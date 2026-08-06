@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260806a_console_role_from_server -->
+<!-- (2026-08-06) 콘솔 권한을 user_metadata → console_users 테이블 조회로 변경. user_metadata 는 사용자 본인이 고칠 수 있고 기본값이 master 였다(무권한 계정이 최고 권한으로 입장 가능). 이제 서버 값만 신뢰하며 기본값 없음, console_users 에 없는 계정은 NotRegisteredPage 로 입장 차단. 인력관리(agents)와는 무관하게 동작. 화면 분기 로직은 그대로. -->
 <!-- v20260624b_refund_group_same_status -->
 <!-- v20260624a_refund_group_by_orderid -->
 <!-- v20260618b_refund_bank_freeinput -->
@@ -10248,9 +10250,22 @@ function NoAccessPage(){
   );
 }
 
+function NotRegisteredPage({email}){
+  return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:'40px 20px',textAlign:'center'}}>
+      <div style={{fontSize:48,marginBottom:16,opacity:.5}}>🔒</div>
+      <div style={{fontSize:18,fontWeight:600,color:'var(--text)',marginBottom:8}}>사용 권한이 없는 계정입니다.</div>
+      <div style={{fontSize:13,color:'var(--sub)',marginBottom:20}}>{email} 은 이 콘솔에 등록되어 있지 않습니다. 관리자에게 문의하세요.</div>
+      <button className="btn-primary" onClick={()=>sb.auth.signOut()}>로그아웃</button>
+    </div>
+  );
+}
+
 function App() {
   const [session,setSession]=useState(null); const [page,setPage]=useState('dashboard'); const [editDate,setEditDate]=useState(null); const [loading,setLoading]=useState(true);
-  const role=session?.user?.user_metadata?.role||'master';
+  // 권한은 서버(console_users)에서만 받는다. user_metadata 는 본인이 고칠 수 있어 신뢰하지 않는다.
+  const [me,setMe]=useState(null); const [meLoading,setMeLoading]=useState(true);
+  const role=me?.console_role||null;
   const isMaster = role==='master';
   const isManager= role==='manager';
   const isCrew   = role==='crew';
@@ -10282,8 +10297,18 @@ function App() {
     setMobileOpen(false);
   };
   useEffect(()=>{ sb.auth.getSession().then(({data})=>{setSession(data.session);setLoading(false);}); const{data:{subscription}}=sb.auth.onAuthStateChange((_,s)=>setSession(s)); return()=>subscription.unsubscribe(); },[]);
+  // 로그인한 계정의 콘솔 권한을 서버에서 조회. 등록되지 않은 계정이면 me 가 null 로 남아 입장이 막힌다.
+  useEffect(()=>{
+    if(!session){ setMe(null); setMeLoading(false); return; }
+    let alive=true; setMeLoading(true);
+    sb.from('console_users').select('console_role,label').eq('user_id',session.user.id).maybeSingle()
+      .then(({data})=>{ if(alive){ setMe(data||null); setMeLoading(false); } });
+    return()=>{ alive=false; };
+  },[session?.user?.id]);
   if(loading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--sub)'}}>로딩 중...</div>;
   if(!session)return<LoginPage/>;
+  if(meLoading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--sub)'}}>권한 확인 중...</div>;
+  if(!me)return<NotRegisteredPage email={session.user.email}/>;
   const afterSave=()=>{setEditDate(null);setPage('entry');};
   return (
     <div className="app-wrap">
