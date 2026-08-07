@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260807h_refund_revert_done -->
+<!-- (2026-08-07) 환불 '완료' 건을 '후처리 대기'로 되돌리는 원복 추가(사용자 요청 — 후처리 대기 건을 실수로 완료 처리했을 때 복구할 방법이 없었다). 완료 건을 열면 [↺ 후처리 대기로 원복] 버튼이 나오고, 확인 창을 거쳐 후처리 완료(3차)만 해제한다(cafe24_done + _at/_by → false/null). 환불 완료(2차)는 그대로 두므로 상태가 '후처리 대기'가 된다 — 한 단계만 되돌리는 것이 목적이라 2차까지 풀지 않는다. 기존 '후처리 대기 → 환불 대기' 원복(revert_to_pending2)과 같은 구조·같은 자리(삭제 버튼 옆)에 뒀다. 완료 건은 읽기 전용이지만 원복·삭제는 계속 가능하다. DB 변경 없음. -->
 <!-- v20260807g_refund_needs_review -->
 <!-- (2026-08-07) 환불 '추가 확인 필요' 표시 신설(사용자 요청). 환불 대기 건을 담당자가 처리하려다 추가 확인이 필요할 때, 그 사실을 남기고 요청자가 알아차릴 방법이 없었다 — 담당자는 처리를 멈추고 요청자는 왜 멈췄는지 모르는 상태가 됐다. → 수정 창에 [🔎 추가 확인 요청](사유 필수 입력)과 [✓ 확인 완료 — 표시 해제] 추가. 요청/해제 각각의 시각·사람을 남기고, 해제해도 사유는 지우지 않아 "왜 한 번 멈췄었나"를 볼 수 있다(지난 확인 요청으로 표시). 요청자 인지 경로 3중: ①목록 상태 옆 '🔎 확인 필요' 칩(마우스 올리면 사유) ②KPI 카드 '추가 확인 필요 N건'(클릭 시 그 건만 필터, 기간과 무관하게 전체에서 집계 — 지난달 건이라도 막혀 있으면 지금 할 일이므로) ③내가 등록한 건에 요청이 붙으면 화면 최상단 배너(알림 전용 — 거르는 일은 바로 아래 KPI 카드가 하므로 클릭 동작을 두지 않는다). 해제는 요청자·담당자 누구나 가능(사용자 결정). ★ 확인 요청/해제는 폼 값과 분리해 저장한다 — 같이 저장하면 아직 다 못 고친 입력이 딸려 들어간다. 기존 상태(환불 대기/후처리 대기/완료)와 독립인 덧붙는 표시라 상태 흐름은 그대로. ★ 선행 조건: tools/refund_needs_review.sql 을 해당 DB 에 먼저 적용(컬럼 6개 + 부분 인덱스). -->
 <!-- v20260807f_toast_notifications -->
@@ -4818,8 +4820,9 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
 // props: row (수정 대상 refunds row), reasons, currentUserEmail, onClose, onSaved
 // 상태별 동작:
 //   환불 대기  → 모든 필드 수정 가능 + [삭제] + [2차 환불 완료 처리]
-//   후처리 대기 → 모든 필드 수정 가능 + [삭제] + [3차 카페24+젠데스크 정리]
-//   완료      → 읽기 전용 + [삭제]만 (보존이 안전)
+//   후처리 대기 → 모든 필드 수정 가능 + [삭제] + [3차 카페24+젠데스크 정리] + [↺ 환불 대기로 원복]
+//   완료      → 읽기 전용 + [삭제] + [↺ 후처리 대기로 원복]
+//              (원복은 휴먼에러 복구용. 한 단계씩만 되돌린다 — 완료→후처리 대기, 후처리 대기→환불 대기)
 function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
   // 행의 현재 상태 판정
   const stKey = refundStatusOf(row).key;  // 'pending2' | 'pending3' | 'done'
@@ -4852,6 +4855,8 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
 
   // 공통 update 호출 (수정 / 2차 처리 / 3차 처리 / 삭제)
   // action: 'save' | 'mark_refund_complete' | 'mark_cafe24_done' | 'delete'
+  //       | 'revert_to_pending2'(완료 해제→환불 대기) | 'revert_to_pending3'(후처리 해제→후처리 대기)
+  //       | 'request_review' | 'resolve_review'
   const performAction = async (action)=>{
     if(action==='save' && !isValid){
       setErr('필수 항목(*)을 모두 입력해주세요.');
@@ -4866,6 +4871,9 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
     }
     if(action==='revert_to_pending2'){
       if(!confirm('환불 완료 상태를 해제하고 환불 대기로 되돌리시겠습니까?\n이미 송금된 건일 수 있습니다. 실제로 송금이 취소되었거나 잘못 처리한 경우에만 사용하세요.')) return;
+    }
+    if(action==='revert_to_pending3'){
+      if(!confirm('후처리 완료를 해제하고 후처리 대기로 되돌리시겠습니까?\n환불 완료(2차)는 그대로 두고 카페24 후처리(3차)만 해제합니다.')) return;
     }
     setSaving(true);
     setErr('');
@@ -4920,6 +4928,13 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
         updatePayload.refund_completed = false;
         updatePayload.refund_completed_at = null;
         updatePayload.refund_completed_by = null;
+      }
+      if(action==='revert_to_pending3'){
+        // 후처리 완료(3차)만 해제 → '후처리 대기'로. 환불 완료(2차)는 건드리지 않는다
+        // (실수로 완료 처리한 건을 한 단계만 되돌리는 것이 목적이다).
+        updatePayload.cafe24_done = false;
+        updatePayload.cafe24_done_at = null;
+        updatePayload.cafe24_done_by = null;
       }
       result = await sb.from('refunds').update(updatePayload).eq('id', row.id);
     }
@@ -5180,6 +5195,14 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
                 style={{fontSize:12,padding:'8px 14px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}
                 title="환불 완료 상태 해제 → 환불 대기로 되돌림">
                 ↺ 환불 대기로 원복
+              </button>
+            )}
+            {/* 실수로 완료 처리한 건을 한 단계만 되돌린다(완료 → 후처리 대기). 환불 완료(2차)는 유지. */}
+            {stKey==='done' && (
+              <button onClick={()=>performAction('revert_to_pending3')} disabled={saving}
+                style={{fontSize:12,padding:'8px 14px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}
+                title="후처리 완료(3차) 해제 → 후처리 대기로 되돌림">
+                ↺ 후처리 대기로 원복
               </button>
             )}
           </div>
