@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- v20260807i_refund_history -->
-<!-- (2026-08-07) 환불 처리 이력을 남긴다(사용자 지시: 모든 처리는 이력이 남는 것을 기본으로). 지금까지 '이력'은 refunds 행의 상태 컬럼(refund_completed_at/by, cafe24_done_at/by)에서 유추해 보여줬는데, 그 방식으로는 원복이 기록되지 않는다 — 되돌리는 순간 근거가 되던 시각·처리자가 지워지기 때문이다. → append-only 테이블 refund_history(refund_id·action·actor·note·created_at)를 두고 등록·수정·환불 완료·후처리 완료·원복 2종·확인 요청/해제·삭제 9종을 모두 기록한다. 수정 창 이력 박스 아래에 '처리 이력'으로 최신순 표시. ★ refund_id 에 외래키를 걸지 않는다 — 환불 건을 삭제해도 '삭제했다'는 이력은 남아야 하는데 FK+cascade 면 함께 지워진다. ★ update/delete 정책을 만들지 않아 한 번 쌓인 이력은 고치거나 지울 수 없다. ★ 이력 기록 실패는 본 처리를 막지 않는다(콘솔에만 남긴다) — 이미 끝난 처리가 실패한 것처럼 보이는 쪽이 더 나쁘다. 함께: '후처리 완료' 클릭 시 확인 창 추가(사용자 요청 — 상태가 «완료»로 바뀌는 마지막 단계라 되묻는다). ★ 선행 조건: tools/refund_history.sql 을 해당 DB 에 먼저 적용. 적용 전에도 처리는 정상 동작하고 이력만 비어 보인다. -->
+<!-- (2026-08-07) 환불 처리 이력을 남긴다(사용자 지시: 모든 처리는 이력이 남는 것을 기본으로). 지금까지 '이력'은 refunds 행의 상태 컬럼(refund_completed_at/by, cafe24_done_at/by)에서 유추해 보여줬는데, 그 방식으로는 원복이 기록되지 않는다 — 되돌리는 순간 근거가 되던 시각·처리자가 지워지기 때문이다. → append-only 테이블 refund_history(refund_id·action·actor·note·created_at)를 두고 등록·수정·환불 완료·후처리 완료·원복 2종·확인 요청/해제·삭제 9종을 모두 기록한다. 수정 창 이력 박스를 한 줄기로 합쳐 오래된 것부터 아래로 쌓아 보여준다 — 유추 표시와 로그를 따로 두면 같은 사건이 두 번 찍힌다(사용자 지적). 이력 기능 이전 건은 로그가 없으므로 상태 컬럼에서 유추해 채우되, 같은 처리의 로그가 있으면 유추분은 버린다. ★ refund_id 에 외래키를 걸지 않는다 — 환불 건을 삭제해도 '삭제했다'는 이력은 남아야 하는데 FK+cascade 면 함께 지워진다. ★ update/delete 정책을 만들지 않아 한 번 쌓인 이력은 고치거나 지울 수 없다. ★ 이력 기록 실패는 본 처리를 막지 않는다(콘솔에만 남긴다) — 이미 끝난 처리가 실패한 것처럼 보이는 쪽이 더 나쁘다. 함께: '후처리 완료' 클릭 시 확인 창 추가(사용자 요청 — 상태가 «완료»로 바뀌는 마지막 단계라 되묻는다). ★ 선행 조건: tools/refund_history.sql 을 해당 DB 에 먼저 적용. 적용 전에도 처리는 정상 동작하고 이력만 비어 보인다. -->
 <!-- v20260807h_refund_revert_done -->
 <!-- (2026-08-07) 환불 '완료' 건을 '후처리 대기'로 되돌리는 원복 추가(사용자 요청 — 후처리 대기 건을 실수로 완료 처리했을 때 복구할 방법이 없었다). 완료 건을 열면 [↺ 후처리 대기로 원복] 버튼이 나오고, 확인 창을 거쳐 후처리 완료(3차)만 해제한다(cafe24_done + _at/_by → false/null). 환불 완료(2차)는 그대로 두므로 상태가 '후처리 대기'가 된다 — 한 단계만 되돌리는 것이 목적이라 2차까지 풀지 않는다. 기존 '후처리 대기 → 환불 대기' 원복(revert_to_pending2)과 같은 구조·같은 자리(삭제 버튼 옆)에 뒀다. 완료 건은 읽기 전용이지만 원복·삭제는 계속 가능하다. DB 변경 없음. -->
 <!-- v20260807g_refund_needs_review -->
@@ -4514,13 +4514,22 @@ const REFUND_BANKS = [
 const REFUND_ACTION_LABEL = {
   create:             '등록',
   update:             '내용 수정',
-  refund_complete:    '환불 완료(2차) 처리',
-  cafe24_done:        '후처리 완료(3차) 처리',
+  refund_complete:    '환불 완료(2차)',
+  cafe24_done:        '후처리 완료(3차)',
   revert_to_pending2: '↺ 환불 대기로 원복',
   revert_to_pending3: '↺ 후처리 대기로 원복',
   review_request:     '🔎 추가 확인 요청',
   review_resolve:     '✓ 추가 확인 해제',
   delete:             '삭제',
+};
+const REFUND_ACTION_COLOR = {
+  refund_complete:    '#F6AD09',
+  cafe24_done:        '#78AAFF',
+  review_request:     '#f87171',
+  review_resolve:     '#7ED957',
+  delete:             '#FF6B6B',
+  revert_to_pending2: 'var(--sub)',
+  revert_to_pending3: 'var(--sub)',
 };
 // 화면의 action 이름 → 이력의 action 이름
 const ACTION_TO_LOG = {
@@ -4877,7 +4886,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
     let alive=true;
     (async()=>{
       const {data,error}=await sb.from('refund_history').select('*')
-        .eq('refund_id',row.id).order('created_at',{ascending:false});
+        .eq('refund_id',row.id).order('created_at',{ascending:true});  // 오래된 것부터 — 화면도 같은 순서다
       if(!alive) return;
       // 이력을 못 읽어도 처리 자체는 할 수 있어야 하므로 막지 않는다. 대신 화면에 사정을 적는다.
       if(error) console.error('[환불 처리 이력 조회] 실패:',error);
@@ -5228,34 +5237,32 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
 
           {/* 이력 박스 */}
           <div style={{marginTop:16,padding:'10px 12px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,fontSize:11,color:'var(--sub)',lineHeight:1.7}}>
-            <div><b style={{color:'var(--text)'}}>등록</b>: {fmtDateTime(row.created_at)} · {row.created_by||'-'}</div>
-            {row.updated_at && row.updated_at!==row.created_at && (
-              <div><b style={{color:'var(--text)'}}>최종 수정</b>: {fmtDateTime(row.updated_at)} · {row.updated_by||'-'}</div>
-            )}
-            {row.refund_completed && (
-              <div><b style={{color:'#F6AD09'}}>환불 완료(2차)</b>: {fmtDateTime(row.refund_completed_at)} · {row.refund_completed_by||'-'}</div>
-            )}
-            {row.cafe24_done && (
-              <div><b style={{color:'#78AAFF'}}>후처리 완료(3차)</b>: {fmtDateTime(row.cafe24_done_at)} · {row.cafe24_done_by||'-'}</div>
-            )}
-
-            {/* 처리 이력 — 위쪽은 '지금 상태', 여기는 '일어난 일'이다.
-                원복처럼 상태를 되돌리는 처리는 위쪽에서 사라지므로 여기에만 남는다. */}
-            <div style={{marginTop:10,paddingTop:8,borderTop:'1px dashed var(--border)'}}>
-              <div style={{color:'var(--text)',fontWeight:600,marginBottom:4}}>처리 이력</div>
-              {historyLoading ? (
-                <div>불러오는 중...</div>
-              ) : history===null ? (
-                <div>이력을 불러오지 못했습니다. (처리에는 영향이 없습니다)</div>
-              ) : history.length===0 ? (
-                <div>기록된 이력이 없습니다. {/* 이력 기능(2026-08-07) 이전에 처리된 건이면 비어 있다 */}</div>
-              ) : history.map(h=>(
-                <div key={h.id}>
-                  {fmtDateTime(h.created_at)} · <b style={{color:'var(--text)'}}>{REFUND_ACTION_LABEL[h.action]||h.action}</b> · {h.actor||'-'}
-                  {h.note && <span style={{color:'var(--sub)'}}> — {h.note}</span>}
-                </div>
-              ))}
-            </div>
+            {/* 처리 이력 한 줄기 — 오래된 것부터 아래로 쌓인다.
+                이력 기능(2026-08-07) 이전 건은 로그가 없으므로 행의 상태 컬럼에서 유추해 채우고,
+                같은 처리의 로그가 있으면 유추분은 버린다(그래야 같은 사건이 두 번 찍히지 않는다). */}
+            {historyLoading ? (
+              <div>이력 불러오는 중...</div>
+            ) : (()=>{
+              const logged = new Set((history||[]).map(h=>h.action));
+              const derived = [];
+              const add=(action,at,by)=>{ if(!logged.has(action) && at) derived.push({id:'d-'+action,action,created_at:at,actor:by}); };
+              add('create',          row.created_at,          row.created_by);
+              if(row.updated_at && row.updated_at!==row.created_at) add('update', row.updated_at, row.updated_by);
+              if(row.refund_completed) add('refund_complete', row.refund_completed_at, row.refund_completed_by);
+              if(row.cafe24_done)      add('cafe24_done',     row.cafe24_done_at,      row.cafe24_done_by);
+              const items = [...derived, ...(history||[])]
+                .sort((a,b)=> new Date(a.created_at) - new Date(b.created_at));
+              return (<>
+                {items.map(h=>(
+                  <div key={h.id}>
+                    <b style={{color:REFUND_ACTION_COLOR[h.action]||'var(--text)'}}>{REFUND_ACTION_LABEL[h.action]||h.action}</b>
+                    : {fmtDateTime(h.created_at)} · {h.actor||'-'}
+                    {h.note && <span style={{color:'var(--sub)'}}> — {h.note}</span>}
+                  </div>
+                ))}
+                {history===null && <div>이후 이력을 불러오지 못했습니다. (처리에는 영향이 없습니다)</div>}
+              </>);
+            })()}
           </div>
 
           {/* 에러 메시지 */}
