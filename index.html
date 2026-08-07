@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260807d_query_errors_surfaced -->
+<!-- (2026-08-07) 조회·저장 실패를 화면에 드러냄. sb.from(...) 호출 104곳 중 33곳이 오류를 받지 않아, 실패해도 빈 목록·0건으로만 보였다. 권한 체계(RLS) 도입 후로는 막힌 조회가 '오류'가 아니라 '0건'으로 오기 때문에 '데이터가 없는 것'과 '내가 못 보는 것'이 구분되지 않았고, 저장 실패는 저장된 줄 알고 넘어가게 된다. → 공통 헬퍼 sbFail(무엇을, error, {write,allowEmpty}) 하나로 통일(같은 실패는 8초에 한 번만 알림, 콘솔에는 매번 기록). 적용: 대시보드·근태·공휴일·상담원 목록/실적·입력 이력·환불 목록·상담원 분석·공급사·발송 통계 조회, 그리고 퇴사/복직/상담원 삭제·상품 삭제·데이터 삭제(단건/일괄) 저장. ★ 권한 조회(console_users) 실패는 별도 화면(RoleCheckFailedPage)으로 분리 — 실패를 '등록되지 않은 계정'으로 보여주면 정당한 사용자가 계정이 지워진 줄 안다. .catch 도 추가(없으면 '권한 확인 중...'에서 영영 멈춘다). .single() 의 '행 없음'(PGRST116)은 실패가 아니라 allowEmpty 로 제외. 정상 경로 동작은 변화 없음. ★ 알림을 토스트로 바꾸려면 sbFail 하나만 고치면 된다. -->
 <!-- v20260807c_supplier_count_error_visible -->
 <!-- (2026-08-07) 상품 목록의 '공급사 N개' 조회 실패를 화면에 드러냄. v20260807b 에서 공급사 관리 화면에는 실패 알림을 넣었지만 상품 목록 쪽은 빠져 있어, supplier_product_counts 뷰가 없거나 권한이 없으면 count 가 null → '0개'로 조용히 표시됐다(공급사가 없는 것과 구분 불가). → 실패 시 숫자 대신 '—' 를 표시하고 console.error + 알림. 알림은 useRef 표시로 화면당 한 번만 띄운다(목록 페이지를 넘길 때마다 load 가 다시 도는데 그때마다 창이 뜨면 흐름이 끊긴다). 정상 경로는 변화 없음. -->
 <!-- v20260807b_supplier_counts_server_side -->
@@ -286,6 +288,34 @@ const { createClient } = supabase;
 const { useState, useEffect, useRef, useCallback } = React;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ── 조회·저장 실패를 화면에 드러낸다 ──────────────────────────────────
+// 권한 체계(RLS) 도입 후로는 막힌 조회가 '오류'가 아니라 '0건'으로 돌아온다.
+// 잡아서 알리지 않으면 사용자는 '데이터가 없는 것'과 '내가 못 보는 것'을 구분할 수 없다.
+// 저장 실패도 마찬가지로, 알리지 않으면 저장된 줄 알고 넘어간다.
+//   조회: const{data,error}=await sb.from(...)...;  if(sbFail('상담원 목록 조회',error)) return;
+//   저장: const{error}=await sb.from(...).update(...);  if(sbFail('퇴사 처리',error,{write:true})) return;
+//   .single(): 행이 없을 때도 error(PGRST116)가 온다. 그건 실패가 아니므로 {allowEmpty:true}.
+// 같은 실패가 이어져도 창은 8초에 한 번만 띄운다 — 목록 로드는 화면 전환·기간 변경마다
+// 다시 도는 자리라 매번 띄우면 흐름이 끊긴다(콘솔에는 매번 남긴다).
+// ★ 알림 방식을 토스트로 바꾸려면 이 함수 하나만 고치면 된다.
+let _sbFailLast = {key:'',at:0};
+function sbFail(what, error, opts){
+  if(!error) return false;
+  // 조회 결과가 0건인 것은 실패가 아니다(.single() 이 내는 코드. .maybeSingle() 은 error 없이 data:null 을 준다)
+  if(opts && opts.allowEmpty && error.code==='PGRST116') return false;
+  console.error('['+what+'] 실패:', error);
+  const key = what+'|'+(error.code||error.message||'');
+  const now = Date.now();
+  if(_sbFailLast.key!==key || now-_sbFailLast.at>8000){
+    _sbFailLast = {key,at:now};
+    alert(what+'에 실패했습니다.\n'+(error.message||'')+(error.code?' ('+error.code+')':'')
+      +(opts && opts.write
+        ? '\n\n변경 내용이 저장되지 않았습니다. 다시 시도해 주세요.'
+        : '\n\n화면에 보이는 내용이 전부가 아닐 수 있습니다.\n새로고침해도 계속되면 관리자에게 알려주세요.'));
+  }
+  return true;
+}
+
 const COLORS = ['#4f8ef7','#22d3a0','#fbbf24','#f87171','#a78bfa','#fb923c','#34d399','#60a5fa'];
 
 const Icon = {
@@ -401,6 +431,7 @@ function DashboardPage() {
     if(f){q1=q1.gte('date',f);q2=q2.gte('date',f);}
     if(t){q1=q1.lte('date',t);q2=q2.lte('date',t);}
     const[r1,r2,r3]=await Promise.all([q1,q2,q3]);
+    if(sbFail('대시보드 데이터 조회',r1.error||r2.error||r3.error)){ setLoading(false); return; }
     setOps(r1.data||[]);
     const validNames = new Set((r3.data||[]).map(a=>a.name));
     setAgentOps((r2.data||[]).filter(r=>validNames.has(r.agent_name)));
@@ -646,7 +677,8 @@ function AttendancePage() {
   const dateStr = d => year+'-'+pad(month)+'-'+pad(d);
 
   const loadHolidays = async () => {
-    const {data} = await sb.from('holidays').select('*').order('date');
+    const {data,error} = await sb.from('holidays').select('*').order('date');
+    if(sbFail('공휴일 조회',error)) return;
     setHolidays(data||[]);
   };
 
@@ -655,6 +687,7 @@ function AttendancePage() {
       sb.from('agents').select('*').order('sort_order').order('created_at'),
       sb.from('attendance').select('*').gte('date',dateStr(1)).lte('date',dateStr(daysInMonth)),
     ]);
+    if(sbFail('근태 데이터 조회',r1.error||r2.error)) return;
     setAgents(r1.data||[]);
     setRecords(r2.data||[]);
     setEdits({});
@@ -1000,16 +1033,21 @@ function AgentListTab() {
   };
   const doResign=async()=>{
     if(!resignTarget||!resignDate)return;
-    await sb.from('agents').update({resigned_at:resignDate}).eq('id',resignTarget.id);
+    const{error}=await sb.from('agents').update({resigned_at:resignDate}).eq('id',resignTarget.id);
+    if(sbFail('퇴사 처리',error,{write:true})) return; // 실패 시 모달을 닫지 않는다 — 그대로 다시 시도할 수 있게
     setResignTarget(null); load();
   };
   const doRestore=async(a)=>{
     if(!confirm(`'${a.name}' 님을 복직 처리하시겠습니까?`))return;
-    await sb.from('agents').update({resigned_at:null}).eq('id',a.id); load();
+    const{error}=await sb.from('agents').update({resigned_at:null}).eq('id',a.id);
+    if(sbFail('복직 처리',error,{write:true})) return;
+    load();
   };
   const del=async(a)=>{
     if(!confirm(`'${a.name}' 을 삭제하시겠습니까?\n기존 데이터는 유지됩니다.`))return;
-    await sb.from('agents').delete().eq('id',a.id); load();
+    const{error}=await sb.from('agents').delete().eq('id',a.id);
+    if(sbFail('상담원 삭제',error,{write:true})) return;
+    load();
   };
 
   const active=agents.filter(a=>!a.resigned_at);
@@ -1157,15 +1195,18 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
 
     if(forEditDate){
       // 수정 모드: 재직자 + 해당 날짜에 데이터 있는 퇴사자 (과거 데이터 보존)
-      const{data:activeData}=await sb.from('agents').select('*').is('resigned_at',null).order('sort_order').order('created_at');
+      const{data:activeData,error:e1}=await sb.from('agents').select('*').is('resigned_at',null).order('sort_order').order('created_at');
+      if(sbFail('상담원 목록 조회',e1)) return [];  // 실패 시 목록을 덮어쓰지 않는다(호출부가 forEach 를 돈다)
       list=activeData||[];
-      const{data:dayOps}=await sb.from('agent_daily_ops').select('agent_name').eq('date',forEditDate);
+      const{data:dayOps,error:e2}=await sb.from('agent_daily_ops').select('agent_name').eq('date',forEditDate);
+      if(sbFail('상담원별 실적 조회',e2)) return [];
       const dayNames=new Set((dayOps||[]).map(r=>r.agent_name));
       const activeNames=new Set(list.map(a=>a.name));
       // 그 날짜에 데이터가 있으나 현재 재직자 목록엔 없는(=퇴사한) 상담원 조회
       const missing=[...dayNames].filter(n=>!activeNames.has(n));
       if(missing.length>0){
-        const{data:resigned}=await sb.from('agents').select('*').in('name',missing);
+        const{data:resigned,error:e3}=await sb.from('agents').select('*').in('name',missing);
+        if(sbFail('퇴사자 조회',e3)) return [];
         if(resigned&&resigned.length>0){
           // 재직자 뒤에 퇴사자를 붙임 (퇴사자는 _resigned 플래그 표시)
           list=[...list,...resigned.map(a=>({...a,_resigned:true}))];
@@ -1174,7 +1215,8 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
     } else if(forEntryDate){
       // 신규 입력 모드 + 날짜 선택됨: 전체 상담원을 불러온 뒤 날짜 기준으로 필터
       // (퇴사자도 일단 불러와야 "그 날짜엔 재직 중이었던" 판단이 가능함)
-      const{data:allData}=await sb.from('agents').select('*').order('sort_order').order('created_at');
+      const{data:allData,error:e4}=await sb.from('agents').select('*').order('sort_order').order('created_at');
+      if(sbFail('상담원 목록 조회',e4)) return [];
       // 조건: 입사일 <= 입력날짜  AND  (퇴사일 없음 OR 입력날짜 <= 퇴사일)
       //  - 퇴사일 당일까지는 입력 가능 (결정 A: 입력날짜 <= 퇴사일)
       //  - hire_date가 NULL이면 입사일 제약 없음 (항상 통과)
@@ -1188,7 +1230,8 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
       });
     } else {
       // 날짜 미선택: 전체 재직자 표시 (기존 동작)
-      const{data:activeData}=await sb.from('agents').select('*').is('resigned_at',null).order('sort_order').order('created_at');
+      const{data:activeData,error:e5}=await sb.from('agents').select('*').is('resigned_at',null).order('sort_order').order('created_at');
+      if(sbFail('상담원 목록 조회',e5)) return [];
       list=activeData||[];
     }
 
@@ -1208,6 +1251,9 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
         sb.from('daily_ops').select('*').eq('date',editDate).single(),
         sb.from('agent_daily_ops').select('*').eq('date',editDate),
       ]);
+      // .single() 은 그 날짜에 행이 없을 때도 error 를 낸다 — 그건 실패가 아니다(allowEmpty).
+      sbFail('일별 실적 조회',r1.error,{allowEmpty:true});
+      sbFail('상담원별 실적 조회',r2.error);
       if(r1.data)setOps(r1.data);
       if(r2.data){
         const d={};
@@ -1535,6 +1581,7 @@ function EntryHistorySection({ onEdit }) {
       sb.from('agents').select('name,role'),
       sb.from('attendance').select('date,agent_name,status'),
     ]);
+    if(sbFail('입력 이력 조회',r1.error||r2.error||r3.error||r4.error)){ setLoading(false); return; }
     const ops=r1.data||[]; const ag=r2.data||[];
     const map={}; ops.forEach(r=>{map[r.date]=r;});
     const dates=[...new Set([...ops.map(r=>r.date),...ag.map(r=>r.date)])].sort().reverse();
@@ -1559,16 +1606,19 @@ function EntryHistorySection({ onEdit }) {
 
   const del=async date=>{
     if(!confirm(`${date} 데이터를 삭제하시겠습니까?`))return;
-    await Promise.all([sb.from('daily_ops').delete().eq('date',date),sb.from('agent_daily_ops').delete().eq('date',date)]);
+    const rs=await Promise.all([sb.from('daily_ops').delete().eq('date',date),sb.from('agent_daily_ops').delete().eq('date',date)]);
+    // 삭제가 막혔는데도 조용히 넘어가면 목록에 그대로 남아 '삭제가 안 먹는다'로만 보인다.
+    if(sbFail('데이터 삭제',rs.find(r=>r.error)?.error,{write:true})) return;
     load();
   };
   const bulkDel=async()=>{
     if(!confirm(`${checkedDates.size}개 데이터를 삭제하시겠습니까?`))return;
     const ids=[...checkedDates];
-    await Promise.all(ids.flatMap(date=>[
+    const rs=await Promise.all(ids.flatMap(date=>[
       sb.from('daily_ops').delete().eq('date',date),
       sb.from('agent_daily_ops').delete().eq('date',date),
     ]));
+    if(sbFail('선택 데이터 삭제',rs.find(r=>r.error)?.error,{write:true})){ load(); return; } // 일부는 지워졌을 수 있어 목록은 새로 읽는다
     setCheckedDates(new Set()); load();
   };
 
@@ -1789,7 +1839,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     return SUP_CHANNELS[ch]||SUP_CHANNELS.none;
   };
   const loadSuppliers=async()=>{
-    const{data}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type');
+    const{data,error:supErr}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type');
+    if(sbFail('공급사 정보 조회',supErr)) return;
     if(data){
       const m={}; const sm={};
       data.forEach(s=>{
@@ -2432,7 +2483,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   };
   const del=async id=>{
     if(!confirm('삭제하시겠습니까?'))return;
-    await sb.from('products').delete().eq('id',id); load(page,search,searchField);
+    const{error}=await sb.from('products').delete().eq('id',id);
+    if(sbFail('상품 삭제',error,{write:true})) return;
+    load(page,search,searchField);
   };
 
 
@@ -3547,7 +3600,8 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
   const loadAll=async()=>{
     setLoading(true);
     // 1. suppliers 테이블
-    const{data:supRows}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type,cafe24_supplier_code,updated_at');
+    const{data:supRows,error:supErr}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type,cafe24_supplier_code,updated_at');
+    if(sbFail('공급사 목록 조회',supErr)){ setLoading(false); return; }
     const supList=(supRows||[]).map(s=>({
       name:s.name,
       channel:s.channel||null,
@@ -5592,6 +5646,7 @@ function RefundManagementPage({ currentUserEmail }) {
       sb.from('refunds').select('*').order('created_at',{ascending:false}).limit(500),
       sb.from('refund_reasons').select('*').order('sort_order',{ascending:true}),
     ]);
+    if(sbFail('환불 목록 조회',r1.error||r2.error)){ setLoading(false); return; }
     setRefunds(r1.data||[]);
     setReasons(r2.data||[]);
     setSelectedIds(new Set());  // 데이터 새로 로드되면 stale한 선택 정리
@@ -6136,6 +6191,7 @@ function AgentAnalysisPage(){
       sb.from('agent_daily_ops').select('*').gte('date',prevFromStr).lte('date',prevToStr),
       sb.from('agents').select('name,resigned_at,role'),
     ]);
+    if(sbFail('상담원 분석 데이터 조회',r1.error||r2.error||r3.error)){ setLoading(false); return; }
     setAgentOps(r1.data||[]);
     setPrevAgentOps(r2.data||[]);
     const m={}; (r3.data||[]).forEach(r=>{ if(r.role==='파트장') return; m[r.name]=r.resigned_at; }); setAgentMap(m);
@@ -6374,13 +6430,14 @@ function HistoryPage({ onEdit }) {
   const load=async()=>{
     setLoading(true);
     const[r1,r2]=await Promise.all([sb.from('daily_ops').select('*'),sb.from('agent_daily_ops').select('*')]);
+    if(sbFail('데이터 내역 조회',r1.error||r2.error)){ setLoading(false); return; }
     const ops=r1.data||[]; const ag=r2.data||[];
     const map={}; ops.forEach(r=>{map[r.date]=r;});
     const dates=[...new Set([...ops.map(r=>r.date),...ag.map(r=>r.date)])].sort().reverse();
     setOpsMap(map); setAgents(ag); setAllDates(dates); setLoading(false);
   };
   useEffect(()=>{load();},[]);
-  const del=async date=>{ if(!confirm(`${date} 데이터를 삭제하시겠습니까?`))return; await Promise.all([sb.from('daily_ops').delete().eq('date',date),sb.from('agent_daily_ops').delete().eq('date',date)]); load(); };
+  const del=async date=>{ if(!confirm(`${date} 데이터를 삭제하시겠습니까?`))return; const rs=await Promise.all([sb.from('daily_ops').delete().eq('date',date),sb.from('agent_daily_ops').delete().eq('date',date)]); if(sbFail('데이터 삭제',rs.find(r=>r.error)?.error,{write:true})) return; load(); };
   return (
     <div>
       <div className="page-header"><div><div className="page-title">데이터 내역</div><div className="page-sub">입력된 운영 데이터 목록</div></div></div>
@@ -9724,7 +9781,8 @@ function DelayHistoryTab(){
       const codes = [...new Set((data||[]).map(r=>r.product_code))];
       let supplierMap = {};
       if(codes.length>0){
-        const {data:prods} = await sb.from('products').select('product_code,supplier_name').in('product_code',codes);
+        const {data:prods,error:prodErr} = await sb.from('products').select('product_code,supplier_name').in('product_code',codes);
+        sbFail('공급사명 보강 조회',prodErr); // 실패해도 목록은 보여준다 — 공급사 열만 빈다
         (prods||[]).forEach(p=>{ supplierMap[p.product_code] = p.supplier_name; });
       }
       let merged = (data||[]).map(r=>({...r, supplier_name: supplierMap[r.product_code]||null}));
@@ -9747,13 +9805,15 @@ function DelayHistoryTab(){
     try {
       const baseQuery = ()=>buildQuery(null, true);
       // 총 발송
-      const {count:totalCount} = await baseQuery();
+      const {count:totalCount,error:e1} = await baseQuery();
       // 알림톡 성공 (channel=alimtalk + status=success)
-      const {count:alimtalkCount} = await buildQuery(null,true).eq('channel','alimtalk').eq('status','success');
+      const {count:alimtalkCount,error:e2} = await buildQuery(null,true).eq('channel','alimtalk').eq('status','success');
       // SMS/LMS 폴백 (channel=sms or lms + status=success)
-      const {count:smsCount} = await buildQuery(null,true).in('channel',['sms','lms']).eq('status','success');
+      const {count:smsCount,error:e3} = await buildQuery(null,true).in('channel',['sms','lms']).eq('status','success');
       // 실패
-      const {count:failedCount} = await buildQuery(null,true).eq('status','failed');
+      const {count:failedCount,error:e4} = await buildQuery(null,true).eq('status','failed');
+      // ★ 카운트 조회는 실패해도 count 가 null 로 와서 화면엔 '0건'으로 보인다 — 발송이 0인 것과 구분되지 않는다.
+      if(sbFail('발송 통계 조회',e1||e2||e3||e4)) return;
       setKpi({total:totalCount||0, alimtalk_success:alimtalkCount||0, sms_fallback:smsCount||0, failed:failedCount||0});
     } catch(e){
       console.error('KPI 로드 실패:',e);
@@ -9812,7 +9872,8 @@ function DelayHistoryTab(){
       const codes = [...new Set((data||[]).map(r=>r.product_code))];
       let supplierMap = {};
       if(codes.length>0){
-        const {data:prods} = await sb.from('products').select('product_code,supplier_name').in('product_code',codes);
+        const {data:prods,error:prodErr} = await sb.from('products').select('product_code,supplier_name').in('product_code',codes);
+        sbFail('공급사명 보강 조회',prodErr); // 실패해도 목록은 보여준다 — 공급사 열만 빈다
         (prods||[]).forEach(p=>{ supplierMap[p.product_code] = p.supplier_name; });
       }
       let merged = (data||[]).map(r=>({...r, supplier_name: supplierMap[r.product_code]||''}));
@@ -10271,10 +10332,29 @@ function NotRegisteredPage({email}){
   );
 }
 
+// 권한 '조회 자체가 실패'했을 때. 등록되지 않은 계정(NotRegisteredPage)과 반드시 구분해야 한다 —
+// 조회 실패를 '권한 없음'으로 보여주면 정당한 사용자가 자기 계정이 지워진 줄 안다.
+function RoleCheckFailedPage({email,error,onRetry}){
+  return (
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:'40px 20px',textAlign:'center'}}>
+      <div style={{fontSize:48,marginBottom:16,opacity:.5}}>⚠️</div>
+      <div style={{fontSize:18,fontWeight:600,color:'var(--text)',marginBottom:8}}>권한을 확인하지 못했습니다.</div>
+      <div style={{fontSize:13,color:'var(--sub)',marginBottom:6}}>{email} 의 권한 정보를 불러오는 데 실패했습니다. 계정 문제가 아니라 조회에 실패한 것입니다.</div>
+      <div style={{fontSize:12,color:'var(--sub)',marginBottom:20,opacity:.8}}>{(error&&(error.message||String(error)))||''}</div>
+      <div style={{display:'flex',gap:8}}>
+        <button className="btn-primary" onClick={onRetry}>다시 시도</button>
+        <button className="btn-cancel" onClick={()=>sb.auth.signOut()}>로그아웃</button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [session,setSession]=useState(null); const [page,setPage]=useState('dashboard'); const [editDate,setEditDate]=useState(null); const [loading,setLoading]=useState(true);
   // 권한은 서버(console_users)에서만 받는다. user_metadata 는 본인이 고칠 수 있어 신뢰하지 않는다.
   const [me,setMe]=useState(null); const [meLoading,setMeLoading]=useState(true);
+  // 권한 조회가 '실패'한 것과 '등록되지 않은 계정'은 다르다. meError 가 있으면 전자다.
+  const [meError,setMeError]=useState(null); const [meRetry,setMeRetry]=useState(0);
   const role=me?.console_role||null;
   const isMaster = role==='master';
   const isManager= role==='manager';
@@ -10308,16 +10388,25 @@ function App() {
   };
   useEffect(()=>{ sb.auth.getSession().then(({data})=>{setSession(data.session);setLoading(false);}); const{data:{subscription}}=sb.auth.onAuthStateChange((_,s)=>setSession(s)); return()=>subscription.unsubscribe(); },[]);
   // 로그인한 계정의 콘솔 권한을 서버에서 조회. 등록되지 않은 계정이면 me 가 null 로 남아 입장이 막힌다.
+  // ★ 조회가 실패했을 때 data 는 null 로 오는데, 그걸 그대로 두면 '등록되지 않은 계정' 화면이 떠서
+  //   정당한 사용자가 계정이 지워진 줄 안다. 실패는 meError 로 따로 들고 다른 화면을 보여준다.
+  //   .catch 도 필요하다 — 없으면 요청이 거부될 때 '권한 확인 중...'에서 영영 멈춘다.
   useEffect(()=>{
-    if(!session){ setMe(null); setMeLoading(false); return; }
-    let alive=true; setMeLoading(true);
+    if(!session){ setMe(null); setMeError(null); setMeLoading(false); return; }
+    let alive=true; setMeLoading(true); setMeError(null);
     sb.from('console_users').select('console_role,label').eq('user_id',session.user.id).maybeSingle()
-      .then(({data})=>{ if(alive){ setMe(data||null); setMeLoading(false); } });
+      .then(({data,error})=>{ if(!alive) return;
+        if(error){ console.error('[콘솔 권한 조회] 실패:',error); setMeError(error); setMe(null); }
+        else { setMe(data||null); }
+        setMeLoading(false);
+      })
+      .catch(err=>{ if(!alive) return; console.error('[콘솔 권한 조회] 실패:',err); setMeError(err); setMe(null); setMeLoading(false); });
     return()=>{ alive=false; };
-  },[session?.user?.id]);
+  },[session?.user?.id,meRetry]);
   if(loading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--sub)'}}>로딩 중...</div>;
   if(!session)return<LoginPage/>;
   if(meLoading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--sub)'}}>권한 확인 중...</div>;
+  if(meError)return<RoleCheckFailedPage email={session.user.email} error={meError} onRetry={()=>setMeRetry(v=>v+1)}/>;
   if(!me)return<NotRegisteredPage email={session.user.email}/>;
   const afterSave=()=>{setEditDate(null);setPage('entry');};
   return (
