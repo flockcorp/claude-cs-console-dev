@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260807g_refund_needs_review -->
+<!-- (2026-08-07) 환불 '추가 확인 필요' 표시 신설(사용자 요청). 환불 대기 건을 담당자가 처리하려다 추가 확인이 필요할 때, 그 사실을 남기고 요청자가 알아차릴 방법이 없었다 — 담당자는 처리를 멈추고 요청자는 왜 멈췄는지 모르는 상태가 됐다. → 수정 창에 [🔎 추가 확인 요청](사유 필수 입력)과 [✓ 확인 완료 — 표시 해제] 추가. 요청/해제 각각의 시각·사람을 남기고, 해제해도 사유는 지우지 않아 "왜 한 번 멈췄었나"를 볼 수 있다(지난 확인 요청으로 표시). 요청자 인지 경로 3중: ①목록 상태 옆 '🔎 확인 필요' 칩(마우스 올리면 사유) ②KPI 카드 '추가 확인 필요 N건'(클릭 시 그 건만 필터, 기간과 무관하게 전체에서 집계 — 지난달 건이라도 막혀 있으면 지금 할 일이므로) ③내가 등록한 건에 요청이 붙으면 화면 최상단 배너. 해제는 요청자·담당자 누구나 가능(사용자 결정). ★ 확인 요청/해제는 폼 값과 분리해 저장한다 — 같이 저장하면 아직 다 못 고친 입력이 딸려 들어간다. 기존 상태(환불 대기/후처리 대기/완료)와 독립인 덧붙는 표시라 상태 흐름은 그대로. ★ 선행 조건: tools/refund_needs_review.sql 을 해당 DB 에 먼저 적용(컬럼 6개 + 부분 인덱스). -->
 <!-- v20260807f_toast_notifications -->
 <!-- (2026-08-07) 브라우저 기본 alert 을 토스트로 교체(57곳). alert 은 창을 닫기 전까지 아무것도 못 하게 막아서, 여러 건을 처리할 때마다 흐름이 끊겼다. 화면 오른쪽 아래에 쌓였다가 스스로 사라지는 알림으로 바꿨다 — 종류별 색(오류 빨강·주의 노랑·완료 초록·정보 파랑)과 표시 시간(8/6/4/5초, 여러 줄이거나 80자가 넘으면 +4초), 마우스를 올리면 멈추고 떼면 다시 세며, 최대 4개까지만 쌓이고 ✕ 로 바로 닫는다. 발송·재발송 결과와 이메일 형식 오류처럼 읽고 조치해야 하는 7곳은 sticky 로 두어 직접 닫을 때까지 남는다. toast(문구) 는 문구에서 종류를 추론하고(실패/오류→error, ~해주세요→warn, 완료→success), toast(문구,종류,{sticky:true}) 로 지정할 수도 있다. ★ React 밖의 평범한 DOM 으로 만들었다 — 모듈 스코프인 sbFail 과 컴포넌트 어디서나 똑같이 부를 수 있어야 하고, 로그인 전처럼 App 이 아직 아무것도 안 그린 때에도 떠야 하기 때문. 확인이 필요한 confirm 25곳·prompt 3곳은 그대로 둔다(사용자 응답을 기다려야 하므로 토스트로 바꿀 수 없다). -->
 <!-- v20260807e_entry_cancel_button_fix -->
@@ -4822,6 +4824,9 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
   // 행의 현재 상태 판정
   const stKey = refundStatusOf(row).key;  // 'pending2' | 'pending3' | 'done'
   const isReadOnly = stKey==='done';
+  // 추가 확인 필요: 담당자가 처리하다 막혔을 때 사유를 남기고, 요청자가 보고 풀 수 있게 한다.
+  const [reviewNote,setReviewNote]=useState('');
+  const [reviewOpen,setReviewOpen]=useState(false);
 
   // 폼 state - row 값으로 초기화
   const [reasonId,    setReasonId]    = useState(String(row.reason_id||''));
@@ -4852,6 +4857,10 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
       setErr('필수 항목(*)을 모두 입력해주세요.');
       return;
     }
+    if(action==='request_review' && !reviewNote.trim()){
+      setErr('어떤 확인이 필요한지 적어주세요.');
+      return;
+    }
     if(action==='delete'){
       if(!confirm('이 환불 요청을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.')) return;
     }
@@ -4863,6 +4872,17 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
     let result;
     if(action==='delete'){
       result = await sb.from('refunds').delete().eq('id', row.id);
+    } else if(action==='request_review' || action==='resolve_review'){
+      // ★ 폼 값은 건드리지 않는다. 확인 요청/해제만 따로 저장한다 —
+      //   같이 저장하면 아직 다 못 고친 입력이 딸려 들어간다.
+      const now = new Date().toISOString();
+      const who = currentUserEmail || 'unknown';
+      const payload = action==='request_review'
+        ? { needs_review:true, review_note:reviewNote.trim(), review_requested_at:now, review_requested_by:who,
+            review_resolved_at:null, review_resolved_by:null }   // 다시 요청하면 지난 해제 기록은 지운다
+        : { needs_review:false, review_resolved_at:now, review_resolved_by:who };
+        // 해제해도 review_note 는 남긴다 — 왜 한 번 멈췄었는지 나중에 볼 수 있어야 한다.
+      result = await sb.from('refunds').update(payload).eq('id', row.id);
     } else {
       // save: 폼 필드 전체 업데이트
       // mark_refund_complete: refund_completed=true + _at/_by + (폼 변경분도 같이)
@@ -5082,6 +5102,52 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
           <textarea value={notes} onChange={e=>setNotes(e.target.value)} disabled={isReadOnly}
             placeholder="자유롭게 메모 입력"
             style={inp({minHeight:70,resize:'vertical',fontFamily:'inherit'})}/>
+
+          {/* 추가 확인 필요 — 요청 중이면 눈에 띄게, 아니면 요청 버튼만 */}
+          {row.needs_review ? (
+            <div style={{marginTop:16,padding:'12px 14px',background:'rgba(248,113,113,.12)',border:'1px solid rgba(248,113,113,.45)',borderRadius:6}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#f87171',marginBottom:6}}>🔎 추가 확인 필요</div>
+              <div style={{fontSize:13,color:'var(--text)',whiteSpace:'pre-wrap',marginBottom:8}}>{row.review_note||'(사유 미기재)'}</div>
+              <div style={{fontSize:11,color:'var(--sub)',marginBottom:10}}>요청: {row.review_requested_by||'-'} · {fmtDateTime(row.review_requested_at)}</div>
+              <button onClick={()=>performAction('resolve_review')} disabled={saving}
+                style={{fontSize:12,padding:'7px 12px',background:'rgba(126,217,87,.18)',border:'1px solid rgba(126,217,87,.5)',color:'#7ED957',borderRadius:6,cursor:saving?'not-allowed':'pointer',fontWeight:600}}>
+                ✓ 확인 완료 — 표시 해제
+              </button>
+              <span style={{fontSize:11,color:'var(--sub)',marginLeft:8}}>확인했거나 내용을 보완했으면 해제해 주세요.</span>
+            </div>
+          ) : (!isReadOnly && (
+            <div style={{marginTop:16}}>
+              {reviewOpen ? (
+                <div style={{padding:'12px 14px',background:'var(--bg)',border:'1px solid rgba(248,113,113,.45)',borderRadius:6}}>
+                  <div style={{fontSize:11,color:'var(--sub)',marginBottom:6}}>어떤 확인이 필요한가요? (필수)</div>
+                  <textarea value={reviewNote} onChange={e=>setReviewNote(e.target.value)} rows={2}
+                    placeholder="예: 예금주가 주문자와 달라 확인 필요"
+                    style={{width:'100%',fontSize:13,padding:'8px 10px',background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit',boxSizing:'border-box',resize:'vertical'}}/>
+                  <div style={{display:'flex',gap:8,marginTop:8}}>
+                    <button onClick={()=>performAction('request_review')} disabled={saving||!reviewNote.trim()}
+                      style={{fontSize:12,padding:'7px 12px',background:reviewNote.trim()?'rgba(248,113,113,.18)':'transparent',border:'1px solid rgba(248,113,113,.45)',color:reviewNote.trim()?'#f87171':'var(--sub)',borderRadius:6,cursor:(saving||!reviewNote.trim())?'not-allowed':'pointer',fontWeight:600}}>
+                      확인 요청 등록
+                    </button>
+                    <button onClick={()=>{setReviewOpen(false);setReviewNote('');setErr('');}} disabled={saving}
+                      style={{fontSize:12,padding:'7px 12px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:'pointer'}}>취소</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={()=>setReviewOpen(true)}
+                  style={{fontSize:12,padding:'7px 12px',background:'transparent',border:'1px solid rgba(248,113,113,.45)',color:'#f87171',borderRadius:6,cursor:'pointer'}}
+                  title="처리 전에 확인이 필요하면 사유를 남겨 요청자에게 알립니다">
+                  🔎 추가 확인 요청
+                </button>
+              )}
+              {/* 예전에 한 번 막혔던 건이면 그 기록을 남겨 보여준다 */}
+              {row.review_note && row.review_resolved_at && (
+                <div style={{marginTop:8,fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
+                  지난 확인 요청: {row.review_note}
+                  <br/>해제: {row.review_resolved_by||'-'} · {fmtDateTime(row.review_resolved_at)}
+                </div>
+              )}
+            </div>
+          ))}
 
           {/* 이력 박스 */}
           <div style={{marginTop:16,padding:'10px 12px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,fontSize:11,color:'var(--sub)',lineHeight:1.7}}>
@@ -5735,7 +5801,7 @@ function RefundManagementPage({ currentUserEmail }) {
   const [fWriter,setFWriter]=useState('');           // 작성자 email 또는 ''
   const [fSearch,setFSearch]=useState('');
   const [period,setPeriod]=useState('all');          // 'all','this_month','last_month','last_7d'
-  const [activeKpi,setActiveKpi]=useState(null);     // null|'thisMonth'|'pendingRefund'|'pendingCafe24'
+  const [activeKpi,setActiveKpi]=useState(null);     // null|'thisMonth'|'pendingRefund'|'pendingCafe24'|'needsReview'
 
   const load = async ()=>{
     setLoading(true);
@@ -5789,6 +5855,7 @@ function RefundManagementPage({ currentUserEmail }) {
     if(periodFilter && !periodFilter(r)) return false;
     if(activeKpi==='pendingRefund' && r.refund_completed) return false;
     if(activeKpi==='pendingCafe24' && !(r.refund_completed && !r.cafe24_done)) return false;
+    if(activeKpi==='needsReview' && !r.needs_review) return false;
     if(fReason && String(r.reason_id)!==String(fReason)) return false;
     if(fStatus){
       const st = refundStatusOf(r).key;
@@ -5918,6 +5985,9 @@ function RefundManagementPage({ currentUserEmail }) {
   const periodLabel = ({all:'전체',this_month:'이번 달',last_month:'지난 달',last_7d:'지난 7일'})[period];
   const kpi = {
     periodCount:    inPeriod.length,
+    // 확인 필요는 기간과 무관하게 전체에서 센다 — 지난달 건이라도 막혀 있으면 지금 처리해야 할 일이다.
+    needsReview:    refunds.filter(r=>r.needs_review).length,
+    myNeedsReview:  refunds.filter(r=>r.needs_review && r.created_by===currentUserEmail).length,
     pendingRefund:  inPeriod.filter(r=>!r.refund_completed).length,
     pendingCafe24:  inPeriod.filter(r=>r.refund_completed && !r.cafe24_done).length,
     periodAmount:   inPeriod.reduce((s,r)=>s+(r.refund_amount||0),0),
@@ -5986,8 +6056,23 @@ function RefundManagementPage({ currentUserEmail }) {
           style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:6,cursor:'pointer',fontWeight:600}}>+ 환불 요청 추가</button>
       </div>
 
-      {/* KPI 4개 (클릭으로 필터 토글) */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:20}}>
+      {/* 내가 등록한 건에 확인 요청이 붙었으면 화면 위에서 먼저 알린다.
+          요청자가 목록을 훑지 않아도 들어오자마자 보이게 하는 것이 이 배너의 목적이다. */}
+      {kpi.myNeedsReview>0 && (
+        <div onClick={()=>setActiveKpi('needsReview')}
+          style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,padding:'12px 14px',cursor:'pointer',
+            background:'rgba(248,113,113,.12)',border:'1px solid rgba(248,113,113,.45)',borderRadius:8}}>
+          <span style={{fontSize:16}}>🔎</span>
+          <div style={{flex:1,fontSize:13,color:'var(--text)'}}>
+            내가 등록한 환불 요청 <b style={{color:'#f87171'}}>{kpi.myNeedsReview}건</b>에 담당자가 추가 확인을 요청했습니다.
+            <span style={{color:'var(--sub)',marginLeft:6}}>내용을 보완하거나 확인 후 표시를 해제해 주세요.</span>
+          </div>
+          <span style={{fontSize:12,color:'#f87171',fontWeight:600,whiteSpace:'nowrap'}}>확인하기 →</span>
+        </div>
+      )}
+
+      {/* KPI 5개 (클릭으로 필터 토글) */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12,marginBottom:20}}>
         {(()=>{
           // 카드 공용: 선택 상태일 때 강조 보더 + 약한 배경
           const baseStyle = {background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,padding:'14px 16px',cursor:'pointer',transition:'all 0.15s'};
@@ -5996,6 +6081,7 @@ function RefundManagementPage({ currentUserEmail }) {
           const card1Active = !activeKpi;  // KPI 필터 없을 때 강조 없음. 이 카드는 KPI 필터 비활성 의미
           const card2Active = activeKpi==='pendingRefund';
           const card3Active = activeKpi==='pendingCafe24';
+          const cardReviewActive = activeKpi==='needsReview';
           return (<>
             <div onClick={()=>setActiveKpi(null)}
               style={{...baseStyle, ...(activeKpi===null?{}:{opacity:0.85})}}>
@@ -6011,6 +6097,13 @@ function RefundManagementPage({ currentUserEmail }) {
               style={{...baseStyle, ...(card3Active?activeStyle('#78AAFF'):{})}}>
               <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>후처리 대기 {card3Active && <span style={{fontSize:9,color:'#78AAFF'}}>● 필터 적용 중</span>}</div>
               <div style={{fontSize:22,fontWeight:700,marginTop:4,color:'#78AAFF'}}>{kpi.pendingCafe24}건</div>
+            </div>
+            {/* 추가 확인 필요 — 기간과 무관하게 전체에서 센다. 0건이면 색을 죽여 눈에 안 띄게 한다. */}
+            <div onClick={()=>setActiveKpi(cardReviewActive?null:'needsReview')}
+              style={{...baseStyle, ...(cardReviewActive?activeStyle('#f87171'):{})}}>
+              <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>추가 확인 필요 {cardReviewActive && <span style={{fontSize:9,color:'#f87171'}}>● 필터 적용 중</span>}</div>
+              <div style={{fontSize:22,fontWeight:700,marginTop:4,color:kpi.needsReview?'#f87171':'var(--sub)'}}>{kpi.needsReview}건</div>
+              {kpi.myNeedsReview>0 && <div style={{fontSize:10,color:'#f87171',marginTop:2}}>내가 등록한 건 {kpi.myNeedsReview}건</div>}
             </div>
             <div onClick={()=>setActiveKpi(null)}
               style={{...baseStyle, ...(activeKpi===null?{}:{opacity:0.85})}}>
@@ -6182,7 +6275,16 @@ function RefundManagementPage({ currentUserEmail }) {
                     <td style={{...td,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}} title={r.product_name}>{r.product_name||'—'}</td>
                     <td style={td}>{r.supplier_name||'—'}</td>
                     <td style={{...td,textAlign:'center'}}>
-                      <span style={{background:st.bg,color:st.fg,padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap'}}>{st.label}</span>
+                      <div style={{display:'flex',gap:4,justifyContent:'center',alignItems:'center',flexWrap:'wrap'}}>
+                        <span style={{background:st.bg,color:st.fg,padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap'}}>{st.label}</span>
+                        {/* 추가 확인 필요 — 기존 상태와 별개로 덧붙는 표시. 사유는 마우스를 올리면 보인다. */}
+                        {r.needs_review && (
+                          <span title={(r.review_note||'사유 미기재')+'\n요청: '+(r.review_requested_by||'-')}
+                            style={{background:'rgba(248,113,113,.18)',color:'#f87171',padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap',fontWeight:600,cursor:'help'}}>
+                            🔎 확인 필요
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
