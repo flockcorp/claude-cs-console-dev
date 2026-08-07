@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260807e_entry_cancel_button_fix -->
+<!-- (2026-08-07) 데이터 수정 화면의 '취소' 버튼이 아무 동작도 하지 않던 문제(사용자 제보). 원인: 버튼이 onSaved 만 호출했는데 onSaved(App.afterSave)는 App 의 editDate 만 지운다. 그런데 데이터 내역에서 [수정]으로 들어오는 경로는 EntryPage 안의 localEditDate 를 쓰고, 화면은 editDate=localEditDate||propEditDate 로 판정한다 → localEditDate 가 그대로 남아 수정 모드가 풀리지 않았다. App 의 editDate 는 이제 어디서도 날짜로 설정되지 않으므로(HistoryPage 는 legacy·미사용) 실질적으로 아무 일도 일어나지 않던 것. → cancelEdit() 신설: 저장 성공 후와 같은 정리(폼·상담원 입력값·메시지 초기화)를 하되 쓰기는 하지 않고, localEditDate 와 propEditDate 를 모두 풀고 온 곳인 '데이터 내역' 탭으로 돌려보낸다. 저장 동작은 변경 없음. -->
 <!-- v20260807d_query_errors_surfaced -->
 <!-- (2026-08-07) 조회·저장 실패를 화면에 드러냄. sb.from(...) 호출 104곳 중 33곳이 오류를 받지 않아, 실패해도 빈 목록·0건으로만 보였다. 권한 체계(RLS) 도입 후로는 막힌 조회가 '오류'가 아니라 '0건'으로 오기 때문에 '데이터가 없는 것'과 '내가 못 보는 것'이 구분되지 않았고, 저장 실패는 저장된 줄 알고 넘어가게 된다. → 공통 헬퍼 sbFail(무엇을, error, {write,allowEmpty}) 하나로 통일(같은 실패는 8초에 한 번만 알림, 콘솔에는 매번 기록). 적용: 대시보드·근태·공휴일·상담원 목록/실적·입력 이력·환불 목록·상담원 분석·공급사·발송 통계 조회, 그리고 퇴사/복직/상담원 삭제·상품 삭제·데이터 삭제(단건/일괄) 저장. ★ 권한 조회(console_users) 실패는 별도 화면(RoleCheckFailedPage)으로 분리 — 실패를 '등록되지 않은 계정'으로 보여주면 정당한 사용자가 계정이 지워진 줄 안다. .catch 도 추가(없으면 '권한 확인 중...'에서 영영 멈춘다). .single() 의 '행 없음'(PGRST116)은 실패가 아니라 allowEmpty 로 제외. 정상 경로 동작은 변화 없음. ★ 알림을 토스트로 바꾸려면 sbFail 하나만 고치면 된다. -->
 <!-- v20260807c_supplier_count_error_visible -->
@@ -1288,6 +1290,21 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
 
   const autoRR=calcRR(ops);
 
+  // 수정 취소 — 저장 성공 후 처리와 같은 정리를 하되 쓰기만 하지 않는다.
+  // ★ 예전엔 onSaved 만 불렀는데, onSaved 는 App 의 editDate(=propEditDate)만 지운다.
+  //   데이터 내역에서 [수정]으로 들어오는 경로는 localEditDate 를 쓰므로 수정 모드가 그대로 남아
+  //   버튼을 눌러도 아무 일도 일어나지 않았다. 두 가지를 다 풀고 온 곳(데이터 내역)으로 돌려보낸다.
+  const cancelEdit=()=>{
+    setOps({...EMPTY_OPS});
+    const cleared={};
+    registeredAgents.forEach(a=>{cleared[a.id]={answered:'',ob:'',board:'',chat:'',etc:''};});
+    setAgentData(cleared);
+    setMsg('');
+    setLocalEditDate(null);
+    if(onSaved)onSaved();
+    setEntryTab('history');
+  };
+
   const save=async()=>{
     if(!ops.date){setMsg('날짜를 선택해주세요.');return;}
     setSaving(true); setMsg('');
@@ -1549,7 +1566,7 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
             </div>
             <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:12}}>
               {msg&&<span className={msg.includes('실패')?'error-msg':'success-msg'}>{msg}</span>}
-              {editDate&&<button className="btn-cancel" onClick={onSaved}>취소</button>}
+              {editDate&&<button className="btn-cancel" onClick={cancelEdit}>취소</button>}
               <button className="btn-save" onClick={save} disabled={saving}>{saving?'저장 중...':'저장'}</button>
             </div>
           </div>
