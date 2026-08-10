@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260810c_product_save_n_columns_fix -->
+<!-- (2026-08-10) 운영 장애 수정: 상품을 검색한 뒤 [수정]해서 저장하면 "저장 실패: Could not find the 'n_all' column of 'products' in the schema cache" 로 저장이 안 됐다. 원인은 v20260807a(상품 검색 서버 이전)에서 들어간 회귀다 — 검색 결과는 products 가 아니라 products_search 뷰에서 select('*') 로 받는데, 그 뷰에는 검색용 정규화 컬럼 5개(n_all·n_supplier·n_code·n_name·n_url)가 더 붙어 있다. [수정]은 목록 행을 통째로 폼에 넣고({...EMPTY_PRODUCT,...p}) 저장은 폼 전체를 products 로 되돌려 쓰므로, 뷰에만 있는 컬럼이 UPDATE 에 섞여 거부됐다. → 뷰 행이 목록 state 로 들어오는 자리에서 n_* 5개를 걷어낸다(화면에서도 저장에서도 쓰지 않는 값이다). ★ 검색을 거치지 않고 목록에서 바로 수정하면 products 에서 온 행이라 멀쩡했다 — 그래서 8/7 배포 때 드러나지 않았다. ★ 교훈: 조회를 뷰로 바꿀 때는 그 행이 나중에 원본 테이블로 되돌아 쓰이는 경로가 있는지 함께 봐야 한다. 저장 로직·검색 동작은 그대로. DB 변경 없음. -->
 <!-- v20260810b_refund_edit_fetch_order -->
 <!-- (2026-08-10) 환불 '수정' 창에도 카페24 주문 조회를 붙인다. 지금까지 자동 채움은 추가 창에만 있어서, 나중에 내용을 보완할 때는 상품명·공급사·고객 정보를 전부 수기로 다시 넣어야 했다. 추가 창과 같은 Edge Function(refund-fetch-order)을 쓴다. ★ 추가 창과 결정적으로 다르게 만들었다 — 수정 창에는 이미 사람이 확인해 넣은 값이 들어 있으므로 **자동으로 채우는 건 빈 칸뿐**이고, 값이 다른 칸은 덮어쓰지 않고 «상품명: 옛값 → 카페24값» 형태로 보여주기만 한다. 바꿀지는 [카페24 값으로 바꾸기]로 사람이 정하고, 그것도 화면 값만 바꿀 뿐 저장은 [수정 저장]을 눌러야 한다. 카페24 응답이 비어 있으면 기존 값을 지우지 않고, 앞뒤 공백만 다른 값은 '다르다'고 보지 않는다. 조회로 알아낸 결제액은 추가 창처럼 금액 라벨 옆에 두어 눌렀을 때만 입력된다(환불액과 결제액은 다를 수 있으므로 자동 입력하지 않는다). 완료 건은 읽기 전용이라 조회 버튼 자체를 두지 않았다. 함께: ①공급사 관리에서 권한이 없어 회색인 [저장]·채널 버튼에 이유를 title 로 붙였다 — 페이지 헤더에 '읽기 전용(master/manager만 편집 가능)' 안내가 이미 있지만 표가 길어 스크롤 밖으로 나가 있을 수 있다. ②두 환불 창에서 값을 넣기만 하고 읽는 곳이 없던 refPaymentMethod 상태를 걷어냈다. DB 변경 없음. -->
 <!-- v20260810a_disabled_reason -->
@@ -2256,7 +2258,12 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
         setProducts([]);
         setTotalCount(p=>({...p,filtered:0}));
       }else{
-        setProducts(data||[]);
+        // ★ 뷰에서 온 행에는 정규화 컬럼(n_*)이 딸려 있다. 그대로 목록에 담으면
+        //   [수정] 이 그 행을 통째로 폼에 넣고([...p]), 저장 때 payload 에 섞여
+        //   products 로 들어가 "Could not find the 'n_all' column" 으로 실패한다
+        //   (2026-08-10 운영 장애 — 검색한 뒤 수정할 때만 재현됐다).
+        //   화면에서도 저장에서도 쓰지 않는 값이므로 들어오는 자리에서 걷어낸다.
+        setProducts((data||[]).map(({n_all,n_supplier,n_code,n_name,n_url,...row})=>row));
         setTotalCount(p=>({...p,filtered:count||0}));
       }
     } else {
