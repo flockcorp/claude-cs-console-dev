@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260810a_disabled_reason -->
+<!-- (2026-08-10) 회색으로 막힌 버튼이 왜 막혔는지 화면에 적는다(사용자 제보 — "등록 버튼 클릭 자체가 불가능한데?"). 눌리지 않는 버튼은 이유가 함께 있지 않으면 고장으로 보인다. disabled 80곳을 전수로 훑어 실제로 이유가 없는 3곳만 고쳤다. ①환불 추가 창 [등록] ②환불 수정 창 [수정 저장]·[환불 완료 처리]·[후처리 완료] — 필수 7개(주문번호·환불 사유·환불 금액·은행·계좌번호·예금주·PG 정보) 중 비어 있는 것을 화면 순서대로 버튼 옆에 빨간 글씨로 나열한다. 폼이 길어 스크롤해야 하므로 "무엇이 비었는지"가 특히 중요한 자리다. ③지연 상품 추가 창 [등록] — 이 버튼을 막는 조건은 상품 미선택 하나뿐이라 그 문구만 띄운다(사유·예상 발송일 등 나머지 검증은 원래대로 눌렀을 때 알려준다). ★ 환불 추가·수정 두 창은 같은 기준·같은 순서를 쓴다 — 한쪽만 고치지 말 것. ★ 나머지 77곳은 이미 이유가 보이거나(진행 중 '저장 중...', '수정 시 상품 변경 불가', '이미 지연중' 뱃지, 액션바 안내) 자명해서(페이지네이션 첫/끝) 손대지 않았다. 판정 로직·저장 동작은 그대로이고 화면 표시만 늘었다. DB 변경 없음. -->
 <!-- v20260807i_refund_history -->
 <!-- (2026-08-07) 환불 처리 이력을 남긴다(사용자 지시: 모든 처리는 이력이 남는 것을 기본으로). 지금까지 '이력'은 refunds 행의 상태 컬럼(refund_completed_at/by, cafe24_done_at/by)에서 유추해 보여줬는데, 그 방식으로는 원복이 기록되지 않는다 — 되돌리는 순간 근거가 되던 시각·처리자가 지워지기 때문이다. → append-only 테이블 refund_history(refund_id·action·actor·note·created_at)를 두고 등록·수정·환불 완료·후처리 완료·원복 2종·확인 요청/해제·삭제 9종을 모두 기록한다. 수정 창 이력 박스를 한 줄기로 합쳐 오래된 것부터 아래로 쌓아 보여준다 — 유추 표시와 로그를 따로 두면 같은 사건이 두 번 찍힌다(사용자 지적). 이력 기능 이전 건은 로그가 없으므로 상태 컬럼에서 유추해 채우되, 같은 처리의 로그가 있으면 유추분은 버린다. ★ refund_id 에 외래키를 걸지 않는다 — 환불 건을 삭제해도 '삭제했다'는 이력은 남아야 하는데 FK+cascade 면 함께 지워진다. ★ update/delete 정책을 만들지 않아 한 번 쌓인 이력은 고치거나 지울 수 없다. ★ 이력 기록 실패는 본 처리를 막지 않는다(콘솔에만 남긴다) — 이미 끝난 처리가 실패한 것처럼 보이는 쪽이 더 나쁘다. 함께: '후처리 완료' 클릭 시 확인 창 추가(사용자 요청 — 상태가 «완료»로 바뀌는 마지막 단계라 되묻는다). ★ 선행 조건: tools/refund_history.sql 을 해당 DB 에 먼저 적용. 적용 전에도 처리는 정상 동작하고 이력만 비어 보인다. -->
 <!-- v20260807h_refund_revert_done -->
@@ -4624,8 +4626,13 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
     setFetching(false);
   };
 
-  // 필수 입력 체크
-  const isValid = reasonId && refundAmount && orderId && bankName && accountNumber && accountHolder && pgInfo;
+  // 필수 입력 체크. 무엇이 비었는지까지 만들어 둔다 — 버튼만 회색이면
+  // 긴 폼에서 어느 칸 때문인지 알 수 없다. 화면에 놓인 순서대로 나열한다.
+  const missingFields = [
+    [orderId,'주문번호'], [reasonId,'환불 사유'], [refundAmount,'환불 금액'],
+    [bankName,'은행'], [accountNumber,'계좌번호'], [accountHolder,'예금주'], [pgInfo,'PG 정보'],
+  ].filter(([v])=>!v).map(([,label])=>label);
+  const isValid = missingFields.length===0;
 
   const save = async ()=>{
     if(!isValid){
@@ -4852,6 +4859,11 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
 
         {/* 푸터 */}
         <div style={{padding:'12px 20px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8}}>
+          {!isValid && (
+            <span style={{marginRight:'auto',alignSelf:'center',fontSize:11,color:'#FF6B6B',lineHeight:1.5}}>
+              필수 항목 미입력: {missingFields.join(', ')}
+            </span>
+          )}
           <button onClick={()=>{if(!saving) onClose();}}
             style={{fontSize:13,padding:'8px 16px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}} disabled={saving}>취소</button>
           <button onClick={save} disabled={saving || !isValid}
@@ -4915,8 +4927,12 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
   const [saving,setSaving]=useState(false);
   const [err,setErr]=useState('');
 
-  // 필수 입력 체크
-  const isValid = reasonId && refundAmount && orderId && bankName && accountNumber && accountHolder && pgInfo;
+  // 필수 입력 체크. 추가 창과 같은 기준·같은 순서다(둘 중 한쪽만 고치지 말 것).
+  const missingFields = [
+    [orderId,'주문번호'], [reasonId,'환불 사유'], [refundAmount,'환불 금액'],
+    [bankName,'은행'], [accountNumber,'계좌번호'], [accountHolder,'예금주'], [pgInfo,'PG 정보'],
+  ].filter(([v])=>!v).map(([,label])=>label);
+  const isValid = missingFields.length===0;
 
   // 공통 update 호출 (수정 / 2차 처리 / 3차 처리 / 삭제)
   // action: 'save' | 'mark_refund_complete' | 'mark_cafe24_done' | 'delete'
@@ -5294,7 +5310,13 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
             )}
           </div>
           {/* 우측: 닫기 + (상태별) 처리 액션 */}
-          <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+            {/* 완료 건은 읽기 전용이라 저장·처리 버튼 자체가 없다 — 그때는 안내도 띄우지 않는다 */}
+            {!isReadOnly && !isValid && (
+              <span style={{fontSize:11,color:'#FF6B6B',lineHeight:1.5}}>
+                필수 항목 미입력: {missingFields.join(', ')}
+              </span>
+            )}
             <button onClick={()=>{if(!saving) onClose();}} disabled={saving}
               style={{fontSize:13,padding:'8px 14px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}>닫기</button>
             {!isReadOnly && (
@@ -7985,7 +8007,14 @@ function DelayAddModal({ editingRow, onClose, onSaved }){
         </div>
 
         {/* 푸터 */}
-        <div style={{padding:'14px 22px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8,background:'var(--bg)'}}>
+        <div style={{padding:'14px 22px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',alignItems:'center',gap:8,background:'var(--bg)'}}>
+          {/* [등록]을 막는 조건은 상품 미선택 하나뿐이다(사유·예상 발송일 등 나머지 검증은
+              handleSave 안에서 눌렀을 때 알려준다). 왜 회색인지 화면에 적어 둔다. */}
+          {!saving && !selectedProduct && (
+            <span style={{marginRight:'auto',fontSize:11,color:'#FF6B6B',lineHeight:1.5}}>
+              위에서 상품을 먼저 선택해주세요.
+            </span>
+          )}
           <button onClick={onClose} disabled={saving}
             style={{padding:'9px 18px',background:'transparent',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)',fontSize:13,cursor:saving?'not-allowed':'pointer',fontFamily:'inherit'}}>
             취소
