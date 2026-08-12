@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260812a_dev_send_blocked_in_ui -->
+<!-- (2026-08-12) 테스트(dev) 콘솔에서 발송 버튼을 화면에서 막는다. dev 는 운영 실데이터 복원본이고 실제 카페24 몰·Solapi·SendGrid 를 쓰기 때문에 [발송하기] 를 누르면 진짜 고객에게 나간다. 2026-08-10 에 엣지 함수 쪽을 SEND_DISABLED 로 막아 뒀지만 막는 주체가 함수라 화면에는 그냥 '발송 실패'로 보였다 — 눌러도 되는 버튼처럼 보이는 게 문제였다. → 실제 고객에게 나가는 발송 버튼 4곳(지연 알림톡 [발송하기], 발송내역 [🔄 선택 재발송], 자동발송 템플릿 [테스트 발송], 자동발송 [📨 수동 발송])을 회색으로 비활성 처리하고 이유를 옆에 적었다(회색 버튼에 이유를 붙인 v20260810a 와 같은 맥락). 각 핸들러에도 같은 판정을 방어로 넣어, 혹시 다른 경로로 호출돼도 발송 요청 자체가 나가지 않는다. 판정은 '지금 접속 중인 Supabase 프로젝트'로 한다(SEND_BLOCKED) — dev·운영 소스는 접속 정보 2줄만 다르므로 같은 파일이 양쪽에서 알아서 동작하고 승격 때 손댈 곳이 없다. 운영 프로젝트가 아니면 전부 차단하는 fail-safe 방식이라, 승격이 잘못돼 운영에 dev 주소가 올라가는 사고에도 발송이 먼저 막힌다. 조회·미리보기·저장은 그대로다. DB·엣지 함수 변경 없음. -->
 <!-- v20260810c_product_save_n_columns_fix -->
 <!-- (2026-08-10) 운영 장애 수정: 상품을 검색한 뒤 [수정]해서 저장하면 "저장 실패: Could not find the 'n_all' column of 'products' in the schema cache" 로 저장이 안 됐다. 원인은 v20260807a(상품 검색 서버 이전)에서 들어간 회귀다 — 검색 결과는 products 가 아니라 products_search 뷰에서 select('*') 로 받는데, 그 뷰에는 검색용 정규화 컬럼 5개(n_all·n_supplier·n_code·n_name·n_url)가 더 붙어 있다. [수정]은 목록 행을 통째로 폼에 넣고({...EMPTY_PRODUCT,...p}) 저장은 폼 전체를 products 로 되돌려 쓰므로, 뷰에만 있는 컬럼이 UPDATE 에 섞여 거부됐다. → 뷰 행이 목록 state 로 들어오는 자리에서 n_* 5개를 걷어낸다(화면에서도 저장에서도 쓰지 않는 값이다). ★ 검색을 거치지 않고 목록에서 바로 수정하면 products 에서 온 행이라 멀쩡했다 — 그래서 8/7 배포 때 드러나지 않았다. ★ 교훈: 조회를 뷰로 바꿀 때는 그 행이 나중에 원본 테이블로 되돌아 쓰이는 경로가 있는지 함께 봐야 한다. 저장 로직·검색 동작은 그대로. DB 변경 없음. -->
 <!-- v20260810b_refund_edit_fetch_order -->
@@ -326,6 +328,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const { createClient } = supabase;
 const { useState, useEffect, useRef, useCallback } = React;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── 테스트(dev) 환경 발송 차단 ─────────────────────────────────────────
+// dev 는 운영 실데이터 복원본이고 실제 카페24 몰·Solapi·SendGrid 를 쓴다 — 여기서 [발송하기] 를
+// 누르면 진짜 고객에게 나간다. 엣지 함수 쪽은 2026-08-10 에 SEND_DISABLED 로 막아 뒀지만,
+// 막는 주체가 함수라 화면에는 그냥 '발송 실패'로 보인다. 눌러도 되는 버튼처럼 보이는 게 문제였다.
+// → 화면에서 아예 못 누르게 하고 이유를 옆에 적는다(회색 버튼에 이유를 붙이는 v20260810a 와 같은 맥락).
+// 판정은 '지금 접속 중인 Supabase 프로젝트'로 한다. dev·운영 소스는 위 접속 정보 2줄만 다르므로
+// 같은 파일이 양쪽에서 알아서 동작하고, 승격할 때 이 부분을 손댈 필요가 없다.
+// ★ 운영이 아닌 것은 전부 차단한다(fail-safe) — 승격이 잘못돼 운영에 dev 주소가 올라가도 발송이 막힌다.
+//   그때는 어차피 dev DB 를 보고 있으므로 발송을 막는 쪽이 맞다.
+const PROD_PROJECT_REF   = 'iasnxjbqhzxpgguhynuo';
+const SEND_BLOCKED       = !SUPABASE_URL.includes(PROD_PROJECT_REF);
+const SEND_BLOCKED_MSG   = '테스트(dev) 환경에서는 실제 고객에게 발송될 수 있어 막아 두었습니다. 발송은 운영 콘솔에서 해주세요.';
+const SEND_BLOCKED_SHORT = '테스트 환경 — 발송 불가';
 
 // ── 토스트 알림 ───────────────────────────────────────────────────────
 // 브라우저 기본 alert() 을 대신한다. alert 은 창을 닫기 전까지 아무것도 못 하게 막아서,
@@ -7183,6 +7199,8 @@ function DelayRegisterTab({isMaster,isManager,onCountChange}){
 
   // 즉시발송 "발송하기" 버튼 핸들러 — 드라이런 → 확인 → 실 발송
   const handleBlastClick = async(row)=>{
+    // 버튼이 이미 비활성이라 눌러서는 못 오지만, 발송은 되돌릴 수 없어 방어로 남긴다.
+    if(SEND_BLOCKED){ toast(SEND_BLOCKED_MSG,'warn',{sticky:true}); return; }
     if(!row.initial_date_from || !row.initial_date_to){
       toast('이 행에는 발송 대상 주문 기간이 설정되어 있지 않습니다. 행을 해제 후 즉시 발송으로 새로 등록해주세요.');
       return;
@@ -7443,10 +7461,14 @@ function DelayRegisterTab({isMaster,isManager,onCountChange}){
                     {!r.is_delayed
                       ? <span style={{background:'rgba(143,168,208,.15)',color:'var(--sub)',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>해제</span>
                       : r.initial_send_type==='blast' && !r.blast_sent_at
-                        ? <button onClick={()=>handleBlastClick(r)}
-                            style={{background:'#F6AD09',border:'1px solid #F6AD09',padding:'4px 10px',fontSize:11,borderRadius:4,cursor:'pointer',color:'#fff',fontWeight:700,fontFamily:'inherit'}}>
-                            발송하기
-                          </button>
+                        ? <div style={{display:'inline-flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                            <button onClick={()=>handleBlastClick(r)} disabled={SEND_BLOCKED}
+                              title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
+                              style={{background:SEND_BLOCKED?'var(--border)':'#F6AD09',border:SEND_BLOCKED?'1px solid var(--border)':'1px solid #F6AD09',padding:'4px 10px',fontSize:11,borderRadius:4,cursor:SEND_BLOCKED?'not-allowed':'pointer',color:SEND_BLOCKED?'var(--sub)':'#fff',fontWeight:700,fontFamily:'inherit'}}>
+                              발송하기
+                            </button>
+                            {SEND_BLOCKED && <span style={{fontSize:9,color:'#f87171',whiteSpace:'nowrap'}}>{SEND_BLOCKED_SHORT}</span>}
+                          </div>
                         : <span style={{background:'rgba(246,173,9,.15)',color:'#F6AD09',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>진행</span>}
                   </td>
                   <td style={{padding:'12px 8px',textAlign:'center'}}>
@@ -8769,6 +8791,7 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
 
   // 실제 테스트 발송 실행 (Phase D-1)
   const doTestSend = async () => {
+    if (SEND_BLOCKED) { toast(SEND_BLOCKED_MSG,'warn',{sticky:true}); return; }  // 방어 — 버튼은 이미 비활성
     const emails = testEmails
       .split(/[\s,;]+/)
       .map(e => e.trim())
@@ -9062,7 +9085,10 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
               )}
             </div>
 
-            <div style={{padding:'12px 18px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8,background:'#162244'}}>
+            <div style={{padding:'12px 18px',borderTop:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8,background:'#162244'}}>
+              {SEND_BLOCKED && (
+                <span style={{marginRight:'auto',fontSize:11,color:'#f87171',lineHeight:1.5}}>{SEND_BLOCKED_MSG}</span>
+              )}
               <button
                 onClick={() => setTestDialogOpen(false)}
                 disabled={testSending}
@@ -9070,8 +9096,9 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
               >닫기</button>
               <button
                 onClick={doTestSend}
-                disabled={testSending}
-                style={{padding:'7px 18px',background:'#F6AD09',color:'#0d1628',border:'1px solid #F6AD09',borderRadius:6,fontSize:12,cursor: testSending ? 'not-allowed' : 'pointer',fontWeight:700,fontFamily:'inherit',opacity: testSending ? 0.6 : 1}}
+                disabled={testSending || SEND_BLOCKED}
+                title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
+                style={{padding:'7px 18px',background:SEND_BLOCKED?'var(--border)':'#F6AD09',color:SEND_BLOCKED?'var(--sub)':'#0d1628',border:SEND_BLOCKED?'1px solid var(--border)':'1px solid #F6AD09',borderRadius:6,fontSize:12,cursor:(testSending||SEND_BLOCKED) ? 'not-allowed' : 'pointer',fontWeight:700,fontFamily:'inherit',opacity: testSending ? 0.6 : 1}}
               >{testSending ? '발송 중...' : '발송하기'}</button>
             </div>
           </div>
@@ -9282,6 +9309,7 @@ function AutoDeliveryRegisterTab({ currentUserEmail }) {
 
   // 실제 발송 (Phase D-2-3)
   const doManualSend = async () => {
+    if (SEND_BLOCKED) { toast(SEND_BLOCKED_MSG,'warn',{sticky:true}); return; }  // 방어 — 버튼은 이미 비활성
     if (!manualTpl || !manualLookup) return;
     const email = (manualEmail || '').trim();
     if (!email) {
@@ -9767,7 +9795,7 @@ function ManualSendDialog({ tpl, orderId, setOrderId, step, lookup, email, setEm
         </div>
 
         {/* 푸터 — step에 따라 버튼 변경 */}
-        <div style={{padding:'12px 18px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8,background:'#162244'}}>
+        <div style={{padding:'12px 18px',borderTop:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8,background:'#162244'}}>
           {step === 'input' && (
             <>
               <button
@@ -9782,13 +9810,18 @@ function ManualSendDialog({ tpl, orderId, setOrderId, step, lookup, email, setEm
           )}
           {step === 'confirm' && (
             <>
+              {SEND_BLOCKED && (
+                <span style={{marginRight:'auto',fontSize:11,color:'#f87171',lineHeight:1.5}}>{SEND_BLOCKED_MSG}</span>
+              )}
               <button
                 onClick={onReset}
                 style={{padding:'7px 14px',background:'transparent',border:'1px solid var(--border)',borderRadius:6,fontSize:12,cursor:'pointer',color:'var(--sub)',fontFamily:'inherit'}}
               >다른 주문</button>
               <button
                 onClick={onSend}
-                style={{padding:'7px 18px',background:'#F6AD09',color:'#0d1628',border:'1px solid #F6AD09',borderRadius:6,fontSize:12,cursor:'pointer',fontWeight:700,fontFamily:'inherit'}}
+                disabled={SEND_BLOCKED}
+                title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
+                style={{padding:'7px 18px',background:SEND_BLOCKED?'var(--border)':'#F6AD09',color:SEND_BLOCKED?'var(--sub)':'#0d1628',border:SEND_BLOCKED?'1px solid var(--border)':'1px solid #F6AD09',borderRadius:6,fontSize:12,cursor:SEND_BLOCKED?'not-allowed':'pointer',fontWeight:700,fontFamily:'inherit'}}
               >📨 발송하기</button>
             </>
           )}
@@ -10383,6 +10416,7 @@ function DelayHistoryTab(){
 
   // ─── 선택 재발송 (실패 건만) ──────────────────────────────────────────
   const handleResendSelected = async()=>{
+    if(SEND_BLOCKED){ toast(SEND_BLOCKED_MSG,'warn',{sticky:true}); return; }  // 방어 — 버튼은 이미 비활성
     const ids = [...selectedIds];
     if(ids.length===0) return;
     if(!window.confirm(
@@ -10600,15 +10634,20 @@ function DelayHistoryTab(){
       {selectedIds.size>0 && (
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,padding:'10px 14px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.3)',borderRadius:8,flexWrap:'wrap'}}>
           <span style={{fontSize:13,color:'var(--text)',fontWeight:700}}>실패 {selectedIds.size}건 선택됨</span>
-          <button onClick={handleResendSelected} disabled={resending}
-            style={{padding:'8px 16px',background:resending?'var(--border)':'#f87171',border:'none',borderRadius:7,color:'#fff',fontSize:13,fontWeight:700,cursor:resending?'default':'pointer',fontFamily:'inherit'}}>
+          <button onClick={handleResendSelected} disabled={resending || SEND_BLOCKED}
+            title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
+            style={{padding:'8px 16px',background:(resending||SEND_BLOCKED)?'var(--border)':'#f87171',border:'none',borderRadius:7,color:SEND_BLOCKED?'var(--sub)':'#fff',fontSize:13,fontWeight:700,cursor:SEND_BLOCKED?'not-allowed':(resending?'default':'pointer'),fontFamily:'inherit'}}>
             {resending ? '재발송 중...' : '🔄 선택 재발송'}
           </button>
           <button onClick={()=>setSelectedIds(new Set())} disabled={resending}
             style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,color:'var(--sub)',fontSize:12,cursor:resending?'default':'pointer',fontFamily:'inherit'}}>
             선택 해제
           </button>
-          <span style={{fontSize:11,color:'var(--sub)'}}>· 잔액 부족 시 다시 실패로 남습니다. 발송 시간 밖이면 자동 예약됩니다.</span>
+          <span style={{fontSize:11,color:SEND_BLOCKED?'#f87171':'var(--sub)'}}>
+            {SEND_BLOCKED
+              ? `· ${SEND_BLOCKED_MSG}`
+              : '· 잔액 부족 시 다시 실패로 남습니다. 발송 시간 밖이면 자동 예약됩니다.'}
+          </span>
         </div>
       )}
 
