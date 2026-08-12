@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- v20260812a_dev_send_blocked_in_ui -->
-<!-- (2026-08-12) 테스트(dev) 콘솔에서 발송 버튼을 화면에서 막는다. dev 는 운영 실데이터 복원본이고 실제 카페24 몰·Solapi·SendGrid 를 쓰기 때문에 [발송하기] 를 누르면 진짜 고객에게 나간다. 2026-08-10 에 엣지 함수 쪽을 SEND_DISABLED 로 막아 뒀지만 막는 주체가 함수라 화면에는 그냥 '발송 실패'로 보였다 — 눌러도 되는 버튼처럼 보이는 게 문제였다. → 실제 고객에게 나가는 발송 버튼 4곳(지연 알림톡 [발송하기], 발송내역 [🔄 선택 재발송], 자동발송 템플릿 [테스트 발송], 자동발송 [📨 수동 발송])을 회색으로 비활성 처리하고 이유를 옆에 적었다(회색 버튼에 이유를 붙인 v20260810a 와 같은 맥락). 각 핸들러에도 같은 판정을 방어로 넣어, 혹시 다른 경로로 호출돼도 발송 요청 자체가 나가지 않는다. 판정은 '지금 접속 중인 Supabase 프로젝트'로 한다(SEND_BLOCKED) — dev·운영 소스는 접속 정보 2줄만 다르므로 같은 파일이 양쪽에서 알아서 동작하고 승격 때 손댈 곳이 없다. 운영 프로젝트가 아니면 전부 차단하는 fail-safe 방식이라, 승격이 잘못돼 운영에 dev 주소가 올라가는 사고에도 발송이 먼저 막힌다. 조회·미리보기·저장은 그대로다. DB·엣지 함수 변경 없음. -->
+<!-- (2026-08-12) 테스트(dev) 콘솔에서 발송 버튼을 화면에서 막는다. dev 는 운영 실데이터 복원본이고 실제 카페24 몰·Solapi·SendGrid 를 쓰기 때문에 [발송하기] 를 누르면 진짜 고객에게 나간다. 2026-08-10 에 엣지 함수 쪽을 SEND_DISABLED 로 막아 뒀지만 막는 주체가 함수라 화면에는 그냥 '발송 실패'로 보였다 — 눌러도 되는 버튼처럼 보이는 게 문제였다. → 실제 고객에게 나가는 발송 버튼 3곳(지연 알림톡 [발송하기], 발송내역 [🔄 선택 재발송], 자동발송 [📨 수동 발송])을 회색으로 비활성 처리하고 이유를 옆에 적었다(회색 버튼에 이유를 붙인 v20260810a 와 같은 맥락). 각 핸들러에도 같은 판정을 방어로 넣어, 혹시 다른 경로로 호출돼도 발송 요청 자체가 나가지 않는다. ★ 자동발송 템플릿의 [테스트 발송]은 일부러 살려 뒀다 — 받는 사람을 운영자가 직접 입력하는 자리라 고객에게 나가지 않고, 메일이 실제로 어떻게 나가는지 봐야 템플릿·코드를 고칠 수 있기 때문이다. 판정은 '지금 접속 중인 Supabase 프로젝트'로 한다(SEND_BLOCKED) — dev·운영 소스는 접속 정보 2줄만 다르므로 같은 파일이 양쪽에서 알아서 동작하고 승격 때 손댈 곳이 없다. 운영 프로젝트가 아니면 전부 차단하는 fail-safe 방식이라, 승격이 잘못돼 운영에 dev 주소가 올라가는 사고에도 발송이 먼저 막힌다. 조회·미리보기·저장은 그대로다. DB·엣지 함수 변경 없음. -->
 <!-- v20260810c_product_save_n_columns_fix -->
 <!-- (2026-08-10) 운영 장애 수정: 상품을 검색한 뒤 [수정]해서 저장하면 "저장 실패: Could not find the 'n_all' column of 'products' in the schema cache" 로 저장이 안 됐다. 원인은 v20260807a(상품 검색 서버 이전)에서 들어간 회귀다 — 검색 결과는 products 가 아니라 products_search 뷰에서 select('*') 로 받는데, 그 뷰에는 검색용 정규화 컬럼 5개(n_all·n_supplier·n_code·n_name·n_url)가 더 붙어 있다. [수정]은 목록 행을 통째로 폼에 넣고({...EMPTY_PRODUCT,...p}) 저장은 폼 전체를 products 로 되돌려 쓰므로, 뷰에만 있는 컬럼이 UPDATE 에 섞여 거부됐다. → 뷰 행이 목록 state 로 들어오는 자리에서 n_* 5개를 걷어낸다(화면에서도 저장에서도 쓰지 않는 값이다). ★ 검색을 거치지 않고 목록에서 바로 수정하면 products 에서 온 행이라 멀쩡했다 — 그래서 8/7 배포 때 드러나지 않았다. ★ 교훈: 조회를 뷰로 바꿀 때는 그 행이 나중에 원본 테이블로 되돌아 쓰이는 경로가 있는지 함께 봐야 한다. 저장 로직·검색 동작은 그대로. DB 변경 없음. -->
 <!-- v20260810b_refund_edit_fetch_order -->
@@ -338,6 +338,9 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // 같은 파일이 양쪽에서 알아서 동작하고, 승격할 때 이 부분을 손댈 필요가 없다.
 // ★ 운영이 아닌 것은 전부 차단한다(fail-safe) — 승격이 잘못돼 운영에 dev 주소가 올라가도 발송이 막힌다.
 //   그때는 어차피 dev DB 를 보고 있으므로 발송을 막는 쪽이 맞다.
+// ★ 막는 대상은 '고객에게 나가는' 발송뿐이다. 자동발송 템플릿의 [테스트 발송]은 받는 사람을
+//   운영자가 직접 입력하므로 막지 않는다(2026-08-12 사용자 지시) — 메일이 실제로 어떻게 나가는지
+//   봐야 템플릿·코드를 고칠 수 있다.
 const PROD_PROJECT_REF   = 'iasnxjbqhzxpgguhynuo';
 const SEND_BLOCKED       = !SUPABASE_URL.includes(PROD_PROJECT_REF);
 const SEND_BLOCKED_MSG   = '테스트(dev) 환경에서는 실제 고객에게 발송될 수 있어 막아 두었습니다. 발송은 운영 콘솔에서 해주세요.';
@@ -8790,8 +8793,10 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
   };
 
   // 실제 테스트 발송 실행 (Phase D-1)
+  // ★ 여기는 SEND_BLOCKED 를 걸지 않는다(2026-08-12 사용자 지시). 받는 사람을 운영자가 직접
+  // 입력하는 '테스트 발송'이라 고객에게 나가지 않고, 메일이 실제로 어떻게 나가는지 봐야
+  // 템플릿·코드를 고칠 수 있다. 실제 고객에게 나가는 나머지 3곳만 막는다.
   const doTestSend = async () => {
-    if (SEND_BLOCKED) { toast(SEND_BLOCKED_MSG,'warn',{sticky:true}); return; }  // 방어 — 버튼은 이미 비활성
     const emails = testEmails
       .split(/[\s,;]+/)
       .map(e => e.trim())
@@ -9086,9 +9091,6 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
             </div>
 
             <div style={{padding:'12px 18px',borderTop:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'flex-end',gap:8,background:'#162244'}}>
-              {SEND_BLOCKED && (
-                <span style={{marginRight:'auto',fontSize:11,color:'#f87171',lineHeight:1.5}}>{SEND_BLOCKED_MSG}</span>
-              )}
               <button
                 onClick={() => setTestDialogOpen(false)}
                 disabled={testSending}
@@ -9096,9 +9098,8 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
               >닫기</button>
               <button
                 onClick={doTestSend}
-                disabled={testSending || SEND_BLOCKED}
-                title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
-                style={{padding:'7px 18px',background:SEND_BLOCKED?'var(--border)':'#F6AD09',color:SEND_BLOCKED?'var(--sub)':'#0d1628',border:SEND_BLOCKED?'1px solid var(--border)':'1px solid #F6AD09',borderRadius:6,fontSize:12,cursor:(testSending||SEND_BLOCKED) ? 'not-allowed' : 'pointer',fontWeight:700,fontFamily:'inherit',opacity: testSending ? 0.6 : 1}}
+                disabled={testSending}
+                style={{padding:'7px 18px',background:'#F6AD09',color:'#0d1628',border:'1px solid #F6AD09',borderRadius:6,fontSize:12,cursor: testSending ? 'not-allowed' : 'pointer',fontWeight:700,fontFamily:'inherit',opacity: testSending ? 0.6 : 1}}
               >{testSending ? '발송 중...' : '발송하기'}</button>
             </div>
           </div>
