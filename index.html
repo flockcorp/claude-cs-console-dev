@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260814a_refund_history_untangled -->
+<!-- (2026-08-14) 환불 수정 창의 이력 표시를 정리한다(사용자 제보 — "이력이 중복 표기된다", "수정하고 뭐 할 때마다 이상하게 꼬이고 기존 이력이 날아간다"). 세 가지 문제가 겹쳐 있었다. ①확인 요청 사유가 빨간 박스·'지난 확인 요청'·이력 박스 세 군데에 찍혔다. ②유추 항목을 걸러내는 기준이 'action 이름이 같은 로그가 있는가'라서, 같은 이름의 로그가 하나라도 생기면 그 전에 있던 유추 항목이 통째로 사라졌다. ③updated_at 은 확인 요청·완료 처리 같은 다른 처리에도 트리거로 갱신되는데 유추 '내용 수정'이 그 값을 쓰고 있어, 무엇을 하든 유령 항목이 최근 시각으로 튀어 올랐다(처리자는 옛 사람 그대로). → 메모가 보이는 곳을 하나로 모았다: 확인 요청 사유는 [🔎 추가 확인 요청] 버튼 **아래에 요청할 때마다 쌓이고**(오래된 것이 위, 진행 중인 건은 빨간 테두리 + '진행 중'), 그 아래 전체 이력 박스에는 **항목명·시각·처리 계정만** 찍는다. 유추 항목은 이름이 아니라 **시각으로 짝짓는다** — 같은 처리의 로그가 5분 안에 있으면 그 로그가 곧 그 사건이므로 버리고, 로그가 쌓이기 시작한 뒤의 컬럼 값도 로그가 진실이므로 버린다. 그 이전 것만 유추로 채우므로 새 처리를 해도 옛 항목이 사라지지 않는다. ★ 원복은 완료 시각·처리자 컬럼을 NULL 로 지우는데, 이력 기록(2026-08-07) 이전에 완료된 건은 그 컬럼이 유일한 근거였다 — 지우기 전에 원래 시각 그대로 이력으로 옮겨 둔다. 확인 요청 메모는 완료 건(읽기 전용)에서도 보인다. 저장·처리 로직과 DB 스키마는 그대로다. -->
 <!-- v20260812a_dev_send_blocked_in_ui -->
 <!-- (2026-08-12) 테스트(dev) 콘솔에서 발송 버튼을 화면에서 막는다. dev 는 운영 실데이터 복원본이고 실제 카페24 몰·Solapi·SendGrid 를 쓰기 때문에 [발송하기] 를 누르면 진짜 고객에게 나간다. 2026-08-10 에 엣지 함수 쪽을 SEND_DISABLED 로 막아 뒀지만 막는 주체가 함수라 화면에는 그냥 '발송 실패'로 보였다 — 눌러도 되는 버튼처럼 보이는 게 문제였다. → 실제 고객에게 나가는 발송 버튼 3곳(지연 알림톡 [발송하기], 발송내역 [🔄 선택 재발송], 자동발송 [📨 수동 발송])을 회색으로 비활성 처리하고 이유를 옆에 적었다(회색 버튼에 이유를 붙인 v20260810a 와 같은 맥락). 각 핸들러에도 같은 판정을 방어로 넣어, 혹시 다른 경로로 호출돼도 발송 요청 자체가 나가지 않는다. ★ 자동발송 템플릿의 [테스트 발송]은 일부러 살려 뒀다 — 받는 사람을 운영자가 직접 입력하는 자리라 고객에게 나가지 않고, 메일이 실제로 어떻게 나가는지 봐야 템플릿·코드를 고칠 수 있기 때문이다. 판정은 '지금 접속 중인 Supabase 프로젝트'로 한다(SEND_BLOCKED) — dev·운영 소스는 접속 정보 2줄만 다르므로 같은 파일이 양쪽에서 알아서 동작하고 승격 때 손댈 곳이 없다. 운영 프로젝트가 아니면 전부 차단하는 fail-safe 방식이라, 승격이 잘못돼 운영에 dev 주소가 올라가는 사고에도 발송이 먼저 막힌다. 조회·미리보기·저장은 그대로다. DB·엣지 함수 변경 없음. -->
 <!-- v20260810c_product_save_n_columns_fix -->
@@ -4576,10 +4578,62 @@ const ACTION_TO_LOG = {
 };
 // 이력 기록은 본 처리를 방해하면 안 된다 — 실패해도 콘솔에만 남기고 흐름을 막지 않는다.
 // (이력이 빠지는 것보다, 이미 끝난 처리가 실패한 것처럼 보이는 쪽이 더 나쁘다)
-async function logRefund(refundId, action, actor, note){
+// 같은 사건으로 볼 시간 차이. 처리 직후에 이력을 쓰므로 실제 차이는 1초 안쪽이다.
+const REFUND_LOG_NEAR_MS = 5*60*1000;
+const refundTs = v => v ? new Date(v).getTime() : NaN;
+
+// 확인 요청 메모 — 요청할 때마다 쌓인다. 요청과 그 뒤에 오는 해제를 짝지어 준다.
+// 이력 기능(2026-08-07) 이전 건이거나 이력을 못 읽었으면 행의 컬럼에서 한 건만 유추한다.
+function buildReviewLog(row, history){
+  const out = [];
+  for(const h of (history||[])){
+    if(h.action==='review_request'){
+      out.push({id:h.id, note:h.note, actor:h.actor, at:h.created_at, resolvedAt:null, resolvedBy:null});
+    }else if(h.action==='review_resolve'){
+      const last = out[out.length-1];
+      if(last && !last.resolvedAt){ last.resolvedAt=h.created_at; last.resolvedBy=h.actor; }
+    }
+  }
+  if(!out.length && row.review_requested_at){
+    out.push({id:'d-review', note:row.review_note, actor:row.review_requested_by,
+              at:row.review_requested_at,
+              resolvedAt:row.review_resolved_at, resolvedBy:row.review_resolved_by});
+  }
+  return out;
+}
+
+// 처리 이력 한 줄기 — 시간순. 로그(append-only)에 없는 옛 처리만 행의 상태 컬럼에서 유추해 채운다.
+// ★ 유추분을 'action 이름이 같은 로그가 있는가'로 걸러내던 것이 문제였다(v20260814a):
+//   같은 이름의 로그가 하나라도 생기면 그 전에 있던 유추 항목이 통째로 사라졌고,
+//   updated_at 은 다른 처리에도 트리거로 갱신돼 유령 '내용 수정'이 최근 시각으로 튀어 올랐다.
+//   → 시각으로 짝짓는다. 같은 처리의 로그가 5분 안에 있으면 그 로그가 곧 그 사건이고,
+//     로그가 쌓이기 시작한 뒤의 컬럼 값도 로그가 진실이다. 그 이전 것만 유추한다.
+function buildRefundTimeline(row, history){
+  const logs = history||[];
+  const logEraFrom = logs.length ? refundTs(logs[0].created_at) : Infinity;  // 조회가 오래된 것부터 준다
+  const derived = [];
+  const add=(action,at,by)=>{
+    const t = refundTs(at);
+    if(!at || isNaN(t)) return;
+    if(logs.some(h=>h.action===action && Math.abs(refundTs(h.created_at)-t)<REFUND_LOG_NEAR_MS)) return;
+    // 경계에도 같은 허용 오차를 준다. 트리거가 updated_at 을 이력보다 한 박자 먼저 갱신해서
+    // '첫 로그보다 1초 이르다'는 이유로 유령 '내용 수정'이 빠져나갔다(테스트로 잡았다).
+    if(t >= logEraFrom - REFUND_LOG_NEAR_MS) return;
+    derived.push({id:'d-'+action, action, created_at:at, actor:by});
+  };
+  add('create', row.created_at, row.created_by);
+  if(row.updated_at && row.updated_at!==row.created_at) add('update', row.updated_at, row.updated_by);
+  if(row.refund_completed) add('refund_complete', row.refund_completed_at, row.refund_completed_by);
+  if(row.cafe24_done)      add('cafe24_done',     row.cafe24_done_at,      row.cafe24_done_by);
+  return [...derived, ...logs].sort((a,b)=> refundTs(a.created_at) - refundTs(b.created_at));
+}
+
+// createdAt 을 주면 그 시각으로 남긴다 — 지나간 처리를 뒤늦게 이력으로 옮길 때 쓴다(원복 직전 보존).
+async function logRefund(refundId, action, actor, note, createdAt){
   if(!refundId) return;
   const { error } = await sb.from('refund_history').insert({
     refund_id: refundId, action, actor: actor || 'unknown', note: note || null,
+    ...(createdAt ? { created_at: createdAt } : {}),
   });
   if(error) console.error('[환불 이력 기록] 실패:', action, error);
 }
@@ -5056,6 +5110,19 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
     if(action==='mark_cafe24_done'){
       if(!confirm('후처리를 완료 처리하시겠습니까?\n이 건의 상태가 «완료»로 바뀝니다. 카페24·젠데스크 정리가 끝났는지 확인해 주세요.')) return;
     }
+    // ★ 원복은 완료 시각·처리자 컬럼을 NULL 로 지운다. 이력 기록(2026-08-07) 이전에 완료된 건은
+    //   그 컬럼이 유일한 근거라, 지우고 나면 "완료했었다"가 화면에서 영영 사라진다.
+    //   → 지우기 전에 이력으로 옮겨 둔다(원래 시각 그대로).
+    //   이력을 못 읽은 상태(history===null)에서는 이미 기록이 있는지 알 수 없어 건너뛴다 —
+    //   같은 처리가 두 줄로 찍히는 편이 더 나쁘다.
+    if((action==='revert_to_pending2' || action==='revert_to_pending3') && history!==null){
+      const [logAction, at, by] = action==='revert_to_pending2'
+        ? ['refund_complete', row.refund_completed_at, row.refund_completed_by]
+        : ['cafe24_done',     row.cafe24_done_at,      row.cafe24_done_by];
+      const already = history.some(h=>h.action===logAction
+        && Math.abs(refundTs(h.created_at)-refundTs(at)) < REFUND_LOG_NEAR_MS);
+      if(at && !already) await logRefund(row.id, logAction, by, null, at);
+    }
     setSaving(true);
     setErr('');
     let result;
@@ -5147,6 +5214,11 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
 
   // 상태 배지 색상
   const stColor = refundStatusOf(row);
+
+  // 확인 요청 메모 — 요청할 때마다 아래로 쌓아 보여준다(요청 버튼 바로 밑).
+  // ★ 메모 본문이 보이는 곳은 여기 하나뿐이다 — 아래 전체 이력 박스에는 찍지 않는다.
+  //   예전엔 빨간 박스·'지난 확인 요청'·이력 박스 세 군데에 같은 내용이 찍혔다(사용자 지적).
+  const reviewLog = buildReviewLog(row, history);
 
   return (
     <div onMouseDown={e=>{if(e.target===e.currentTarget && !saving) onClose();}}
@@ -5352,12 +5424,12 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
             placeholder="자유롭게 메모 입력"
             style={inp({minHeight:70,resize:'vertical',fontFamily:'inherit'})}/>
 
-          {/* 추가 확인 필요 — 요청 중이면 눈에 띄게, 아니면 요청 버튼만 */}
+          {/* 추가 확인 필요 — 요청 중이면 눈에 띄게, 아니면 요청 버튼만.
+              사유·요청자는 바로 아래 '확인 요청 메모'에서 본다(여기서 또 찍으면 중복이다). */}
+          <div style={{marginTop:16}}>
           {row.needs_review ? (
-            <div style={{marginTop:16,padding:'12px 14px',background:'rgba(248,113,113,.12)',border:'1px solid rgba(248,113,113,.45)',borderRadius:6}}>
-              <div style={{fontSize:12,fontWeight:700,color:'#f87171',marginBottom:6}}>🔎 추가 확인 필요</div>
-              <div style={{fontSize:13,color:'var(--text)',whiteSpace:'pre-wrap',marginBottom:8}}>{row.review_note||'(사유 미기재)'}</div>
-              <div style={{fontSize:11,color:'var(--sub)',marginBottom:10}}>요청: {row.review_requested_by||'-'} · {fmtDateTime(row.review_requested_at)}</div>
+            <div style={{padding:'12px 14px',background:'rgba(248,113,113,.12)',border:'1px solid rgba(248,113,113,.45)',borderRadius:6}}>
+              <div style={{fontSize:12,fontWeight:700,color:'#f87171',marginBottom:10}}>🔎 추가 확인 필요</div>
               <button onClick={()=>performAction('resolve_review')} disabled={saving}
                 style={{fontSize:12,padding:'7px 12px',background:'rgba(126,217,87,.18)',border:'1px solid rgba(126,217,87,.5)',color:'#7ED957',borderRadius:6,cursor:saving?'not-allowed':'pointer',fontWeight:600}}>
                 ✓ 확인 완료 — 표시 해제
@@ -5365,7 +5437,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
               <span style={{fontSize:11,color:'var(--sub)',marginLeft:8}}>확인했거나 내용을 보완했으면 해제해 주세요.</span>
             </div>
           ) : (!isReadOnly && (
-            <div style={{marginTop:16}}>
+            <div>
               {reviewOpen ? (
                 <div style={{padding:'12px 14px',background:'var(--bg)',border:'1px solid rgba(248,113,113,.45)',borderRadius:6}}>
                   <div style={{fontSize:11,color:'var(--sub)',marginBottom:6}}>어떤 확인이 필요한가요? (필수)</div>
@@ -5388,42 +5460,55 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
                   🔎 추가 확인 요청
                 </button>
               )}
-              {/* 예전에 한 번 막혔던 건이면 그 기록을 남겨 보여준다 */}
-              {row.review_note && row.review_resolved_at && (
-                <div style={{marginTop:8,fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
-                  지난 확인 요청: {row.review_note}
-                  <br/>해제: {row.review_resolved_by||'-'} · {fmtDateTime(row.review_resolved_at)}
-                </div>
-              )}
             </div>
           ))}
 
+          {/* 확인 요청 메모 — 요청 버튼 아래로 쌓인다. 오래된 것이 위, 최근 것이 아래.
+              완료 건(읽기 전용)에서도 보여준다 — 왜 한 번 멈췄었는지는 남아야 한다. */}
+          {reviewLog.length>0 && (
+            <div style={{marginTop:10}}>
+              <div style={{fontSize:11,color:'var(--sub)',marginBottom:6,fontWeight:500}}>
+                확인 요청 메모{reviewLog.length>1 ? ` (${reviewLog.length}건)` : ''}
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                {reviewLog.map(r=>{
+                  const active = !r.resolvedAt;
+                  return (
+                    <div key={r.id} style={{padding:'8px 10px',background:'var(--bg)',borderRadius:6,
+                      border:'1px solid '+(active?'rgba(248,113,113,.45)':'var(--border)')}}>
+                      <div style={{fontSize:11,color:'var(--sub)',marginBottom:4}}>
+                        요청: {fmtDateTime(r.at)} · {r.actor||'-'}
+                        {active
+                          ? <span style={{color:'#f87171',fontWeight:600}}> · 진행 중</span>
+                          : <span> · 해제: {fmtDateTime(r.resolvedAt)} · {r.resolvedBy||'-'}</span>}
+                      </div>
+                      <div style={{fontSize:13,color:'var(--text)',whiteSpace:'pre-wrap'}}>{r.note||'(사유 미기재)'}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          </div>
+
           {/* 이력 박스 */}
           <div style={{marginTop:16,padding:'10px 12px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,fontSize:11,color:'var(--sub)',lineHeight:1.7}}>
-            {/* 처리 이력 한 줄기 — 오래된 것부터 아래로 쌓인다.
-                이력 기능(2026-08-07) 이전 건은 로그가 없으므로 행의 상태 컬럼에서 유추해 채우고,
-                같은 처리의 로그가 있으면 유추분은 버린다(그래야 같은 사건이 두 번 찍히지 않는다). */}
+            {/* 처리 이력 한 줄기 — 오래된 것부터 아래로, 시간순 그대로.
+                항목명·시각·처리 계정만 찍는다. **메모 본문은 여기 넣지 않는다** —
+                확인 요청 사유는 위 '확인 요청 메모'에서 보므로 여기 또 찍으면 중복이다.
+                무엇을 어떻게 합치는지는 buildRefundTimeline() 주석 참고. */}
             {historyLoading ? (
               <div>이력 불러오는 중...</div>
             ) : (()=>{
-              const logged = new Set((history||[]).map(h=>h.action));
-              const derived = [];
-              const add=(action,at,by)=>{ if(!logged.has(action) && at) derived.push({id:'d-'+action,action,created_at:at,actor:by}); };
-              add('create',          row.created_at,          row.created_by);
-              if(row.updated_at && row.updated_at!==row.created_at) add('update', row.updated_at, row.updated_by);
-              if(row.refund_completed) add('refund_complete', row.refund_completed_at, row.refund_completed_by);
-              if(row.cafe24_done)      add('cafe24_done',     row.cafe24_done_at,      row.cafe24_done_by);
-              const items = [...derived, ...(history||[])]
-                .sort((a,b)=> new Date(a.created_at) - new Date(b.created_at));
+              const items = buildRefundTimeline(row, history);
               return (<>
                 {items.map(h=>(
                   <div key={h.id}>
                     <b style={{color:REFUND_ACTION_COLOR[h.action]||'var(--text)'}}>{REFUND_ACTION_LABEL[h.action]||h.action}</b>
                     : {fmtDateTime(h.created_at)} · {h.actor||'-'}
-                    {h.note && <span style={{color:'var(--sub)'}}> — {h.note}</span>}
                   </div>
                 ))}
-                {history===null && <div>이후 이력을 불러오지 못했습니다. (처리에는 영향이 없습니다)</div>}
+                {history===null && <div>이력을 불러오지 못했습니다. (처리에는 영향이 없습니다)</div>}
               </>);
             })()}
           </div>
