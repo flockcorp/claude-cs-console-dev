@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260814b_review_memo_lines -->
+<!-- (2026-08-14) 확인 요청 메모를 읽기 좋게 나눈다(사용자 요청). 요청과 해제를 한 줄에 붙여 놨더니 «요청: 시각 · 계정 · 해제: 시각 · 계정» 이 한 줄로 길게 이어져 읽기 어려웠다. → 요청 / 사유 / 해제 순으로 한 줄씩 놓고, 사유는 왼쪽에 선을 그어 요청에 딸린 내용임을 보이게 했다. 진행 중이면 해제 줄 대신 요청 줄에 '진행 중'을 붙인다. 함께 확인한 것: 메모 끝에 붙어 보이던 '+' 는 화면이 만든 군더더기가 아니라 **그 메모의 실제 내용**이다(운영 refund_history.note 값이 문자 그대로 '+' — 2026-08-11 테스트 때 사유 칸에 그렇게 입력됐다). 이력 표는 수정·삭제 정책이 없어 그 값은 고칠 수 없다. 표시 로직·저장 로직·DB 스키마 변경 없음. -->
 <!-- v20260814a_refund_history_untangled -->
 <!-- (2026-08-14) 환불 수정 창의 이력 표시를 정리한다(사용자 제보 — "이력이 중복 표기된다", "수정하고 뭐 할 때마다 이상하게 꼬이고 기존 이력이 날아간다"). 세 가지 문제가 겹쳐 있었다. ①확인 요청 사유가 빨간 박스·'지난 확인 요청'·이력 박스 세 군데에 찍혔다. ②유추 항목을 걸러내는 기준이 'action 이름이 같은 로그가 있는가'라서, 같은 이름의 로그가 하나라도 생기면 그 전에 있던 유추 항목이 통째로 사라졌다. ③updated_at 은 확인 요청·완료 처리 같은 다른 처리에도 트리거로 갱신되는데 유추 '내용 수정'이 그 값을 쓰고 있어, 무엇을 하든 유령 항목이 최근 시각으로 튀어 올랐다(처리자는 옛 사람 그대로). → 메모가 보이는 곳을 하나로 모았다: 확인 요청 사유는 [🔎 추가 확인 요청] 버튼 **아래에 요청할 때마다 쌓이고**(오래된 것이 위, 진행 중인 건은 빨간 테두리 + '진행 중'), 그 아래 전체 이력 박스에는 **항목명·시각·처리 계정만** 찍는다. 유추 항목은 이름이 아니라 **시각으로 짝짓는다** — 같은 처리의 로그가 5분 안에 있으면 그 로그가 곧 그 사건이므로 버리고, 로그가 쌓이기 시작한 뒤의 컬럼 값도 로그가 진실이므로 버린다. 그 이전 것만 유추로 채우므로 새 처리를 해도 옛 항목이 사라지지 않는다. ★ 원복은 완료 시각·처리자 컬럼을 NULL 로 지우는데, 이력 기록(2026-08-07) 이전에 완료된 건은 그 컬럼이 유일한 근거였다 — 지우기 전에 원래 시각 그대로 이력으로 옮겨 둔다. 확인 요청 메모는 완료 건(읽기 전용)에서도 보인다. 저장·처리 로직과 DB 스키마는 그대로다. -->
 <!-- v20260812a_dev_send_blocked_in_ui -->
@@ -5476,13 +5478,21 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
                   return (
                     <div key={r.id} style={{padding:'8px 10px',background:'var(--bg)',borderRadius:6,
                       border:'1px solid '+(active?'rgba(248,113,113,.45)':'var(--border)')}}>
-                      <div style={{fontSize:11,color:'var(--sub)',marginBottom:4}}>
+                      {/* 요청 → 사유 → 해제 순으로 한 줄씩. 사유가 요청에 딸린 것임이 보이도록
+                          왼쪽 선을 긋는다(요청·해제를 한 줄에 붙여 놨더니 읽기 어려웠다). */}
+                      <div style={{fontSize:11,color:'var(--sub)'}}>
                         요청: {fmtDateTime(r.at)} · {r.actor||'-'}
-                        {active
-                          ? <span style={{color:'#f87171',fontWeight:600}}> · 진행 중</span>
-                          : <span> · 해제: {fmtDateTime(r.resolvedAt)} · {r.resolvedBy||'-'}</span>}
+                        {active && <span style={{color:'#f87171',fontWeight:600}}> · 진행 중</span>}
                       </div>
-                      <div style={{fontSize:13,color:'var(--text)',whiteSpace:'pre-wrap'}}>{r.note||'(사유 미기재)'}</div>
+                      <div style={{fontSize:13,color:'var(--text)',whiteSpace:'pre-wrap',
+                        margin:'6px 0',paddingLeft:10,borderLeft:'2px solid var(--border)'}}>
+                        {r.note || '(사유 미기재)'}
+                      </div>
+                      {!active && (
+                        <div style={{fontSize:11,color:'var(--sub)'}}>
+                          해제: {fmtDateTime(r.resolvedAt)} · {r.resolvedBy||'-'}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
