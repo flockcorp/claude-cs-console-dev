@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260814g_review_trail_fix -->
+<!-- (2026-08-14) v20260814f 긴급 수정: 환불 수정 창이 열리지 않았다. 진행 중인 경과를 계산하는 pendingSteps 를 pendingReview 보다 **위에** 둬서, const 초기화 전 참조(ReferenceError)로 창이 통째로 죽었다. 선언 순서만 바로잡았고 동작은 v20260814f 그대로다. ★ npm run check(문법 검사)는 이걸 못 잡는다 — 파싱은 통과하고 실행할 때만 터진다. 빌드가 없는 단일 파일이라 이런 것은 배포 후에야 드러난다(2026-06-17 흰 화면 사고와 같은 계열). -->
 <!-- v20260814f_review_trail -->
 <!-- (2026-08-14) 확인 요청의 경과를 빠짐없이 남기고 보여준다(사용자 제보 — "보류했다가 해제하면서 남긴 메모가 표기가 안 된다"). 두 군데가 새고 있었다. ①메모칸이 [확인 완료]에만 물려 있어 [보류 해제]를 누르면 적어 둔 글이 조용히 사라졌다 — 이제 두 버튼이 같은 칸을 쓰고 어느 쪽을 눌러도 이력에 남는다(라벨도 '이 처리에 메모를 남기시겠어요?'로 바꿨다). ②보류를 풀면 refunds 의 hold_* 를 지우는데, 진행 중인 요청은 아래 목록에서 빠져 있어 보류했던 사실 자체가 화면에서 사라졌다 — 이제 진행 중인 건의 경과(요청 → 보류 → 보류 해제 → …)를 이력에서 읽어 빨간 박스 안에 순서대로 쌓아 보여준다. ★ 한 처리를 '한 줄 + 메모'로 그리는 stepLine 을 하나 두고 박스와 지난 목록이 같은 모양을 쓴다 — 두 곳이 따로 그리면 한쪽만 고쳐져 어긋난다. 이력을 못 읽은 경우엔 행의 hold_* 로라도 지금 걸린 보류는 보여준다. 저장·판정 로직과 DB 스키마 변경 없음. -->
 <!-- v20260814e_refund_hold -->
@@ -5292,10 +5294,6 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
       </div>
     );
   };
-  // 진행 중인 건의 경과. 이력을 못 읽었으면 행의 hold_* 로라도 지금 걸린 보류는 보여준다.
-  const pendingSteps = (pendingReview && pendingReview.steps) || [];
-  const holdFallback = isHeld && !pendingSteps.some(s=>s.kind==='hold')
-    ? [{kind:'hold', at:row.hold_at, by:row.hold_by, note:row.hold_reason}] : [];
 
   // 확인 요청 메모 — 요청할 때마다 아래로 쌓아 보여준다(요청 버튼 바로 밑).
   // ★ 메모 본문이 보이는 곳은 여기 하나뿐이다 — 아래 전체 이력 박스에는 찍지 않는다.
@@ -5306,6 +5304,12 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
   // 지금 무엇이 막혀 있는지가 목록에 묻혀 안 보였다(사용자 지적).
   const pendingReview  = row.needs_review ? reviewLog.find(r=>!r.resolvedAt) : null;
   const resolvedReview = reviewLog.filter(r=>r!==pendingReview);
+  // 진행 중인 건의 경과(보류·보류 해제). 이력을 못 읽었으면 행의 hold_* 로라도 지금 걸린 보류는 보여준다.
+  // ★ 반드시 pendingReview 뒤에 와야 한다 — 앞에 두면 const 초기화 전 참조로 창이 통째로 죽는다.
+  //   문법 검사(npm run check)는 이걸 못 잡는다. 실제로 한 번 밟았다.
+  const pendingSteps = (pendingReview && pendingReview.steps) || [];
+  const holdFallback = isHeld && !pendingSteps.some(s=>s.kind==='hold')
+    ? [{kind:'hold', at:row.hold_at, by:row.hold_by, note:row.hold_reason}] : [];
 
   return (
     <div onMouseDown={e=>{if(e.target===e.currentTarget && !saving) onClose();}}
