@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260819e_hbar_axis_fix -->
+<!-- (2026-08-19) 환불 Report 탭의 '공급사별 상위 10'·'상품별 상위 10' 두 그래프가 축만 그려지고 막대가 안 나오던 것을 고쳤다(사용자 제보). 원인은 데이터가 아니라 축 설정이다 — 이 둘은 앱에서 유일하게 가로 막대(indexAxis:'y')인데, BASE_OPTS 의 scales 를 그대로 얹으면서 x·y 에 type 을 적지 않았다. 그러면 Chart.js 가 id 이름만 보고 x 를 이름축(category), y 를 값축(linear)으로 잡아 값이 어느 축에도 안 붙는다. 축·눈금은 멀쩡히 그려지므로 데이터 문제로 오해하기 쉽다. → 두 차트에 x:{type:'linear'} · y:{type:'category'} 를 명시했다. ★ 재현 실측(Chart.js 4.4.0): 지금 설정 → x=category·y=linear(막대 없음) / scales 를 아예 안 넘김 → 정상 / type 명시 → 정상 / BASE_OPTS 깊은 복사 → 여전히 깨짐(공유 객체 문제가 아니다). scales 를 빼도 되지만 그러면 눈금·격자 색이 다른 차트와 달라져 type 명시 쪽을 택했다. ★ 앞으로 가로 막대를 추가하면 축 type 을 반드시 적을 것. 집계·데이터·다른 차트는 건드리지 않았다. -->
 <!-- v20260819d_hold_alert_wording -->
 <!-- (2026-08-19) 보류 알림 문구만 사용자 표현으로 교체했다. 배너는 '[보류 확인 알림] 재개 예정일 확인 N건이 있습니다. 확인 후 보류 해제 하거나 재개일을 재설정 해주세요.', KPI 보류 카드의 꼬리 표기는 '재개일 도래 N' → '재개일 알림 N'. 판정 기준(hold_until <= 오늘)과 동작은 v20260819c 그대로다. -->
 <!-- v20260819c_hold_bulk_guard -->
@@ -6280,6 +6282,15 @@ function RefundReportTab({ reasons }){
               <ChartComp type="bar"
                 options={{
                   ...BASE_OPTS, indexAxis:'y',
+                  scales:{
+                    // ★ 가로 막대(indexAxis:'y')는 축 type 을 직접 적어야 한다. BASE_OPTS 처럼
+                    //   x·y 를 type 없이 넘기면 Chart.js 가 id 이름만 보고 x 를 이름축(category),
+                    //   y 를 값축(linear)으로 잡아 값이 어느 축에도 안 붙는다 — 축과 눈금은 멀쩡히
+                    //   그려지고 막대만 안 나온다(2026-08-19 실측). 축을 아예 안 넘겨도 정상이지만
+                    //   그러면 눈금·격자 색이 다른 차트와 달라진다.
+                    x:{type:'linear', beginAtZero:true, ticks:{...BASE_OPTS.scales.x.ticks}, grid:{...BASE_OPTS.scales.x.grid}},
+                    y:{type:'category', ticks:{...BASE_OPTS.scales.y.ticks}, grid:{...BASE_OPTS.scales.y.grid}},
+                  },
                   plugins:{...BASE_OPTS.plugins, legend:{display:false},
                     tooltip:{callbacks:{label:(ctx)=>` ${fmtVal(ctx.parsed.x)}`}}},
                 }}
@@ -6298,6 +6309,11 @@ function RefundReportTab({ reasons }){
             <ChartComp type="bar"
               options={{
                 ...BASE_OPTS, indexAxis:'y',
+                scales:{
+                  // ★ 축 type 을 빼면 막대가 안 그려진다 — 위 공급사별 차트의 주석 참고.
+                  x:{type:'linear', beginAtZero:true, ticks:{...BASE_OPTS.scales.x.ticks}, grid:{...BASE_OPTS.scales.x.grid}},
+                  y:{type:'category', ticks:{...BASE_OPTS.scales.y.ticks}, grid:{...BASE_OPTS.scales.y.grid}},
+                },
                 plugins:{...BASE_OPTS.plugins, legend:{display:false},
                   tooltip:{callbacks:{label:(ctx)=>` ${fmtVal(ctx.parsed.x)}`}}},
               }}
