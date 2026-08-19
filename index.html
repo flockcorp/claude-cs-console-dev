@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260819g_hbar_name_axis -->
+<!-- (2026-08-19) 가로 막대 두 개의 왼쪽 이름축이 공급사명·상품명 대신 '0·1·2' 줄 번호를 찍던 것을 고쳤다. 사용자가 '막대 길이와 y축 숫자가 안 맞는다'고 한 그 숫자의 정체가 이것이다 — 건수가 아니라 몇 번째 줄인지였다. 실측(브라우저 콘솔에서 Chart.getChart 로 확인): 아래축 x(linear)는 ₩0·₩5만…으로 정상인데 왼쪽축 y(category)의 눈금이 0|1|2|3|4 였고, 라벨은 data.labels 에 9~10개 들어 있었다. 세로 방향 category 축이 data.labels 를 집지 못해 값(인덱스)을 그대로 라벨로 쓴 것이다. → 이름 목록을 축 옵션(labels)에 직접 넘기는 nameAxis(entries) 를 만들어 두 차트가 같이 쓴다. ★ autoSkip:false 를 함께 켰다 — 10개 중 몇 개만 찍히면 막대와 이름이 한 줄씩 밀려 보인다(진단 페이지에서 실제로 그랬다). ★ 16자가 넘는 이름은 잘라 그린다. 안 자르면 이름칸이 그래프를 밀어내 막대가 뭉개진다. data.labels 는 원문 그대로라 막대에 마우스를 올리면 전체 이름이 툴팁 제목으로 보인다. 집계·데이터·다른 차트는 그대로다. -->
 <!-- v20260819f_hbar_ticks -->
 <!-- (2026-08-19) 가로 막대 두 개(공급사별·상품별)의 값축 눈금을 손봤다(사용자 제보 — '숫자가 막대 건수와 안 맞는다'). ①건수일 때 Chart.js 가 값이 작으면 0.2·0.4 같은 소수 눈금을 찍어, 3건짜리 막대 옆에 소수가 나열되니 숫자가 어긋나 보였다 → precision:0 에 더해 눈금 간격을 최대값에서 뽑아(ceil(max/6)) 항상 정수만 찍는다. ②금액일 때 50000·100000 처럼 원시 숫자가 그대로 찍혔다 → 일자별 추이 차트와 같은 '₩5만' 표기로 통일했다. 값축 만드는 코드를 valueAxis(entries) 하나로 모아 두 차트가 같이 쓴다 — 두 곳에서 따로 그리면 한쪽만 고쳐져 어긋난다. 축 방향·집계·데이터는 v20260819e 그대로다(아래축=값, 왼쪽축=이름). -->
 <!-- v20260819e_hbar_axis_fix -->
@@ -6195,6 +6197,22 @@ function RefundReportTab({ reasons }){
     };
   };
 
+  // 가로 막대의 이름축 = 왼쪽 y축.
+  // ★ 이름 목록을 축에 직접 넘긴다. data.labels 에만 두면 세로 방향 category 축이 그걸 못 집어
+  //   '0·1·2' 같은 줄 번호를 찍는다(2026-08-19 실측 — 막대 길이와 숫자가 안 맞는다는 제보의 정체).
+  // ★ autoSkip 을 끄지 않으면 10개 중 몇 개만 찍혀 막대와 이름이 한 줄씩 밀려 보인다.
+  // ★ 긴 상품명은 잘라 그린다 — 안 자르면 이름칸이 그래프를 밀어내 막대가 뭉개진다.
+  //   전체 이름은 막대에 마우스를 올리면 툴팁 제목으로 보인다(data.labels 는 원문 그대로 둔다).
+  const nameAxis = (entries)=>{
+    const names = entries.map(e=>e.name);
+    return {
+      type:'category', labels:names,
+      ticks:{...BASE_OPTS.scales.y.ticks, autoSkip:false,
+        callback:(v,i)=>{ const t = String(names[i]||''); return t.length>16 ? t.slice(0,15)+'…' : t; }},
+      grid:{...BASE_OPTS.scales.y.grid},
+    };
+  };
+
   // 차트 색상 해석 (사유 color → hex)
   const reasonHex = (color)=>(REFUND_COLOR_MAP[color]||REFUND_COLOR_MAP.gray).fg;
 
@@ -6308,7 +6326,7 @@ function RefundReportTab({ reasons }){
                     //   그려지고 막대만 안 나온다(2026-08-19 실측). 축을 아예 안 넘겨도 정상이지만
                     //   그러면 눈금·격자 색이 다른 차트와 달라진다.
                     x:valueAxis(supplierEntries),
-                    y:{type:'category', ticks:{...BASE_OPTS.scales.y.ticks}, grid:{...BASE_OPTS.scales.y.grid}},
+                    y:nameAxis(supplierEntries),
                   },
                   plugins:{...BASE_OPTS.plugins, legend:{display:false},
                     tooltip:{callbacks:{label:(ctx)=>` ${fmtVal(ctx.parsed.x)}`}}},
@@ -6331,7 +6349,7 @@ function RefundReportTab({ reasons }){
                 scales:{
                   // ★ 축 type 을 빼면 막대가 안 그려진다 — 위 공급사별 차트의 주석 참고.
                   x:valueAxis(productEntries),
-                  y:{type:'category', ticks:{...BASE_OPTS.scales.y.ticks}, grid:{...BASE_OPTS.scales.y.grid}},
+                  y:nameAxis(productEntries),
                 },
                 plugins:{...BASE_OPTS.plugins, legend:{display:false},
                   tooltip:{callbacks:{label:(ctx)=>` ${fmtVal(ctx.parsed.x)}`}}},
