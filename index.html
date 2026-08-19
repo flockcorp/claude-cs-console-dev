@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260814g_review_trail_fix -->
+<!-- v20260819a_hold_display_only -->
+<!-- (2026-08-19) 보류 건이 '환불 대기'와 겹쳐 세지던 것을 화면에서 떼어 냈다(사용자 요청). 한 건이 두 숫자에 잡히니 '지금 할 수 있는 일'이 몇 건인지가 흐려졌다. 이제 보류 건은 KPI '환불 대기'·'후처리 대기'에서 빠지고 '보류' 카드에서만 세며, 목록 [처리상태]에도 '환불 대기 + ⏸ 보류'가 아니라 '⏸ 보류' 하나만 뜬다. 카드를 눌러 거는 필터·상태 드롭다운(⏸ 보류 항목 추가)·수정 창 헤더 배지도 같은 기준으로 맞췄다 — 카드 숫자와 목록 줄 수가 어긋나면 그게 더 큰 혼란이다. ★ DB 는 그대로다. 보류 건은 여전히 환불 대기(또는 후처리 대기) + review_state='held' 이고, 바뀐 것은 화면 표시뿐이다. 판정은 isHeldRow() 하나로 모았다 — 기준이 갈리면 '환불 대기'는 숨겼는데 '보류'도 안 뜨는 빈 칸이 생긴다. ★ 그룹 묶기·일괄 처리·저장 로직은 실제 상태(refundStatusOf)를 그대로 쓴다. -->
 <!-- (2026-08-14) v20260814f 긴급 수정: 환불 수정 창이 열리지 않았다. 진행 중인 경과를 계산하는 pendingSteps 를 pendingReview 보다 **위에** 둬서, const 초기화 전 참조(ReferenceError)로 창이 통째로 죽었다. 선언 순서만 바로잡았고 동작은 v20260814f 그대로다. ★ npm run check(문법 검사)는 이걸 못 잡는다 — 파싱은 통과하고 실행할 때만 터진다. 빌드가 없는 단일 파일이라 이런 것은 배포 후에야 드러난다(2026-06-17 흰 화면 사고와 같은 계열). -->
 <!-- v20260814f_review_trail -->
 <!-- (2026-08-14) 확인 요청의 경과를 빠짐없이 남기고 보여준다(사용자 제보 — "보류했다가 해제하면서 남긴 메모가 표기가 안 된다"). 두 군데가 새고 있었다. ①메모칸이 [확인 완료]에만 물려 있어 [보류 해제]를 누르면 적어 둔 글이 조용히 사라졌다 — 이제 두 버튼이 같은 칸을 쓰고 어느 쪽을 눌러도 이력에 남는다(라벨도 '이 처리에 메모를 남기시겠어요?'로 바꿨다). ②보류를 풀면 refunds 의 hold_* 를 지우는데, 진행 중인 요청은 아래 목록에서 빠져 있어 보류했던 사실 자체가 화면에서 사라졌다 — 이제 진행 중인 건의 경과(요청 → 보류 → 보류 해제 → …)를 이력에서 읽어 빨간 박스 안에 순서대로 쌓아 보여준다. ★ 한 처리를 '한 줄 + 메모'로 그리는 stepLine 을 하나 두고 박스와 지난 목록이 같은 모양을 쓴다 — 두 곳이 따로 그리면 한쪽만 고쳐져 어긋난다. 이력을 못 읽은 경우엔 행의 hold_* 로라도 지금 걸린 보류는 보여준다. 저장·판정 로직과 DB 스키마 변경 없음. -->
@@ -4544,6 +4545,14 @@ const refundStatusOf = (r)=>{
   if(r.refund_completed && !r.cafe24_done) return {key:'pending3',label:'후처리 대기',bg:'rgba(120,170,255,.18)', fg:'#78AAFF'};
   return {key:'pending2', label:'환불 대기', bg:'rgba(246,173,9,.18)', fg:'#F6AD09'};
 };
+// 보류는 '처리 상태'가 아니라 화면 표시를 덮어쓰는 상태다(2026-08-19 사용자 지시).
+// DB 상 보류 건은 여전히 환불 대기(또는 후처리 대기)지만, 콘솔에서는 '보류'로만 세고 '보류'로만 보인다 —
+// 한 건이 두 숫자에 겹쳐 잡히면 '지금 할 수 있는 일'이 몇 건인지가 흐려진다(보류를 만든 이유가 그것이다).
+// ★ KPI 카드·카드 필터·상태 드롭다운·목록 칩·수정 창 배지가 모두 이 하나를 본다. 기준이 갈리면
+//   '환불 대기'는 숨겼는데 '보류'도 안 뜨는 빈 칸이 생긴다.
+// ★ 그룹 묶기·일괄 처리·저장 로직은 그대로 refundStatusOf(실제 상태)를 쓴다 — 표시만 덮는다.
+const isHeldRow = (r)=> r.review_state==='held';
+const HELD_CHIP = {key:'held', label:'⏸ 보류', bg:'rgba(255,169,77,.18)', fg:'#FFA94D'};
 const KRW = (n)=>'₩'+Number(n||0).toLocaleString();
 
 // 환불 은행 마스터 (47개)
@@ -5271,8 +5280,8 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
-  // 상태 배지 색상
-  const stColor = refundStatusOf(row);
+  // 상태 배지 색상 — 보류면 목록과 같이 '보류'로 덮는다(창 안에 주황 보류 박스가 따로 있다).
+  const stColor = isHeldRow(row) ? HELD_CHIP : refundStatusOf(row);
 
   // 확인 요청의 처리 한 건을 '한 줄 + 메모'로 그린다. 진행 중인 건(위 박스)과 지난 목록이
   // 같은 모양을 써야 눈이 흔들리지 않는다. 메모는 없을 수 있다(보류 해제·확인 완료는 선택 입력).
@@ -6382,13 +6391,15 @@ function RefundManagementPage({ currentUserEmail }) {
   // 필터링
   const filtered = refunds.filter(r=>{
     if(periodFilter && !periodFilter(r)) return false;
-    if(activeKpi==='pendingRefund' && r.refund_completed) return false;
-    if(activeKpi==='pendingCafe24' && !(r.refund_completed && !r.cafe24_done)) return false;
+    // 카드 숫자에서 뺐으니 카드를 눌러 거는 필터에서도 보류는 빠진다(안 그러면 '3건'인데 4줄이 나온다).
+    if(activeKpi==='pendingRefund' && (r.refund_completed || isHeldRow(r))) return false;
+    if(activeKpi==='pendingCafe24' && (!(r.refund_completed && !r.cafe24_done) || isHeldRow(r))) return false;
     if(activeKpi==='needsReview' && !(r.needs_review && r.review_state!=='held')) return false;
     if(activeKpi==='held' && r.review_state!=='held') return false;
     if(fReason && String(r.reason_id)!==String(fReason)) return false;
     if(fStatus){
-      const st = refundStatusOf(r).key;
+      // 화면에 보이는 대로 걸린다 — 보류 건은 '환불 대기'가 아니라 '보류'로만 잡힌다.
+      const st = isHeldRow(r) ? 'held' : refundStatusOf(r).key;
       if(st!==fStatus) return false;
     }
     if(fWriter && r.created_by!==fWriter) return false;
@@ -6522,8 +6533,9 @@ function RefundManagementPage({ currentUserEmail }) {
     held:           refunds.filter(r=>r.review_state==='held').length,
     heldOverdue:    refunds.filter(r=>r.review_state==='held' && r.hold_until && r.hold_until < todayLocal()).length,
     myNeedsReview:  refunds.filter(r=>r.needs_review && r.review_state!=='held' && r.created_by===currentUserEmail).length,
-    pendingRefund:  inPeriod.filter(r=>!r.refund_completed).length,
-    pendingCafe24:  inPeriod.filter(r=>r.refund_completed && !r.cafe24_done).length,
+    // 보류 건은 여기서 빼고 '보류' 카드에서만 센다(2026-08-19 사용자 지시).
+    pendingRefund:  inPeriod.filter(r=>!r.refund_completed && !isHeldRow(r)).length,
+    pendingCafe24:  inPeriod.filter(r=>r.refund_completed && !r.cafe24_done && !isHeldRow(r)).length,
     periodAmount:   inPeriod.reduce((s,r)=>s+(r.refund_amount||0),0),
   };
 
@@ -6670,6 +6682,7 @@ function RefundManagementPage({ currentUserEmail }) {
           <option value="pending2">환불 대기</option>
           <option value="pending3">후처리 대기</option>
           <option value="done">완료</option>
+          <option value="held">⏸ 보류</option>
         </select>
         <select value={fWriter} onChange={e=>setFWriter(e.target.value)} style={{fontSize:12,padding:'7px 10px',background:'var(--surface)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,minWidth:160}}>
           <option value="">전체 작성자</option>
@@ -6821,21 +6834,24 @@ function RefundManagementPage({ currentUserEmail }) {
                     <td style={td}>{r.supplier_name||'—'}</td>
                     <td style={{...td,textAlign:'center'}}>
                       <div style={{display:'flex',gap:4,justifyContent:'center',alignItems:'center',flexWrap:'wrap'}}>
-                        <span style={{background:st.bg,color:st.fg,padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap'}}>{st.label}</span>
+                        {/* 보류 건은 처리 상태 칩을 숨긴다 — '환불 대기 + 보류'를 나란히 두지 않고 '보류'만 보인다(2026-08-19 사용자 지시). */}
+                        {!isHeldRow(r) && (
+                          <span style={{background:st.bg,color:st.fg,padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap'}}>{st.label}</span>
+                        )}
                         {/* 추가 확인 필요 — 기존 상태와 별개로 덧붙는 표시. 사유는 마우스를 올리면 보인다. */}
-                        {r.needs_review && (r.review_state==='held' ? (
+                        {isHeldRow(r) ? (
                           <span title={(r.hold_reason||'사유 미기재')+'\n보류: '+(r.hold_by||'-')
                                        +'\n최초 요청 사유: '+(r.review_note||'미기재')}
                             style={{background:'rgba(255,169,77,.18)',color:'#FFA94D',padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap',fontWeight:600,cursor:'help'}}>
                             ⏸ 보류{r.hold_until ? ` (~${r.hold_until.slice(5)})` : ''}
                             {r.hold_until && r.hold_until < todayLocal() && <span style={{color:'#FF6B6B'}}> !</span>}
                           </span>
-                        ) : (
+                        ) : r.needs_review ? (
                           <span title={(r.review_note||'사유 미기재')+'\n요청: '+(r.review_requested_by||'-')}
                             style={{background:'rgba(248,113,113,.18)',color:'#f87171',padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap',fontWeight:600,cursor:'help'}}>
                             🔎 확인 필요
                           </span>
-                        ))}
+                        ) : null}
                       </div>
                     </td>
                   </tr>
