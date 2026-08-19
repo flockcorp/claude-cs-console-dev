@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260819d_hold_alert_wording -->
+<!-- (2026-08-19) 보류 알림 문구만 사용자 표현으로 교체했다. 배너는 '[보류 확인 알림] 재개 예정일 확인 N건이 있습니다. 확인 후 보류 해제 하거나 재개일을 재설정 해주세요.', KPI 보류 카드의 꼬리 표기는 '재개일 도래 N' → '재개일 알림 N'. 판정 기준(hold_until <= 오늘)과 동작은 v20260819c 그대로다. -->
 <!-- v20260819c_hold_bulk_guard -->
 <!-- (2026-08-19) ①일괄 처리에 뚫려 있던 보류를 막았다(사용자 요청). 수정 창에서는 보류 중이면 [환불 완료]·[후처리 완료]를 회색으로 막아 두는데 목록 체크박스 일괄 처리는 review_state 를 아예 보지 않아, 보류 건도 그대로 송금 처리됐다 — 보류의 목적이 '모르고 송금하는 사고를 물리적으로 막는 것'이었으므로 여기가 뚫려 있으면 취지가 무너진다. 이 경로로는 '완료 + 보류'라는 있을 수 없는 조합까지 만들어졌다. 이제 보류 행은 체크칸에 회색 ⏸ 만 두고 고를 수 없으며(마우스를 올리면 이유), 전체 선택에서도 빠진다. ★ 고른 뒤에 다른 사람이 보류를 걸 수 있으므로 두 일괄 함수가 보내기 직전에 한 번 더 거르고, 빠진 건수를 토스트로 알린다. ②재개 예정일 알림을 키웠다(자동 해제 대신 사용자가 고른 방식). 재개일이 되어도 상태는 저절로 풀리지 않는다 — 사람이 [보류 해제]를 눌러야 한다. 그래서 화면 맨 위에 주황 배너를 두고 누르면 보류 건만 걸러 보여준다(확인 요청 배너와 달리 클릭 동작을 준 이유: 카드 6개 중 어디를 눌러야 하는지 찾게 만들면 알림이 한 단계 멀어진다). ★ 판정 기준을 '지남'에서 '오늘 포함'으로 바꿨다(heldOverdue → heldDue, hold_until <= 오늘) — 재개일 당일에 알리지 못하면 알림의 값이 없다. 카드 문구는 '재개일 도래', 수정 창은 '· 오늘입니다'를 함께 쓴다. 목록 칩의 빨간 ! 도 같은 기준. DB·스키마·저장 로직 변경 없음. -->
 <!-- v20260819b_hold_form_focus -->
@@ -6648,8 +6650,7 @@ function RefundManagementPage({ currentUserEmail }) {
           background:'rgba(255,169,77,.12)',border:'1px solid rgba(255,169,77,.5)',borderRadius:8}}>
           <span style={{fontSize:16}}>⏸</span>
           <div style={{flex:1,fontSize:13,color:'var(--text)'}}>
-            재개 예정일이 된 보류 <b style={{color:'#FFA94D'}}>{kpi.heldDue}건</b>이 있습니다.
-            <span style={{color:'var(--sub)',marginLeft:6}}>보류는 저절로 풀리지 않습니다 — 열어서 [보류 해제] 하거나 재개일을 다시 잡아 주세요.</span>
+            [보류 확인 알림] 재개 예정일 확인 <b style={{color:'#FFA94D'}}>{kpi.heldDue}건</b>이 있습니다. 확인 후 보류 해제 하거나 재개일을 재설정 해주세요.
           </div>
           <span style={{fontSize:11,color:'#FFA94D',fontWeight:600,whiteSpace:'nowrap'}}>보류만 보기 →</span>
         </div>
@@ -6712,7 +6713,7 @@ function RefundManagementPage({ currentUserEmail }) {
               <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>보류 {cardHeldActive && <span style={{fontSize:9,color:'#FFA94D'}}>● 필터 적용 중</span>}</div>
               <div style={{fontSize:22,fontWeight:700,marginTop:4,color:kpi.held?'#FFA94D':'var(--sub)'}}>
                 {kpi.held}건
-                {kpi.heldDue>0 && <span style={{fontSize:11,color:'#FF6B6B',marginLeft:6,fontWeight:600}}>재개일 도래 {kpi.heldDue}</span>}
+                {kpi.heldDue>0 && <span style={{fontSize:11,color:'#FF6B6B',marginLeft:6,fontWeight:600}}>재개일 알림 {kpi.heldDue}</span>}
               </div>
             </div>
             <div onClick={()=>setActiveKpi(null)}
