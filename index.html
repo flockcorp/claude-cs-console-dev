@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260819h_hbar_value_ticks -->
+<!-- (2026-08-19) 가로 막대의 아래축(값축)이 건수 모드에서 숫자 대신 공급사명·상품명을 찍던 것을 고쳤다. 브라우저 실측: 차트2 의 x(linear) 눈금이 '올인홈 | 블랙라인 | 타카타카…' 였는데, 이는 y 이름 목록의 0·2·4·6·8 번째다 — x축 눈금값(숫자)을 이름표로 바꿔 찍고 있었다. ★★ 원인: Chart.js 는 indexAxis:'y' 여도 x 자리에 '이름축(category) 기본값'을 먼저 얹는다. type 만 linear 로 덮으면 함께 딸려 온 '값을 라벨로 바꾸는 눈금 콜백'이 남는다. 금액 모드는 ₩…만 콜백을 직접 줘서 멀쩡했고 건수만 깨졌던 이유가 이것이다(사용자 제보와 일치). → 값축은 건수든 금액이든 항상 콜백을 직접 준다. ★ 가로 막대를 또 만들 일이 있으면 type 과 눈금 콜백을 둘 다 명시할 것 — 이 함정은 세로 막대에서는 안 나온다. 집계·데이터·다른 차트는 그대로다. -->
 <!-- v20260819g_hbar_name_axis -->
 <!-- (2026-08-19) 가로 막대 두 개의 왼쪽 이름축이 공급사명·상품명 대신 '0·1·2' 줄 번호를 찍던 것을 고쳤다. 사용자가 '막대 길이와 y축 숫자가 안 맞는다'고 한 그 숫자의 정체가 이것이다 — 건수가 아니라 몇 번째 줄인지였다. 실측(브라우저 콘솔에서 Chart.getChart 로 확인): 아래축 x(linear)는 ₩0·₩5만…으로 정상인데 왼쪽축 y(category)의 눈금이 0|1|2|3|4 였고, 라벨은 data.labels 에 9~10개 들어 있었다. 세로 방향 category 축이 data.labels 를 집지 못해 값(인덱스)을 그대로 라벨로 쓴 것이다. → 이름 목록을 축 옵션(labels)에 직접 넘기는 nameAxis(entries) 를 만들어 두 차트가 같이 쓴다. ★ autoSkip:false 를 함께 켰다 — 10개 중 몇 개만 찍히면 막대와 이름이 한 줄씩 밀려 보인다(진단 페이지에서 실제로 그랬다). ★ 16자가 넘는 이름은 잘라 그린다. 안 자르면 이름칸이 그래프를 밀어내 막대가 뭉개진다. data.labels 는 원문 그대로라 막대에 마우스를 올리면 전체 이름이 툴팁 제목으로 보인다. 집계·데이터·다른 차트는 그대로다. -->
 <!-- v20260819f_hbar_ticks -->
@@ -6189,9 +6191,12 @@ function RefundReportTab({ reasons }){
     return {
       type:'linear', beginAtZero:true,
       ticks:{...BASE_OPTS.scales.x.ticks,
-        ...(metric==='count'
-          ? {precision:0, stepSize: Math.max(1, Math.ceil(max/6))}
-          : {callback:v=>'₩'+(v>=10000?Math.round(v/10000)+'만':v)}),
+        // ★★ 눈금 콜백을 반드시 직접 준다. Chart.js 는 indexAxis:'y' 여도 x 자리에 '이름축'
+        //    기본값을 먼저 얹는데, type 만 linear 로 덮으면 딸려 온 '값을 라벨로 바꾸는 콜백'이
+        //    남아 아래축에 숫자 대신 공급사명·상품명이 찍힌다(2026-08-19 실측).
+        //    금액은 ₩ 콜백을 주고 있어 멀쩡했고 건수만 깨졌던 게 이 때문이다.
+        callback: metric==='count' ? (v)=>v : (v)=>'₩'+(v>=10000?Math.round(v/10000)+'만':v),
+        ...(metric==='count' ? {precision:0, stepSize: Math.max(1, Math.ceil(max/6))} : {}),
       },
       grid:{...BASE_OPTS.scales.x.grid},
     };
