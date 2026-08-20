@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820w_varwidth_auto -->
+<!-- v20260820x_snap_horizon -->
+<!-- (2026-08-20) 검토 회차 카드에 그때의 비교 기간을 표시한다(사용자 요청). «2026-08-20 저장 · someone@floc.kr · 36개월 기준» 꼴이다. 회차 옆의 차액은 '지금 값으로 계산한 총비용 − 저장 당시 총비용'인데, 총비용은 비교 기간 전체 기준이라 기간을 바꾸면 비용이 그대로여도 차액이 크게 뜬다. 어느 기간으로 잰 금액인지 보이면 사람이 판단할 수 있다. 겸해서 그때와 지금의 기간이 다를 때만 «지금은 48개월 — 차액은 참고만»을 붉게 덧붙인다. 늘 띄우면 잔소리가 되고, 어긋난 때에만 보이면 신호가 된다. 회차에 저장된 기간(data.horizonMonths)을 읽어 쓰므로 계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 두 가지. ①상단 가정값의 숫자가 계속 잘렸다(사용자 제보, 세 번째). 폭을 82→118px 로 넓히고 flex:none 으로 눌림도 막았는데도 잘렸다 — 운영에 규칙이 들어간 것과 가리는 조상 요소가 없는 것까지 확인했으므로, 남은 답은 '숫자가 실제로 118px 보다 길다'였다. 폭을 숫자로 못 박는 방식은 몇 자리가 들어올지 모르는 한 언제든 다시 깨진다 → 글자 수에 맞춰 늘어나게 했다(최소 96px, 글자당 9px). 이제 몇 자리든 잘리지 않는다. ②검토 회차의 차액 표시가 서비스를 이름으로 '정확히' 맞춰 찾고 있었다 — 이름에 공백이 하나 끼면 차액이 오류 없이 조용히 사라진다. 가정값에서 보이지 않는 공백에 실제로 당한 뒤라, 여기도 공백을 무시하고 맞추게 했다. -->
 <!-- (2026-08-20) 비용표의 수식이 '계산할 수 없는 식'이라고만 하고 이유를 알려주지 않던 것을 고쳤다(사용자 제보 — 100000+250000*(상담원 수+관리자 수) 를 넣었는데 안 됐다). 원인은 식이 아니라 이름이다. 계산은 가정값 이름을 값으로 바꿔치기한 뒤 하는데, 설정 탭의 이름과 식에 적은 이름의 띄어쓰기가 다르면 바꿔치기가 안 되고 남은 이름이 정체불명의 기호가 되어 실패한다. 두 가지를 고쳤다. ①띄어쓰기를 무시하고 맞춘다 — 식과 이름 양쪽에서 공백을 없앤 자리에서 바꿔치기하므로 '상담원 수'로 적어 두고 식에 '상담원수'라고 써도(또는 그 반대로) 맞는다. 공백을 없애도 계산에는 지장이 없다. ②실패했을 때 무엇을 못 찾았는지 이름을 집어 말해준다 — «'상담원' 이라는 가정값이 없습니다 · 설정 탭의 이름과 같은지 보세요». 그전에는 어디를 고쳐야 하는지 알 수 없었다. 계산 방식 자체는 그대로다. -->
 <!-- (2026-08-20) 상단 가정값의 숫자가 '특정 값이 맨 앞에 있을 때만' 잘리던 것을 고쳤다(사용자 제보). 앞서 입력칸(.tcc-varchip-in)에 flex:none 을 줬지만 그 칸을 감싼 칩(.tcc-varchip)은 여전히 줄어들 수 있었다. 칩들은 한 줄에 늘어서다가 자리가 모자라면 눌리는데, 안쪽 입력칸은 안 줄어드니 칩 밖으로 넘쳐 잘려 보였다. 이름이 긴 가정값이 맨 앞에 와서 한 줄을 많이 차지할 때만 그 현상이 났고, 뒤로 가면 다음 줄로 넘어가 자리가 남아 멀쩡했다 — '맨 앞일 때만'이라는 제보가 그대로 원인을 가리켰다. 칩에도 flex:none 을 줘 자리가 모자라면 줄이지 말고 다음 줄로 넘기게 했다(max-width:100% 로 화면보다 넓어지는 것만 막는다). ★ 교훈: 안쪽만 고정하면 바깥이 눌릴 때 그대로 잘린다. flex 는 감싼 쪽부터 본다. -->
@@ -13535,6 +13536,17 @@ function HistoryTab({ project, patch, me }) {
                     />
                     <div className="tcc-snap-date">
                       {s.savedAt} 저장{s.savedBy ? " · " + s.savedBy : ""}
+                      {s.data && s.data.horizonMonths
+                        ? " · " + s.data.horizonMonths + "개월 기준"
+                        : ""}
+                      {/* 차액은 '지금 값 − 저장 당시 값'인데, 비교 기간이 그때와 다르면
+                          비용이 그대로여도 차액이 크게 뜬다. 그 경우에만 짚어 준다. */}
+                      {s.data && s.data.horizonMonths &&
+                        Number(s.data.horizonMonths) !== Number(project.horizonMonths) && (
+                          <span className="tcc-snap-warn">
+                            {" "}지금은 {project.horizonMonths}개월 — 차액은 참고만
+                          </span>
+                        )}
                     </div>
                   </div>
                   <div className="tcc-inline">
@@ -14366,6 +14378,7 @@ const CSS = `
 .tcc-snap-name:hover { border-bottom-color: var(--line); }
 .tcc-snap-name:focus { outline: none; border-bottom-color: var(--accent); }
 .tcc-snap-date { font-size: 11.5px; color: var(--ink2); font-family: ui-monospace, monospace; }
+.tcc-snap-warn { color: var(--danger); font-weight: 700; }
 .tcc-snap-rows { margin-top: 9px; display: flex; flex-direction: column; gap: 3px; }
 .tcc-snap-row { display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; border-top: 1px solid var(--line2); padding-top: 4px; }
 .tcc-snap-svc { flex: 1; color: var(--ink2); }
