@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820h_button_size -->
+<!-- v20260820i_drop_share_mode -->
+<!-- (2026-08-20) 비용 비교 도구의 '나만 보기 / 팀 공유' 모드를 없앴다(사용자 지시). 콘솔에 들어온 이상 접근 통제는 콘솔 권한이 한다 — 이 메뉴는 master 전용이고 보기·쓰기·수정이 모두 같은 권한이므로, 도구가 개인/공유를 또 나누면 같은 자료가 두 벌로 갈라져 '어느 쪽이 진짜인가' 문제만 남는다. 이제 저장소는 하나뿐이다(cost_store 의 shared 행). 머리말의 모드 버튼과 전환 패널, 내 이름 입력, 설정 저장(PREF_KEY)을 걷어냈다. ★ 다만 그동안 '나만 보기'로 저장된 자료가 있을 수 있어, 공유 저장소가 비어 있을 때만 옛 개인 저장본을 한 번 읽어 옮겨 온다(readLegacyPersonal) — 안 그러면 지금까지 만든 프로젝트가 사라진다. 대신 누가 만들고 고쳤는지를 남긴다: 편집자는 로그인 계정(currentUserEmail)을 그대로 쓰고, 고친 사람·시각은 patch() 한 곳에서만 찍는다(화면마다 따로 챙기면 반드시 빠지는 곳이 생긴다). 새로 만들거나 복제할 때는 stampNew() 로 만든 사람을 남긴다. 프로젝트 이름 줄에 «만든 사람 A · 최근 편집 B (3분 전)» 로 보인다. 옛 자료에는 이 항목이 없으므로 migrate() 에서 빈 값으로 채운다. 다른 사람의 수정을 감지하는 30초 확인은 그대로 두었다 — master 가 여럿일 수 있어 여전히 필요하다. 계산·저장 구조는 건드리지 않았다. -->
 <!-- (2026-08-20) 비용 비교 도구의 버튼 규격을 통일했다(사용자 제보). 시작은 회차 목록의 삭제 버튼이었다 — .tcc-x 가 26x26 고정 상자라 확인 단계에서 라벨이 '×' 에서 '삭제' 로 바뀌면 글자가 상자를 넘어 잘렸고, 옆의 '되돌리기'(.tcc-btn, 약 35px)와 높이도 달랐다. 전체를 훑어보니 상자형 버튼이 세 규격으로 갈려 있었다 — .tcc-btn 약 35px · .tcc-x 26px · .tcc-mini 24px. 다만 머리말은 이미 .tcc-head-right 규칙으로 30px 에 맞춰 두고 있었으므로, 그 30px 을 기준으로 셋을 모았다. 높이는 세로 여백 대신 height:30px 으로 잡고 글자 정렬은 inline-flex 에 맡겼다. 폭 고정(width)은 최소폭(min-width)으로 바꿔 라벨이 길어지면 상자가 따라 늘어난다 — 같은 문제가 .tcc-mini 를 쓰는 자리(비용 항목 · 기능 항목의 삭제)에도 있었다. 링크처럼 보이도록 만든 버튼(.tcc-linkbtn · .tcc-loglink · .tcc-notebtn)과 목록 행 전체를 누르는 .tcc-todo 는 상자형이 아니므로 그대로 뒀다. 색·기능은 건드리지 않았다. -->
 <!-- (2026-08-20) 저장한 검토 회차의 이름을 나중에 고칠 수 있게 했다(사용자 요청). 회차 이름을 그냥 눌러 고치면 된다 — 프로젝트 이름 칸과 같은 방식으로, 평소엔 글자처럼 보이다가 올리면 밑줄이 생기고 누르면 초록 밑줄로 바뀐다. 되돌리기 때 자동으로 남는 [자동저장] 회차를 알아보기 쉬운 이름으로 바꾸려는 것이 첫 용도다. 저장은 기존 자동 저장 경로를 그대로 타므로 마지막 타자 뒤 700ms 에 한 번만 나간다(글자마다 저장되지 않는다). 회차의 값·날짜·계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 계약·이력 탭의 '검토 회차'를 셋 보완했다(사용자와 검토 후 합의). ①되돌리기를 누르면 현재 입력값이 백업 없이 덮여 사라졌다 — 되돌리기의 되돌리기가 없어, 회차 저장을 깜빡하면 작업이 통째로 날아가는 자리였다. 이제 되돌리기 직전에 현재 상태를 «[자동저장] YYYY-MM-DD 되돌리기 직전» 이름으로 한 건 먼저 남기고 복원한다. 이름 앞 [자동저장]으로 사람이 붙인 회차와 구분된다. 겸해서 '현재 값을 회차로 뜨는' 부분을 takeSnapshot() 하나로 모아 저장 버튼과 자동 저장이 같은 모양을 쓰게 했다. ②회차를 전부 그리던 것을 최근 5건만 펼치고 나머지는 «이전 회차 N건 더 보기»로 접었다. 카드마다 서비스별로 현재값과의 차액을 다시 계산하므로(computeService — 비용 수식을 전부 평가한다) 회차가 쌓이면 화면을 그릴 때마다 그 횟수가 회차 x 서비스로 늘어난다. ③회차가 20건을 넘으면 목록 위에 정리 안내를 띄운다. 회차 하나가 그때의 값(기간·변수·서비스·비용항목·기능항목)을 통째로 담고 그 전부가 프로젝트 JSON 한 칸에 저장되므로, 쌓일수록 저장·불러오기가 무거워지고 공유 모드의 30초 폴링도 함께 무거워진다. 자동 삭제는 하지 않는다 — 무엇을 버릴지는 사람이 판단할 일이다. 계산·저장 구조는 건드리지 않았다. -->
@@ -11294,7 +11295,6 @@ const TCC_STORE = {
 
 const STORAGE_KEY = "toolcost:projects:v1";
 const SHARED_KEY = "toolcost:team:v1";
-const PREF_KEY = "toolcost:pref:v1";
 
 /* 몇 분 전인지 사람이 읽기 좋게 */
 function agoText(iso) {
@@ -11370,6 +11370,10 @@ function migrate(p) {
   if (!out.decision) out.decision = { serviceId: "", decidedAt: "", reason: "" };
   if (!Array.isArray(out.logs)) out.logs = [];
   if (!Array.isArray(out.snapshots)) out.snapshots = [];
+  if (typeof out.createdBy !== "string") out.createdBy = "";
+  if (typeof out.createdAt !== "string") out.createdAt = "";
+  if (typeof out.updatedBy !== "string") out.updatedBy = "";
+  if (typeof out.updatedAt !== "string") out.updatedAt = "";
   out.services = (out.services || []).map((s) => ({
     state: "candidate",
     vendor: "",
@@ -11669,7 +11673,7 @@ function emptyProject(name) {
 /* =========================================================
    메인 컴포넌트
    ========================================================= */
-function ToolCostCompare({ nav, onProjects } = {}) {
+function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
   const [projects, setProjects] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [tab, setTab] = useState("cost");
@@ -11677,21 +11681,14 @@ function ToolCostCompare({ nav, onProjects } = {}) {
   const [search, setSearch] = useState("");
   const [notice, setNotice] = useState("");
   const [saveState, setSaveState] = useState("idle");
-  const [mode, setMode] = useState("personal");
-  const [me, setMe] = useState("");
+  const me = currentUserEmail || "";   // 편집자는 로그인 계정이다. 따로 이름을 받지 않는다.
   const [meta, setMeta] = useState(null);
   const [remoteChanged, setRemoteChanged] = useState(false);
-  const [switchOpen, setSwitchOpen] = useState(false);
-  const [nameDraft, setNameDraft] = useState("");
   const firstLoad = useRef(true);
   const fileRef = useRef(null);
   const baseRev = useRef(0);
-  const modeRef = useRef("personal");
   const meRef = useRef("");
 
-  useEffect(() => {
-    modeRef.current = mode;
-  }, [mode]);
   useEffect(() => {
     meRef.current = me;
   }, [me]);
@@ -11700,36 +11697,25 @@ function ToolCostCompare({ nav, onProjects } = {}) {
   useEffect(() => {
     let alive = true;
     (async () => {
-      let savedMode = "personal";
-      let savedName = "";
-      try {
-        const r = await TCC_STORE.get(PREF_KEY);
-        if (r && r.value) {
-          const pref = JSON.parse(r.value);
-          savedMode = pref.mode === "shared" ? "shared" : "personal";
-          savedName = pref.name || "";
-        }
-      } catch (e) {
-        /* 설정이 없으면 기본값 */
+      meRef.current = currentUserEmail || "";
+      let box = await readStore();
+      let moved = null;
+      if (!box) {
+        // 예전에 '나만 보기'로 저장해 둔 것이 있으면 잃지 않도록 한 번 옮겨 온다.
+        moved = await readLegacyPersonal();
+        if (moved && moved.length) box = { rev: 0, projects: moved };
       }
       if (!alive) return;
-      setMode(savedMode);
-      modeRef.current = savedMode;
-      setMe(savedName);
-      meRef.current = savedName;
-
-      const box = await readStore(savedMode);
-      if (!alive) return;
       applyBox(box, true);
+      if (moved && moved.length) await writeStore(moved, true);
     })();
     return () => {
       alive = false;
     };
   }, []);
 
-  /* 공유 모드에서 다른 사람의 변경을 감지 */
+  /* 다른 사람이 같은 자료를 고쳤는지 30초마다 확인한다 (master 는 여럿일 수 있다) */
   useEffect(() => {
-    if (mode !== "shared") return;
     const id = setInterval(async () => {
       try {
         const r = await TCC_STORE.get(SHARED_KEY, true);
@@ -11745,7 +11731,7 @@ function ToolCostCompare({ nav, onProjects } = {}) {
       }
     }, 30000);
     return () => clearInterval(id);
-  }, [mode]);
+  }, []);
 
   /* 변경 시 자동 저장 */
   useEffect(() => {
@@ -11771,32 +11757,30 @@ function ToolCostCompare({ nav, onProjects } = {}) {
   }, [projects]);
 
   /* ---------- 저장소 입출력 ---------- */
-  async function readStore(m) {
-    if (m === "shared") {
-      try {
-        const r = await TCC_STORE.get(SHARED_KEY, true);
-        if (r && r.value) return JSON.parse(r.value);
-      } catch (e) {
-        /* 공유 저장소가 비어 있음 */
-      }
-      return null;
+  async function readStore() {
+    try {
+      const r = await TCC_STORE.get(SHARED_KEY, true);
+      if (r && r.value) return JSON.parse(r.value);
+    } catch (e) {
+      /* 아직 저장된 것이 없음 */
     }
+    return null;
+  }
+
+  /* 개인/공유를 나누던 시절의 저장본. 처음 한 번만 읽어 옮겨 온다. */
+  async function readLegacyPersonal() {
     try {
       const r = await TCC_STORE.get(STORAGE_KEY);
-      if (r && r.value) return { rev: 0, projects: JSON.parse(r.value) };
+      if (r && r.value) return JSON.parse(r.value);
     } catch (e) {
-      /* 개인 저장소가 비어 있음 */
+      /* 없으면 그만 */
     }
     return null;
   }
 
   async function writeStore(projs, force) {
     try {
-      if (modeRef.current !== "shared") {
-        await TCC_STORE.set(STORAGE_KEY, JSON.stringify(projs));
-        return { ok: true };
-      }
-      // 공유 저장소는 남의 수정을 덮어쓰지 않도록 먼저 확인한다
+      // 남의 수정을 덮어쓰지 않도록 먼저 확인한다
       let cur = null;
       try {
         const r = await TCC_STORE.get(SHARED_KEY, true);
@@ -11810,7 +11794,7 @@ function ToolCostCompare({ nav, onProjects } = {}) {
       const next = {
         rev: (cur && typeof cur.rev === "number" ? cur.rev : baseRev.current) + 1,
         updatedAt: new Date().toISOString(),
-        updatedBy: meRef.current || "이름 미설정",
+        updatedBy: meRef.current || "계정 미확인",
         projects: projs,
       };
       await TCC_STORE.set(SHARED_KEY, JSON.stringify(next), true);
@@ -11841,20 +11825,9 @@ function ToolCostCompare({ nav, onProjects } = {}) {
     setActiveId((prev) => (fixed.some((p) => p.id === prev) ? prev : fixed[0].id));
   }
 
-  async function savePref(nextMode, nextName) {
-    try {
-      await TCC_STORE.set(
-        PREF_KEY,
-        JSON.stringify({ mode: nextMode, name: nextName })
-      );
-    } catch (e) {
-      /* 설정 저장 실패는 치명적이지 않음 */
-    }
-  }
-
   /* 최신 내용 다시 불러오기 */
   const pullLatest = async () => {
-    const box = await readStore(modeRef.current);
+    const box = await readStore();
     firstLoad.current = true;
     applyBox(box, true);
     setSaveState("idle");
@@ -11865,27 +11838,6 @@ function ToolCostCompare({ nav, onProjects } = {}) {
     const r = await writeStore(projects, true);
     setSaveState(r.ok ? "saved" : "error");
     if (r.ok) setTimeout(() => setSaveState("idle"), 1500);
-  };
-
-  /* 모드 전환 */
-  const switchMode = async (nextMode, take) => {
-    const name = nameDraft.trim() || me;
-    setMe(name);
-    meRef.current = name;
-    setMode(nextMode);
-    modeRef.current = nextMode;
-    await savePref(nextMode, name);
-    setSwitchOpen(false);
-
-    if (nextMode === "shared" && take === "push") {
-      baseRev.current = 0;
-      const r = await writeStore(projects, true);
-      if (!r.ok) setNotice("공유 저장소에 올리지 못했습니다. 잠시 후 다시 시도해주세요.");
-      return;
-    }
-    const box = await readStore(nextMode);
-    firstLoad.current = true;
-    applyBox(box, true);
   };
 
   const project = useMemo(
@@ -11908,15 +11860,26 @@ function ToolCostCompare({ nav, onProjects } = {}) {
     );
   }, [projects, search]);
 
+  /* 고친 사람과 시각은 여기 한 곳에서만 찍는다. 화면마다 따로 챙기면 반드시 빠지는 곳이 생긴다. */
   const patch = (updater) => {
     setProjects((prev) =>
-      prev.map((p) => (p.id === activeId ? { ...p, ...updater(p) } : p))
+      prev.map((p) =>
+        p.id === activeId
+          ? { ...p, ...updater(p), updatedBy: meRef.current, updatedAt: new Date().toISOString() }
+          : p
+      )
     );
+  };
+
+  /* 새로 만들거나 복제할 때 만든 사람을 남긴다 */
+  const stampNew = (p) => {
+    const now = new Date().toISOString();
+    return { ...p, createdBy: meRef.current, createdAt: now, updatedBy: meRef.current, updatedAt: now };
   };
 
   /* ---------- 프로젝트 조작 ---------- */
   const addProject = () => {
-    const p = emptyProject("새 비교 프로젝트");
+    const p = stampNew(emptyProject("새 비교 프로젝트"));
     setProjects((prev) => [...prev, p]);
     setActiveId(p.id);
     setTab("setup");
@@ -11968,7 +11931,7 @@ function ToolCostCompare({ nav, onProjects } = {}) {
     const copy = JSON.parse(JSON.stringify(project));
     copy.id = uid();
     copy.name = project.name + " (복사본)";
-    setProjects((prev) => [...prev, copy]);
+    setProjects((prev) => [...prev, stampNew(copy)]);
     setActiveId(copy.id);
   };
 
@@ -12068,17 +12031,6 @@ function ToolCostCompare({ nav, onProjects } = {}) {
               ? "저장 실패"
               : "자동 저장"}
           </span>
-          <button
-            className={"tcc-mode" + (mode === "shared" ? " is-shared" : "")}
-            onClick={() => {
-              setNameDraft(me);
-              setSwitchOpen(!switchOpen);
-            }}
-          >
-            <span className="tcc-mode-dot" />
-            {mode === "shared" ? "팀 공유" : "나만 보기"}
-          </button>
-
           <span className="tcc-headsep" />
 
           <button className="tcc-btn tcc-btn-ghost" onClick={exportJson}>
@@ -12097,69 +12049,7 @@ function ToolCostCompare({ nav, onProjects } = {}) {
         </div>
       </header>
 
-      {switchOpen && (
-        <div className="tcc-panel">
-          <div className="tcc-panel-row">
-            <label className="tcc-panel-label">내 이름</label>
-            <input
-              className="tcc-in"
-              value={nameDraft}
-              placeholder="예: 이자영"
-              onChange={(e) => setNameDraft(e.target.value)}
-            />
-            <span className="tcc-hint">수정한 사람을 표시할 때 씁니다.</span>
-          </div>
-
-          {mode === "personal" ? (
-            <>
-              <p className="tcc-panel-desc">
-                팀 공유로 바꾸면 이 도구를 여는 모든 사람이 같은 내용을 보고 함께 고칠 수 있습니다.
-                입력한 내용이 팀 전체에 공개되니 개인 메모는 미리 정리해주세요.
-              </p>
-              <div className="tcc-panel-actions">
-                <button className="tcc-btn tcc-btn-solid" onClick={() => switchMode("shared", "push")}>
-                  지금 내용을 팀 공유로 올리기
-                </button>
-                <button className="tcc-btn" onClick={() => switchMode("shared", "pull")}>
-                  팀 공유 내용 가져오기
-                </button>
-                <button className="tcc-btn tcc-btn-ghost" onClick={() => setSwitchOpen(false)}>
-                  닫기
-                </button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className="tcc-panel-desc">
-                지금은 팀 공유 상태입니다. 나만 보기로 돌아가면 공유 내용은 그대로 남고 내 개인
-                저장본을 보게 됩니다.
-              </p>
-              <div className="tcc-panel-actions">
-                <button
-                  className="tcc-btn"
-                  onClick={() => {
-                    const n = nameDraft.trim();
-                    setMe(n);
-                    meRef.current = n;
-                    savePref("shared", n);
-                    setSwitchOpen(false);
-                  }}
-                >
-                  이름만 저장
-                </button>
-                <button className="tcc-btn" onClick={() => switchMode("personal", "pull")}>
-                  나만 보기로 돌아가기
-                </button>
-                <button className="tcc-btn tcc-btn-ghost" onClick={() => setSwitchOpen(false)}>
-                  닫기
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {mode === "shared" && remoteChanged && (
+      {remoteChanged && (
         <div className="tcc-conflict">
           <span>
             다른 사람이 내용을 수정했습니다
@@ -12217,6 +12107,13 @@ function ToolCostCompare({ nav, onProjects } = {}) {
                   value={project.name}
                   onChange={(e) => patch(() => ({ name: e.target.value }))}
                 />
+                <span className="tcc-projmeta">
+                  {project.createdBy ? "만든 사람 " + project.createdBy : "만든 사람 기록 없음"}
+                  {project.updatedBy
+                    ? " · 최근 편집 " + project.updatedBy +
+                      (project.updatedAt ? " (" + agoText(project.updatedAt) + ")" : "")
+                    : ""}
+                </span>
                 <div className="tcc-projbar-actions">
                   <button className="tcc-btn tcc-btn-ghost" onClick={duplicateProject}>
                     복제
@@ -14083,7 +13980,6 @@ const CSS = `
 /* 헤더 우측은 상태 표시와 버튼이 섞여 있어 높이·모서리·글자 크기를 한 곳에서 맞춘다.
    전역 .tcc-btn 은 건드리지 않고 헤더 안에서만 적용한다. */
 .tcc-head-right .tcc-btn,
-.tcc-head-right .tcc-mode,
 .tcc-head-right .tcc-save {
   display: inline-flex; align-items: center; gap: 6px;
   height: 30px; padding: 0 11px; margin: 0;
@@ -14135,6 +14031,7 @@ const CSS = `
 .tcc-projname { flex: 1; min-width: 180px; font-size: 17px; font-weight: 700; border: none; background: none; color: var(--ink); font-family: inherit; padding: 4px 0; border-bottom: 1px solid transparent; }
 .tcc-projname:focus { outline: none; border-bottom-color: var(--accent); }
 .tcc-projbar-actions { display: flex; gap: 6px; }
+.tcc-projmeta { font-size: 11.5px; color: var(--ink2); white-space: nowrap; }
 .tcc-tabbar { display: flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-top: none; padding: 0 8px; flex-wrap: wrap; }
 .tcc-tab { font-family: inherit; font-size: 13px; padding: 11px 14px; border: none; background: none; cursor: pointer; color: var(--ink2); border-bottom: 2px solid transparent; }
 .tcc-tab:hover { color: var(--ink); }
@@ -14283,11 +14180,6 @@ const CSS = `
 .tcc-cblock li { margin: 4px 0; }
 
 /* 저장 모드 · 팀 공유 */
-.tcc-mode { background: var(--panel); color: var(--ink2); cursor: pointer; }
-.tcc-mode:hover { border-color: var(--ink2); color: var(--ink); }
-.tcc-mode-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--ink2); }
-.tcc-mode.is-shared { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
-.tcc-mode.is-shared .tcc-mode-dot { background: var(--accent); }
 .tcc-save-conflict { color: #8A6100; border-color: #F0DDAC; }
 .tcc-save-conflict .tcc-save-dot { background: #C79217; }
 .tcc-panel { margin-top: 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; }
@@ -14751,7 +14643,7 @@ function App() {
         {page==='delays'&&(isMaster||isManager)&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
         {page==='autoDelivery'&&(isMaster||isManager)&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='refunds'&&(isMaster?<RefundManagementPage currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
-        {page==='costs'&&(isMaster?<ToolCostCompare nav={costNav} onProjects={setCostState}/>:<NoAccessPage/>)}
+        {page==='costs'&&(isMaster?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&isMaster&&<AgentAnalysisPage/>}
         {page==='agents'&&(isMaster?<AgentMgmtPage/>:<NoAccessPage/>)}
       </div>
