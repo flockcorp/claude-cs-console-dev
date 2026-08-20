@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820g_snapshot_rename -->
+<!-- v20260820h_button_size -->
+<!-- (2026-08-20) 비용 비교 도구의 버튼 규격을 통일했다(사용자 제보). 시작은 회차 목록의 삭제 버튼이었다 — .tcc-x 가 26x26 고정 상자라 확인 단계에서 라벨이 '×' 에서 '삭제' 로 바뀌면 글자가 상자를 넘어 잘렸고, 옆의 '되돌리기'(.tcc-btn, 약 35px)와 높이도 달랐다. 전체를 훑어보니 상자형 버튼이 세 규격으로 갈려 있었다 — .tcc-btn 약 35px · .tcc-x 26px · .tcc-mini 24px. 다만 머리말은 이미 .tcc-head-right 규칙으로 30px 에 맞춰 두고 있었으므로, 그 30px 을 기준으로 셋을 모았다. 높이는 세로 여백 대신 height:30px 으로 잡고 글자 정렬은 inline-flex 에 맡겼다. 폭 고정(width)은 최소폭(min-width)으로 바꿔 라벨이 길어지면 상자가 따라 늘어난다 — 같은 문제가 .tcc-mini 를 쓰는 자리(비용 항목 · 기능 항목의 삭제)에도 있었다. 링크처럼 보이도록 만든 버튼(.tcc-linkbtn · .tcc-loglink · .tcc-notebtn)과 목록 행 전체를 누르는 .tcc-todo 는 상자형이 아니므로 그대로 뒀다. 색·기능은 건드리지 않았다. -->
 <!-- (2026-08-20) 저장한 검토 회차의 이름을 나중에 고칠 수 있게 했다(사용자 요청). 회차 이름을 그냥 눌러 고치면 된다 — 프로젝트 이름 칸과 같은 방식으로, 평소엔 글자처럼 보이다가 올리면 밑줄이 생기고 누르면 초록 밑줄로 바뀐다. 되돌리기 때 자동으로 남는 [자동저장] 회차를 알아보기 쉬운 이름으로 바꾸려는 것이 첫 용도다. 저장은 기존 자동 저장 경로를 그대로 타므로 마지막 타자 뒤 700ms 에 한 번만 나간다(글자마다 저장되지 않는다). 회차의 값·날짜·계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 계약·이력 탭의 '검토 회차'를 셋 보완했다(사용자와 검토 후 합의). ①되돌리기를 누르면 현재 입력값이 백업 없이 덮여 사라졌다 — 되돌리기의 되돌리기가 없어, 회차 저장을 깜빡하면 작업이 통째로 날아가는 자리였다. 이제 되돌리기 직전에 현재 상태를 «[자동저장] YYYY-MM-DD 되돌리기 직전» 이름으로 한 건 먼저 남기고 복원한다. 이름 앞 [자동저장]으로 사람이 붙인 회차와 구분된다. 겸해서 '현재 값을 회차로 뜨는' 부분을 takeSnapshot() 하나로 모아 저장 버튼과 자동 저장이 같은 모양을 쓰게 했다. ②회차를 전부 그리던 것을 최근 5건만 펼치고 나머지는 «이전 회차 N건 더 보기»로 접었다. 카드마다 서비스별로 현재값과의 차액을 다시 계산하므로(computeService — 비용 수식을 전부 평가한다) 회차가 쌓이면 화면을 그릴 때마다 그 횟수가 회차 x 서비스로 늘어난다. ③회차가 20건을 넘으면 목록 위에 정리 안내를 띄운다. 회차 하나가 그때의 값(기간·변수·서비스·비용항목·기능항목)을 통째로 담고 그 전부가 프로젝트 JSON 한 칸에 저장되므로, 쌓일수록 저장·불러오기가 무거워지고 공유 모드의 30초 폴링도 함께 무거워진다. 자동 삭제는 하지 않는다 — 무엇을 버릴지는 사람이 판단할 일이다. 계산·저장 구조는 건드리지 않았다. -->
 <!-- (2026-08-20) 결론 탭 '값이 바뀌면 순위도 바뀔까' 그래프가 확대되어 보이던 것을 고쳤다(사용자 제보). 원인은 배율이다 — 이 차트는 SVG(viewBox 720x260)인데 .tcc-chart 가 width:100% 라 컨테이너 폭에 맞춰 통째로 늘어난다. 오른쪽 목록을 사이드바로 옮기며 본문이 넓어지자(최대 1360px) 그림이 약 1.8배로 확대됐고, 축 글자(10px)와 선 굵기(2.5px)까지 함께 커져 확대경으로 보는 모양이 됐다. 데이터나 축 범위 문제가 아니다. → .tcc-chart 에 max-width:880px 을 걸어 배율을 약 1.2배로 묶었다. 세로 비율은 viewBox 가 잡으므로 함께 줄어든다. 차트 로직·계산은 건드리지 않았다. -->
@@ -14147,7 +14148,16 @@ const CSS = `
 .tcc-sechead h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
 .tcc-sechead p { margin: 3px 0 0; font-size: 12.5px; color: var(--ink2); }
 
-.tcc-btn { font-family: inherit; font-size: 12.5px; padding: 7px 13px; border-radius: 5px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+/* 상자형 버튼은 모두 같은 높이를 쓴다 — 머리말에서 이미 쓰던 30px 을 기준으로 삼았다.
+   ★ .tcc-x(26px) · .tcc-mini(24px) 는 폭까지 고정돼 있어, 확인 단계에서 라벨이
+     '×' → '삭제' 로 바뀌면 글자가 상자를 넘어 잘렸다. 폭을 최소값으로 바꿔 내용을 따라 늘어나게 한다.
+   글자를 가운데 두는 일은 inline-flex 에 맡기고, 세로 여백 대신 height 로 높이를 잡는다. */
+.tcc-btn, .tcc-x, .tcc-mini {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 30px; line-height: 1; box-sizing: border-box; white-space: nowrap;
+  font-family: inherit; border-radius: 5px; cursor: pointer;
+}
+.tcc-btn { font-size: 12.5px; padding: 0 13px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
 .tcc-btn:hover { border-color: var(--ink2); }
 .tcc-btn-solid { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 .tcc-btn-solid:hover { background: #0b5545; }
@@ -14177,7 +14187,7 @@ const CSS = `
 .tcc-varrange { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--ink2); }
 .tcc-svcno { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); width: 22px; }
 .tcc-svcrow .tcc-in { flex: 1 1 220px; }
-.tcc-x { width: 26px; height: 26px; border: 1px solid var(--line); background: none; border-radius: 4px; cursor: pointer; color: var(--ink2); font-size: 14px; line-height: 1; }
+.tcc-x { font-size: 13px; min-width: 30px; padding: 0 9px; border: 1px solid var(--line); background: none; color: var(--ink2); }
 .tcc-x:hover { color: var(--danger); border-color: var(--danger); }
 
 .tcc-varstrip { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; background: var(--accent-soft); border-radius: 6px; align-items: center; }
@@ -14206,7 +14216,7 @@ const CSS = `
 .tcc-cellpre.is-err { color: var(--danger); }
 .tcc-notebtn { margin-top: 3px; background: none; border: none; font-family: inherit; font-size: 11px; color: var(--ink2); cursor: pointer; padding: 0 7px; text-decoration: underline; text-underline-offset: 2px; }
 .tcc-notein { margin-top: 5px; border-color: var(--line); font-size: 12px; }
-.tcc-mini { width: 24px; height: 24px; border: 1px solid var(--line); background: none; border-radius: 4px; cursor: pointer; color: var(--ink2); font-size: 11px; margin-right: 3px; }
+.tcc-mini { font-size: 11.5px; min-width: 28px; padding: 0 8px; border: 1px solid var(--line); background: none; color: var(--ink2); margin-right: 3px; }
 .tcc-mini:hover { border-color: var(--ink2); color: var(--ink); }
 .tcc-mini-del:hover { color: var(--danger); border-color: var(--danger); }
 
