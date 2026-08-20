@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260819j_report_layout -->
-<!-- v20260820a_cost_compare -->
-<!-- (2026-08-20) 사이드바에 '비용 비교' 메뉴를 신설했다(master 전용). 운영팀이 쓰거나 검토 중인 툴의 비용을 쌓아 무엇을 쓸지 정하는 근거로 삼는 화면이다. 표 4개를 새로 만들었다(cost_categories · cost_services · cost_quote_items · cost_actuals, tools/cost_compare.sql). RLS 는 네 표 모두 환불·인력관리와 같은 master 전용 등급 — 계약 조건과 단가가 민감 정보라서다. 화면은 세 단계다: ①목록(카테고리별 · 상태 뱃지 · 월 비용/일회성/3년 TCO/최근 청구/계약 만료 D-day) ②상세(기본 정보 + 견적 항목 인라인 편집 + 월별 실제 청구) ③비교(2~3개를 골라 항목별로 나란히 · 월/연/3년 환산 · 최저 대비 차액 · 단위당 단가). ★ 설계에서 정한 규칙 셋 — (가) 견적은 세대를 갖는다: 협상하면 2차 견적이 오므로 quote_label 로 묶고 목록·비교는 quote_date 가 가장 최근인 라벨 하나만 합산한다(섞으면 두 배로 잡힌다). (나) VAT 는 항목마다 포함 여부를 두고 화면 상단 '기준'에서 별도/포함으로 맞춰 본다 — 견적서는 별도, 카드 청구는 포함으로 와서 섞이면 10% 착시가 생긴다. (다) 3년 TCO = 월 합계 x 36 + 일회성 합계. ★ 계약 만료 알림 — contract_end 가 60일 이내이거나 이미 지난 '사용중·보류' 툴을 목록 맨 위 배너로 띄운다(사용자 요청). 최소 계약기간이 있는 툴은 갱신일을 놓치면 자동 연장되는 일이 많아 비용 관리에서 실효가 큰 자리다. 기존 화면·표는 건드리지 않았다. -->
+<!-- v20260820b_cost_compare_tool -->
+<!-- (2026-08-20) 사이드바에 '비용 비교' 메뉴를 신설했다(master 전용). 챗에서 만든 프로토타입(tool-cost-compare_3.jsx)을 콘솔로 옮긴 것이다 — 프로젝트 단위로 써드파티 툴의 비용과 기능을 견주는 도구다. 가정값(변수)을 두고 셀에 '월문의수 * 40' 같은 수식을 직접 적어 비용을 산출하고, 가중치를 준 기능 항목을 1~5점으로 채점해 100점으로 환산하며, 결론·계약이력·설정 탭과 대시보드를 갖는다. 계산과 화면 로직은 원본을 그대로 두고 콘솔에서 못 도는 다섯 군데만 갈아끼웠다. ①import/export 제거 ②window.storage(클로드 아티팩트 전용 API)를 TCC_STORE 로 대체 — Supabase public.cost_store 표에 JSON 문자열을 그대로 담는다(tools/cost_store.sql). 개인/공유 두 모드를 원본대로 유지하며 공유 행은 주인 자리에 0번 UUID 를 넣어 한 행만 존재하도록 못 박았다. rev 기반 충돌 감지(30초 폴링)도 그대로 살아 있다. RLS 는 환불·인력관리와 같은 master 전용 등급이고 개인 행은 본인 것만 보인다. ③mathjs 를 CDN 으로 싣되 12.4.2 로 버전을 고정했다 — 2026-06-17 babel 버전 미지정으로 흰 화면이 났던 일을 되풀이하지 않기 위해서다. ④React 구조분해에 useMemo 를 추가했다. ⑤AI 판단 코멘트는 비활성으로 뒀다 — 브라우저에서 Anthropic API 를 부르려면 키가 필요한데 이 저장소는 공개라 화면에 박을 수 없다. Supabase 엣지 함수를 만들어 경유시킨 뒤 연다. 기존 화면·표는 건드리지 않았다. -->
 <!-- (2026-08-19) Report 탭 가독성 조정(사용자 요청). ①사유별 도넛과 공급사별 막대의 2단 폭을 반반(1fr 1fr)에서 0.85fr 1.15fr 로 바꿨다 — 도넛은 범례가 오른쪽에 붙어 좁아도 읽히지만, 가로 막대는 폭이 곧 이름칸 + 막대 길이라 넓을수록 낫다. ②왼쪽 이름축의 자르는 길이는 16자 그대로 둔다 — 22자로 늘렸다가 사용자 지시로 되돌렸다(dev v20260819i 로 한 번 나갔던 상태). 16자가 넘는 이름은 …으로 자르고 전체는 막대 툴팁 제목에서 본다(data.labels 는 원문 그대로). 축 방향은 가로 막대 유지 — 상품명이 길어 세로로 두면 이름이 눕거나 잘린다(사용자와 합의). 집계·데이터 변경 없음. -->
 <!-- v20260819h_hbar_value_ticks -->
 <!-- (2026-08-19) 가로 막대의 아래축(값축)이 건수 모드에서 숫자 대신 공급사명·상품명을 찍던 것을 고쳤다. 브라우저 실측: 차트2 의 x(linear) 눈금이 '올인홈 | 블랙라인 | 타카타카…' 였는데, 이는 y 이름 목록의 0·2·4·6·8 번째다 — x축 눈금값(숫자)을 이름표로 바꿔 찍고 있었다. ★★ 원인: Chart.js 는 indexAxis:'y' 여도 x 자리에 '이름축(category) 기본값'을 먼저 얹는다. type 만 linear 로 덮으면 함께 딸려 온 '값을 라벨로 바꾸는 눈금 콜백'이 남는다. 금액 모드는 ₩…만 콜백을 직접 줘서 멀쩡했고 건수만 깨졌던 이유가 이것이다(사용자 제보와 일치). → 값축은 건수든 금액이든 항상 콜백을 직접 준다. ★ 가로 막대를 또 만들 일이 있으면 type 과 눈금 콜백을 둘 다 명시할 것 — 이 함정은 세로 막대에서는 안 나온다. 집계·데이터·다른 차트는 그대로다. -->
@@ -95,6 +94,8 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- 비용 비교 화면의 수식 계산(셀에 '월문의수 * 40' 처럼 적는다). 버전을 반드시 고정한다 -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjs@12.4.2/lib/browser/math.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
@@ -359,7 +360,7 @@ const SUPABASE_URL      = 'https://cpnssvebqfhmczszceqk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwbnNzdmVicWZobWN6c3pjZXFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNTQ3OTQsImV4cCI6MjA5MjgzMDc5NH0.waUYoJxfhtazYN6nLq7nOK4Soh0fo6AggvbMew2n4ME';
 
 const { createClient } = supabase;
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── 테스트(dev) 환경 발송 차단 ─────────────────────────────────────────
@@ -11232,633 +11233,3205 @@ function DelayReportTab(){
 }
 
 // ── APP ────────────────────────────────────────
-// ─── CostComparePage: 운영팀 툴 비용 비교 (master 전용) ─────────────
-// 운영팀이 쓰거나 검토 중인 툴의 비용을 쌓아 "무엇을 쓸지" 정하는 근거로 삼는 화면.
-// 도입 전에는 견적(cost_quote_items), 도입 후에는 실제 청구(cost_actuals)를 같은 서비스 아래 둔다.
+// ═══════════════════════════════════════════════════════════════
+// 비용 비교 도구 — 프로젝트 단위로 써드파티 툴의 비용·기능을 견주는 화면 (master 전용)
 //
-// ★ 견적은 세대를 갖는다 — 협상하면 2차 견적이 온다. quote_label 로 묶고,
-//   목록·비교의 월 비용은 quote_date 가 가장 최근인 라벨 하나만 합산한다(섞으면 두 배가 된다).
-// ★ VAT — 견적서는 별도, 카드 청구는 포함으로 오는 일이 흔하다. 항목마다 포함 여부를 두고
-//   화면 상단에서 기준을 하나로 맞춰 본다. 기준이 섞이면 10%짜리 착시가 생긴다.
-function CostComparePage(){
-  const [cats,setCats]         = useState([]);
-  const [services,setServices] = useState([]);
-  const [items,setItems]       = useState([]);   // cost_quote_items 전체
-  const [actuals,setActuals]   = useState([]);   // cost_actuals 전체
-  const [loading,setLoading]   = useState(true);
-  const [view,setView]         = useState('list');   // list | detail | compare
-  const [curId,setCurId]       = useState(null);
-  const [picked,setPicked]     = useState([]);       // 비교에 담은 service id (최대 3)
-  const [vatMode,setVatMode]   = useState('excl');   // excl = VAT별도 기준 / incl = VAT포함 기준
-  const [fCat,setFCat]         = useState('all');
-  const [fStatus,setFStatus]   = useState('all');
-  const [q,setQ]               = useState('');
-  const [saving,setSaving]     = useState(false);
-  const [baseQty,setBaseQty]   = useState('');       // 비교 화면의 '단위당 단가' 기준 수량
+// 챗에서 만든 프로토타입(tool-cost-compare_3.jsx)을 콘솔로 옮긴 것이다.
+// 계산·화면 로직은 원본 그대로 두고, 콘솔에서 못 도는 곳만 갈아끼웠다.
+//   · window.storage(아티팩트 전용 API) → TCC_STORE (Supabase cost_store 표)
+//   · mathjs 는 CDN 으로 싣는다(버전 고정 — 예전 babel 흰 화면 사고를 되풀이하지 않기 위해)
+//   · AI 코멘트는 비활성. 브라우저에서 Anthropic API 를 부르려면 키가 필요한데 이 저장소는
+//     공개라 화면에 박을 수 없다 → Supabase 엣지 함수를 만들어 경유시킨 뒤 연다.
+// ═══════════════════════════════════════════════════════════════
 
-  const STATUS = {
-    '검토중':  {bg:'rgba(168,222,246,.18)', color:'#A8DEF6', border:'rgba(168,222,246,.5)'},
-    '사용중':  {bg:'rgba(246,173,9,.18)',   color:'#F6AD09', border:'rgba(246,173,9,.5)'},
-    '보류':    {bg:'rgba(220,232,255,.15)', color:'#dce8ff', border:'rgba(220,232,255,.4)'},
-    '해지':    {bg:'rgba(150,150,150,.15)', color:'#888888', border:'rgba(150,150,150,.4)'},
-    '부적합':  {bg:'rgba(246,109,109,.15)', color:'#F66D6D', border:'rgba(246,109,109,.4)'},
-  };
-  const STATUS_LIST = ['검토중','사용중','보류','해지','부적합'];
-  const KINDS  = [{v:'monthly',t:'월 반복'},{v:'onetime',t:'일회성'}];
-  const BASES  = ['고정','계정당','건당','사용량','1회성'];
+// 프로토타입이 쓰던 저장소 API 를 같은 모양으로 흉내 낸다. 호출부는 손대지 않았다.
+//   get(key, shared) → {value} | null   ·   set(key, value, shared)
+const TCC_STORE = {
+  async _me(){
+    const {data} = await sb.auth.getUser();
+    return data && data.user ? data.user : null;
+  },
+  async get(key, shared){
+    let q = sb.from('cost_store').select('value').eq('store_key', key)
+              .eq('scope', shared ? 'shared' : 'personal');
+    if(!shared){
+      const me = await this._me();
+      if(!me) return null;
+      q = q.eq('owner', me.id);
+    }
+    const {data, error} = await q.maybeSingle();
+    if(error){ sbFail('비용 비교 자료 조회', error); throw error; }
+    return data ? {value: data.value} : null;
+  },
+  async set(key, value, shared){
+    const me = await this._me();
+    const row = {
+      store_key: key,
+      scope: shared ? 'shared' : 'personal',
+      owner: shared ? '00000000-0000-0000-0000-000000000000' : (me ? me.id : null),
+      value: String(value),
+      updated_at: new Date().toISOString(),
+      updated_by: me ? me.email : null,
+    };
+    const {error} = await sb.from('cost_store').upsert(row, {onConflict:'store_key,scope,owner'});
+    if(error){ sbFail('비용 비교 자료 저장', error, {write:true}); throw error; }
+  },
+};
 
-  const won = n => Number(n||0).toLocaleString('ko-KR', {maximumFractionDigits:0});
-  const todayStr = () => new Date().toISOString().slice(0,10);
+/* =========================================================
+   비용 비교 도구  v20260820b_header_unify
+   - 프로젝트 단위로 써드파티 툴 비용/기능 비교
+   - 가정값(변수) + 수식 기반 비용 산출
+   - 가중치 기반 기능 평가
+   - 우리몰 기준을 반영한 AI 판단 코멘트
+   ========================================================= */
 
-  // ── 데이터 ────────────────────────────────────────────────
-  const loadAll = async () => {
-    setLoading(true);
-    const [c,s,i,a] = await Promise.all([
-      sb.from('cost_categories').select('*').order('sort_order'),
-      sb.from('cost_services').select('*').order('name'),
-      sb.from('cost_quote_items').select('*').order('sort_order'),
-      sb.from('cost_actuals').select('*').order('ym',{ascending:false}),
-    ]);
-    if(sbFail('툴 카테고리 조회',c.error) || sbFail('툴 목록 조회',s.error)
-       || sbFail('견적 항목 조회',i.error) || sbFail('청구 내역 조회',a.error)){ setLoading(false); return; }
-    setCats(c.data||[]); setServices(s.data||[]); setItems(i.data||[]); setActuals(a.data||[]);
-    setLoading(false);
-  };
-  useEffect(()=>{ loadAll(); },[]);
+const STORAGE_KEY = "toolcost:projects:v1";
+const SHARED_KEY = "toolcost:team:v1";
+const PREF_KEY = "toolcost:pref:v1";
 
-  // 견적·청구를 고칠 때 loadAll() 을 돌리면 아직 저장하지 않은 '기본 정보' 폼 입력이 서버 값으로 덮인다.
-  // 그래서 각자 자기 표만 다시 읽는다.
-  const reloadItems = async () => {
-    const {data,error}=await sb.from('cost_quote_items').select('*').order('sort_order');
-    if(sbFail('견적 항목 조회',error)) return; setItems(data||[]);
+/* 몇 분 전인지 사람이 읽기 좋게 */
+function agoText(iso) {
+  if (!iso) return "";
+  const t = new Date(iso);
+  if (isNaN(t.getTime())) return "";
+  const min = Math.floor((Date.now() - t.getTime()) / 60000);
+  if (min < 1) return "방금";
+  if (min < 60) return min + "분 전";
+  const h = Math.floor(min / 60);
+  if (h < 24) return h + "시간 전";
+  return Math.floor(h / 24) + "일 전";
+}
+
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+const won = (n) => {
+  if (!isFinite(n)) return "-";
+  return Math.round(n).toLocaleString("ko-KR");
+};
+
+const CYCLES = [
+  { key: "monthly", label: "매월" },
+  { key: "yearly", label: "매년" },
+  { key: "once", label: "1회성" },
+];
+
+const SERVICE_STATES = [
+  { key: "candidate", label: "검토 후보" },
+  { key: "current", label: "현재 사용" },
+  { key: "dropped", label: "탈락 · 종료" },
+];
+
+const LOG_TYPES = [
+  { key: "update", label: "정보 갱신" },
+  { key: "talk", label: "벤더 협의" },
+  { key: "issue", label: "운영 이슈" },
+  { key: "retro", label: "도입 후 평가" },
+];
+
+const VIEWS = [
+  ["cost", "비용표"],
+  ["feature", "기능 평가"],
+  ["result", "결론"],
+  ["history", "계약 · 이력"],
+  ["setup", "설정"],
+];
+
+const todayStr = () => new Date().toISOString().slice(0, 10);
+
+// 오늘 기준 남은 일수. 지난 날짜면 음수.
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const t = new Date(dateStr + "T00:00:00");
+  if (isNaN(t.getTime())) return null;
+  const now = new Date(todayStr() + "T00:00:00");
+  return Math.round((t - now) / 86400000);
+}
+
+function addDays(dateStr, days) {
+  if (!dateStr) return "";
+  const t = new Date(dateStr + "T00:00:00");
+  if (isNaN(t.getTime())) return "";
+  t.setDate(t.getDate() + days);
+  return t.toISOString().slice(0, 10);
+}
+
+/* 예전에 저장된 데이터에 새로 생긴 항목을 채워 넣는다 */
+function migrate(p) {
+  const out = { ...p };
+  if (!out.contract)
+    out.contract = { startedAt: "", endsAt: "", noticeDays: 30, reviewLeadDays: 90 };
+  if (!out.decision) out.decision = { serviceId: "", decidedAt: "", reason: "" };
+  if (!Array.isArray(out.logs)) out.logs = [];
+  if (!Array.isArray(out.snapshots)) out.snapshots = [];
+  out.services = (out.services || []).map((s) => ({
+    state: "candidate",
+    vendor: "",
+    contact: "",
+    link: "",
+    memo: "",
+    lastCheckedAt: "",
+    ...s,
+  }));
+  out.featureItems = (out.featureItems || []).map((f) => ({ desc: "", ...f }));
+  return out;
+}
+
+/* 정보가 언제 마지막으로 확인됐는지 */
+function freshness(project) {
+  const dates = project.services
+    .map((s) => s.lastCheckedAt)
+    .filter(Boolean)
+    .sort();
+  if (dates.length === 0) return { oldest: null, days: null };
+  const oldest = dates[0];
+  return { oldest, days: -daysUntil(oldest) };
+}
+
+/* ---------- 수식 계산 ---------------------------------- */
+// 변수명을 값으로 치환한 뒤 계산한다. 한글 변수명도 그대로 쓸 수 있다.
+function escapeRe(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function evalCell(expr, vars) {
+  const raw = (expr === null || expr === undefined ? "" : String(expr)).trim();
+  if (raw === "") return { value: 0, error: null, empty: true };
+
+  let work = raw;
+  const sorted = [...vars].sort((a, b) => b.label.length - a.label.length);
+  for (const v of sorted) {
+    if (!v.label) continue;
+    const num = Number(v.value);
+    work = work.replace(
+      new RegExp(escapeRe(v.label), "g"),
+      "(" + (isFinite(num) ? num : 0) + ")"
+    );
+  }
+  // 천단위 콤마와 '원' 같은 단위 표기는 지워준다
+  work = work.replace(/,/g, "").replace(/원/g, "");
+
+  try {
+    const out = math.evaluate(work);
+    const num = typeof out === "number" ? out : Number(out);
+    if (!isFinite(num)) return { value: 0, error: "숫자로 계산되지 않았습니다" };
+    return { value: num, error: null };
+  } catch (e) {
+    return { value: 0, error: "계산할 수 없는 식입니다" };
+  }
+}
+
+/* ---------- 서비스별 비용 집계 -------------------------- */
+function computeService(project, serviceId) {
+  const months = Math.max(1, Number(project.horizonMonths) || 36);
+  let monthly = 0;
+  let yearly = 0;
+  let once = 0;
+  const errors = [];
+
+  for (const item of project.costItems) {
+    const r = evalCell(item.values[serviceId], project.vars);
+    if (r.error) errors.push(item.label + ": " + r.error);
+    if (item.cycle === "monthly") monthly += r.value;
+    else if (item.cycle === "yearly") yearly += r.value;
+    else once += r.value;
+  }
+
+  const perMonth = monthly + yearly / 12;
+  const total = monthly * months + (yearly * months) / 12 + once;
+  return { monthly, yearly, once, perMonth, total, months, errors };
+}
+
+function computeScore(project, serviceId) {
+  let weightSum = 0;
+  let got = 0;
+  for (const f of project.featureItems) {
+    const w = Number(f.weight) || 0;
+    const s = Number(f.scores[serviceId]);
+    weightSum += w;
+    got += w * (isFinite(s) ? s : 0);
+  }
+  if (weightSum === 0) return { score: 0, weightSum: 0 };
+  return { score: (got / (weightSum * 5)) * 100, weightSum };
+}
+
+/* ---------- 샘플 프로젝트 ------------------------------- */
+function sampleProject() {
+  const s1 = uid();
+  const s2 = uid();
+  const s3 = uid();
+  return {
+    id: uid(),
+    name: "고객센터 운영 플랫폼",
+    horizonMonths: 36,
+    contract: { startedAt: "", endsAt: "", noticeDays: 30, reviewLeadDays: 90 },
+    decision: { serviceId: "", decidedAt: "", reason: "" },
+    logs: [],
+    snapshots: [],
+    context:
+      "월 주문 약 23,000건 규모의 자취·1인가구 홈리빙 셀렉트샵입니다. 상품 수가 8,000개 이상이고 공급사가 350곳이라 배송·재고 문의 비중이 큽니다. 장기적으로는 CS를 내재화하고 싶고, AI는 상담원을 대체하기보다 보조하는 용도로 쓰려고 합니다. 초기 비용보다 3년 총비용과 운영 안정성을 더 중요하게 봅니다.",
+    vars: [
+      { id: uid(), label: "상담사수", value: 3, unit: "명", min: 1, max: 10, step: 1 },
+      { id: uid(), label: "월문의건수", value: 4000, unit: "건", min: 1000, max: 20000, step: 500 },
+      { id: uid(), label: "좌석수", value: 2, unit: "석", min: 1, max: 8, step: 1 },
+    ],
+    services: [
+      { id: s1, name: "A안 · 툴 교체 + 기존 대행사", state: "candidate", vendor: "", contact: "", link: "", memo: "", lastCheckedAt: "" },
+      { id: s2, name: "B안 · 툴 교체 + 자체 채용", state: "candidate", vendor: "", contact: "", link: "", memo: "", lastCheckedAt: "" },
+      { id: s3, name: "C안 · 툴 교체 + 신규 BPO", state: "candidate", vendor: "", contact: "", link: "", memo: "", lastCheckedAt: "" },
+    ],
+    costItems: [
+      {
+        id: uid(),
+        label: "상담 툴 이용료",
+        cycle: "monthly",
+        note: "요금제 + 좌석 과금 (예시 값)",
+        values: { [s1]: "250000 + 좌석수*48800", [s2]: "250000 + 좌석수*48800", [s3]: "250000 + 좌석수*48800" },
+      },
+      {
+        id: uid(),
+        label: "인건비 / 대행 수수료",
+        cycle: "monthly",
+        note: "예시 값이니 실제 견적으로 바꿔주세요",
+        values: { [s1]: "7550000", [s2]: "상담사수*3200000", [s3]: "7000000" },
+      },
+      {
+        id: uid(),
+        label: "AI 응대 사용료",
+        cycle: "monthly",
+        note: "문의 30%를 AI가 1차 응대한다고 가정",
+        values: { [s1]: "월문의건수*0.3*90", [s2]: "월문의건수*0.3*90", [s3]: "0" },
+      },
+      {
+        id: uid(),
+        label: "초기 구축 · 이관 비용",
+        cycle: "once",
+        note: "데이터 이관, 시나리오 세팅",
+        values: { [s1]: "500000", [s2]: "1500000", [s3]: "1000000" },
+      },
+    ],
+    featureItems: [
+      {
+        id: uid(),
+        label: "쇼핑몰 주문·배송 데이터 연동",
+        desc: "상담 화면에서 주문번호로 배송 상태와 옵션 정보를 바로 확인할 수 있는가. 5점 = 실시간 자동 연동, 3점 = 수동 조회 필요, 1점 = 별도 창을 띄워야 함.",
+        weight: 5,
+        scores: { [s1]: 4, [s2]: 4, [s3]: 3 },
+      },
+      {
+        id: uid(),
+        label: "응대 품질 안정성",
+        desc: "상담사 교체가 잦아도 답변 수준이 유지되는가. 오답·재문의 발생률 기준.",
+        weight: 5,
+        scores: { [s1]: 3, [s2]: 5, [s3]: 3 },
+      },
+      {
+        id: uid(),
+        label: "우리 상품·정책 이해도",
+        desc: "공급사별 반품비 차이, 옵션 구조 같은 우리 몰 특유의 규칙을 얼마나 빨리 익히는가.",
+        weight: 4,
+        scores: { [s1]: 4, [s2]: 5, [s3]: 2 },
+      },
+      {
+        id: uid(),
+        label: "운영 관리 부담",
+        desc: "우리 쪽에서 들여야 하는 관리 공수. 점수가 높을수록 손이 덜 감.",
+        weight: 3,
+        scores: { [s1]: 4, [s2]: 2, [s3]: 5 },
+      },
+      {
+        id: uid(),
+        label: "인력 변동 대응력",
+        desc: "결원이나 성수기 문의 급증에 얼마나 빨리 인력을 붙일 수 있는가.",
+        weight: 3,
+        scores: { [s1]: 3, [s2]: 2, [s3]: 4 },
+      },
+    ],
   };
-  const reloadActuals = async () => {
-    const {data,error}=await sb.from('cost_actuals').select('*').order('ym',{ascending:false});
-    if(sbFail('청구 내역 조회',error)) return; setActuals(data||[]);
+}
+
+/* 리뷰 솔루션 — 실제로 채워 넣을 수 있게 뼈대만 만들어둔 프로젝트 */
+function reviewProject() {
+  const a = uid();
+  const b = uid();
+  const c = uid();
+  return {
+    id: uid(),
+    name: "리뷰 솔루션",
+    horizonMonths: 36,
+    contract: { startedAt: "", endsAt: "", noticeDays: 30, reviewLeadDays: 90 },
+    decision: { serviceId: a, decidedAt: "", reason: "" },
+    logs: [
+      {
+        id: uid(),
+        date: todayStr(),
+        type: "update",
+        text: "비교 기록 시작. 각 후보의 실제 견적과 계약 조건을 채워 넣을 것.",
+      },
+    ],
+    snapshots: [],
+    context:
+      "상품 8,000개 이상, 누적 리뷰 23만건 규모입니다. 리뷰 위젯 디자인 커스터마이징 자유도와 카페24 연동 안정성이 중요하고, 하반기 쇼핑몰 디자인 리뉴얼 때 위젯 CSS를 다시 작업해야 하는 점도 고려해야 합니다. 기존 리뷰 데이터 이관 가능 여부가 전환 비용을 크게 좌우합니다.",
+    vars: [
+      { id: uid(), label: "월리뷰수집건수", value: 3000, unit: "건", min: 500, max: 15000, step: 500 },
+      { id: uid(), label: "상품수", value: 8000, unit: "개", min: 1000, max: 20000, step: 500 },
+    ],
+    services: [
+      { id: a, name: "넥젠리뷰", state: "current", vendor: "", contact: "", link: "", memo: "현재 사용 중", lastCheckedAt: "" },
+      { id: b, name: "알파리뷰", state: "dropped", vendor: "", contact: "", link: "", memo: "이전 사용, 계약 종료", lastCheckedAt: "" },
+      { id: c, name: "비교 후보 3", state: "candidate", vendor: "", contact: "", link: "", memo: "", lastCheckedAt: "" },
+    ],
+    costItems: [
+      { id: uid(), label: "월 이용료", cycle: "monthly", note: "견적서 기준으로 입력", values: { [a]: "", [b]: "", [c]: "" } },
+      { id: uid(), label: "리뷰 건수 초과 과금", cycle: "monthly", note: "구간 요금이면 수식으로", values: { [a]: "", [b]: "", [c]: "" } },
+      { id: uid(), label: "위젯 디자인 커스터마이징", cycle: "once", note: "쇼핑몰 리뉴얼 시 재작업 여부 확인", values: { [a]: "", [b]: "", [c]: "" } },
+      { id: uid(), label: "기존 리뷰 데이터 이관", cycle: "once", note: "23만건 이관 가능 여부와 비용", values: { [a]: "", [b]: "", [c]: "" } },
+    ],
+    featureItems: [
+      {
+        id: uid(),
+        label: "카페24 연동 안정성",
+        desc: "주문 완료 후 리뷰 요청 발송, 적립금 지급, 상품 매칭이 자동으로 끊김 없이 도는가. 연동 장애 발생 이력과 복구 속도 포함.",
+        weight: 5,
+        scores: { [a]: 3, [b]: 3, [c]: 3 },
+      },
+      {
+        id: uid(),
+        label: "기존 리뷰 이관 지원",
+        desc: "누적 23만건을 이관할 수 있는가. 텍스트만 되는지 포토리뷰와 별점, 작성일까지 그대로 넘어가는지 확인. 이관 불가면 사실상 후보에서 제외.",
+        weight: 5,
+        scores: { [a]: 3, [b]: 3, [c]: 3 },
+      },
+      {
+        id: uid(),
+        label: "위젯 디자인 자유도",
+        desc: "CSS를 어디까지 손댈 수 있는가. 하반기 쇼핑몰 리뉴얼 때 재작업이 필요하므로, 커스터마이징을 벤더가 해주는지 우리가 직접 하는지도 함께 본다.",
+        weight: 4,
+        scores: { [a]: 3, [b]: 3, [c]: 3 },
+      },
+      {
+        id: uid(),
+        label: "리뷰 통계·리포트",
+        desc: "상품별 만족도, 키워드 추이를 데이터로 뽑아낼 수 있는가. API나 CSV로 외부 반출이 되는지가 핵심.",
+        weight: 3,
+        scores: { [a]: 3, [b]: 3, [c]: 3 },
+      },
+      {
+        id: uid(),
+        label: "어드민 사용 편의성",
+        desc: "리뷰 검수, 신고 처리, 답글 작성을 하루 단위로 반복할 때의 손이 얼마나 가는가.",
+        weight: 3,
+        scores: { [a]: 3, [b]: 3, [c]: 3 },
+      },
+      {
+        id: uid(),
+        label: "장애 대응·고객지원",
+        desc: "위젯이 안 뜨는 상황에서 연락이 닿는 속도와 조치 시간. 전담 담당자 배정 여부.",
+        weight: 4,
+        scores: { [a]: 3, [b]: 3, [c]: 3 },
+      },
+    ],
+  };
+}
+
+function emptyProject(name) {
+  const s1 = uid();
+  const s2 = uid();
+  return {
+    id: uid(),
+    name: name || "새 비교 프로젝트",
+    horizonMonths: 36,
+    contract: { startedAt: "", endsAt: "", noticeDays: 30, reviewLeadDays: 90 },
+    decision: { serviceId: "", decidedAt: "", reason: "" },
+    logs: [],
+    snapshots: [],
+    context: "",
+    vars: [{ id: uid(), label: "월주문건수", value: 23000, unit: "건", min: 1000, max: 50000, step: 1000 }],
+    services: [
+      { id: s1, name: "후보 A", state: "candidate", vendor: "", contact: "", link: "", memo: "", lastCheckedAt: "" },
+      { id: s2, name: "후보 B", state: "candidate", vendor: "", contact: "", link: "", memo: "", lastCheckedAt: "" },
+    ],
+    costItems: [
+      { id: uid(), label: "기본 이용료", cycle: "monthly", note: "", values: { [s1]: "", [s2]: "" } },
+    ],
+    featureItems: [
+      { id: uid(), label: "필요 기능 충족도", desc: "", weight: 5, scores: { [s1]: 3, [s2]: 3 } },
+    ],
+  };
+}
+
+/* =========================================================
+   메인 컴포넌트
+   ========================================================= */
+function ToolCostCompare() {
+  const [projects, setProjects] = useState(null);
+  const [activeId, setActiveId] = useState(null);
+  const [tab, setTab] = useState("cost");
+  const [view, setView] = useState("dashboard");
+  const [search, setSearch] = useState("");
+  const [sideOpen, setSideOpen] = useState(true);
+  const [notice, setNotice] = useState("");
+  const [saveState, setSaveState] = useState("idle");
+  const [mode, setMode] = useState("personal");
+  const [me, setMe] = useState("");
+  const [meta, setMeta] = useState(null);
+  const [remoteChanged, setRemoteChanged] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const firstLoad = useRef(true);
+  const fileRef = useRef(null);
+  const baseRev = useRef(0);
+  const modeRef = useRef("personal");
+  const meRef = useRef("");
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+  useEffect(() => {
+    meRef.current = me;
+  }, [me]);
+
+  /* 저장소에서 불러오기 */
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      let savedMode = "personal";
+      let savedName = "";
+      try {
+        const r = await TCC_STORE.get(PREF_KEY);
+        if (r && r.value) {
+          const pref = JSON.parse(r.value);
+          savedMode = pref.mode === "shared" ? "shared" : "personal";
+          savedName = pref.name || "";
+        }
+      } catch (e) {
+        /* 설정이 없으면 기본값 */
+      }
+      if (!alive) return;
+      setMode(savedMode);
+      modeRef.current = savedMode;
+      setMe(savedName);
+      meRef.current = savedName;
+
+      const box = await readStore(savedMode);
+      if (!alive) return;
+      applyBox(box, true);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  /* 공유 모드에서 다른 사람의 변경을 감지 */
+  useEffect(() => {
+    if (mode !== "shared") return;
+    const id = setInterval(async () => {
+      try {
+        const r = await TCC_STORE.get(SHARED_KEY, true);
+        if (r && r.value) {
+          const box = JSON.parse(r.value);
+          if (typeof box.rev === "number" && box.rev !== baseRev.current) {
+            setRemoteChanged(true);
+            setMeta({ updatedAt: box.updatedAt, updatedBy: box.updatedBy });
+          }
+        }
+      } catch (e) {
+        /* 조회 실패는 무시하고 다음 주기에 다시 시도 */
+      }
+    }, 30000);
+    return () => clearInterval(id);
+  }, [mode]);
+
+  /* 변경 시 자동 저장 */
+  useEffect(() => {
+    if (projects === null) return;
+    if (firstLoad.current) {
+      firstLoad.current = false;
+      return;
+    }
+    setSaveState("saving");
+    const t = setTimeout(async () => {
+      const r = await writeStore(projects);
+      if (r.ok) {
+        setSaveState("saved");
+        setTimeout(() => setSaveState("idle"), 1500);
+      } else if (r.conflict) {
+        setSaveState("conflict");
+        setRemoteChanged(true);
+      } else {
+        setSaveState("error");
+      }
+    }, 700);
+    return () => clearTimeout(t);
+  }, [projects]);
+
+  /* ---------- 저장소 입출력 ---------- */
+  async function readStore(m) {
+    if (m === "shared") {
+      try {
+        const r = await TCC_STORE.get(SHARED_KEY, true);
+        if (r && r.value) return JSON.parse(r.value);
+      } catch (e) {
+        /* 공유 저장소가 비어 있음 */
+      }
+      return null;
+    }
+    try {
+      const r = await TCC_STORE.get(STORAGE_KEY);
+      if (r && r.value) return { rev: 0, projects: JSON.parse(r.value) };
+    } catch (e) {
+      /* 개인 저장소가 비어 있음 */
+    }
+    return null;
+  }
+
+  async function writeStore(projs, force) {
+    try {
+      if (modeRef.current !== "shared") {
+        await TCC_STORE.set(STORAGE_KEY, JSON.stringify(projs));
+        return { ok: true };
+      }
+      // 공유 저장소는 남의 수정을 덮어쓰지 않도록 먼저 확인한다
+      let cur = null;
+      try {
+        const r = await TCC_STORE.get(SHARED_KEY, true);
+        if (r && r.value) cur = JSON.parse(r.value);
+      } catch (e) {
+        cur = null;
+      }
+      if (!force && cur && typeof cur.rev === "number" && cur.rev !== baseRev.current) {
+        return { ok: false, conflict: true };
+      }
+      const next = {
+        rev: (cur && typeof cur.rev === "number" ? cur.rev : baseRev.current) + 1,
+        updatedAt: new Date().toISOString(),
+        updatedBy: meRef.current || "이름 미설정",
+        projects: projs,
+      };
+      await TCC_STORE.set(SHARED_KEY, JSON.stringify(next), true);
+      baseRev.current = next.rev;
+      setMeta({ updatedAt: next.updatedAt, updatedBy: next.updatedBy });
+      setRemoteChanged(false);
+      return { ok: true };
+    } catch (e) {
+      return { ok: false };
+    }
+  }
+
+  function applyBox(box, isFirst) {
+    const list = box && Array.isArray(box.projects) ? box.projects : null;
+    baseRev.current = box && typeof box.rev === "number" ? box.rev : 0;
+    if (box) setMeta({ updatedAt: box.updatedAt, updatedBy: box.updatedBy });
+    setRemoteChanged(false);
+    if (!list || list.length === 0) {
+      const sample = [sampleProject(), reviewProject()];
+      if (isFirst) firstLoad.current = true;
+      setProjects(sample);
+      setActiveId(sample[0].id);
+      return;
+    }
+    const fixed = list.map(migrate);
+    if (isFirst) firstLoad.current = true;
+    setProjects(fixed);
+    setActiveId((prev) => (fixed.some((p) => p.id === prev) ? prev : fixed[0].id));
+  }
+
+  async function savePref(nextMode, nextName) {
+    try {
+      await TCC_STORE.set(
+        PREF_KEY,
+        JSON.stringify({ mode: nextMode, name: nextName })
+      );
+    } catch (e) {
+      /* 설정 저장 실패는 치명적이지 않음 */
+    }
+  }
+
+  /* 최신 내용 다시 불러오기 */
+  const pullLatest = async () => {
+    const box = await readStore(modeRef.current);
+    firstLoad.current = true;
+    applyBox(box, true);
+    setSaveState("idle");
   };
 
-  // ── 계산 ──────────────────────────────────────────────────
-  const vat = (amt, included) => (vatMode==='incl' && !included) ? Number(amt||0)*1.1 : Number(amt||0);
-  const itemsOf = sid => items.filter(x=>x.service_id===sid);
-  const labelsOf = sid => {
-    const seen={}; const out=[];
-    itemsOf(sid).forEach(x=>{ if(!seen[x.quote_label]){ seen[x.quote_label]=x.quote_date||''; out.push(x.quote_label); }
-                              else if((x.quote_date||'')>seen[x.quote_label]) seen[x.quote_label]=x.quote_date||''; });
-    return out.map(l=>({label:l, date:seen[l]})).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  };
-  const latestLabel = sid => { const L=labelsOf(sid); return L.length?L[0].label:null; };
-  const currentItems = sid => { const L=latestLabel(sid); return L?itemsOf(sid).filter(x=>x.quote_label===L):[]; };
-  const monthlyOf = sid => currentItems(sid).filter(x=>x.kind==='monthly').reduce((s,x)=>s+vat(x.amount,x.vat_included),0);
-  const onetimeOf = sid => currentItems(sid).filter(x=>x.kind==='onetime').reduce((s,x)=>s+vat(x.amount,x.vat_included),0);
-  const tco3Of    = sid => monthlyOf(sid)*36 + onetimeOf(sid);
-  const actualsOf = sid => actuals.filter(a=>a.service_id===sid).slice().sort((a,b)=>b.ym.localeCompare(a.ym));
-  const lastActual= sid => { const L=actualsOf(sid); return L.length?L[0]:null; };
-  const catName   = id => (cats.find(c=>c.id===id)||{}).name || '미분류';
-
-  const daysLeft = d => {
-    if(!d) return null;
-    const t=new Date(); const today=new Date(t.getFullYear(),t.getMonth(),t.getDate());
-    return Math.round((new Date(d+'T00:00:00') - today)/86400000);
+  /* 내 화면 내용으로 공유 저장소 덮어쓰기 */
+  const pushMine = async () => {
+    const r = await writeStore(projects, true);
+    setSaveState(r.ok ? "saved" : "error");
+    if (r.ok) setTimeout(() => setSaveState("idle"), 1500);
   };
 
-  // 계약 만료 알림 — 최소 계약기간이 있는 툴은 갱신일을 놓치면 자동 연장되는 일이 많다.
-  const expiring = services
-    .filter(s=>s.contract_end && (s.status==='사용중'||s.status==='보류'))
-    .map(s=>({s, d:daysLeft(s.contract_end)}))
-    .filter(x=>x.d!==null && x.d<=60)
-    .sort((a,b)=>a.d-b.d);
+  /* 모드 전환 */
+  const switchMode = async (nextMode, take) => {
+    const name = nameDraft.trim() || me;
+    setMe(name);
+    meRef.current = name;
+    setMode(nextMode);
+    modeRef.current = nextMode;
+    await savePref(nextMode, name);
+    setSwitchOpen(false);
 
-  // ── 쓰기 ──────────────────────────────────────────────────
-  const addService = async () => {
-    const name=(prompt('추가할 서비스·툴 이름을 적어 주세요.')||'').trim();
-    if(!name) return;
-    setSaving(true);
-    const {data,error}=await sb.from('cost_services')
-      .insert({name, category_id: fCat!=='all'?Number(fCat):null}).select().single();
-    setSaving(false);
-    if(sbFail('툴 추가',error,{write:true})) return;
-    await loadAll(); setCurId(data.id); setView('detail');
-  };
-  const saveService = async (svc) => {
-    setSaving(true);
-    const {error}=await sb.from('cost_services').update({
-      category_id:svc.category_id||null, name:svc.name, vendor:svc.vendor||null, purpose:svc.purpose||null,
-      status:svc.status, homepage:svc.homepage||null, contact:svc.contact||null, owner_email:svc.owner_email||null,
-      contract_start:svc.contract_start||null, contract_end:svc.contract_end||null,
-      contract_note:svc.contract_note||null, decision_note:svc.decision_note||null,
-      updated_at:new Date().toISOString(),
-    }).eq('id',svc.id);
-    setSaving(false);
-    if(sbFail('툴 정보 저장',error,{write:true})) return;
-    toast('저장했습니다.','success'); loadAll();
-  };
-  const delService = async (svc) => {
-    if(!confirm('«'+svc.name+'» 을 지웁니다.\n견적 항목과 청구 내역도 함께 사라집니다. 계속할까요?')) return;
-    const {error}=await sb.from('cost_services').delete().eq('id',svc.id);
-    if(sbFail('툴 삭제',error,{write:true})) return;
-    setView('list'); setCurId(null); loadAll();
+    if (nextMode === "shared" && take === "push") {
+      baseRev.current = 0;
+      const r = await writeStore(projects, true);
+      if (!r.ok) setNotice("공유 저장소에 올리지 못했습니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+    const box = await readStore(nextMode);
+    firstLoad.current = true;
+    applyBox(box, true);
   };
 
-  const addItem = async (sid,label) => {
-    const {error}=await sb.from('cost_quote_items').insert({
-      service_id:sid, quote_label:label||'1차 견적', quote_date:todayStr(),
-      item_name:'새 항목', kind:'monthly', billing_basis:'고정', qty:1, unit_price:0,
-      sort_order:(itemsOf(sid).length+1)*10,
+  const project = useMemo(
+    () => (projects || []).find((p) => p.id === activeId) || null,
+    [projects, activeId]
+  );
+
+  const visibleProjects = useMemo(() => {
+    const list = projects || [];
+    const q = search.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.services || []).some(
+          (s) =>
+            (s.name || "").toLowerCase().includes(q) ||
+            (s.vendor || "").toLowerCase().includes(q)
+        )
+    );
+  }, [projects, search]);
+
+  const patch = (updater) => {
+    setProjects((prev) =>
+      prev.map((p) => (p.id === activeId ? { ...p, ...updater(p) } : p))
+    );
+  };
+
+  /* ---------- 프로젝트 조작 ---------- */
+  const addProject = () => {
+    const p = emptyProject("새 비교 프로젝트");
+    setProjects((prev) => [...prev, p]);
+    setActiveId(p.id);
+    setTab("setup");
+    setView("project");
+  };
+
+  const removeProject = (id) => {
+    setProjects((prev) => {
+      const next = prev.filter((p) => p.id !== id);
+      if (next.length === 0) {
+        const p = emptyProject("새 비교 프로젝트");
+        setActiveId(p.id);
+        return [p];
+      }
+      if (id === activeId) setActiveId(next[0].id);
+      return next;
     });
-    if(sbFail('견적 항목 추가',error,{write:true})) return;
-    reloadItems();
-  };
-  const saveItem = async (row) => {
-    const {error}=await sb.from('cost_quote_items').update({
-      quote_label:row.quote_label||'1차 견적', quote_date:row.quote_date||null, item_name:row.item_name,
-      kind:row.kind, billing_basis:row.billing_basis||null, unit:row.unit||null,
-      qty:Number(row.qty||0), unit_price:Number(row.unit_price||0),
-      vat_included:!!row.vat_included, note:row.note||null,
-    }).eq('id',row.id);
-    if(sbFail('견적 항목 저장',error,{write:true})) return;
-    reloadItems();
-  };
-  const delItem = async (id) => {
-    const {error}=await sb.from('cost_quote_items').delete().eq('id',id);
-    if(sbFail('견적 항목 삭제',error,{write:true})) return;
-    reloadItems();
   };
 
-  const addActual = async (sid) => {
-    const d=new Date(); d.setMonth(d.getMonth()-1);
-    const ym=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-    if(actuals.some(a=>a.service_id===sid && a.ym===ym)){ toast(ym+' 청구 내역이 이미 있습니다.'); return; }
-    const {error}=await sb.from('cost_actuals').insert({service_id:sid, ym, amount:0});
-    if(sbFail('청구 내역 추가',error,{write:true})) return;
-    reloadActuals();
-  };
-  const saveActual = async (row) => {
-    const {error}=await sb.from('cost_actuals').update({
-      ym:row.ym, amount:Number(row.amount||0),
-      usage_qty:row.usage_qty===''||row.usage_qty==null?null:Number(row.usage_qty),
-      usage_unit:row.usage_unit||null, vat_included:!!row.vat_included, note:row.note||null,
-    }).eq('id',row.id);
-    if(sbFail('청구 내역 저장',error,{write:true})) return;
-    reloadActuals();
-  };
-  const delActual = async (id) => {
-    const {error}=await sb.from('cost_actuals').delete().eq('id',id);
-    if(sbFail('청구 내역 삭제',error,{write:true})) return;
-    reloadActuals();
+  const duplicateProject = () => {
+    if (!project) return;
+    const copy = JSON.parse(JSON.stringify(project));
+    copy.id = uid();
+    copy.name = project.name + " (복사본)";
+    setProjects((prev) => [...prev, copy]);
+    setActiveId(copy.id);
   };
 
-  const togglePick = sid => setPicked(p =>
-    p.includes(sid) ? p.filter(x=>x!==sid) : (p.length>=3 ? (toast('비교는 3개까지입니다.'),p) : [...p,sid]));
-
-  // ── 공통 조각 ─────────────────────────────────────────────
-  const Badge = ({status}) => {
-    const st=STATUS[status]||STATUS['검토중'];
-    return <span style={{display:'inline-block',padding:'2px 8px',background:st.bg,color:st.color,
-      border:'1px solid '+st.border,borderRadius:3,fontSize:10,fontWeight:700,whiteSpace:'nowrap'}}>{status}</span>;
+  /* ---------- 백업 / 복원 ---------- */
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(projects, null, 2)], {
+      type: "application/json",
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "tool-cost-compare-backup.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
-  const inp = {width:'100%',padding:'6px 8px',background:'var(--bg)',border:'1px solid var(--border)',
-               borderRadius:6,color:'var(--text)',fontSize:12};
-  const th  = {padding:'8px 10px',fontSize:11,color:'var(--sub)',fontWeight:600,textAlign:'left',whiteSpace:'nowrap'};
-  const td  = {padding:'6px 10px',fontSize:12,borderTop:'1px solid var(--border)',verticalAlign:'middle'};
-  const num = {...td, textAlign:'right', fontVariantNumeric:'tabular-nums', whiteSpace:'nowrap'};
 
-  if(loading) return <div className="loading">불러오는 중…</div>;
+  const importJson = (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(String(reader.result));
+        if (!Array.isArray(data)) throw new Error("형식이 맞지 않습니다");
+        const fixed = data.map(migrate);
+        setProjects(fixed);
+        setActiveId(fixed[0] ? fixed[0].id : null);
+      } catch (err) {
+        setNotice("백업을 불러오지 못했습니다. 이 도구에서 내려받은 파일인지 확인해주세요.");
+      }
+    };
+    reader.readAsText(f);
+    e.target.value = "";
+  };
 
-  // ── 목록 ──────────────────────────────────────────────────
-  const renderList = () => {
-    let list = services.slice();
-    if(fCat!=='all')    list=list.filter(s=>String(s.category_id||'')===String(fCat));
-    if(fStatus!=='all') list=list.filter(s=>s.status===fStatus);
-    if(q.trim()){ const k=q.trim().toLowerCase();
-      list=list.filter(s=>[s.name,s.vendor,s.purpose].some(v=>(v||'').toLowerCase().includes(k))); }
+  const exportCsv = () => {
+    if (!project) return;
+    const head = ["항목", "주기", ...project.services.map((s) => s.name)];
+    const rows = [head];
+    for (const it of project.costItems) {
+      const cy = CYCLES.find((c) => c.key === it.cycle);
+      rows.push([
+        it.label,
+        cy ? cy.label : it.cycle,
+        ...project.services.map((s) => String(evalCell(it.values[s.id], project.vars).value)),
+      ]);
+    }
+    rows.push([]);
+    rows.push([
+      "월 환산 합계",
+      "",
+      ...project.services.map((s) => String(Math.round(computeService(project, s.id).perMonth))),
+    ]);
+    rows.push([
+      project.horizonMonths + "개월 총비용",
+      "",
+      ...project.services.map((s) => String(Math.round(computeService(project, s.id).total))),
+    ]);
+    const csv = rows
+      .map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(","))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = project.name + "_비용비교.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
-    const groups={};
-    list.forEach(s=>{ const k=catName(s.category_id); (groups[k]=groups[k]||[]).push(s); });
-    const order=cats.map(c=>c.name).concat(['미분류']).filter(n=>groups[n]);
-
-    const usingMonthly = services.filter(s=>s.status==='사용중').reduce((t,s)=>t+monthlyOf(s.id),0);
-
+  if (projects === null || !project) {
     return (
-      <>
-        {expiring.length>0 && (
-          <div className="section" style={{border:'1px solid rgba(246,109,109,.4)',background:'rgba(246,109,109,.07)'}}>
-            <div style={{fontSize:13,fontWeight:700,color:'#F66D6D',marginBottom:8}}>
-              ⏰ 계약 만료가 가까운 툴 {expiring.length}건
-            </div>
-            <div style={{fontSize:11,color:'var(--sub)',marginBottom:10}}>
-              최소 계약기간이 있는 툴은 갱신일을 놓치면 자동 연장되는 경우가 많습니다. 해지·재협상 통보 기한을 계약 조건에서 확인하세요.
-            </div>
-            <div style={{display:'flex',flexDirection:'column',gap:6}}>
-              {expiring.map(({s,d})=>(
-                <div key={s.id} style={{display:'flex',alignItems:'center',gap:10,fontSize:12}}>
-                  <span style={{minWidth:64,fontWeight:700,fontVariantNumeric:'tabular-nums',
-                    color:d<0?'#F66D6D':(d<=14?'#F6AD09':'var(--text)')}}>
-                    {d<0 ? '만료 '+Math.abs(d)+'일 지남' : 'D-'+d}
-                  </span>
-                  <span style={{fontWeight:600}}>{s.name}</span>
-                  <span style={{color:'var(--sub)'}}>{s.vendor||''}</span>
-                  <span style={{color:'var(--sub)',fontVariantNumeric:'tabular-nums'}}>{s.contract_end}</span>
-                  <button className="btn-sm" onClick={()=>{setCurId(s.id);setView('detail');}}>열기</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="section">
-          <div className="filter-bar">
-            <label>카테고리</label>
-            <select value={fCat} onChange={e=>setFCat(e.target.value)}>
-              <option value="all">전체</option>
-              {cats.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-            <label>상태</label>
-            <select value={fStatus} onChange={e=>setFStatus(e.target.value)}>
-              <option value="all">전체</option>
-              {STATUS_LIST.map(s=><option key={s} value={s}>{s}</option>)}
-            </select>
-            <input placeholder="이름·업체·용도 검색" value={q} onChange={e=>setQ(e.target.value)} style={{minWidth:180}}/>
-            <label>기준</label>
-            <select value={vatMode} onChange={e=>setVatMode(e.target.value)}>
-              <option value="excl">VAT 별도</option>
-              <option value="incl">VAT 포함 환산</option>
-            </select>
-            <div style={{flex:1}}/>
-            <button className="btn-primary" onClick={addService} disabled={saving}>+ 툴 추가</button>
-            {picked.length>0 && (
-              <button className="btn-filter" onClick={()=>setView('compare')}>
-                비교하기 ({picked.length})
-              </button>
-            )}
-          </div>
-
-          <div style={{padding:'0 4px 12px',fontSize:12,color:'var(--sub)'}}>
-            사용 중인 툴 <b style={{color:'var(--text)'}}>{services.filter(s=>s.status==='사용중').length}개</b> ·
-            월 합계 <b style={{color:'#F6AD09',fontVariantNumeric:'tabular-nums'}}>{won(usingMonthly)}원</b>
-            <span style={{marginLeft:6}}>({vatMode==='incl'?'VAT 포함 환산':'VAT 별도'} 기준)</span>
-          </div>
-
-          {order.length===0 && <div className="empty-state">등록된 툴이 없습니다. 오른쪽 위 «+ 툴 추가»로 시작하세요.</div>}
-
-          {order.map(cn=>(
-            <div key={cn} style={{marginBottom:18}}>
-              <div style={{fontSize:12,fontWeight:700,color:'#F6AD09',padding:'6px 4px'}}>{cn}</div>
-              <div className="table-wrap">
-                <table style={{width:'100%',borderCollapse:'collapse'}}>
-                  <thead><tr style={{background:'var(--hover)'}}>
-                    <th style={{...th,width:34}}></th>
-                    <th style={th}>서비스</th><th style={th}>업체</th><th style={th}>상태</th>
-                    <th style={{...th,textAlign:'right'}}>월 비용</th>
-                    <th style={{...th,textAlign:'right'}}>일회성</th>
-                    <th style={{...th,textAlign:'right'}}>3년 TCO</th>
-                    <th style={{...th,textAlign:'right'}}>최근 청구</th>
-                    <th style={th}>계약 만료</th><th style={{...th,width:56}}></th>
-                  </tr></thead>
-                  <tbody>
-                    {groups[cn].map(s=>{
-                      const la=lastActual(s.id); const dl=daysLeft(s.contract_end);
-                      return (
-                        <tr key={s.id}>
-                          <td style={{...td,textAlign:'center'}}>
-                            <input type="checkbox" checked={picked.includes(s.id)} onChange={()=>togglePick(s.id)}/>
-                          </td>
-                          <td style={td}>
-                            <div style={{fontWeight:600,cursor:'pointer'}}
-                                 onClick={()=>{setCurId(s.id);setView('detail');}}>{s.name}</div>
-                            {s.purpose && <div style={{fontSize:11,color:'var(--sub)'}}>{s.purpose}</div>}
-                          </td>
-                          <td style={{...td,color:'var(--sub)'}}>{s.vendor||'-'}</td>
-                          <td style={td}><Badge status={s.status}/></td>
-                          <td style={num}>{monthlyOf(s.id)?won(monthlyOf(s.id)):'-'}</td>
-                          <td style={{...num,color:'var(--sub)'}}>{onetimeOf(s.id)?won(onetimeOf(s.id)):'-'}</td>
-                          <td style={num}>{tco3Of(s.id)?won(tco3Of(s.id)):'-'}</td>
-                          <td style={num}>{la?won(la.amount)+' ('+la.ym+')':'-'}</td>
-                          <td style={{...td,whiteSpace:'nowrap',
-                            color:dl==null?'var(--sub)':(dl<0?'#F66D6D':(dl<=60?'#F6AD09':'var(--text)'))}}>
-                            {s.contract_end ? s.contract_end+(dl!=null?' (D'+(dl<0?'+'+Math.abs(dl):'-'+dl)+')':'') : '-'}
-                          </td>
-                          <td style={td}>
-                            <button className="btn-sm" onClick={()=>{setCurId(s.id);setView('detail');}}>상세</button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  };
-
-  // ── 상세 ──────────────────────────────────────────────────
-  const renderDetail = () => {
-    const svc = services.find(s=>s.id===curId);
-    if(!svc) return <div className="empty-state">선택한 툴을 찾을 수 없습니다.</div>;
-    const labels = labelsOf(svc.id);
-    const cur = latestLabel(svc.id);
-    const rows = itemsOf(svc.id).slice().sort((a,b)=>
-      (b.quote_date||'').localeCompare(a.quote_date||'') || (a.sort_order-b.sort_order));
-
-    const setField=(k,v)=>setServices(prev=>prev.map(x=>x.id===svc.id?{...x,[k]:v}:x));
-    const setRow=(id,k,v)=>setItems(prev=>prev.map(x=>x.id===id?{...x,[k]:v}:x));
-    const setAct=(id,k,v)=>setActuals(prev=>prev.map(x=>x.id===id?{...x,[k]:v}:x));
-
-    return (
-      <div className="section">
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-          <button className="btn-sm" onClick={()=>{setView('list');setCurId(null);}}>← 목록</button>
-          <div style={{fontSize:15,fontWeight:700}}>{svc.name}</div>
-          <Badge status={svc.status}/>
-          <div style={{flex:1}}/>
-          <button className="btn-primary" onClick={()=>saveService(svc)} disabled={saving}>저장</button>
-          <button className="btn-delete" onClick={()=>delService(svc)}>삭제</button>
-        </div>
-
-        {/* 기본 정보 */}
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:10,marginBottom:18}}>
-          {[['name','서비스·제품명'],['vendor','업체명'],['purpose','용도 — 무엇에 쓰는가'],
-            ['homepage','홈페이지'],['contact','영업 담당자·연락처'],['owner_email','사내 담당자']].map(([k,label])=>(
-            <div key={k} className="form-group">
-              <label style={{fontSize:11,color:'var(--sub)'}}>{label}</label>
-              <input style={inp} value={svc[k]||''} onChange={e=>setField(k,e.target.value)}/>
-            </div>
-          ))}
-          <div className="form-group">
-            <label style={{fontSize:11,color:'var(--sub)'}}>카테고리</label>
-            <select style={inp} value={svc.category_id||''} onChange={e=>setField('category_id',e.target.value?Number(e.target.value):null)}>
-              <option value="">미분류</option>
-              {cats.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label style={{fontSize:11,color:'var(--sub)'}}>상태</label>
-            <select style={inp} value={svc.status} onChange={e=>setField('status',e.target.value)}>
-              {STATUS_LIST.map(s=><option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label style={{fontSize:11,color:'var(--sub)'}}>계약 시작</label>
-            <input type="date" style={inp} value={svc.contract_start||''} onChange={e=>setField('contract_start',e.target.value)}/>
-          </div>
-          <div className="form-group">
-            <label style={{fontSize:11,color:'var(--sub)'}}>계약 만료 — 알림 기준</label>
-            <input type="date" style={inp} value={svc.contract_end||''} onChange={e=>setField('contract_end',e.target.value)}/>
-          </div>
-        </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}}>
-          <div className="form-group">
-            <label style={{fontSize:11,color:'var(--sub)'}}>계약 조건 — 최소 기간·중도 해지·단가 인상 조항</label>
-            <textarea style={{...inp,minHeight:60,resize:'vertical'}} value={svc.contract_note||''}
-                      onChange={e=>setField('contract_note',e.target.value)}/>
-          </div>
-          <div className="form-group">
-            <label style={{fontSize:11,color:'var(--sub)'}}>판정 근거 — 왜 골랐나 / 왜 뺐나</label>
-            <textarea style={{...inp,minHeight:60,resize:'vertical'}} value={svc.decision_note||''}
-                      onChange={e=>setField('decision_note',e.target.value)}/>
-          </div>
-        </div>
-
-        {/* 견적 */}
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
-          <div style={{fontSize:13,fontWeight:700}}>견적 항목</div>
-          {cur && <span style={{fontSize:11,color:'var(--sub)'}}>
-            현재 적용: <b style={{color:'#F6AD09'}}>{cur}</b> — 목록·비교의 월 비용은 이 라벨만 합산합니다
-          </span>}
-          <div style={{flex:1}}/>
-          <button className="btn-sm" onClick={()=>addItem(svc.id,cur)}>+ 항목</button>
-          <button className="btn-sm" onClick={()=>{
-            const l=(prompt('새 견적 라벨 (예: 2차 견적)','2차 견적')||'').trim(); if(l) addItem(svc.id,l);
-          }}>+ 새 견적 세대</button>
-        </div>
-        <div className="table-wrap" style={{marginBottom:20}}>
-          <table style={{width:'100%',borderCollapse:'collapse'}}>
-            <thead><tr style={{background:'var(--hover)'}}>
-              <th style={th}>견적 라벨</th><th style={th}>견적일</th><th style={th}>항목</th>
-              <th style={th}>구분</th><th style={th}>과금 기준</th><th style={th}>단위</th>
-              <th style={{...th,textAlign:'right'}}>수량</th><th style={{...th,textAlign:'right'}}>단가</th>
-              <th style={{...th,textAlign:'right'}}>금액</th><th style={th}>VAT</th>
-              <th style={th}>비고</th><th style={{...th,width:44}}></th>
-            </tr></thead>
-            <tbody>
-              {rows.length===0 && <tr><td style={{...td,color:'var(--sub)'}} colSpan={12}>견적 항목이 없습니다. «+ 항목»으로 추가하세요.</td></tr>}
-              {rows.map(r=>(
-                <tr key={r.id} style={r.quote_label!==cur?{opacity:.5}:{}}>
-                  <td style={td}><input style={{...inp,width:90}} value={r.quote_label||''}
-                        onChange={e=>setRow(r.id,'quote_label',e.target.value)} onBlur={()=>saveItem(r)}/></td>
-                  <td style={td}><input type="date" style={{...inp,width:120}} value={r.quote_date||''}
-                        onChange={e=>setRow(r.id,'quote_date',e.target.value)} onBlur={()=>saveItem(r)}/></td>
-                  <td style={td}><input style={{...inp,minWidth:130}} value={r.item_name||''}
-                        onChange={e=>setRow(r.id,'item_name',e.target.value)} onBlur={()=>saveItem(r)}/></td>
-                  <td style={td}><select style={{...inp,width:80}} value={r.kind}
-                        onChange={e=>{setRow(r.id,'kind',e.target.value); saveItem({...r,kind:e.target.value});}}>
-                        {KINDS.map(k=><option key={k.v} value={k.v}>{k.t}</option>)}</select></td>
-                  <td style={td}><select style={{...inp,width:84}} value={r.billing_basis||''}
-                        onChange={e=>{setRow(r.id,'billing_basis',e.target.value); saveItem({...r,billing_basis:e.target.value});}}>
-                        <option value=""></option>{BASES.map(b=><option key={b} value={b}>{b}</option>)}</select></td>
-                  <td style={td}><input style={{...inp,width:56}} value={r.unit||''}
-                        onChange={e=>setRow(r.id,'unit',e.target.value)} onBlur={()=>saveItem(r)}/></td>
-                  <td style={num}><input style={{...inp,width:70,textAlign:'right'}} value={r.qty}
-                        onChange={e=>setRow(r.id,'qty',e.target.value)} onBlur={()=>saveItem(r)}/></td>
-                  <td style={num}><input style={{...inp,width:96,textAlign:'right'}} value={r.unit_price}
-                        onChange={e=>setRow(r.id,'unit_price',e.target.value)} onBlur={()=>saveItem(r)}/></td>
-                  <td style={{...num,fontWeight:700}}>{won(Number(r.qty||0)*Number(r.unit_price||0))}</td>
-                  <td style={{...td,textAlign:'center'}}>
-                    <input type="checkbox" checked={!!r.vat_included}
-                           onChange={e=>{setRow(r.id,'vat_included',e.target.checked); saveItem({...r,vat_included:e.target.checked});}}
-                           title="체크하면 VAT 포함 금액"/>
-                  </td>
-                  <td style={td}><input style={{...inp,minWidth:110}} value={r.note||''}
-                        onChange={e=>setRow(r.id,'note',e.target.value)} onBlur={()=>saveItem(r)}/></td>
-                  <td style={td}><button className="btn-sm" onClick={()=>delItem(r.id)}>삭제</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* 실제 청구 */}
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
-          <div style={{fontSize:13,fontWeight:700}}>실제 청구</div>
-          <span style={{fontSize:11,color:'var(--sub)'}}>견적보다 얼마나 더 나왔는지가 재계약 협상의 근거가 됩니다</span>
-          <div style={{flex:1}}/>
-          <button className="btn-sm" onClick={()=>addActual(svc.id)}>+ 지난달</button>
-        </div>
-        <div className="table-wrap">
-          <table style={{width:'100%',borderCollapse:'collapse'}}>
-            <thead><tr style={{background:'var(--hover)'}}>
-              <th style={th}>연월</th><th style={{...th,textAlign:'right'}}>청구액</th>
-              <th style={{...th,textAlign:'right'}}>견적 대비</th>
-              <th style={{...th,textAlign:'right'}}>사용량</th><th style={th}>단위</th>
-              <th style={th}>VAT</th><th style={th}>비고</th><th style={{...th,width:44}}></th>
-            </tr></thead>
-            <tbody>
-              {actualsOf(svc.id).length===0 && <tr><td style={{...td,color:'var(--sub)'}} colSpan={8}>기록된 청구 내역이 없습니다.</td></tr>}
-              {actualsOf(svc.id).map(a=>{
-                const base=monthlyOf(svc.id);
-                const diff=base? vat(a.amount,a.vat_included)-base : null;
-                return (
-                  <tr key={a.id}>
-                    <td style={td}><input style={{...inp,width:88}} value={a.ym}
-                          onChange={e=>setAct(a.id,'ym',e.target.value)} onBlur={()=>saveActual(a)} placeholder="2026-08"/></td>
-                    <td style={num}><input style={{...inp,width:110,textAlign:'right'}} value={a.amount}
-                          onChange={e=>setAct(a.id,'amount',e.target.value)} onBlur={()=>saveActual(a)}/></td>
-                    <td style={{...num,color:diff==null?'var(--sub)':(diff>0?'#F66D6D':'#7ED9A6')}}>
-                      {diff==null?'-':(diff>0?'+':'')+won(diff)}
-                    </td>
-                    <td style={num}><input style={{...inp,width:80,textAlign:'right'}} value={a.usage_qty==null?'':a.usage_qty}
-                          onChange={e=>setAct(a.id,'usage_qty',e.target.value)} onBlur={()=>saveActual(a)}/></td>
-                    <td style={td}><input style={{...inp,width:56}} value={a.usage_unit||''}
-                          onChange={e=>setAct(a.id,'usage_unit',e.target.value)} onBlur={()=>saveActual(a)}/></td>
-                    <td style={{...td,textAlign:'center'}}>
-                      <input type="checkbox" checked={!!a.vat_included}
-                             onChange={e=>{setAct(a.id,'vat_included',e.target.checked); saveActual({...a,vat_included:e.target.checked});}}/>
-                    </td>
-                    <td style={td}><input style={{...inp,minWidth:120}} value={a.note||''}
-                          onChange={e=>setAct(a.id,'note',e.target.value)} onBlur={()=>saveActual(a)}/></td>
-                    <td style={td}><button className="btn-sm" onClick={()=>delActual(a.id)}>삭제</button></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="tcc-root">
+        <style>{CSS}</style>
+        <div className="tcc-loading">불러오는 중…</div>
       </div>
     );
-  };
+  }
 
-  // ── 비교 ──────────────────────────────────────────────────
-  const renderCompare = () => {
-    const list = picked.map(id=>services.find(s=>s.id===id)).filter(Boolean);
-    if(list.length===0) return <div className="empty-state">비교할 툴을 목록에서 골라 주세요.</div>;
+  return (
+    <div className="tcc-root">
+      <style>{CSS}</style>
 
-    const names={};
-    list.forEach(s=>currentItems(s.id).forEach(i=>{ names[i.kind+'|'+i.item_name]=true; }));
-    const keys=Object.keys(names).sort((a,b)=>a.localeCompare(b));
-    const monthKeys=keys.filter(k=>k.startsWith('monthly|'));
-    const onceKeys =keys.filter(k=>k.startsWith('onetime|'));
-    const cellOf=(sid,key)=>currentItems(sid).filter(i=>(i.kind+'|'+i.item_name)===key)
-      .reduce((t,i)=>t+vat(i.amount,i.vat_included),0);
-    const cheapest = Math.min(...list.map(s=>tco3Of(s.id)));
-    const qty = Number(baseQty||0);
-
-    return (
-      <div className="section">
-        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
-          <button className="btn-sm" onClick={()=>setView('list')}>← 목록</button>
-          <div style={{fontSize:15,fontWeight:700}}>비용 비교</div>
-          <span style={{fontSize:11,color:'var(--sub)'}}>
-            각 툴의 가장 최근 견적 라벨만 비교합니다 · {vatMode==='incl'?'VAT 포함 환산':'VAT 별도'} 기준
+      <header className="tcc-head">
+        <div className="tcc-head-left">
+          <div className="tcc-eyebrow">COST COMPARE</div>
+          <h1 className="tcc-title">비용 비교 도구</h1>
+        </div>
+        <div className="tcc-head-right">
+          <span className={"tcc-save tcc-save-" + saveState}>
+            <span className="tcc-save-dot" />
+            {saveState === "saving"
+              ? "저장 중"
+              : saveState === "saved"
+              ? "저장됨"
+              : saveState === "conflict"
+              ? "저장 보류"
+              : saveState === "error"
+              ? "저장 실패"
+              : "자동 저장"}
           </span>
-          <div style={{flex:1}}/>
-          <label style={{fontSize:11,color:'var(--sub)'}}>단가 기준 수량</label>
-          <input style={{...inp,width:110,textAlign:'right'}} value={baseQty} placeholder="예: 6383"
-                 onChange={e=>setBaseQty(e.target.value)}/>
+          <button
+            className={"tcc-mode" + (mode === "shared" ? " is-shared" : "")}
+            onClick={() => {
+              setNameDraft(me);
+              setSwitchOpen(!switchOpen);
+            }}
+          >
+            <span className="tcc-mode-dot" />
+            {mode === "shared" ? "팀 공유" : "나만 보기"}
+          </button>
+
+          <span className="tcc-headsep" />
+
+          <button
+            className="tcc-btn tcc-btn-ghost"
+            onClick={() => setSideOpen(!sideOpen)}
+          >
+            {sideOpen ? "목록 접기" : "목록 펼치기"}
+          </button>
+          <button className="tcc-btn tcc-btn-ghost" onClick={exportJson}>
+            백업 내려받기
+          </button>
+          <button className="tcc-btn tcc-btn-ghost" onClick={() => fileRef.current.click()}>
+            백업 불러오기
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="application/json"
+            onChange={importJson}
+            style={{ display: "none" }}
+          />
         </div>
+      </header>
 
-        <div className="table-wrap">
-          <table style={{width:'100%',borderCollapse:'collapse'}}>
-            <thead><tr style={{background:'var(--hover)'}}>
-              <th style={{...th,minWidth:170}}>항목</th>
-              {list.map(s=><th key={s.id} style={{...th,textAlign:'right',minWidth:130}}>
-                <div>{s.name}</div>
-                <div style={{fontWeight:400,color:'var(--sub)'}}>{s.vendor||''}</div>
-              </th>)}
-            </tr></thead>
-            <tbody>
-              <tr><td style={{...td,fontWeight:700,color:'#F6AD09'}} colSpan={list.length+1}>월 반복</td></tr>
-              {monthKeys.map(k=>(
-                <tr key={k}>
-                  <td style={td}>{k.split('|')[1]}</td>
-                  {list.map(s=><td key={s.id} style={num}>{cellOf(s.id,k)?won(cellOf(s.id,k)):'-'}</td>)}
-                </tr>
-              ))}
-              <tr>
-                <td style={{...td,fontWeight:700}}>월 합계</td>
-                {list.map(s=><td key={s.id} style={{...num,fontWeight:700}}>{won(monthlyOf(s.id))}</td>)}
-              </tr>
+      {switchOpen && (
+        <div className="tcc-panel">
+          <div className="tcc-panel-row">
+            <label className="tcc-panel-label">내 이름</label>
+            <input
+              className="tcc-in"
+              value={nameDraft}
+              placeholder="예: 이자영"
+              onChange={(e) => setNameDraft(e.target.value)}
+            />
+            <span className="tcc-hint">수정한 사람을 표시할 때 씁니다.</span>
+          </div>
 
-              {onceKeys.length>0 && <tr><td style={{...td,fontWeight:700,color:'#F6AD09'}} colSpan={list.length+1}>일회성</td></tr>}
-              {onceKeys.map(k=>(
-                <tr key={k}>
-                  <td style={td}>{k.split('|')[1]}</td>
-                  {list.map(s=><td key={s.id} style={num}>{cellOf(s.id,k)?won(cellOf(s.id,k)):'-'}</td>)}
-                </tr>
-              ))}
-
-              <tr><td style={{...td,fontWeight:700,color:'#F6AD09'}} colSpan={list.length+1}>환산</td></tr>
-              <tr>
-                <td style={td}>연간</td>
-                {list.map(s=><td key={s.id} style={num}>{won(monthlyOf(s.id)*12)}</td>)}
-              </tr>
-              <tr>
-                <td style={{...td,fontWeight:700}}>3년 TCO (일회성 포함)</td>
-                {list.map(s=>{
-                  const v=tco3Of(s.id); const best=v===cheapest;
-                  return <td key={s.id} style={{...num,fontWeight:700,color:best?'#7ED9A6':'var(--text)'}}>
-                    {won(v)}{best&&list.length>1?' ★':''}
-                  </td>;
-                })}
-              </tr>
-              <tr>
-                <td style={td}>최저 대비 3년 차액</td>
-                {list.map(s=>{
-                  const d=tco3Of(s.id)-cheapest;
-                  return <td key={s.id} style={{...num,color:d>0?'#F66D6D':'var(--sub)'}}>{d>0?'+'+won(d):'-'}</td>;
-                })}
-              </tr>
-              {qty>0 && (
-                <tr>
-                  <td style={td}>단위당 단가 (월 합계 ÷ {won(qty)})</td>
-                  {list.map(s=><td key={s.id} style={num}>{(monthlyOf(s.id)/qty).toFixed(1)}원</td>)}
-                </tr>
-              )}
-
-              <tr><td style={{...td,fontWeight:700,color:'#F6AD09'}} colSpan={list.length+1}>참고</td></tr>
-              <tr>
-                <td style={td}>최근 실제 청구</td>
-                {list.map(s=>{const a=lastActual(s.id);
-                  return <td key={s.id} style={num}>{a?won(a.amount)+' ('+a.ym+')':'-'}</td>;})}
-              </tr>
-              <tr>
-                <td style={td}>계약 만료</td>
-                {list.map(s=><td key={s.id} style={{...num,fontWeight:400}}>{s.contract_end||'-'}</td>)}
-              </tr>
-              <tr>
-                <td style={{...td,verticalAlign:'top'}}>판정 근거</td>
-                {list.map(s=><td key={s.id} style={{...td,fontSize:11,color:'var(--sub)',whiteSpace:'normal'}}>
-                  {s.decision_note||'-'}
-                </td>)}
-              </tr>
-            </tbody>
-          </table>
+          {mode === "personal" ? (
+            <>
+              <p className="tcc-panel-desc">
+                팀 공유로 바꾸면 이 도구를 여는 모든 사람이 같은 내용을 보고 함께 고칠 수 있습니다.
+                입력한 내용이 팀 전체에 공개되니 개인 메모는 미리 정리해주세요.
+              </p>
+              <div className="tcc-panel-actions">
+                <button className="tcc-btn tcc-btn-solid" onClick={() => switchMode("shared", "push")}>
+                  지금 내용을 팀 공유로 올리기
+                </button>
+                <button className="tcc-btn" onClick={() => switchMode("shared", "pull")}>
+                  팀 공유 내용 가져오기
+                </button>
+                <button className="tcc-btn tcc-btn-ghost" onClick={() => setSwitchOpen(false)}>
+                  닫기
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="tcc-panel-desc">
+                지금은 팀 공유 상태입니다. 나만 보기로 돌아가면 공유 내용은 그대로 남고 내 개인
+                저장본을 보게 됩니다.
+              </p>
+              <div className="tcc-panel-actions">
+                <button
+                  className="tcc-btn"
+                  onClick={() => {
+                    const n = nameDraft.trim();
+                    setMe(n);
+                    meRef.current = n;
+                    savePref("shared", n);
+                    setSwitchOpen(false);
+                  }}
+                >
+                  이름만 저장
+                </button>
+                <button className="tcc-btn" onClick={() => switchMode("personal", "pull")}>
+                  나만 보기로 돌아가기
+                </button>
+                <button className="tcc-btn tcc-btn-ghost" onClick={() => setSwitchOpen(false)}>
+                  닫기
+                </button>
+              </div>
+            </>
+          )}
         </div>
+      )}
 
-        <div style={{marginTop:12,fontSize:11,color:'var(--sub)',lineHeight:1.7}}>
-          · 3년 TCO = 월 합계 × 36 + 일회성 합계.<br/>
-          · 견적이 여러 세대면 <b>가장 최근 견적일의 라벨</b>만 씁니다 — 1차와 2차를 섞으면 두 배로 잡힙니다.<br/>
-          · 항목마다 VAT 포함 여부가 다를 수 있어 위쪽 «기준»에서 하나로 맞춰 보세요.
+      {mode === "shared" && remoteChanged && (
+        <div className="tcc-conflict">
+          <span>
+            다른 사람이 내용을 수정했습니다
+            {meta && meta.updatedBy ? " · " + meta.updatedBy + " " + agoText(meta.updatedAt) : ""}.
+            내 화면은 아직 예전 내용이라 저장이 보류된 상태입니다.
+          </span>
+          <div className="tcc-inline">
+            <button className="tcc-btn tcc-btn-solid" onClick={pullLatest}>
+              최신 내용 불러오기
+            </button>
+            <ConfirmButton
+              className="tcc-btn"
+              label="내 화면으로 덮어쓰기"
+              confirmLabel="정말 덮어쓸까요?"
+              onConfirm={pushMine}
+            />
+          </div>
         </div>
+      )}
+
+      {mode === "shared" && !remoteChanged && meta && meta.updatedBy && (
+        <div className="tcc-lastedit">
+          마지막 수정 · {meta.updatedBy} · {agoText(meta.updatedAt)}
+          <button className="tcc-linkbtn" onClick={pullLatest}>
+            새로고침
+          </button>
+        </div>
+      )}
+
+      {notice && (
+        <div className="tcc-notice">
+          {notice}
+          <button className="tcc-x" onClick={() => setNotice("")}>
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className={"tcc-body" + (sideOpen ? "" : " is-collapsed")}>
+        <main className="tcc-content">
+          {view === "dashboard" ? (
+            <Dashboard
+              projects={projects}
+              onOpen={(id, t) => {
+                setActiveId(id);
+                setTab(t || "cost");
+                setView("project");
+              }}
+            />
+          ) : (
+            <>
+              <div className="tcc-projbar">
+                <input
+                  className="tcc-projname"
+                  value={project.name}
+                  onChange={(e) => patch(() => ({ name: e.target.value }))}
+                />
+                <div className="tcc-projbar-actions">
+                  <button className="tcc-btn tcc-btn-ghost" onClick={duplicateProject}>
+                    복제
+                  </button>
+                  <ConfirmButton
+                    className="tcc-btn tcc-btn-danger"
+                    label="삭제"
+                    confirmLabel="정말 삭제할까요?"
+                    onConfirm={() => removeProject(project.id)}
+                  />
+                </div>
+              </div>
+              <div className="tcc-main">
+                {tab === "cost" && (
+                  <CostTab project={project} patch={patch} exportCsv={exportCsv} />
+                )}
+                {tab === "feature" && <FeatureTab project={project} patch={patch} />}
+                {tab === "result" && <ResultTab project={project} patch={patch} />}
+                {tab === "history" && <HistoryTab project={project} patch={patch} />}
+                {tab === "setup" && <SetupTab project={project} patch={patch} />}
+              </div>
+            </>
+          )}
+        </main>
+
+        <aside className="tcc-side">
+          <button
+            className={"tcc-navhome" + (view === "dashboard" ? " is-on" : "")}
+            onClick={() => setView("dashboard")}
+          >
+            메인 화면
+          </button>
+
+          <input
+            className="tcc-navsearch"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="프로젝트 검색"
+          />
+
+          <div className="tcc-navlist">
+            {visibleProjects.length === 0 && (
+              <p className="tcc-hint tcc-navempty">검색 결과가 없습니다.</p>
+            )}
+            {visibleProjects.map((p) => {
+              const open = p.id === activeId && view === "project";
+              const d = daysUntil(p.contract.endsAt);
+              return (
+                <div key={p.id} className={"tcc-navgroup" + (open ? " is-open" : "")}>
+                  <button
+                    className="tcc-navproj"
+                    onClick={() => {
+                      if (open) {
+                        setView("dashboard");
+                      } else {
+                        setActiveId(p.id);
+                        setView("project");
+                      }
+                    }}
+                  >
+                    <span className="tcc-navproj-name">{p.name}</span>
+                    {d !== null && (
+                      <span
+                        className={
+                          "tcc-navd" + (d < 0 ? " is-past" : d <= 60 ? " is-near" : "")
+                        }
+                      >
+                        {d < 0 ? "종료" : "D-" + d}
+                      </span>
+                    )}
+                  </button>
+                  {open && (
+                    <div className="tcc-navsub">
+                      {VIEWS.map(([k, label]) => (
+                        <button
+                          key={k}
+                          className={"tcc-navtab" + (tab === k ? " is-on" : "")}
+                          onClick={() => setTab(k)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <button className="tcc-navadd" onClick={addProject}>
+            + 새 프로젝트
+          </button>
+        </aside>
       </div>
-    );
+    </div>
+  );
+}
+
+/* =========================================================
+   설정 탭 — 가정값과 비교 대상
+   ========================================================= */
+function SetupTab({ project, patch }) {
+  const [svcWarn, setSvcWarn] = useState("");
+
+  const addVar = () =>
+    patch((p) => ({
+      vars: [
+        ...p.vars,
+        { id: uid(), label: "새변수", value: 0, unit: "", min: 0, max: 100, step: 1 },
+      ],
+    }));
+
+  const updVar = (id, key, val) =>
+    patch((p) => ({
+      vars: p.vars.map((v) => (v.id === id ? { ...v, [key]: val } : v)),
+    }));
+
+  const delVar = (id) => patch((p) => ({ vars: p.vars.filter((v) => v.id !== id) }));
+
+  const addService = () => {
+    const sid = uid();
+    patch((p) => ({
+      services: [...p.services, { id: sid, name: "후보 " + (p.services.length + 1) }],
+      costItems: p.costItems.map((it) => ({ ...it, values: { ...it.values, [sid]: "" } })),
+      featureItems: p.featureItems.map((f) => ({ ...f, scores: { ...f.scores, [sid]: 3 } })),
+    }));
+  };
+
+  const delService = (sid) => {
+    if (project.services.length <= 1) {
+      setSvcWarn("비교 대상은 최소 1개는 남아 있어야 합니다.");
+      setTimeout(() => setSvcWarn(""), 3000);
+      return;
+    }
+    patch((p) => ({ services: p.services.filter((s) => s.id !== sid) }));
   };
 
   return (
-    <>
-      <div className="page-header">
-        <div>
-          <div className="page-title">비용 비교</div>
-          <div className="page-sub">운영팀이 쓰는 툴의 견적과 실제 청구를 쌓아 무엇을 쓸지 정한다</div>
+    <div className="tcc-pane">
+      <Section
+        title="가정값"
+        desc="비용 계산에 쓸 숫자를 미리 정해둡니다. 여기 적은 이름을 비용표 수식에 그대로 쓸 수 있어요."
+      >
+        <div className="tcc-varlist">
+          {project.vars.map((v) => (
+            <div className="tcc-varrow" key={v.id}>
+              <input
+                className="tcc-in tcc-in-label"
+                value={v.label}
+                onChange={(e) => updVar(v.id, "label", e.target.value)}
+                placeholder="변수 이름"
+              />
+              <input
+                className="tcc-in tcc-in-num"
+                type="number"
+                value={v.value}
+                onChange={(e) => updVar(v.id, "value", e.target.value)}
+              />
+              <input
+                className="tcc-in tcc-in-unit"
+                value={v.unit}
+                onChange={(e) => updVar(v.id, "unit", e.target.value)}
+                placeholder="단위"
+              />
+              <div className="tcc-varrange">
+                <label>범위</label>
+                <input
+                  className="tcc-in tcc-in-mini"
+                  type="number"
+                  value={v.min}
+                  onChange={(e) => updVar(v.id, "min", e.target.value)}
+                />
+                <span>~</span>
+                <input
+                  className="tcc-in tcc-in-mini"
+                  type="number"
+                  value={v.max}
+                  onChange={(e) => updVar(v.id, "max", e.target.value)}
+                />
+              </div>
+              <button className="tcc-x" onClick={() => delVar(v.id)} title="삭제">
+                ×
+              </button>
+            </div>
+          ))}
         </div>
-      </div>
-      {view==='list'    && renderList()}
-      {view==='detail'  && renderDetail()}
-      {view==='compare' && renderCompare()}
-    </>
+        <button className="tcc-btn tcc-btn-line" onClick={addVar}>
+          + 가정값 추가
+        </button>
+        <p className="tcc-hint">
+          범위는 결론 탭의 시뮬레이션에서 값을 움직여볼 때 쓰입니다.
+        </p>
+      </Section>
+
+      <Section
+        title="비교 대상"
+        desc="비교할 서비스나 운영 방식을 등록합니다. 담당자와 견적 출처를 같이 남겨두면 다음 검토 때 다시 찾지 않아도 됩니다."
+      >
+        <div className="tcc-svclist">
+          {project.services.map((s, i) => {
+            const upd = (key, val) =>
+              patch((p) => ({
+                services: p.services.map((x) => (x.id === s.id ? { ...x, [key]: val } : x)),
+              }));
+            const stale = s.lastCheckedAt ? -daysUntil(s.lastCheckedAt) : null;
+            return (
+              <div className="tcc-svccard" key={s.id}>
+                <div className="tcc-svcrow">
+                  <span className="tcc-svcno">{String(i + 1).padStart(2, "0")}</span>
+                  <input
+                    className="tcc-in tcc-in-title"
+                    value={s.name}
+                    onChange={(e) => upd("name", e.target.value)}
+                    placeholder="서비스 이름"
+                  />
+                  <select
+                    className="tcc-sel"
+                    value={s.state || "candidate"}
+                    onChange={(e) => upd("state", e.target.value)}
+                  >
+                    {SERVICE_STATES.map((st) => (
+                      <option key={st.key} value={st.key}>
+                        {st.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button className="tcc-x" onClick={() => delService(s.id)} title="삭제">
+                    ×
+                  </button>
+                </div>
+                <div className="tcc-svcgrid">
+                  <label>
+                    <span>공급사</span>
+                    <input
+                      className="tcc-in"
+                      value={s.vendor}
+                      onChange={(e) => upd("vendor", e.target.value)}
+                      placeholder="회사명"
+                    />
+                  </label>
+                  <label>
+                    <span>담당자 · 연락처</span>
+                    <input
+                      className="tcc-in"
+                      value={s.contact}
+                      onChange={(e) => upd("contact", e.target.value)}
+                      placeholder="이름 / 이메일"
+                    />
+                  </label>
+                  <label>
+                    <span>견적·자료 링크</span>
+                    <input
+                      className="tcc-in"
+                      value={s.link}
+                      onChange={(e) => upd("link", e.target.value)}
+                      placeholder="드라이브 주소 등"
+                    />
+                  </label>
+                  <label>
+                    <span>정보 확인일</span>
+                    <div className="tcc-inline">
+                      <input
+                        className="tcc-in"
+                        type="date"
+                        value={s.lastCheckedAt}
+                        onChange={(e) => upd("lastCheckedAt", e.target.value)}
+                      />
+                      <button className="tcc-chip" onClick={() => upd("lastCheckedAt", todayStr())}>
+                        오늘로
+                      </button>
+                      {stale !== null && stale > 180 && (
+                        <span className="tcc-stale">{stale}일 지남</span>
+                      )}
+                    </div>
+                  </label>
+                </div>
+                <input
+                  className="tcc-in tcc-svcmemo"
+                  value={s.memo}
+                  onChange={(e) => upd("memo", e.target.value)}
+                  placeholder="특이사항 · 계약 조건 요약"
+                />
+              </div>
+            );
+          })}
+        </div>
+        {svcWarn && <p className="tcc-warnline">{svcWarn}</p>}
+        <button className="tcc-btn tcc-btn-line" onClick={addService}>
+          + 비교 대상 추가
+        </button>
+      </Section>
+
+      <Section title="비교 기간" desc="총비용을 몇 개월치로 볼지 정합니다.">
+        <div className="tcc-inline">
+          <input
+            className="tcc-in tcc-in-num"
+            type="number"
+            value={project.horizonMonths}
+            onChange={(e) => patch(() => ({ horizonMonths: e.target.value }))}
+          />
+          <span className="tcc-unit">개월</span>
+          {[12, 24, 36].map((m) => (
+            <button
+              key={m}
+              className="tcc-chip"
+              onClick={() => patch(() => ({ horizonMonths: m }))}
+            >
+              {m}개월
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        title="우리몰 상황과 판단 기준"
+        desc="AI가 추천 코멘트를 쓸 때 참고하는 배경입니다. 구체적으로 적을수록 코멘트가 정확해집니다."
+      >
+        <textarea
+          className="tcc-ta"
+          rows={7}
+          value={project.context}
+          onChange={(e) => patch(() => ({ context: e.target.value }))}
+          placeholder="예) 월 주문 2만건 규모, 배송 문의 비중이 큼. 초기 비용보다 3년 총비용을 중요하게 봄. 담당 인력이 1명이라 운영 부담이 적어야 함."
+        />
+      </Section>
+    </div>
   );
 }
+
+/* =========================================================
+   비용표 탭
+   ========================================================= */
+function CostTab({ project, patch, exportCsv }) {
+  const [openNote, setOpenNote] = useState(null);
+
+  const addItem = () =>
+    patch((p) => {
+      const values = {};
+      p.services.forEach((s) => (values[s.id] = ""));
+      return {
+        costItems: [
+          ...p.costItems,
+          { id: uid(), label: "새 비용 항목", cycle: "monthly", note: "", values },
+        ],
+      };
+    });
+
+  const updItem = (id, key, val) =>
+    patch((p) => ({
+      costItems: p.costItems.map((it) => (it.id === id ? { ...it, [key]: val } : it)),
+    }));
+
+  const updCell = (id, sid, val) =>
+    patch((p) => ({
+      costItems: p.costItems.map((it) =>
+        it.id === id ? { ...it, values: { ...it.values, [sid]: val } } : it
+      ),
+    }));
+
+  const delItem = (id) => patch((p) => ({ costItems: p.costItems.filter((it) => it.id !== id) }));
+
+  const moveItem = (id, dir) =>
+    patch((p) => {
+      const arr = [...p.costItems];
+      const i = arr.findIndex((x) => x.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= arr.length) return {};
+      const t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+      return { costItems: arr };
+    });
+
+  const totals = project.services.map((s) => computeService(project, s.id));
+  const minTotal = Math.min(...totals.map((t) => t.total));
+
+  return (
+    <div className="tcc-pane">
+      <div className="tcc-varstrip">
+        {project.vars.map((v) => (
+          <div className="tcc-varchip" key={v.id}>
+            <span className="tcc-varchip-label">{v.label}</span>
+            <input
+              className="tcc-varchip-in"
+              type="number"
+              value={v.value}
+              onChange={(e) =>
+                patch((p) => ({
+                  vars: p.vars.map((x) => (x.id === v.id ? { ...x, value: e.target.value } : x)),
+                }))
+              }
+            />
+            <span className="tcc-varchip-unit">{v.unit}</span>
+          </div>
+        ))}
+        {project.vars.length === 0 && (
+          <span className="tcc-hint">설정 탭에서 가정값을 먼저 등록해보세요.</span>
+        )}
+      </div>
+
+      <div className="tcc-tablewrap">
+        <table className="tcc-table">
+          <thead>
+            <tr>
+              <th className="tcc-th-item">비용 항목</th>
+              <th className="tcc-th-cycle">주기</th>
+              {project.services.map((s) => (
+                <th key={s.id} className="tcc-th-svc">
+                  {s.name}
+                </th>
+              ))}
+              <th className="tcc-th-tool"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {project.costItems.map((it) => (
+              <tr key={it.id}>
+                <td className="tcc-td-item">
+                  <input
+                    className="tcc-cellin tcc-cellin-label"
+                    value={it.label}
+                    onChange={(e) => updItem(it.id, "label", e.target.value)}
+                  />
+                  <button
+                    className="tcc-notebtn"
+                    onClick={() => setOpenNote(openNote === it.id ? null : it.id)}
+                  >
+                    {it.note ? "메모 있음" : "메모"}
+                  </button>
+                  {openNote === it.id && (
+                    <input
+                      className="tcc-cellin tcc-notein"
+                      value={it.note}
+                      placeholder="근거나 조건을 적어두세요"
+                      onChange={(e) => updItem(it.id, "note", e.target.value)}
+                    />
+                  )}
+                </td>
+                <td className="tcc-td-cycle">
+                  <select
+                    className="tcc-sel"
+                    value={it.cycle}
+                    onChange={(e) => updItem(it.id, "cycle", e.target.value)}
+                  >
+                    {CYCLES.map((c) => (
+                      <option key={c.key} value={c.key}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                {project.services.map((s) => {
+                  const r = evalCell(it.values[s.id], project.vars);
+                  return (
+                    <td key={s.id} className="tcc-td-cell">
+                      <input
+                        className={"tcc-cellin tcc-cellin-num" + (r.error ? " is-err" : "")}
+                        value={it.values[s.id] || ""}
+                        placeholder="0"
+                        onChange={(e) => updCell(it.id, s.id, e.target.value)}
+                      />
+                      <div className={"tcc-cellpre" + (r.error ? " is-err" : "")}>
+                        {r.error ? r.error : r.empty ? "" : won(r.value) + "원"}
+                      </div>
+                    </td>
+                  );
+                })}
+                <td className="tcc-td-tool">
+                  <button className="tcc-mini" onClick={() => moveItem(it.id, -1)}>
+                    ↑
+                  </button>
+                  <button className="tcc-mini" onClick={() => moveItem(it.id, 1)}>
+                    ↓
+                  </button>
+                  <button className="tcc-mini tcc-mini-del" onClick={() => delItem(it.id)}>
+                    ×
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="tcc-sum">
+              <td colSpan={2}>월 환산 합계</td>
+              {totals.map((t, i) => (
+                <td key={i} className="tcc-num">
+                  {won(t.perMonth)}원
+                </td>
+              ))}
+              <td></td>
+            </tr>
+            <tr className="tcc-sum">
+              <td colSpan={2}>1회성 비용</td>
+              {totals.map((t, i) => (
+                <td key={i} className="tcc-num tcc-num-soft">
+                  {won(t.once)}원
+                </td>
+              ))}
+              <td></td>
+            </tr>
+            <tr className="tcc-sum tcc-sum-strong">
+              <td colSpan={2}>{project.horizonMonths}개월 총비용</td>
+              {totals.map((t, i) => (
+                <td key={i} className={"tcc-num" + (t.total === minTotal ? " is-best" : "")}>
+                  {won(t.total)}원
+                  {t.total === minTotal && <span className="tcc-badge">최저</span>}
+                </td>
+              ))}
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div className="tcc-rowactions">
+        <button className="tcc-btn tcc-btn-line" onClick={addItem}>
+          + 비용 항목 추가
+        </button>
+        <button className="tcc-btn tcc-btn-ghost" onClick={exportCsv}>
+          표 CSV로 내려받기
+        </button>
+      </div>
+
+      <div className="tcc-guide">
+        <div className="tcc-guide-title">수식 쓰는 법</div>
+        <ul>
+          <li>
+            숫자만 넣어도 됩니다. <code>250000</code>
+          </li>
+          <li>
+            가정값 이름을 그대로 쓸 수 있습니다. <code>상담사수 * 3200000</code>
+          </li>
+          <li>
+            사칙연산과 괄호를 씁니다. <code>(월문의건수 - 1000) * 90 + 50000</code>
+          </li>
+          <li>비워두면 0원으로 계산합니다.</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   기능 평가 탭
+   ========================================================= */
+function FeatureTab({ project, patch }) {
+  const [openDesc, setOpenDesc] = useState(null);
+
+  const addFeature = () =>
+    patch((p) => {
+      const scores = {};
+      p.services.forEach((s) => (scores[s.id] = 3));
+      return {
+        featureItems: [
+          ...p.featureItems,
+          { id: uid(), label: "새 평가 항목", desc: "", weight: 3, scores },
+        ],
+      };
+    });
+
+  const updFeature = (id, key, val) =>
+    patch((p) => ({
+      featureItems: p.featureItems.map((f) => (f.id === id ? { ...f, [key]: val } : f)),
+    }));
+
+  const updScore = (id, sid, val) =>
+    patch((p) => ({
+      featureItems: p.featureItems.map((f) =>
+        f.id === id ? { ...f, scores: { ...f.scores, [sid]: Number(val) } } : f
+      ),
+    }));
+
+  const delFeature = (id) =>
+    patch((p) => ({ featureItems: p.featureItems.filter((f) => f.id !== id) }));
+
+  const moveFeature = (id, dir) =>
+    patch((p) => {
+      const arr = [...p.featureItems];
+      const i = arr.findIndex((x) => x.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= arr.length) return {};
+      const t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+      return { featureItems: arr };
+    });
+
+  const scores = project.services.map((s) => computeScore(project, s.id));
+  const maxScore = Math.max(...scores.map((s) => s.score));
+
+  return (
+    <div className="tcc-pane">
+      <p className="tcc-lead">
+        중요도는 1에서 5까지, 각 후보의 점수도 0에서 5까지 매깁니다. 중요도가 높은 항목의 점수가
+        총점에 더 크게 반영됩니다.
+      </p>
+
+      <div className="tcc-tablewrap">
+        <table className="tcc-table">
+          <thead>
+            <tr>
+              <th className="tcc-th-item">평가 항목</th>
+              <th className="tcc-th-cycle">중요도</th>
+              {project.services.map((s) => (
+                <th key={s.id} className="tcc-th-svc">
+                  {s.name}
+                </th>
+              ))}
+              <th className="tcc-th-tool"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {project.featureItems.map((f) => (
+              <tr key={f.id}>
+                <td className="tcc-td-item">
+                  <input
+                    className="tcc-cellin tcc-cellin-label"
+                    value={f.label}
+                    onChange={(e) => updFeature(f.id, "label", e.target.value)}
+                  />
+                  {openDesc === f.id ? (
+                    <textarea
+                      className="tcc-descta"
+                      rows={4}
+                      autoFocus
+                      value={f.desc || ""}
+                      placeholder="이 항목이 무엇을 보는지, 몇 점이 어떤 상태인지 적어두세요."
+                      onChange={(e) => updFeature(f.id, "desc", e.target.value)}
+                      onBlur={() => setOpenDesc(null)}
+                    />
+                  ) : f.desc ? (
+                    <p
+                      className="tcc-desctext"
+                      onClick={() => setOpenDesc(f.id)}
+                      title="눌러서 수정"
+                    >
+                      {f.desc}
+                    </p>
+                  ) : (
+                    <button className="tcc-notebtn" onClick={() => setOpenDesc(f.id)}>
+                      설명 추가
+                    </button>
+                  )}
+                </td>
+                <td className="tcc-td-cycle">
+                  <select
+                    className="tcc-sel"
+                    value={f.weight}
+                    onChange={(e) => updFeature(f.id, "weight", Number(e.target.value))}
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                {project.services.map((s) => (
+                  <td key={s.id} className="tcc-td-cell">
+                    <div className="tcc-dots">
+                      {[0, 1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          className={
+                            "tcc-dot" + (Number(f.scores[s.id]) === n ? " is-on" : "")
+                          }
+                          onClick={() => updScore(f.id, s.id, n)}
+                          title={n + "점"}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </td>
+                ))}
+                <td className="tcc-td-tool">
+                  <button className="tcc-mini" onClick={() => moveFeature(f.id, -1)} title="위로">
+                    ↑
+                  </button>
+                  <button className="tcc-mini" onClick={() => moveFeature(f.id, 1)} title="아래로">
+                    ↓
+                  </button>
+                  <button className="tcc-mini tcc-mini-del" onClick={() => delFeature(f.id)}>
+                    ×
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="tcc-sum tcc-sum-strong">
+              <td colSpan={2}>가중 총점 (100점 만점)</td>
+              {scores.map((sc, i) => (
+                <td key={i} className={"tcc-num" + (sc.score === maxScore ? " is-best" : "")}>
+                  {sc.score.toFixed(1)}
+                  {sc.score === maxScore && <span className="tcc-badge">최고</span>}
+                </td>
+              ))}
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div className="tcc-rowactions">
+        <button className="tcc-btn tcc-btn-line" onClick={addFeature}>
+          + 평가 항목 추가
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   결론 탭 — 요약 + 시뮬레이션 + AI 코멘트
+   ========================================================= */
+function ResultTab({ project, patch }) {
+  const [sweepVarId, setSweepVarId] = useState(
+    project.vars[0] ? project.vars[0].id : null
+  );
+  const [comment, setComment] = useState(null);
+  const [cut, setCut] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+
+  const rows = project.services.map((s) => {
+    const c = computeService(project, s.id);
+    const sc = computeScore(project, s.id);
+    return {
+      id: s.id,
+      name: s.name,
+      total: c.total,
+      perMonth: c.perMonth,
+      once: c.once,
+      score: sc.score,
+      efficiency: sc.score > 0 ? c.total / sc.score : Infinity,
+    };
+  });
+
+  const minTotal = Math.min(...rows.map((r) => r.total));
+  const maxScore = Math.max(...rows.map((r) => r.score));
+  const minEff = Math.min(...rows.map((r) => r.efficiency));
+
+  /* 시뮬레이션 데이터 */
+  const sweepVar = project.vars.find((v) => v.id === sweepVarId) || null;
+  const sweep = useMemo(() => {
+    if (!sweepVar) return null;
+    const min = Number(sweepVar.min) || 0;
+    const max = Number(sweepVar.max) || 100;
+    if (max <= min) return null;
+    const steps = 24;
+    const points = [];
+    for (let i = 0; i <= steps; i++) {
+      const x = min + ((max - min) * i) / steps;
+      const tmp = {
+        ...project,
+        vars: project.vars.map((v) => (v.id === sweepVar.id ? { ...v, value: x } : v)),
+      };
+      const ys = project.services.map((s) => computeService(tmp, s.id).total);
+      points.push({ x, ys });
+    }
+    return { points, min, max };
+  }, [project, sweepVar]);
+
+  const askAI = async () => {
+    // 1차 이식에서는 막아 둔다. 브라우저에서 Anthropic API 를 직접 부르려면 키가 필요한데,
+    // 이 콘솔은 공개 저장소라 키를 화면에 박을 수 없다. Supabase 엣지 함수를 만들어 경유시킬 것.
+    setErr('AI 코멘트는 아직 연결되지 않았습니다. 서버 함수를 붙인 뒤 열립니다.');
+    return;
+    setLoading(true);
+    setErr("");
+    setComment(null);
+    setCut(false);
+    try {
+      const lines = [];
+      lines.push("프로젝트: " + project.name);
+      lines.push("비교 기간: " + project.horizonMonths + "개월");
+      lines.push("");
+      lines.push("[가정값]");
+      project.vars.forEach((v) => lines.push("- " + v.label + " = " + v.value + " " + v.unit));
+      lines.push("");
+      lines.push("[비용 항목별 산출액]");
+      project.costItems.forEach((it) => {
+        const cy = CYCLES.find((c) => c.key === it.cycle);
+        const per = project.services
+          .map((s) => s.name + " " + won(evalCell(it.values[s.id], project.vars).value) + "원")
+          .join(" / ");
+        lines.push("- " + it.label + " (" + (cy ? cy.label : "") + "): " + per + (it.note ? " · 메모: " + it.note : ""));
+      });
+      lines.push("");
+      lines.push("[총계]");
+      rows.forEach((r) =>
+        lines.push(
+          "- " + r.name + ": 월 환산 " + won(r.perMonth) + "원, 1회성 " + won(r.once) +
+          "원, " + project.horizonMonths + "개월 총 " + won(r.total) + "원, 기능 총점 " +
+          r.score.toFixed(1) + "점"
+        )
+      );
+      lines.push("");
+      lines.push("[기능 평가 상세] (중요도 1-5, 점수 0-5)");
+      project.featureItems.forEach((f) => {
+        const per = project.services.map((s) => s.name + " " + f.scores[s.id]).join(" / ");
+        lines.push("- " + f.label + " (중요도 " + f.weight + "): " + per);
+        if (f.desc) lines.push("    평가 기준: " + f.desc);
+      });
+      lines.push("");
+      lines.push("[계약 정보]");
+      lines.push(
+        "- 계약 기간: " + (project.contract.startedAt || "미입력") + " ~ " +
+        (project.contract.endsAt || "미입력")
+      );
+      if (project.contract.endsAt) {
+        const dEnd = daysUntil(project.contract.endsAt);
+        lines.push("- 종료까지 " + dEnd + "일 남음");
+        lines.push(
+          "- 해지 통보 기한: 종료 " + project.contract.noticeDays + "일 전 (" +
+          addDays(project.contract.endsAt, -Number(project.contract.noticeDays || 0)) + ")"
+        );
+      }
+      const decided = project.services.find((s) => s.id === project.decision.serviceId);
+      if (decided) {
+        lines.push(
+          "- 현재 선택된 서비스: " + decided.name +
+          (project.decision.decidedAt ? " (" + project.decision.decidedAt + " 결정)" : "")
+        );
+        if (project.decision.reason) lines.push("- 당시 선택 사유: " + project.decision.reason);
+      }
+
+      if (project.logs.length > 0) {
+        lines.push("");
+        lines.push("[운영 기록]");
+        [...project.logs]
+          .sort((a, b) => (a.date < b.date ? 1 : -1))
+          .slice(0, 15)
+          .forEach((l) => {
+            const t = LOG_TYPES.find((x) => x.key === l.type);
+            lines.push("- " + l.date + " [" + (t ? t.label : l.type) + "] " + l.text);
+          });
+      }
+
+      if (project.snapshots.length > 0) {
+        lines.push("");
+        lines.push("[이전 검토 회차]");
+        project.snapshots.slice(0, 5).forEach((s) => {
+          lines.push(
+            "- " + s.name + " (" + s.savedAt + "): " +
+            s.totals.map((t) => t.name + " " + won(t.total) + "원").join(" / ")
+          );
+        });
+      }
+
+      lines.push("");
+      lines.push("[우리몰 상황과 판단 기준]");
+      lines.push(project.context || "(입력되지 않음)");
+
+      const prompt =
+        "당신은 이커머스 운영팀의 툴 도입 의사결정을 돕는 분석가입니다. " +
+        "아래 비교 데이터를 보고 한국어로 검토 의견을 작성하세요.\n\n" +
+        "반드시 아래 JSON 형식으로만 응답하세요. 설명이나 코드 블록 표시 없이 JSON만 출력합니다.\n" +
+        '{"conclusion":"어떤 안을 권하는지 한 문장",' +
+        '"reasons":["근거1","근거2","근거3"],' +
+        '"cautions":["주의점1","주의점2"],' +
+        '"nextSteps":["확인사항1","확인사항2"]}\n\n' +
+        "작성 규칙\n" +
+        "- 배열의 각 원소는 완결된 한 문장이며 120자를 넘기지 않습니다.\n" +
+        "- reasons는 정확히 3개, cautions와 nextSteps는 각각 2개입니다.\n" +
+        "- 구분선이나 빈 문자열을 원소로 넣지 마세요.\n" +
+        "- 숫자는 데이터에 있는 값만 쓰고 추정치를 지어내지 마세요.\n" +
+        "- 비용 차이가 크지 않다면 무리하게 한쪽을 밀지 말고 그 사실을 명확히 말하세요.\n" +
+        "- 운영 기록이나 이전 검토 회차가 있으면 그때와 지금이 무엇이 달라졌는지 짚으세요.\n" +
+        "- 계약 종료일이나 해지 통보 기한이 임박했다면 cautions 첫 번째에 그 내용을 넣으세요.\n\n" +
+        lines.join("\n");
+
+      // 응답이 길이 제한에 걸리면 이어서 한 번 더 받아 붙인다
+      let msgs = [{ role: "user", content: prompt }];
+      let full = "";
+      let truncated = false;
+
+      for (let round = 0; round < 2; round++) {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 1000,
+            messages: msgs,
+          }),
+        });
+        const data = await res.json();
+        const part = (data.content || [])
+          .filter((b) => b.type === "text")
+          .map((b) => b.text)
+          .join("");
+        full += part;
+        truncated = data.stop_reason === "max_tokens";
+        if (!truncated) break;
+        msgs = [
+          ...msgs,
+          { role: "assistant", content: part },
+          { role: "user", content: "끊긴 지점부터 이어서 JSON을 마저 완성하세요." },
+        ];
+      }
+
+      const raw = full.replace(/```json/g, "").replace(/```/g, "").trim();
+      if (!raw) throw new Error("빈 응답");
+
+      let parsed = null;
+      try {
+        const s = raw.indexOf("{");
+        const e = raw.lastIndexOf("}");
+        parsed = JSON.parse(s >= 0 && e > s ? raw.slice(s, e + 1) : raw);
+      } catch (pe) {
+        parsed = null;
+      }
+
+      setComment(parsed || raw);
+      setCut(truncated && !parsed);
+    } catch (e) {
+      setErr("코멘트를 받아오지 못했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="tcc-pane">
+      <div className="tcc-cards">
+        {rows.map((r) => (
+          <div
+            key={r.id}
+            className={"tcc-card" + (r.efficiency === minEff ? " is-pick" : "")}
+          >
+            <div className="tcc-card-name">{r.name}</div>
+            <div className="tcc-card-total">
+              {won(r.total)}
+              <span className="tcc-card-cur">원</span>
+            </div>
+            <div className="tcc-card-sub">{project.horizonMonths}개월 총비용</div>
+            <dl className="tcc-card-dl">
+              <div>
+                <dt>월 환산</dt>
+                <dd>{won(r.perMonth)}원</dd>
+              </div>
+              <div>
+                <dt>기능 총점</dt>
+                <dd>{r.score.toFixed(1)}점</dd>
+              </div>
+              <div>
+                <dt>1점당 비용</dt>
+                <dd>{isFinite(r.efficiency) ? won(r.efficiency) + "원" : "-"}</dd>
+              </div>
+            </dl>
+            <div className="tcc-card-flags">
+              {r.total === minTotal && <span className="tcc-flag">비용 최저</span>}
+              {r.score === maxScore && <span className="tcc-flag">기능 최고</span>}
+              {r.efficiency === minEff && <span className="tcc-flag tcc-flag-pick">가성비 최고</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {sweep && (
+        <Section
+          title="값이 바뀌면 순위도 바뀔까"
+          desc="가정값 하나를 범위 안에서 움직여보면서, 어느 지점부터 유리한 안이 달라지는지 확인합니다."
+        >
+          <div className="tcc-inline">
+            <span className="tcc-unit">기준 값</span>
+            <select
+              className="tcc-sel"
+              value={sweepVarId}
+              onChange={(e) => setSweepVarId(e.target.value)}
+            >
+              {project.vars.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <SweepChart
+            sweep={sweep}
+            services={project.services}
+            currentX={Number(sweepVar.value)}
+            unit={sweepVar.unit}
+            label={sweepVar.label}
+          />
+          <div className="tcc-inline tcc-slider-wrap">
+            <input
+              className="tcc-slider"
+              type="range"
+              min={sweep.min}
+              max={sweep.max}
+              step={sweepVar.step || 1}
+              value={Number(sweepVar.value)}
+              onChange={(e) =>
+                patch((p) => ({
+                  vars: p.vars.map((v) =>
+                    v.id === sweepVar.id ? { ...v, value: e.target.value } : v
+                  ),
+                }))
+              }
+            />
+            <span className="tcc-slider-val">
+              {Number(sweepVar.value).toLocaleString("ko-KR")} {sweepVar.unit}
+            </span>
+          </div>
+        </Section>
+      )}
+
+      <Section
+        title="AI 검토 의견"
+        desc="위 표와 설정 탭에 적은 우리몰 상황을 함께 읽고 의견을 씁니다. 참고용이고 최종 판단은 직접 하세요."
+      >
+        <button className="tcc-btn tcc-btn-solid" onClick={askAI} disabled={loading}>
+          {loading ? "검토 중…" : comment ? "다시 검토받기" : "검토 의견 받기"}
+        </button>
+        {err && <div className="tcc-err">{err}</div>}
+        {cut && (
+          <div className="tcc-cut">
+            내용이 길어 일부가 끊겼을 수 있습니다. 다시 검토받으면 더 짧게 정리됩니다.
+          </div>
+        )}
+        {comment && <CommentView data={comment} />}
+      </Section>
+    </div>
+  );
+}
+
+/* ---------- 시뮬레이션 차트 ---------- */
+function SweepChart({ sweep, services, currentX, unit, label }) {
+  const W = 720;
+  const H = 260;
+  const P = { t: 16, r: 16, b: 34, l: 68 };
+  const allY = sweep.points.flatMap((p) => p.ys);
+  const yMin = Math.min(...allY, 0);
+  const yMax = Math.max(...allY, 1);
+  const sx = (x) =>
+    P.l + ((x - sweep.min) / (sweep.max - sweep.min)) * (W - P.l - P.r);
+  const sy = (y) => H - P.b - ((y - yMin) / (yMax - yMin || 1)) * (H - P.t - P.b);
+
+  const colors = ["var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)"];
+
+  return (
+    <div className="tcc-chartwrap">
+      <svg viewBox={"0 0 " + W + " " + H} className="tcc-chart" role="img">
+        {[0, 0.25, 0.5, 0.75, 1].map((f, i) => {
+          const y = P.t + (H - P.t - P.b) * f;
+          const val = yMax - (yMax - yMin) * f;
+          return (
+            <g key={i}>
+              <line x1={P.l} y1={y} x2={W - P.r} y2={y} className="tcc-grid" />
+              <text x={P.l - 8} y={y + 4} className="tcc-axis" textAnchor="end">
+                {Math.round(val / 10000).toLocaleString("ko-KR")}만
+              </text>
+            </g>
+          );
+        })}
+        <line
+          x1={sx(currentX)}
+          y1={P.t}
+          x2={sx(currentX)}
+          y2={H - P.b}
+          className="tcc-nowline"
+        />
+        {services.map((s, si) => {
+          const d = sweep.points
+            .map((p, i) => (i === 0 ? "M" : "L") + sx(p.x) + " " + sy(p.ys[si]))
+            .join(" ");
+          return (
+            <path
+              key={s.id}
+              d={d}
+              fill="none"
+              stroke={colors[si % colors.length]}
+              strokeWidth="2.5"
+            />
+          );
+        })}
+        <text x={sx(sweep.min)} y={H - 12} className="tcc-axis" textAnchor="start">
+          {Math.round(sweep.min).toLocaleString("ko-KR")}
+        </text>
+        <text x={W - P.r} y={H - 12} className="tcc-axis" textAnchor="end">
+          {Math.round(sweep.max).toLocaleString("ko-KR")} {unit}
+        </text>
+        <text x={sx(currentX)} y={P.t - 4} className="tcc-axis tcc-axis-now" textAnchor="middle">
+          지금 {Math.round(currentX).toLocaleString("ko-KR")}
+        </text>
+      </svg>
+      <div className="tcc-legend">
+        {services.map((s, si) => (
+          <span key={s.id} className="tcc-leg">
+            <i style={{ background: "var(--c" + ((si % 5) + 1) + ")" }} />
+            {s.name}
+          </span>
+        ))}
+      </div>
+      <p className="tcc-hint">
+        가로축은 {label}, 세로축은 총비용입니다. 선이 서로 교차하는 지점이 유불리가 뒤집히는 값입니다.
+      </p>
+    </div>
+  );
+}
+
+/* ---------- AI 코멘트 렌더 ---------- */
+// 구분선이나 빈 항목처럼 내용이 없는 줄은 걸러낸다
+function cleanItems(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((x) => String(x == null ? "" : x).replace(/^[-*·]\s*/, "").replace(/\*\*/g, "").trim())
+    .filter((x) => x.length > 1 && !/^[-–—*=_·\s]+$/.test(x));
+}
+
+function CommentView({ data }) {
+  let sections;
+
+  if (data && typeof data === "object") {
+    sections = [
+      { title: "한 줄 결론", items: cleanItems([data.conclusion]), numbered: false },
+      { title: "근거", items: cleanItems(data.reasons), numbered: true },
+      { title: "주의할 점", items: cleanItems(data.cautions), numbered: true },
+      { title: "다음 확인 사항", items: cleanItems(data.nextSteps), numbered: true },
+    ].filter((s) => s.items.length > 0);
+  } else {
+    // JSON 해석에 실패한 경우를 대비한 대체 표시
+    const blocks = [];
+    let cur = null;
+    for (const rawLine of String(data).split("\n")) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      const m = line.match(/^\[(.+?)\]\s*(.*)$/);
+      if (m) {
+        cur = { title: m[1], items: [] };
+        blocks.push(cur);
+        if (m[2]) cur.items.push(m[2]);
+      } else {
+        if (!cur) {
+          cur = { title: "검토 의견", items: [] };
+          blocks.push(cur);
+        }
+        cur.items.push(line);
+      }
+    }
+    sections = blocks
+      .map((b) => ({ title: b.title, items: cleanItems(b.items), numbered: true }))
+      .filter((s) => s.items.length > 0);
+  }
+
+  return (
+    <div className="tcc-comment">
+      {sections.map((s, i) => (
+        <div className="tcc-cblock" key={i}>
+          <div className="tcc-ctitle">
+            <span className="tcc-cnum">{i + 1}</span>
+            <span className="tcc-ctitletext">{s.title}</span>
+          </div>
+          <ul className="tcc-clines">
+            {s.items.map((l, j) => (
+              <li key={j}>
+                <span className="tcc-cno">
+                  {s.numbered ? i + 1 + "-" + (j + 1) : ""}
+                </span>
+                <span className="tcc-ctext">{l}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* =========================================================
+   계약 · 이력 탭
+   ========================================================= */
+function HistoryTab({ project, patch }) {
+  const [logDraft, setLogDraft] = useState({ date: todayStr(), type: "update", text: "" });
+  const [snapOpen, setSnapOpen] = useState(false);
+  const [snapName, setSnapName] = useState("");
+  const c = project.contract;
+
+  const updContract = (key, val) =>
+    patch((p) => ({ contract: { ...p.contract, [key]: val } }));
+
+  const noticeDeadline = c.endsAt ? addDays(c.endsAt, -Number(c.noticeDays || 0)) : "";
+  const reviewStart = c.endsAt ? addDays(c.endsAt, -Number(c.reviewLeadDays || 0)) : "";
+  const dEnd = daysUntil(c.endsAt);
+  const dNotice = daysUntil(noticeDeadline);
+  const dReview = daysUntil(reviewStart);
+
+  const addLog = () => {
+    if (!logDraft.text.trim()) return;
+    patch((p) => ({ logs: [{ id: uid(), ...logDraft }, ...p.logs] }));
+    setLogDraft({ date: todayStr(), type: "update", text: "" });
+  };
+
+  const delLog = (id) => patch((p) => ({ logs: p.logs.filter((l) => l.id !== id) }));
+
+  const saveSnapshot = () => {
+    const name = snapName.trim();
+    if (!name) return;
+    const totals = project.services.map((s) => ({
+      name: s.name,
+      total: computeService(project, s.id).total,
+      score: computeScore(project, s.id).score,
+    }));
+    const snap = {
+      id: uid(),
+      name,
+      savedAt: todayStr(),
+      totals,
+      data: {
+        horizonMonths: project.horizonMonths,
+        vars: project.vars,
+        services: project.services,
+        costItems: project.costItems,
+        featureItems: project.featureItems,
+      },
+    };
+    patch((p) => ({ snapshots: [snap, ...p.snapshots] }));
+    setSnapOpen(false);
+    setSnapName("");
+  };
+
+  const restoreSnapshot = (snap) => {
+    patch(() => ({ ...snap.data }));
+  };
+
+  const delSnapshot = (id) =>
+    patch((p) => ({ snapshots: p.snapshots.filter((s) => s.id !== id) }));
+
+  const sortedLogs = [...project.logs].sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  return (
+    <div className="tcc-pane">
+      <Section
+        title="계약 정보"
+        desc="종료일을 넣어두면 해지 통보 기한과 재검토 시작 시점을 알아서 계산합니다."
+      >
+        <div className="tcc-cgrid">
+          <label>
+            <span>계약 시작일</span>
+            <input
+              className="tcc-in"
+              type="date"
+              value={c.startedAt}
+              onChange={(e) => updContract("startedAt", e.target.value)}
+            />
+          </label>
+          <label>
+            <span>계약 종료일</span>
+            <input
+              className="tcc-in"
+              type="date"
+              value={c.endsAt}
+              onChange={(e) => updContract("endsAt", e.target.value)}
+            />
+          </label>
+          <label>
+            <span>해지 통보 기한</span>
+            <div className="tcc-inline">
+              <input
+                className="tcc-in tcc-in-mini"
+                type="number"
+                value={c.noticeDays}
+                onChange={(e) => updContract("noticeDays", e.target.value)}
+              />
+              <span className="tcc-unit">일 전</span>
+            </div>
+          </label>
+          <label>
+            <span>재검토 착수</span>
+            <div className="tcc-inline">
+              <input
+                className="tcc-in tcc-in-mini"
+                type="number"
+                value={c.reviewLeadDays}
+                onChange={(e) => updContract("reviewLeadDays", e.target.value)}
+              />
+              <span className="tcc-unit">일 전</span>
+            </div>
+          </label>
+        </div>
+
+        {c.endsAt ? (
+          <div className="tcc-timeline">
+            <TimelineRow label="재검토 착수" date={reviewStart} d={dReview} />
+            <TimelineRow label="해지 통보 마감" date={noticeDeadline} d={dNotice} warn />
+            <TimelineRow label="계약 종료" date={c.endsAt} d={dEnd} />
+          </div>
+        ) : (
+          <p className="tcc-hint">계약 종료일을 넣으면 일정이 계산됩니다.</p>
+        )}
+      </Section>
+
+      <Section title="결정 기록" desc="무엇을 왜 골랐는지 남겨두면 다음 검토의 출발점이 됩니다.">
+        <div className="tcc-cgrid">
+          <label>
+            <span>선택한 서비스</span>
+            <select
+              className="tcc-sel"
+              value={project.decision.serviceId}
+              onChange={(e) =>
+                patch((p) => ({ decision: { ...p.decision, serviceId: e.target.value } }))
+              }
+            >
+              <option value="">아직 미정</option>
+              {project.services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>결정일</span>
+            <input
+              className="tcc-in"
+              type="date"
+              value={project.decision.decidedAt}
+              onChange={(e) =>
+                patch((p) => ({ decision: { ...p.decision, decidedAt: e.target.value } }))
+              }
+            />
+          </label>
+        </div>
+        <textarea
+          className="tcc-ta"
+          rows={4}
+          value={project.decision.reason}
+          placeholder="예) 총비용은 B안이 낮았지만 리뷰 데이터 이관이 불가능해 제외. 연동 안정성을 우선해 A안 선택."
+          onChange={(e) =>
+            patch((p) => ({ decision: { ...p.decision, reason: e.target.value } }))
+          }
+        />
+      </Section>
+
+      <Section
+        title="검토 회차 저장"
+        desc="지금 표의 내용을 통째로 보관합니다. 다음 검토 때 이전 회차와 비교하거나 그대로 되돌릴 수 있습니다."
+      >
+        {snapOpen ? (
+          <div className="tcc-snapform">
+            <input
+              className="tcc-in tcc-snapin"
+              autoFocus
+              value={snapName}
+              placeholder="회차 이름 (예: 2026년 8월 검토)"
+              onChange={(e) => setSnapName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveSnapshot();
+                if (e.key === "Escape") setSnapOpen(false);
+              }}
+            />
+            <button className="tcc-btn tcc-btn-solid" onClick={saveSnapshot}>
+              저장
+            </button>
+            <button className="tcc-btn tcc-btn-ghost" onClick={() => setSnapOpen(false)}>
+              취소
+            </button>
+          </div>
+        ) : (
+          <button
+            className="tcc-btn tcc-btn-solid"
+            onClick={() => {
+              const d = new Date();
+              setSnapName(d.getFullYear() + "년 " + (d.getMonth() + 1) + "월 검토");
+              setSnapOpen(true);
+            }}
+          >
+            현재 내용을 회차로 저장
+          </button>
+        )}
+        {project.snapshots.length === 0 ? (
+          <p className="tcc-hint">아직 저장된 회차가 없습니다.</p>
+        ) : (
+          <div className="tcc-snaplist">
+            {project.snapshots.map((s) => (
+              <div className="tcc-snap" key={s.id}>
+                <div className="tcc-snap-head">
+                  <div>
+                    <div className="tcc-snap-name">{s.name}</div>
+                    <div className="tcc-snap-date">{s.savedAt} 저장</div>
+                  </div>
+                  <div className="tcc-inline">
+                    <ConfirmButton
+                      className="tcc-btn tcc-btn-ghost"
+                      label="되돌리기"
+                      confirmLabel="정말 되돌릴까요?"
+                      onConfirm={() => restoreSnapshot(s)}
+                    />
+                    <ConfirmButton
+                      className="tcc-x"
+                      label="×"
+                      confirmLabel="삭제"
+                      onConfirm={() => delSnapshot(s.id)}
+                    />
+                  </div>
+                </div>
+                <div className="tcc-snap-rows">
+                  {s.totals.map((t, i) => {
+                    const now = project.services.find((x) => x.name === t.name);
+                    const nowTotal = now ? computeService(project, now.id).total : null;
+                    const diff = nowTotal === null ? null : nowTotal - t.total;
+                    return (
+                      <div className="tcc-snap-row" key={i}>
+                        <span className="tcc-snap-svc">{t.name}</span>
+                        <span className="tcc-snap-num">{won(t.total)}원</span>
+                        {diff !== null && Math.abs(diff) > 0.5 && (
+                          <span className={"tcc-diff" + (diff > 0 ? " is-up" : " is-down")}>
+                            {diff > 0 ? "+" : "-"}
+                            {won(Math.abs(diff))}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section
+        title="운영 기록"
+        desc="가격 인상 통보, 장애, 협의 내용을 그때그때 적어두면 재계약 협상 근거가 됩니다."
+      >
+        <div className="tcc-logform">
+          <input
+            className="tcc-in"
+            type="date"
+            value={logDraft.date}
+            onChange={(e) => setLogDraft({ ...logDraft, date: e.target.value })}
+          />
+          <select
+            className="tcc-sel"
+            value={logDraft.type}
+            onChange={(e) => setLogDraft({ ...logDraft, type: e.target.value })}
+          >
+            {LOG_TYPES.map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          <input
+            className="tcc-in tcc-logtext"
+            value={logDraft.text}
+            placeholder="무슨 일이 있었나요"
+            onChange={(e) => setLogDraft({ ...logDraft, text: e.target.value })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addLog();
+            }}
+          />
+          <button className="tcc-btn tcc-btn-line" onClick={addLog}>
+            기록 추가
+          </button>
+        </div>
+        {sortedLogs.length === 0 ? (
+          <p className="tcc-hint">아직 기록이 없습니다.</p>
+        ) : (
+          <ol className="tcc-loglist">
+            {sortedLogs.map((l) => {
+              const t = LOG_TYPES.find((x) => x.key === l.type);
+              return (
+                <li key={l.id} className="tcc-logitem">
+                  <span className="tcc-logdate">{l.date}</span>
+                  <span className={"tcc-logtag tcc-logtag-" + l.type}>{t ? t.label : l.type}</span>
+                  <span className="tcc-logbody">{l.text}</span>
+                  <button className="tcc-x" onClick={() => delLog(l.id)}>
+                    ×
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </Section>
+    </div>
+  );
+}
+
+function TimelineRow({ label, date, d, warn }) {
+  const past = d !== null && d < 0;
+  const near = d !== null && d >= 0 && d <= 30;
+  return (
+    <div className={"tcc-tl" + (past ? " is-past" : near ? " is-near" : "")}>
+      <span className="tcc-tl-label">{label}</span>
+      <span className="tcc-tl-date">{date || "-"}</span>
+      <span className="tcc-tl-d">
+        {d === null ? "" : d < 0 ? Math.abs(d) + "일 지남" : "D-" + d}
+      </span>
+      {warn && near && <span className="tcc-tl-warn">통보 기한 임박</span>}
+    </div>
+  );
+}
+
+/* =========================================================
+   전체 현황 대시보드
+   ========================================================= */
+function Dashboard({ projects, onOpen }) {
+  const rows = projects.map((p) => {
+    const cur =
+      p.services.find((s) => s.id === p.decision.serviceId) ||
+      p.services.find((s) => s.state === "current") ||
+      null;
+    const dEnd = daysUntil(p.contract.endsAt);
+    const noticeDeadline = p.contract.endsAt
+      ? addDays(p.contract.endsAt, -Number(p.contract.noticeDays || 0))
+      : "";
+    const reviewStart = p.contract.endsAt
+      ? addDays(p.contract.endsAt, -Number(p.contract.reviewLeadDays || 0))
+      : "";
+    const dNotice = daysUntil(noticeDeadline);
+    const dReview = daysUntil(reviewStart);
+    const fresh = freshness(p);
+    const lastLog = p.logs.length
+      ? [...p.logs].sort((a, b) => (a.date < b.date ? 1 : -1))[0]
+      : null;
+    const monthly = cur ? computeService(p, cur.id).perMonth : null;
+
+    const alerts = [];
+    if (dNotice !== null && dNotice >= 0 && dNotice <= 45)
+      alerts.push({ level: "hot", text: "해지 통보 마감 D-" + dNotice });
+    else if (dNotice !== null && dNotice < 0 && dEnd !== null && dEnd >= 0)
+      alerts.push({ level: "hot", text: "해지 통보 기한 지남 · 자동 연장 확인" });
+    if (dReview !== null && dReview <= 0 && dEnd !== null && dEnd > 0)
+      alerts.push({ level: "warn", text: "재검토 착수 시점 도래" });
+    if (fresh.days !== null && fresh.days > 180)
+      alerts.push({ level: "warn", text: "견적 정보 " + fresh.days + "일째 미갱신" });
+    if (!p.contract.endsAt)
+      alerts.push({ level: "soft", text: "계약 종료일 미입력" });
+
+    return { p, cur, dEnd, dNotice, dReview, fresh, lastLog, monthly, alerts };
+  });
+
+  const monthlySum = rows.reduce((acc, r) => acc + (r.monthly || 0), 0);
+
+  /* 할 일 큐 — 기한이 가까운 순 */
+  const todos = [];
+  rows.forEach((r) => {
+    if (r.dNotice !== null && r.dNotice >= 0 && r.dNotice <= 60)
+      todos.push({
+        pid: r.p.id,
+        tab: "history",
+        d: r.dNotice,
+        level: "hot",
+        title: r.p.name + " 해지 통보 마감",
+        sub: "이 날짜를 넘기면 자동 연장됩니다",
+      });
+    if (r.dNotice !== null && r.dNotice < 0 && r.dEnd !== null && r.dEnd >= 0)
+      todos.push({
+        pid: r.p.id,
+        tab: "history",
+        d: r.dEnd,
+        level: "hot",
+        title: r.p.name + " 해지 통보 기한 경과",
+        sub: "자동 연장 여부를 확인하세요",
+      });
+    if (r.dReview !== null && r.dReview <= 0 && r.dEnd !== null && r.dEnd > 0)
+      todos.push({
+        pid: r.p.id,
+        tab: "cost",
+        d: r.dEnd,
+        level: "warn",
+        title: r.p.name + " 재검토 착수 시점",
+        sub: "계약 종료까지 " + r.dEnd + "일 남았습니다",
+      });
+    if (r.fresh.days !== null && r.fresh.days > 180)
+      todos.push({
+        pid: r.p.id,
+        tab: "setup",
+        d: 9000,
+        level: "warn",
+        title: r.p.name + " 견적 정보 갱신 필요",
+        sub: r.fresh.days + "일째 확인하지 않았습니다",
+      });
+    if (!r.p.contract.endsAt)
+      todos.push({
+        pid: r.p.id,
+        tab: "history",
+        d: 9999,
+        level: "soft",
+        title: r.p.name + " 계약 종료일 미입력",
+        sub: "일정 알림을 받으려면 종료일이 필요합니다",
+      });
+  });
+  todos.sort((a, b) => a.d - b.d);
+
+  /* 현재 사용 중인 툴의 비용 구성 */
+  const spend = rows
+    .filter((r) => r.cur && r.monthly > 0)
+    .map((r) => ({ pid: r.p.id, name: r.cur.name, project: r.p.name, monthly: r.monthly }))
+    .sort((a, b) => b.monthly - a.monthly);
+  const spendMax = spend.length ? spend[0].monthly : 0;
+
+  /* 최근 기록 */
+  const recent = [];
+  projects.forEach((p) => p.logs.forEach((l) => recent.push({ ...l, project: p.name, pid: p.id })));
+  recent.sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  return (
+    <div className="tcc-dash">
+      <div className="tcc-dashtop">
+        <div className="tcc-dashstat">
+          <span className="tcc-dashstat-label">관리 중인 비교 건</span>
+          <span className="tcc-dashstat-num">{projects.length}</span>
+        </div>
+        <div className="tcc-dashstat">
+          <span className="tcc-dashstat-label">사용 중인 툴 월 비용</span>
+          <span className="tcc-dashstat-num">{won(monthlySum)}원</span>
+        </div>
+        <div className="tcc-dashstat">
+          <span className="tcc-dashstat-label">연 환산</span>
+          <span className="tcc-dashstat-num">{won(monthlySum * 12)}원</span>
+        </div>
+      </div>
+
+      <section className="tcc-dashsec">
+        <h2 className="tcc-dashh">챙겨야 할 일</h2>
+        {todos.length === 0 ? (
+          <p className="tcc-hint">지금 처리할 일은 없습니다.</p>
+        ) : (
+          <ul className="tcc-todos">
+            {todos.slice(0, 8).map((t, i) => (
+              <li key={i}>
+                <button
+                  className={"tcc-todo tcc-todo-" + t.level}
+                  onClick={() => onOpen(t.pid, t.tab)}
+                >
+                  <span className="tcc-todo-dot" />
+                  <span className="tcc-todo-main">
+                    <span className="tcc-todo-title">{t.title}</span>
+                    <span className="tcc-todo-sub">{t.sub}</span>
+                  </span>
+                  <span className="tcc-todo-d">
+                    {t.d < 9000 ? "D-" + t.d : ""}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="tcc-dashsec">
+        <h2 className="tcc-dashh">앞으로 1년 계약 일정</h2>
+        <div className="tcc-gantt">
+          <div className="tcc-ganttscale">
+            {[0, 3, 6, 9, 12].map((m) => (
+              <span key={m} style={{ left: (m / 12) * 100 + "%" }}>
+                {m === 0 ? "오늘" : m + "개월"}
+              </span>
+            ))}
+          </div>
+          {rows.map((r) => {
+            const pos = r.dEnd === null ? null : (r.dEnd / 365) * 100;
+            const reviewPos =
+              r.dReview === null ? null : Math.max(0, (r.dReview / 365) * 100);
+            const inRange = pos !== null && pos >= 0 && pos <= 100;
+            return (
+              <div className="tcc-gline" key={r.p.id}>
+                <button className="tcc-gname" onClick={() => onOpen(r.p.id, "history")}>
+                  {r.p.name}
+                </button>
+                <div className="tcc-gtrack">
+                  {inRange && reviewPos !== null && (
+                    <div
+                      className="tcc-gband"
+                      style={{
+                        left: reviewPos + "%",
+                        width: Math.max(1, pos - reviewPos) + "%",
+                      }}
+                      title="재검토 기간"
+                    />
+                  )}
+                  {inRange && (
+                    <div className="tcc-gmark" style={{ left: pos + "%" }}>
+                      <span>{r.p.contract.endsAt}</span>
+                    </div>
+                  )}
+                  {pos !== null && pos > 100 && (
+                    <div className="tcc-gfar">1년 뒤 · {r.p.contract.endsAt}</div>
+                  )}
+                  {pos !== null && pos < 0 && <div className="tcc-gfar">계약 종료됨</div>}
+                  {pos === null && <div className="tcc-gfar">종료일 미입력</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {spend.length > 0 && (
+        <section className="tcc-dashsec">
+          <h2 className="tcc-dashh">툴별 비용 비중</h2>
+          <div className="tcc-spend">
+            {spend.map((s) => (
+              <button className="tcc-spendrow" key={s.pid} onClick={() => onOpen(s.pid, "cost")}>
+                <span className="tcc-spendname">
+                  {s.name}
+                  <em>{s.project}</em>
+                </span>
+                <span className="tcc-spendbar">
+                  <i style={{ width: (s.monthly / spendMax) * 100 + "%" }} />
+                </span>
+                <span className="tcc-spendnum">
+                  {won(s.monthly)}원
+                  <em>{Math.round((s.monthly / monthlySum) * 100)}%</em>
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <h2 className="tcc-dashh">프로젝트</h2>
+      <div className="tcc-dashgrid">
+        {rows.map((r) => (
+          <div className="tcc-dashcard" key={r.p.id}>
+            <button className="tcc-dashcard-title" onClick={() => onOpen(r.p.id, "cost")}>
+              {r.p.name}
+            </button>
+            <div className="tcc-dashcard-cur">
+              {r.cur ? r.cur.name : "선택된 서비스 없음"}
+              {r.monthly !== null && r.monthly > 0 && (
+                <span className="tcc-dashcard-cost">월 {won(r.monthly)}원</span>
+              )}
+            </div>
+            <dl className="tcc-dashdl">
+              <div>
+                <dt>계약 종료</dt>
+                <dd>
+                  {r.p.contract.endsAt || "-"}
+                  {r.dEnd !== null && (
+                    <span className="tcc-dd">
+                      {r.dEnd < 0 ? " 종료됨" : " D-" + r.dEnd}
+                    </span>
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt>정보 확인</dt>
+                <dd>
+                  {r.fresh.oldest || "-"}
+                  {r.fresh.days !== null && <span className="tcc-dd"> {r.fresh.days}일 전</span>}
+                </dd>
+              </div>
+              <div>
+                <dt>최근 기록</dt>
+                <dd className="tcc-dashlog">
+                  {r.lastLog ? r.lastLog.date + " · " + r.lastLog.text : "-"}
+                </dd>
+              </div>
+            </dl>
+            {r.alerts.length > 0 && (
+              <div className="tcc-alerts">
+                {r.alerts.map((a, i) => (
+                  <span key={i} className={"tcc-alert tcc-alert-" + a.level}>
+                    {a.text}
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="tcc-dashcard-actions">
+              <button className="tcc-btn tcc-btn-ghost" onClick={() => onOpen(r.p.id, "cost")}>
+                비용표
+              </button>
+              <button className="tcc-btn tcc-btn-ghost" onClick={() => onOpen(r.p.id, "history")}>
+                계약 · 이력
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {recent.length > 0 && (
+        <section className="tcc-dashsec">
+          <h2 className="tcc-dashh">최근 기록</h2>
+          <ul className="tcc-loglist">
+            {recent.slice(0, 6).map((l) => {
+              const t = LOG_TYPES.find((x) => x.key === l.type);
+              return (
+                <li key={l.id} className="tcc-logitem">
+                  <span className="tcc-logdate">{l.date}</span>
+                  <span className={"tcc-logtag tcc-logtag-" + l.type}>
+                    {t ? t.label : l.type}
+                  </span>
+                  <span className="tcc-logbody">
+                    <button className="tcc-loglink" onClick={() => onOpen(l.pid, "history")}>
+                      {l.project}
+                    </button>
+                    {" · "}
+                    {l.text}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
+/* ---------- 공용 섹션 ---------- */
+function Section({ title, desc, children }) {
+  return (
+    <section className="tcc-section">
+      <div className="tcc-sechead">
+        <h2>{title}</h2>
+        {desc && <p>{desc}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/* 한 번 누르면 확인 문구로 바뀌고, 한 번 더 누르면 실행된다.
+   아티팩트 안에서는 브라우저 기본 확인창이 뜨지 않아 직접 만든 방식이다. */
+function ConfirmButton({ className, label, confirmLabel, onConfirm, title }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 4000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  const click = () => {
+    if (armed) {
+      setArmed(false);
+      onConfirm();
+    } else {
+      setArmed(true);
+    }
+  };
+  return (
+    <button
+      className={(className || "tcc-btn") + (armed ? " is-armed" : "")}
+      onClick={click}
+      title={title}
+    >
+      {armed ? confirmLabel : label}
+    </button>
+  );
+}
+
+/* =========================================================
+   스타일
+   ========================================================= */
+const CSS = `
+.tcc-root {
+  --paper: #F1F3F0;
+  --panel: #FFFFFF;
+  --ink: #16211D;
+  --ink2: #5D6B65;
+  --line: #D6DBD4;
+  --line2: #E8EBE6;
+  --accent: #0F6B57;
+  --accent-soft: #E2EFE9;
+  --danger: #8E3B4E;
+  --c1: #0F6B57;
+  --c2: #2F5D8C;
+  --c3: #A8752A;
+  --c4: #8E3B4E;
+  --c5: #57657E;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 100vh;
+  padding: 20px 22px 60px;
+  -webkit-font-smoothing: antialiased;
+}
+.tcc-root * { box-sizing: border-box; }
+.tcc-loading { padding: 60px; text-align: center; color: var(--ink2); }
+
+.tcc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+.tcc-eyebrow { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--ink2); }
+.tcc-title { margin: 2px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.tcc-head-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* 헤더 우측은 상태 표시와 버튼이 섞여 있어 높이·모서리·글자 크기를 한 곳에서 맞춘다.
+   전역 .tcc-btn 은 건드리지 않고 헤더 안에서만 적용한다. */
+.tcc-head-right .tcc-btn,
+.tcc-head-right .tcc-mode,
+.tcc-head-right .tcc-save {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 11px; margin: 0;
+  border-radius: 5px; border: 1px solid var(--line);
+  font-family: inherit; font-size: 12px; font-weight: 500;
+  line-height: 1; white-space: nowrap; box-sizing: border-box;
+}
+.tcc-headsep { width: 1px; height: 18px; background: var(--line); margin: 0 3px; flex: none; }
+
+.tcc-save { color: var(--ink2); background: var(--panel); cursor: default; }
+.tcc-save-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--line); }
+.tcc-save-saving .tcc-save-dot { background: var(--ink2); }
+.tcc-save-saved { color: var(--accent); border-color: var(--accent); }
+.tcc-save-saved .tcc-save-dot { background: var(--accent); }
+.tcc-save-error { color: var(--danger); border-color: var(--danger); }
+.tcc-save-error .tcc-save-dot { background: var(--danger); }
+
+/* 본문 + 우측 내비게이션 */
+.tcc-body { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 16px; margin-top: 16px; align-items: start; }
+.tcc-body.is-collapsed { grid-template-columns: minmax(0, 1fr); }
+.tcc-body.is-collapsed .tcc-side { display: none; }
+.tcc-content { min-width: 0; }
+
+.tcc-side { position: sticky; top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.tcc-navhome { font-family: inherit; font-size: 13px; font-weight: 700; text-align: left; padding: 10px 12px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; cursor: pointer; color: var(--ink2); }
+.tcc-navhome:hover { border-color: var(--ink2); color: var(--ink); }
+.tcc-navhome.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.tcc-navsearch { font-family: inherit; font-size: 12.5px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
+.tcc-navsearch:focus { outline: none; border-color: var(--accent); }
+.tcc-navlist { display: flex; flex-direction: column; gap: 3px; max-height: 62vh; overflow-y: auto; }
+.tcc-navempty { padding: 8px 4px; }
+.tcc-navgroup { border: 1px solid transparent; border-radius: 6px; }
+.tcc-navgroup.is-open { border-color: var(--line); background: var(--panel); }
+.tcc-navproj { width: 100%; display: flex; align-items: center; gap: 6px; font-family: inherit; font-size: 13px; text-align: left; padding: 9px 11px; border: none; background: none; cursor: pointer; color: var(--ink2); border-radius: 6px; }
+.tcc-navproj:hover { background: var(--panel); color: var(--ink); }
+.tcc-navgroup.is-open .tcc-navproj { font-weight: 700; color: var(--ink); }
+.tcc-navproj-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tcc-navd { font-family: ui-monospace, monospace; font-size: 10px; color: var(--ink2); border: 1px solid var(--line); padding: 1px 5px; border-radius: 999px; white-space: nowrap; }
+.tcc-navd.is-near { color: #8A6100; background: #FFF3D6; border-color: #F0DDAC; }
+.tcc-navd.is-past { color: var(--ink2); background: var(--line2); }
+.tcc-navsub { display: flex; flex-direction: column; padding: 2px 8px 8px 10px; }
+.tcc-navtab { font-family: inherit; font-size: 12.5px; text-align: left; padding: 6px 10px; border: none; background: none; cursor: pointer; color: var(--ink2); border-left: 2px solid var(--line2); border-radius: 0 4px 4px 0; }
+.tcc-navtab:hover { color: var(--ink); background: #F7F8F6; }
+.tcc-navtab.is-on { color: var(--accent); font-weight: 700; border-left-color: var(--accent); background: var(--accent-soft); }
+.tcc-navadd { font-family: inherit; font-size: 12.5px; padding: 9px 12px; border: 1px dashed var(--line); background: none; border-radius: 6px; cursor: pointer; color: var(--ink2); text-align: left; }
+.tcc-navadd:hover { border-color: var(--accent); color: var(--accent); }
+
+.tcc-projbar { display: flex; align-items: center; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 7px 7px 0 0; padding: 12px 14px; flex-wrap: wrap; }
+.tcc-projname { flex: 1; min-width: 180px; font-size: 17px; font-weight: 700; border: none; background: none; color: var(--ink); font-family: inherit; padding: 4px 0; border-bottom: 1px solid transparent; }
+.tcc-projname:focus { outline: none; border-bottom-color: var(--accent); }
+.tcc-projbar-actions { display: flex; gap: 6px; }
+
+.tcc-main { background: var(--panel); border: 1px solid var(--line); border-top: none; border-radius: 0 0 7px 7px; padding: 22px; }
+.tcc-pane { display: flex; flex-direction: column; gap: 26px; }
+.tcc-lead { margin: 0; color: var(--ink2); font-size: 13px; }
+
+.tcc-section { display: flex; flex-direction: column; gap: 12px; }
+.tcc-sechead h2 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.tcc-sechead p { margin: 3px 0 0; font-size: 12.5px; color: var(--ink2); }
+
+.tcc-btn { font-family: inherit; font-size: 12.5px; padding: 7px 13px; border-radius: 5px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.tcc-btn:hover { border-color: var(--ink2); }
+.tcc-btn-solid { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.tcc-btn-solid:hover { background: #0b5545; }
+.tcc-btn-solid:disabled { opacity: 0.55; cursor: default; }
+.tcc-btn-line { border-style: dashed; color: var(--ink2); }
+.tcc-btn-ghost { background: none; }
+.tcc-btn-danger { color: var(--danger); border-color: var(--line); }
+.tcc-btn-danger:hover { border-color: var(--danger); }
+.tcc-chip { font-family: inherit; font-size: 12px; padding: 4px 10px; border: 1px solid var(--line); background: none; border-radius: 999px; cursor: pointer; color: var(--ink2); }
+.tcc-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+.tcc-in { font-family: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--ink); }
+.tcc-in:focus { outline: none; border-color: var(--accent); }
+.tcc-in-label { flex: 1 1 150px; font-weight: 600; }
+.tcc-in-num { width: 110px; text-align: right; font-family: ui-monospace, monospace; }
+.tcc-in-unit { width: 70px; }
+.tcc-in-mini { width: 78px; text-align: right; font-family: ui-monospace, monospace; padding: 5px 7px; }
+.tcc-ta { font-family: inherit; font-size: 13px; line-height: 1.6; padding: 12px; border: 1px solid var(--line); border-radius: 5px; resize: vertical; color: var(--ink); }
+.tcc-ta:focus { outline: none; border-color: var(--accent); }
+.tcc-sel { font-family: inherit; font-size: 12.5px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--ink); }
+.tcc-inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tcc-unit { font-size: 12.5px; color: var(--ink2); }
+.tcc-hint { font-size: 12px; color: var(--ink2); margin: 0; }
+
+.tcc-varlist, .tcc-svclist { display: flex; flex-direction: column; gap: 8px; }
+.tcc-varrow, .tcc-svcrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tcc-varrange { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--ink2); }
+.tcc-svcno { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); width: 22px; }
+.tcc-svcrow .tcc-in { flex: 1 1 220px; }
+.tcc-x { width: 26px; height: 26px; border: 1px solid var(--line); background: none; border-radius: 4px; cursor: pointer; color: var(--ink2); font-size: 14px; line-height: 1; }
+.tcc-x:hover { color: var(--danger); border-color: var(--danger); }
+
+.tcc-varstrip { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; background: var(--accent-soft); border-radius: 6px; align-items: center; }
+.tcc-varchip { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; }
+.tcc-varchip-label { font-size: 12px; font-weight: 600; }
+.tcc-varchip-in { width: 82px; border: none; border-bottom: 1px solid var(--line); background: none; text-align: right; font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); padding: 1px 2px; }
+.tcc-varchip-in:focus { outline: none; border-bottom-color: var(--accent); }
+.tcc-varchip-unit { font-size: 11px; color: var(--ink2); }
+
+.tcc-tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+.tcc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tcc-table th { background: #F7F8F6; text-align: left; padding: 10px 12px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; color: var(--ink2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tcc-th-item { min-width: 210px; }
+.tcc-th-cycle { width: 92px; }
+.tcc-th-svc { min-width: 150px; }
+.tcc-th-tool { width: 92px; }
+.tcc-table td { padding: 9px 12px; border-bottom: 1px solid var(--line2); vertical-align: top; }
+.tcc-table tbody tr:hover { background: #FAFBFA; }
+.tcc-cellin { width: 100%; border: 1px solid transparent; background: none; font-family: inherit; font-size: 13px; padding: 5px 7px; border-radius: 4px; color: var(--ink); }
+.tcc-cellin:hover { border-color: var(--line); }
+.tcc-cellin:focus { outline: none; border-color: var(--accent); background: var(--panel); }
+.tcc-cellin-label { font-weight: 600; }
+.tcc-cellin-num { font-family: ui-monospace, monospace; text-align: right; font-size: 12.5px; }
+.tcc-cellin-num.is-err { border-color: var(--danger); }
+.tcc-cellpre { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); text-align: right; padding: 2px 7px 0; min-height: 15px; }
+.tcc-cellpre.is-err { color: var(--danger); }
+.tcc-notebtn { margin-top: 3px; background: none; border: none; font-family: inherit; font-size: 11px; color: var(--ink2); cursor: pointer; padding: 0 7px; text-decoration: underline; text-underline-offset: 2px; }
+.tcc-notein { margin-top: 5px; border-color: var(--line); font-size: 12px; }
+.tcc-mini { width: 24px; height: 24px; border: 1px solid var(--line); background: none; border-radius: 4px; cursor: pointer; color: var(--ink2); font-size: 11px; margin-right: 3px; }
+.tcc-mini:hover { border-color: var(--ink2); color: var(--ink); }
+.tcc-mini-del:hover { color: var(--danger); border-color: var(--danger); }
+
+.tcc-table tfoot td { padding: 10px 12px; border-top: 1px solid var(--line); font-size: 13px; }
+.tcc-sum td:first-child { font-weight: 600; color: var(--ink2); }
+.tcc-sum-strong td { background: #F7F8F6; font-weight: 700; border-top: 2px solid var(--ink); }
+.tcc-sum-strong td:first-child { color: var(--ink); }
+.tcc-num { text-align: right; font-family: ui-monospace, monospace; white-space: nowrap; }
+.tcc-num-soft { color: var(--ink2); }
+.tcc-num.is-best { color: var(--accent); }
+.tcc-badge { display: inline-block; margin-left: 6px; font-family: inherit; font-size: 10px; font-weight: 700; background: var(--accent); color: #fff; padding: 1px 6px; border-radius: 999px; vertical-align: middle; }
+
+.tcc-dots { display: flex; gap: 3px; justify-content: flex-end; }
+.tcc-dot { width: 24px; height: 24px; border: 1px solid var(--line); background: none; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); cursor: pointer; }
+.tcc-dot:hover { border-color: var(--accent); }
+.tcc-dot.is-on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+
+.tcc-rowactions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tcc-guide { background: #F7F8F6; border-left: 3px solid var(--accent); padding: 13px 16px; border-radius: 0 5px 5px 0; }
+.tcc-guide-title { font-size: 12.5px; font-weight: 700; margin-bottom: 5px; }
+.tcc-guide ul { margin: 0; padding-left: 17px; font-size: 12.5px; color: var(--ink2); }
+.tcc-guide li { margin: 3px 0; }
+.tcc-guide code { font-family: ui-monospace, monospace; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
+
+.tcc-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.tcc-card { border: 1px solid var(--line); border-radius: 7px; padding: 16px; background: var(--panel); }
+.tcc-card.is-pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.tcc-card-name { font-size: 12.5px; font-weight: 700; color: var(--ink2); margin-bottom: 10px; }
+.tcc-card-total { font-family: ui-monospace, monospace; font-size: 25px; font-weight: 700; letter-spacing: -0.03em; }
+.tcc-card-cur { font-size: 14px; margin-left: 2px; color: var(--ink2); }
+.tcc-card-sub { font-size: 11.5px; color: var(--ink2); margin-top: 1px; }
+.tcc-card-dl { margin: 13px 0 0; display: flex; flex-direction: column; gap: 5px; }
+.tcc-card-dl > div { display: flex; justify-content: space-between; font-size: 12px; border-top: 1px solid var(--line2); padding-top: 5px; }
+.tcc-card-dl dt { color: var(--ink2); margin: 0; }
+.tcc-card-dl dd { margin: 0; font-family: ui-monospace, monospace; }
+.tcc-card-flags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
+.tcc-flag { font-size: 10.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink2); }
+.tcc-flag-pick { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+
+.tcc-chartwrap { display: flex; flex-direction: column; gap: 9px; }
+.tcc-chart { width: 100%; height: auto; background: #FBFCFB; border: 1px solid var(--line2); border-radius: 6px; }
+.tcc-grid { stroke: var(--line2); stroke-width: 1; }
+.tcc-axis { font-family: ui-monospace, monospace; font-size: 10px; fill: var(--ink2); }
+.tcc-axis-now { fill: var(--ink); font-weight: 700; }
+.tcc-nowline { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.5; }
+.tcc-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink2); }
+.tcc-leg { display: flex; align-items: center; gap: 6px; }
+.tcc-leg i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.tcc-slider-wrap { gap: 12px; }
+.tcc-slider { flex: 1 1 240px; accent-color: var(--accent); }
+.tcc-slider-val { font-family: ui-monospace, monospace; font-size: 12.5px; min-width: 110px; text-align: right; }
+
+.tcc-comment { margin-top: 14px; border: 1px solid var(--line); border-radius: 7px; padding: 18px 20px; background: #FBFCFB; display: flex; flex-direction: column; gap: 15px; }
+.tcc-ctitle { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.02em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+.tcc-ctitletext { display: inline-block; }
+.tcc-cnum { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; flex: none; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 0; }
+.tcc-clines { list-style: none; margin: 0; padding: 0; font-size: 13px; line-height: 1.65; }
+.tcc-clines li { display: flex; gap: 10px; margin: 6px 0; align-items: baseline; }
+.tcc-cno { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); flex: none; min-width: 26px; }
+.tcc-ctext { flex: 1; }
+.tcc-cblock ul { margin: 0; padding-left: 17px; font-size: 13px; line-height: 1.65; }
+.tcc-cblock li { margin: 4px 0; }
+
+/* 저장 모드 · 팀 공유 */
+.tcc-mode { background: var(--panel); color: var(--ink2); cursor: pointer; }
+.tcc-mode:hover { border-color: var(--ink2); color: var(--ink); }
+.tcc-mode-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--ink2); }
+.tcc-mode.is-shared { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.tcc-mode.is-shared .tcc-mode-dot { background: var(--accent); }
+.tcc-save-conflict { color: #8A6100; border-color: #F0DDAC; }
+.tcc-save-conflict .tcc-save-dot { background: #C79217; }
+.tcc-panel { margin-top: 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; }
+.tcc-panel-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tcc-panel-label { font-size: 12px; font-weight: 700; color: var(--ink2); width: 54px; }
+.tcc-panel-desc { margin: 0; font-size: 12.5px; color: var(--ink2); line-height: 1.6; }
+.tcc-panel-actions { display: flex; gap: 7px; flex-wrap: wrap; }
+.tcc-conflict { margin-top: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 15px; border: 1px solid #F0DDAC; background: #FFF8E8; border-radius: 7px; font-size: 12.5px; color: #7A5600; line-height: 1.55; }
+.tcc-conflict > span { flex: 1 1 280px; }
+.tcc-lastedit { margin-top: 10px; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--ink2); }
+.tcc-linkbtn { background: none; border: none; padding: 0; font-family: inherit; font-size: 11.5px; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+/* 확인 버튼 · 알림 */
+.is-armed { background: var(--danger) !important; border-color: var(--danger) !important; color: #fff !important; font-weight: 700; }
+.tcc-notice { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 14px; background: #FFF8E8; border: 1px solid #F0DDAC; border-radius: 6px; font-size: 12.5px; color: #8A6100; }
+.tcc-notice .tcc-x { margin-left: auto; }
+.tcc-warnline { margin: 0; font-size: 12.5px; color: var(--danger); }
+.tcc-snapform { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+.tcc-snapin { flex: 1 1 240px; }
+.tcc-err { margin-top: 10px; font-size: 12.5px; color: var(--danger); }
+.tcc-cut { margin-top: 10px; font-size: 12.5px; color: #8A6100; background: #FFF8E8; border: 1px solid #F0DDAC; padding: 8px 11px; border-radius: 5px; }
+
+/* 평가 항목 설명 */
+.tcc-desctext { margin: 3px 0 0; padding: 5px 7px; font-size: 12px; line-height: 1.55; color: var(--ink2); border-left: 2px solid var(--line); cursor: text; border-radius: 0 4px 4px 0; }
+.tcc-desctext:hover { border-left-color: var(--accent); background: #FAFBFA; }
+.tcc-descta { width: 100%; margin-top: 4px; font-family: inherit; font-size: 12px; line-height: 1.55; padding: 8px 9px; border: 1px solid var(--accent); border-radius: 4px; resize: vertical; color: var(--ink); background: var(--panel); }
+.tcc-descta:focus { outline: none; }
+
+/* 비교 대상 상세 */
+.tcc-proj-home { font-weight: 700; }
+.tcc-svccard { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.tcc-in-title { flex: 1 1 200px; font-weight: 700; }
+.tcc-svcgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.tcc-svcgrid label, .tcc-cgrid label { display: flex; flex-direction: column; gap: 4px; }
+.tcc-svcgrid label > span, .tcc-cgrid label > span { font-size: 11.5px; color: var(--ink2); font-weight: 600; }
+.tcc-svcmemo { width: 100%; }
+.tcc-stale { font-size: 11px; color: var(--danger); white-space: nowrap; }
+
+/* 계약 정보 */
+.tcc-cgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.tcc-timeline { display: flex; flex-direction: column; gap: 1px; background: var(--line2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.tcc-tl { display: flex; align-items: center; gap: 12px; background: var(--panel); padding: 10px 14px; font-size: 12.5px; }
+.tcc-tl-label { width: 108px; color: var(--ink2); font-weight: 600; }
+.tcc-tl-date { font-family: ui-monospace, monospace; }
+.tcc-tl-d { font-family: ui-monospace, monospace; color: var(--ink2); }
+.tcc-tl.is-near { background: #FFF8E8; }
+.tcc-tl.is-near .tcc-tl-d { color: #8A6100; font-weight: 700; }
+.tcc-tl.is-past { background: #FAFBFA; color: var(--ink2); }
+.tcc-tl-warn { font-size: 10.5px; font-weight: 700; color: #fff; background: var(--danger); padding: 2px 8px; border-radius: 999px; }
+
+/* 검토 회차 */
+.tcc-snaplist { display: flex; flex-direction: column; gap: 10px; }
+.tcc-snap { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+.tcc-snap-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.tcc-snap-name { font-weight: 700; font-size: 13px; }
+.tcc-snap-date { font-size: 11.5px; color: var(--ink2); font-family: ui-monospace, monospace; }
+.tcc-snap-rows { margin-top: 9px; display: flex; flex-direction: column; gap: 3px; }
+.tcc-snap-row { display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; border-top: 1px solid var(--line2); padding-top: 4px; }
+.tcc-snap-svc { flex: 1; color: var(--ink2); }
+.tcc-snap-num { font-family: ui-monospace, monospace; }
+.tcc-diff { font-family: ui-monospace, monospace; font-size: 11px; padding: 1px 6px; border-radius: 999px; }
+.tcc-diff.is-up { color: var(--danger); background: #F8EDEF; }
+.tcc-diff.is-down { color: var(--accent); background: var(--accent-soft); }
+
+/* 운영 기록 */
+.tcc-logform { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+.tcc-logtext { flex: 1 1 260px; }
+.tcc-loglist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tcc-logitem { display: flex; gap: 10px; align-items: baseline; padding: 8px 2px; border-bottom: 1px solid var(--line2); font-size: 12.5px; }
+.tcc-logdate { font-family: ui-monospace, monospace; font-size: 11.5px; color: var(--ink2); white-space: nowrap; }
+.tcc-logtag { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--line); color: var(--ink2); }
+.tcc-logtag-update { border-color: var(--c2); color: var(--c2); }
+.tcc-logtag-talk { border-color: var(--c5); color: var(--c5); }
+.tcc-logtag-issue { border-color: var(--danger); color: var(--danger); }
+.tcc-logtag-retro { border-color: var(--accent); color: var(--accent); }
+.tcc-logbody { flex: 1; }
+
+/* 대시보드 */
+.tcc-dash { background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 22px; display: flex; flex-direction: column; gap: 22px; }
+.tcc-dashsec { display: flex; flex-direction: column; gap: 10px; }
+.tcc-dashh { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.01em; color: var(--ink); padding-bottom: 6px; border-bottom: 1px solid var(--line2); }
+
+/* 할 일 큐 */
+.tcc-todos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tcc-todo { width: 100%; display: flex; align-items: center; gap: 11px; font-family: inherit; text-align: left; padding: 10px 13px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); cursor: pointer; }
+.tcc-todo:hover { border-color: var(--ink2); }
+.tcc-todo-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--ink2); }
+.tcc-todo-hot .tcc-todo-dot { background: var(--danger); }
+.tcc-todo-warn .tcc-todo-dot { background: #C79217; }
+.tcc-todo-soft .tcc-todo-dot { background: var(--line); }
+.tcc-todo-main { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tcc-todo-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+.tcc-todo-sub { font-size: 11.5px; color: var(--ink2); }
+.tcc-todo-d { font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink2); white-space: nowrap; }
+.tcc-todo-hot .tcc-todo-d { color: var(--danger); font-weight: 700; }
+
+/* 계약 일정 */
+.tcc-gantt { display: flex; flex-direction: column; gap: 5px; }
+.tcc-ganttscale { position: relative; height: 15px; margin-left: 132px; }
+.tcc-ganttscale span { position: absolute; transform: translateX(-50%); font-family: ui-monospace, monospace; font-size: 10px; color: var(--ink2); white-space: nowrap; }
+.tcc-gline { display: flex; align-items: center; gap: 10px; }
+.tcc-gname { width: 122px; flex: none; font-family: inherit; font-size: 12.5px; text-align: right; background: none; border: none; padding: 0; cursor: pointer; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tcc-gname:hover { color: var(--accent); }
+.tcc-gtrack { position: relative; flex: 1; height: 26px; background: #FAFBFA; border: 1px solid var(--line2); border-radius: 4px; background-image: repeating-linear-gradient(to right, var(--line2) 0 1px, transparent 1px 25%); }
+.tcc-gband { position: absolute; top: 6px; bottom: 6px; background: #FFF3D6; border: 1px solid #F0DDAC; border-radius: 3px; }
+.tcc-gmark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--danger); }
+.tcc-gmark span { position: absolute; left: 5px; top: 5px; font-family: ui-monospace, monospace; font-size: 10px; color: var(--danger); white-space: nowrap; }
+.tcc-gfar { position: absolute; left: 8px; top: 5px; font-size: 11px; color: var(--ink2); }
+
+/* 비용 비중 */
+.tcc-spend { display: flex; flex-direction: column; gap: 4px; }
+.tcc-spendrow { display: flex; align-items: center; gap: 12px; width: 100%; background: none; border: none; padding: 5px 2px; cursor: pointer; font-family: inherit; text-align: left; border-bottom: 1px solid var(--line2); }
+.tcc-spendrow:hover .tcc-spendname { color: var(--accent); }
+.tcc-spendname { width: 150px; flex: none; font-size: 12.5px; color: var(--ink); display: flex; flex-direction: column; }
+.tcc-spendname em { font-style: normal; font-size: 10.5px; color: var(--ink2); }
+.tcc-spendbar { flex: 1; height: 9px; background: var(--line2); border-radius: 999px; overflow: hidden; }
+.tcc-spendbar i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.tcc-spendnum { width: 108px; flex: none; text-align: right; font-family: ui-monospace, monospace; font-size: 12px; display: flex; flex-direction: column; }
+.tcc-spendnum em { font-style: normal; font-size: 10.5px; color: var(--ink2); }
+.tcc-loglink { background: none; border: none; padding: 0; font-family: inherit; font-size: inherit; color: var(--accent); cursor: pointer; font-weight: 600; }
+.tcc-dashtop { display: flex; gap: 30px; flex-wrap: wrap; border-bottom: 1px solid var(--line2); padding-bottom: 16px; }
+.tcc-dashstat { display: flex; flex-direction: column; gap: 2px; }
+.tcc-dashstat-label { font-size: 11.5px; color: var(--ink2); }
+.tcc-dashstat-num { font-family: ui-monospace, monospace; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.tcc-dashstat-num.is-hot { color: var(--danger); }
+.tcc-dashgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.tcc-dashcard { border: 1px solid var(--line); border-radius: 7px; padding: 15px; display: flex; flex-direction: column; gap: 9px; }
+.tcc-dashcard-title { background: none; border: none; padding: 0; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: left; }
+.tcc-dashcard-title:hover { color: var(--accent); }
+.tcc-dashcard-cur { font-size: 12.5px; color: var(--ink2); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tcc-dashcard-cost { font-family: ui-monospace, monospace; color: var(--ink); }
+.tcc-dashdl { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.tcc-dashdl > div { display: flex; gap: 10px; font-size: 12px; border-top: 1px solid var(--line2); padding-top: 4px; }
+.tcc-dashdl dt { width: 62px; color: var(--ink2); margin: 0; flex: none; }
+.tcc-dashdl dd { margin: 0; font-family: ui-monospace, monospace; font-size: 11.5px; }
+.tcc-dashlog { font-family: inherit !important; font-size: 12px !important; color: var(--ink2); }
+.tcc-dd { color: var(--ink2); }
+.tcc-alerts { display: flex; gap: 5px; flex-wrap: wrap; }
+.tcc-alert { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+.tcc-alert-hot { background: var(--danger); color: #fff; }
+.tcc-alert-warn { background: #FFF3D6; color: #8A6100; }
+.tcc-alert-soft { background: var(--line2); color: var(--ink2); }
+.tcc-dashcard-actions { display: flex; gap: 6px; margin-top: 2px; }
+
+@media (max-width: 900px) {
+  .tcc-body { grid-template-columns: minmax(0, 1fr); }
+  .tcc-side { position: static; order: -1; max-height: none; }
+  .tcc-navlist { max-height: 240px; }
+}
+@media (max-width: 640px) {
+  .tcc-root { padding: 14px 12px 40px; }
+  .tcc-dash { padding: 16px 13px; }
+  .tcc-dashtop { gap: 18px; }
+  .tcc-ganttscale { margin-left: 0; }
+  .tcc-gline { flex-direction: column; align-items: stretch; gap: 3px; }
+  .tcc-gname { width: auto; text-align: left; font-weight: 600; }
+  .tcc-spendname { width: 110px; }
+  .tcc-spendnum { width: 88px; }
+  .tcc-title { font-size: 21px; }
+  .tcc-main { padding: 16px 13px; }
+  .tcc-tab { padding: 10px 13px; font-size: 12.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tcc-root * { transition: none !important; animation: none !important; }
+}
+`;
 
 function NoAccessPage(){
   return (
@@ -12097,7 +14670,7 @@ function App() {
         {page==='delays'&&(isMaster||isManager)&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
         {page==='autoDelivery'&&(isMaster||isManager)&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='refunds'&&(isMaster?<RefundManagementPage currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
-        {page==='costs'&&(isMaster?<CostComparePage/>:<NoAccessPage/>)}
+        {page==='costs'&&(isMaster?<ToolCostCompare/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&isMaster&&<AgentAnalysisPage/>}
         {page==='agents'&&(isMaster?<AgentMgmtPage/>:<NoAccessPage/>)}
       </div>
