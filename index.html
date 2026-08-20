@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820e_chart_scale -->
+<!-- v20260820f_snapshot_guard -->
+<!-- (2026-08-20) 계약·이력 탭의 '검토 회차'를 셋 보완했다(사용자와 검토 후 합의). ①되돌리기를 누르면 현재 입력값이 백업 없이 덮여 사라졌다 — 되돌리기의 되돌리기가 없어, 회차 저장을 깜빡하면 작업이 통째로 날아가는 자리였다. 이제 되돌리기 직전에 현재 상태를 «[자동저장] YYYY-MM-DD 되돌리기 직전» 이름으로 한 건 먼저 남기고 복원한다. 이름 앞 [자동저장]으로 사람이 붙인 회차와 구분된다. 겸해서 '현재 값을 회차로 뜨는' 부분을 takeSnapshot() 하나로 모아 저장 버튼과 자동 저장이 같은 모양을 쓰게 했다. ②회차를 전부 그리던 것을 최근 5건만 펼치고 나머지는 «이전 회차 N건 더 보기»로 접었다. 카드마다 서비스별로 현재값과의 차액을 다시 계산하므로(computeService — 비용 수식을 전부 평가한다) 회차가 쌓이면 화면을 그릴 때마다 그 횟수가 회차 x 서비스로 늘어난다. ③회차가 20건을 넘으면 목록 위에 정리 안내를 띄운다. 회차 하나가 그때의 값(기간·변수·서비스·비용항목·기능항목)을 통째로 담고 그 전부가 프로젝트 JSON 한 칸에 저장되므로, 쌓일수록 저장·불러오기가 무거워지고 공유 모드의 30초 폴링도 함께 무거워진다. 자동 삭제는 하지 않는다 — 무엇을 버릴지는 사람이 판단할 일이다. 계산·저장 구조는 건드리지 않았다. -->
 <!-- (2026-08-20) 결론 탭 '값이 바뀌면 순위도 바뀔까' 그래프가 확대되어 보이던 것을 고쳤다(사용자 제보). 원인은 배율이다 — 이 차트는 SVG(viewBox 720x260)인데 .tcc-chart 가 width:100% 라 컨테이너 폭에 맞춰 통째로 늘어난다. 오른쪽 목록을 사이드바로 옮기며 본문이 넓어지자(최대 1360px) 그림이 약 1.8배로 확대됐고, 축 글자(10px)와 선 굵기(2.5px)까지 함께 커져 확대경으로 보는 모양이 됐다. 데이터나 축 범위 문제가 아니다. → .tcc-chart 에 max-width:880px 을 걸어 배율을 약 1.2배로 묶었다. 세로 비율은 viewBox 가 잡으므로 함께 줄어든다. 차트 로직·계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 비용 비교 화면의 두 가지를 고쳤다(사용자 제보). ①'+ 새 프로젝트'를 한 번 누른 뒤에는 다른 프로젝트나 메인 화면을 눌러도 이동하지 않고 프로젝트만 계속 새로 만들어졌다. 원인은 goCost 가 이전 nav 값을 그대로 펼친 뒤(...v) 새 값을 얹은 것 — '+ 새 프로젝트'가 넣은 action:'add' 가 지워지지 않고 다음 클릭에 묻어갔고, 도구 쪽 effect 는 seq 가 오를 때마다 그 action 을 다시 실행했다. → 매번 기본값(view:'dashboard', id:null, action:null)에서 새로 만들어 얹도록 바꿔 지난 지시가 남지 않게 했다. 겸해서 사이드바 강조를 '마지막 클릭(costNav)'이 아니라 '도구의 실제 상태'로 바꿨다 — 새 프로젝트를 만들면 도구가 스스로 그것을 여는데 클릭 기준으로 칠하면 어긋나기 때문이다. 도구가 목록과 함께 view·activeId 도 올려 보내고(onProjects), App 은 costState 하나로 받는다. ②오른쪽 목록(250px)을 사이드바로 옮기면서 본문이 화면 끝까지 늘어나 표가 과하게 벌어졌다 — .tcc-root 의 직계 자식에 max-width:1360px 을 걸어 폭을 묶었다. 계산·저장·탭 내용은 건드리지 않았다. -->
 <!-- (2026-08-20) 비용 비교 도구의 '메인 화면 · 프로젝트 목록'을 콘솔 왼쪽 사이드바의 하위 뎁스로 옮겼다(사용자 요청). 이제 '비용 비교'가 상품 관리처럼 접히는 부모가 되고, 자식으로 «메인 화면» · 프로젝트 이름들 · «+ 새 프로젝트» 가 붙는다. 프로젝트 이름 옆에는 계약 종료까지 남은 일수를 뱃지로 단다(지난 건 '종료' 빨강, 60일 이내 노랑) — 도구 안 목록에 있던 표시를 그대로 가져왔다. 도구 오른쪽에 있던 목록(aside.tcc-side)은 없앴다. 같은 목록이 두 곳에 있으면 어느 쪽이 진짜인지 헷갈리기 때문이다. 그 안에만 있던 탭 5개(비용표·기능평가·결론·계약이력·설정)는 갈 곳이 없어져 본문 프로젝트명 바 아래로 올렸다 — 대시보드·환불관리와 같은 가로 탭 방식이라 콘솔 관용구에도 맞는다. 목록이 사라졌으므로 '목록 접기' 버튼과 sideOpen 상태도 함께 걷어냈다. 연결 방식: 도구가 프로젝트 목록(id·이름·계약종료일)을 onProjects 로 올려 보내고, 사이드바 클릭은 nav={view,id,action,seq} 로 내려온다. seq 를 올려 같은 곳을 다시 눌러도 반응하게 했다. 계산·저장·탭 내용은 건드리지 않았다. -->
@@ -13336,6 +13337,7 @@ function HistoryTab({ project, patch }) {
   const [logDraft, setLogDraft] = useState({ date: todayStr(), type: "update", text: "" });
   const [snapOpen, setSnapOpen] = useState(false);
   const [snapName, setSnapName] = useState("");
+  const [snapAll, setSnapAll] = useState(false);   // 회차 목록을 전부 펼쳤는가
   const c = project.contract;
 
   const updContract = (key, val) =>
@@ -13355,34 +13357,39 @@ function HistoryTab({ project, patch }) {
 
   const delLog = (id) => patch((p) => ({ logs: p.logs.filter((l) => l.id !== id) }));
 
-  const saveSnapshot = () => {
-    const name = snapName.trim();
-    if (!name) return;
-    const totals = project.services.map((s) => ({
+  /* 지금 화면의 값을 회차 한 건으로 뜬다. 저장 버튼과 자동 저장이 같은 모양을 쓰게 한다. */
+  const takeSnapshot = (name) => ({
+    id: uid(),
+    name,
+    savedAt: todayStr(),
+    totals: project.services.map((s) => ({
       name: s.name,
       total: computeService(project, s.id).total,
       score: computeScore(project, s.id).score,
-    }));
-    const snap = {
-      id: uid(),
-      name,
-      savedAt: todayStr(),
-      totals,
-      data: {
-        horizonMonths: project.horizonMonths,
-        vars: project.vars,
-        services: project.services,
-        costItems: project.costItems,
-        featureItems: project.featureItems,
-      },
-    };
+    })),
+    data: {
+      horizonMonths: project.horizonMonths,
+      vars: project.vars,
+      services: project.services,
+      costItems: project.costItems,
+      featureItems: project.featureItems,
+    },
+  });
+
+  const saveSnapshot = () => {
+    const name = snapName.trim();
+    if (!name) return;
+    const snap = takeSnapshot(name);
     patch((p) => ({ snapshots: [snap, ...p.snapshots] }));
     setSnapOpen(false);
     setSnapName("");
   };
 
+  /* 되돌리면 지금 입력한 값은 사라진다. 되돌리기 전에 현재 상태를 자동으로 한 건 남겨,
+     회차 저장을 깜빡했더라도 잃을 것이 없게 한다. 이름 앞에 [자동저장]을 붙여 구분한다. */
   const restoreSnapshot = (snap) => {
-    patch(() => ({ ...snap.data }));
+    const auto = takeSnapshot("[자동저장] " + todayStr() + " 되돌리기 직전");
+    patch((p) => ({ ...snap.data, snapshots: [auto, ...p.snapshots] }));
   };
 
   const delSnapshot = (id) =>
@@ -13530,11 +13537,17 @@ function HistoryTab({ project, patch }) {
             현재 내용을 회차로 저장
           </button>
         )}
+        {project.snapshots.length > 20 && (
+          <p className="tcc-hint" style={{ color: "var(--danger)" }}>
+            저장된 회차가 {project.snapshots.length}건입니다. 회차 하나에는 그때의 값이 통째로 담기므로,
+            쌓일수록 프로젝트가 무거워지고 불러오기가 느려집니다. 필요 없는 회차는 × 로 정리하세요.
+          </p>
+        )}
         {project.snapshots.length === 0 ? (
           <p className="tcc-hint">아직 저장된 회차가 없습니다.</p>
         ) : (
           <div className="tcc-snaplist">
-            {project.snapshots.map((s) => (
+            {(snapAll ? project.snapshots : project.snapshots.slice(0, 5)).map((s) => (
               <div className="tcc-snap" key={s.id}>
                 <div className="tcc-snap-head">
                   <div>
@@ -13577,6 +13590,16 @@ function HistoryTab({ project, patch }) {
                 </div>
               </div>
             ))}
+            {project.snapshots.length > 5 && (
+              <button
+                className="tcc-btn tcc-btn-ghost"
+                onClick={() => setSnapAll(!snapAll)}
+              >
+                {snapAll
+                  ? "최근 5건만 보기"
+                  : "이전 회차 " + (project.snapshots.length - 5) + "건 더 보기"}
+              </button>
+            )}
           </div>
         )}
       </Section>
