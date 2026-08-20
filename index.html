@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820f_snapshot_guard -->
+<!-- v20260820g_snapshot_rename -->
+<!-- (2026-08-20) 저장한 검토 회차의 이름을 나중에 고칠 수 있게 했다(사용자 요청). 회차 이름을 그냥 눌러 고치면 된다 — 프로젝트 이름 칸과 같은 방식으로, 평소엔 글자처럼 보이다가 올리면 밑줄이 생기고 누르면 초록 밑줄로 바뀐다. 되돌리기 때 자동으로 남는 [자동저장] 회차를 알아보기 쉬운 이름으로 바꾸려는 것이 첫 용도다. 저장은 기존 자동 저장 경로를 그대로 타므로 마지막 타자 뒤 700ms 에 한 번만 나간다(글자마다 저장되지 않는다). 회차의 값·날짜·계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 계약·이력 탭의 '검토 회차'를 셋 보완했다(사용자와 검토 후 합의). ①되돌리기를 누르면 현재 입력값이 백업 없이 덮여 사라졌다 — 되돌리기의 되돌리기가 없어, 회차 저장을 깜빡하면 작업이 통째로 날아가는 자리였다. 이제 되돌리기 직전에 현재 상태를 «[자동저장] YYYY-MM-DD 되돌리기 직전» 이름으로 한 건 먼저 남기고 복원한다. 이름 앞 [자동저장]으로 사람이 붙인 회차와 구분된다. 겸해서 '현재 값을 회차로 뜨는' 부분을 takeSnapshot() 하나로 모아 저장 버튼과 자동 저장이 같은 모양을 쓰게 했다. ②회차를 전부 그리던 것을 최근 5건만 펼치고 나머지는 «이전 회차 N건 더 보기»로 접었다. 카드마다 서비스별로 현재값과의 차액을 다시 계산하므로(computeService — 비용 수식을 전부 평가한다) 회차가 쌓이면 화면을 그릴 때마다 그 횟수가 회차 x 서비스로 늘어난다. ③회차가 20건을 넘으면 목록 위에 정리 안내를 띄운다. 회차 하나가 그때의 값(기간·변수·서비스·비용항목·기능항목)을 통째로 담고 그 전부가 프로젝트 JSON 한 칸에 저장되므로, 쌓일수록 저장·불러오기가 무거워지고 공유 모드의 30초 폴링도 함께 무거워진다. 자동 삭제는 하지 않는다 — 무엇을 버릴지는 사람이 판단할 일이다. 계산·저장 구조는 건드리지 않았다. -->
 <!-- (2026-08-20) 결론 탭 '값이 바뀌면 순위도 바뀔까' 그래프가 확대되어 보이던 것을 고쳤다(사용자 제보). 원인은 배율이다 — 이 차트는 SVG(viewBox 720x260)인데 .tcc-chart 가 width:100% 라 컨테이너 폭에 맞춰 통째로 늘어난다. 오른쪽 목록을 사이드바로 옮기며 본문이 넓어지자(최대 1360px) 그림이 약 1.8배로 확대됐고, 축 글자(10px)와 선 굵기(2.5px)까지 함께 커져 확대경으로 보는 모양이 됐다. 데이터나 축 범위 문제가 아니다. → .tcc-chart 에 max-width:880px 을 걸어 배율을 약 1.2배로 묶었다. 세로 비율은 viewBox 가 잡으므로 함께 줄어든다. 차트 로직·계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 비용 비교 화면의 두 가지를 고쳤다(사용자 제보). ①'+ 새 프로젝트'를 한 번 누른 뒤에는 다른 프로젝트나 메인 화면을 눌러도 이동하지 않고 프로젝트만 계속 새로 만들어졌다. 원인은 goCost 가 이전 nav 값을 그대로 펼친 뒤(...v) 새 값을 얹은 것 — '+ 새 프로젝트'가 넣은 action:'add' 가 지워지지 않고 다음 클릭에 묻어갔고, 도구 쪽 effect 는 seq 가 오를 때마다 그 action 을 다시 실행했다. → 매번 기본값(view:'dashboard', id:null, action:null)에서 새로 만들어 얹도록 바꿔 지난 지시가 남지 않게 했다. 겸해서 사이드바 강조를 '마지막 클릭(costNav)'이 아니라 '도구의 실제 상태'로 바꿨다 — 새 프로젝트를 만들면 도구가 스스로 그것을 여는데 클릭 기준으로 칠하면 어긋나기 때문이다. 도구가 목록과 함께 view·activeId 도 올려 보내고(onProjects), App 은 costState 하나로 받는다. ②오른쪽 목록(250px)을 사이드바로 옮기면서 본문이 화면 끝까지 늘어나 표가 과하게 벌어졌다 — .tcc-root 의 직계 자식에 max-width:1360px 을 걸어 폭을 묶었다. 계산·저장·탭 내용은 건드리지 않았다. -->
@@ -13395,6 +13396,13 @@ function HistoryTab({ project, patch }) {
   const delSnapshot = (id) =>
     patch((p) => ({ snapshots: p.snapshots.filter((s) => s.id !== id) }));
 
+  /* 회차 이름은 저장한 뒤에도 고칠 수 있다. [자동저장]으로 남은 것을 알아보기 쉽게 바꾸거나,
+     나중에 무슨 회차였는지 기억나면 적어 두기 위해서다. 저장은 700ms 뒤 한 번만 나간다. */
+  const renameSnapshot = (id, name) =>
+    patch((p) => ({
+      snapshots: p.snapshots.map((x) => (x.id === id ? { ...x, name } : x)),
+    }));
+
   const sortedLogs = [...project.logs].sort((a, b) => (a.date < b.date ? 1 : -1));
 
   return (
@@ -13551,7 +13559,13 @@ function HistoryTab({ project, patch }) {
               <div className="tcc-snap" key={s.id}>
                 <div className="tcc-snap-head">
                   <div>
-                    <div className="tcc-snap-name">{s.name}</div>
+                    <input
+                      className="tcc-snap-name"
+                      value={s.name}
+                      aria-label="회차 이름"
+                      title="이름을 눌러 고칠 수 있습니다"
+                      onChange={(e) => renameSnapshot(s.id, e.target.value)}
+                    />
                     <div className="tcc-snap-date">{s.savedAt} 저장</div>
                   </div>
                   <div className="tcc-inline">
@@ -14318,7 +14332,11 @@ const CSS = `
 .tcc-snaplist { display: flex; flex-direction: column; gap: 10px; }
 .tcc-snap { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
 .tcc-snap-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
-.tcc-snap-name { font-weight: 700; font-size: 13px; }
+.tcc-snap-head > div:first-child { flex: 1; min-width: 180px; }
+.tcc-snap-name { font-weight: 700; font-size: 13px; width: 100%; min-width: 160px; border: none; background: none;
+  color: var(--ink); font-family: inherit; padding: 2px 0; border-bottom: 1px solid transparent; }
+.tcc-snap-name:hover { border-bottom-color: var(--line); }
+.tcc-snap-name:focus { outline: none; border-bottom-color: var(--accent); }
 .tcc-snap-date { font-size: 11.5px; color: var(--ink2); font-family: ui-monospace, monospace; }
 .tcc-snap-rows { margin-top: 9px; display: flex; flex-direction: column; gap: 3px; }
 .tcc-snap-row { display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; border-top: 1px solid var(--line2); padding-top: 4px; }
