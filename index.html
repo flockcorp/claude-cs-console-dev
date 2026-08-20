@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820u_varchip_noshrink -->
+<!-- v20260820v_formula_help -->
+<!-- (2026-08-20) 비용표의 수식이 '계산할 수 없는 식'이라고만 하고 이유를 알려주지 않던 것을 고쳤다(사용자 제보 — 100000+250000*(상담원 수+관리자 수) 를 넣었는데 안 됐다). 원인은 식이 아니라 이름이다. 계산은 가정값 이름을 값으로 바꿔치기한 뒤 하는데, 설정 탭의 이름과 식에 적은 이름의 띄어쓰기가 다르면 바꿔치기가 안 되고 남은 이름이 정체불명의 기호가 되어 실패한다. 두 가지를 고쳤다. ①띄어쓰기를 무시하고 맞춘다 — 식과 이름 양쪽에서 공백을 없앤 자리에서 바꿔치기하므로 '상담원 수'로 적어 두고 식에 '상담원수'라고 써도(또는 그 반대로) 맞는다. 공백을 없애도 계산에는 지장이 없다. ②실패했을 때 무엇을 못 찾았는지 이름을 집어 말해준다 — «'상담원' 이라는 가정값이 없습니다 · 설정 탭의 이름과 같은지 보세요». 그전에는 어디를 고쳐야 하는지 알 수 없었다. 계산 방식 자체는 그대로다. -->
 <!-- (2026-08-20) 상단 가정값의 숫자가 '특정 값이 맨 앞에 있을 때만' 잘리던 것을 고쳤다(사용자 제보). 앞서 입력칸(.tcc-varchip-in)에 flex:none 을 줬지만 그 칸을 감싼 칩(.tcc-varchip)은 여전히 줄어들 수 있었다. 칩들은 한 줄에 늘어서다가 자리가 모자라면 눌리는데, 안쪽 입력칸은 안 줄어드니 칩 밖으로 넘쳐 잘려 보였다. 이름이 긴 가정값이 맨 앞에 와서 한 줄을 많이 차지할 때만 그 현상이 났고, 뒤로 가면 다음 줄로 넘어가 자리가 남아 멀쩡했다 — '맨 앞일 때만'이라는 제보가 그대로 원인을 가리켰다. 칩에도 flex:none 을 줘 자리가 모자라면 줄이지 말고 다음 줄로 넘기게 했다(max-width:100% 로 화면보다 넓어지는 것만 막는다). ★ 교훈: 안쪽만 고정하면 바깥이 눌릴 때 그대로 잘린다. flex 는 감싼 쪽부터 본다. -->
 <!-- (2026-08-20) 앞서 고쳤다고 한 표 헤더 겹침이 그대로였다(사용자 제보). 원인은 CSS 우선순위다 — 위쪽의 '.tcc-table th { white-space: nowrap }' 가 '.tcc-th-svc' 보다 선택자 점수가 높아(클래스+요소 대 클래스 하나), 뒤에 써도 nowrap 이 풀리지 않았다. 선택자를 '.tcc-table th.tcc-th-svc' 로 올려 실제로 적용되게 했다. 겸해서 이름이 두 줄이 되면 아래로 정렬되도록 vertical-align:bottom 을 줘 다른 헤더와 밑선이 맞게 했다. ★ 교훈: 뒤에 쓴 규칙이 이긴다고 넘겨짚지 말 것. 요소가 붙은 선택자(.a b)는 클래스 하나(.c)보다 세다. -->
 <!-- (2026-08-20) 설정 탭의 가정값을 위아래로 옮길 수 있게 했다(사용자 요청). 각 줄 오른쪽에 ↑↓ 버튼을 붙였다 — 비용 항목의 순서 바꾸기와 같은 방식·같은 버튼(.tcc-mini)이다. 비용표 탭 상단의 가정값 띠는 저장된 순서를 그대로 그리므로 여기서 바꾼 순서가 그대로 나온다. 자주 손대는 값을 앞으로 끌어다 두면 표를 볼 때 눈이 덜 움직인다. 수식은 변수 이름으로 값을 찾으므로 순서가 바뀌어도 계산에는 영향이 없다(evalCell 은 이름이 긴 것부터 치환한다 — 배열 순서와 무관). -->
@@ -11420,13 +11421,18 @@ function evalCell(expr, vars) {
   const raw = (expr === null || expr === undefined ? "" : String(expr)).trim();
   if (raw === "") return { value: 0, error: null, empty: true };
 
-  let work = raw;
+  // 띄어쓰기는 무시하고 맞춘다. 설정 탭에 '상담원 수'로 적어 두고 식에는 '상담원수'라고
+  // (또는 그 반대로) 쓰는 일이 잦은데, 그때마다 계산이 안 되면 이유를 찾기 어렵다.
+  // 공백을 없앤 자리에서 이름을 바꿔치기하므로 양쪽 어느 쪽으로 적어도 맞는다.
+  let work = raw.replace(/\s+/g, "");
   const sorted = [...vars].sort((a, b) => b.label.length - a.label.length);
   for (const v of sorted) {
     if (!v.label) continue;
+    const key = String(v.label).replace(/\s+/g, "");
+    if (!key) continue;
     const num = Number(v.value);
     work = work.replace(
-      new RegExp(escapeRe(v.label), "g"),
+      new RegExp(escapeRe(key), "g"),
       "(" + (isFinite(num) ? num : 0) + ")"
     );
   }
@@ -11439,6 +11445,12 @@ function evalCell(expr, vars) {
     if (!isFinite(num)) return { value: 0, error: "숫자로 계산되지 않았습니다" };
     return { value: num, error: null };
   } catch (e) {
+    // 무엇 때문에 막혔는지 알려준다. '계산할 수 없는 식'만으로는 고칠 데를 찾을 수 없다.
+    const msg = String((e && e.message) || "");
+    const miss = msg.match(/Undefined symbol\s+([^\s,)]+)/);
+    if (miss) {
+      return { value: 0, error: "'" + miss[1] + "' 이라는 가정값이 없습니다 · 설정 탭의 이름과 같은지 보세요" };
+    }
     return { value: 0, error: "계산할 수 없는 식입니다" };
   }
 }
