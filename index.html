@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820t_header_wrap_fix -->
+<!-- v20260820u_varchip_noshrink -->
+<!-- (2026-08-20) 상단 가정값의 숫자가 '특정 값이 맨 앞에 있을 때만' 잘리던 것을 고쳤다(사용자 제보). 앞서 입력칸(.tcc-varchip-in)에 flex:none 을 줬지만 그 칸을 감싼 칩(.tcc-varchip)은 여전히 줄어들 수 있었다. 칩들은 한 줄에 늘어서다가 자리가 모자라면 눌리는데, 안쪽 입력칸은 안 줄어드니 칩 밖으로 넘쳐 잘려 보였다. 이름이 긴 가정값이 맨 앞에 와서 한 줄을 많이 차지할 때만 그 현상이 났고, 뒤로 가면 다음 줄로 넘어가 자리가 남아 멀쩡했다 — '맨 앞일 때만'이라는 제보가 그대로 원인을 가리켰다. 칩에도 flex:none 을 줘 자리가 모자라면 줄이지 말고 다음 줄로 넘기게 했다(max-width:100% 로 화면보다 넓어지는 것만 막는다). ★ 교훈: 안쪽만 고정하면 바깥이 눌릴 때 그대로 잘린다. flex 는 감싼 쪽부터 본다. -->
 <!-- (2026-08-20) 앞서 고쳤다고 한 표 헤더 겹침이 그대로였다(사용자 제보). 원인은 CSS 우선순위다 — 위쪽의 '.tcc-table th { white-space: nowrap }' 가 '.tcc-th-svc' 보다 선택자 점수가 높아(클래스+요소 대 클래스 하나), 뒤에 써도 nowrap 이 풀리지 않았다. 선택자를 '.tcc-table th.tcc-th-svc' 로 올려 실제로 적용되게 했다. 겸해서 이름이 두 줄이 되면 아래로 정렬되도록 vertical-align:bottom 을 줘 다른 헤더와 밑선이 맞게 했다. ★ 교훈: 뒤에 쓴 규칙이 이긴다고 넘겨짚지 말 것. 요소가 붙은 선택자(.a b)는 클래스 하나(.c)보다 세다. -->
 <!-- (2026-08-20) 설정 탭의 가정값을 위아래로 옮길 수 있게 했다(사용자 요청). 각 줄 오른쪽에 ↑↓ 버튼을 붙였다 — 비용 항목의 순서 바꾸기와 같은 방식·같은 버튼(.tcc-mini)이다. 비용표 탭 상단의 가정값 띠는 저장된 순서를 그대로 그리므로 여기서 바꾼 순서가 그대로 나온다. 자주 손대는 값을 앞으로 끌어다 두면 표를 볼 때 눈이 덜 움직인다. 수식은 변수 이름으로 값을 찾으므로 순서가 바뀌어도 계산에는 영향이 없다(evalCell 은 이름이 긴 것부터 치환한다 — 배열 순서와 무관). -->
 <!-- (2026-08-20) 운영에서 써 보며 나온 두 가지를 고쳤다(사용자 제보). ①비교 서비스를 늘리자 비용표 헤더의 서비스 이름끼리 겹쳐 보였다. 표 헤더 전체에 '줄바꿈 안 함'이 걸려 있어, 열이 좁아지면 이름이 칸 밖으로 흘러 옆 글자 위에 얹혔다. 서비스 이름 열(.tcc-th-svc)만 접히도록 풀었다 — 비용표와 기능 평가가 같은 열 클래스를 쓰므로 두 표가 함께 고쳐진다. 나머지 헤더(비용 항목·주기 등)는 짧아 그대로 둔다. ②상단 가정값 칸의 숫자가 다시 잘렸다. 폭을 118px 로 넓혔지만 그 칸이 flex 안에 있어 칩이 많아지면 눌렸다 — 폭이 지정돼 있어도 flex 는 남는 자리가 모자라면 줄인다. flex:none 으로 줄어들지 않게 못 박고, 이름표도 줄바꿈되지 않게 했다. 계산·저장은 건드리지 않았다. -->
@@ -14170,7 +14171,10 @@ const CSS = `
 .tcc-x:hover { color: var(--danger); border-color: var(--danger); }
 
 .tcc-varstrip { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; background: var(--accent-soft); border-radius: 6px; align-items: center; }
-.tcc-varchip { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; }
+/* ★ 칩 자체도 줄어들지 않게 해야 한다. 안쪽 입력칸만 flex:none 으로 묶어 뒀더니,
+   칩이 눌릴 때 그 안의 칸이 잘려 보였다 — 이름이 긴 가정값이 맨 앞에 와서 한 줄에
+   다른 칩들과 같이 놓일 때만 그랬다. 자리가 모자라면 줄이지 말고 다음 줄로 넘긴다. */
+.tcc-varchip { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; flex: none; max-width: 100%; }
 .tcc-varchip-label { font-size: 12px; font-weight: 600; white-space: nowrap; }
 /* 폭이 82px 이라 1,000만 단위가 들어가면 잘렸다. type="number" 의 위아래 화살표가
    자리를 더 빼앗는 것도 겹쳤다 — 화살표를 없애고 폭을 넓힌다. */
