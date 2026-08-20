@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820b_cost_compare_tool -->
+<!-- v20260820c_cost_nav_to_sidebar -->
+<!-- (2026-08-20) 비용 비교 도구의 '메인 화면 · 프로젝트 목록'을 콘솔 왼쪽 사이드바의 하위 뎁스로 옮겼다(사용자 요청). 이제 '비용 비교'가 상품 관리처럼 접히는 부모가 되고, 자식으로 «메인 화면» · 프로젝트 이름들 · «+ 새 프로젝트» 가 붙는다. 프로젝트 이름 옆에는 계약 종료까지 남은 일수를 뱃지로 단다(지난 건 '종료' 빨강, 60일 이내 노랑) — 도구 안 목록에 있던 표시를 그대로 가져왔다. 도구 오른쪽에 있던 목록(aside.tcc-side)은 없앴다. 같은 목록이 두 곳에 있으면 어느 쪽이 진짜인지 헷갈리기 때문이다. 그 안에만 있던 탭 5개(비용표·기능평가·결론·계약이력·설정)는 갈 곳이 없어져 본문 프로젝트명 바 아래로 올렸다 — 대시보드·환불관리와 같은 가로 탭 방식이라 콘솔 관용구에도 맞는다. 목록이 사라졌으므로 '목록 접기' 버튼과 sideOpen 상태도 함께 걷어냈다. 연결 방식: 도구가 프로젝트 목록(id·이름·계약종료일)을 onProjects 로 올려 보내고, 사이드바 클릭은 nav={view,id,action,seq} 로 내려온다. seq 를 올려 같은 곳을 다시 눌러도 반응하게 했다. 계산·저장·탭 내용은 건드리지 않았다. -->
 <!-- (2026-08-20) 사이드바에 '비용 비교' 메뉴를 신설했다(master 전용). 챗에서 만든 프로토타입(tool-cost-compare_3.jsx)을 콘솔로 옮긴 것이다 — 프로젝트 단위로 써드파티 툴의 비용과 기능을 견주는 도구다. 가정값(변수)을 두고 셀에 '월문의수 * 40' 같은 수식을 직접 적어 비용을 산출하고, 가중치를 준 기능 항목을 1~5점으로 채점해 100점으로 환산하며, 결론·계약이력·설정 탭과 대시보드를 갖는다. 계산과 화면 로직은 원본을 그대로 두고 콘솔에서 못 도는 다섯 군데만 갈아끼웠다. ①import/export 제거 ②window.storage(클로드 아티팩트 전용 API)를 TCC_STORE 로 대체 — Supabase public.cost_store 표에 JSON 문자열을 그대로 담는다(tools/cost_store.sql). 개인/공유 두 모드를 원본대로 유지하며 공유 행은 주인 자리에 0번 UUID 를 넣어 한 행만 존재하도록 못 박았다. rev 기반 충돌 감지(30초 폴링)도 그대로 살아 있다. RLS 는 환불·인력관리와 같은 master 전용 등급이고 개인 행은 본인 것만 보인다. ③mathjs 를 CDN 으로 싣되 12.4.2 로 버전을 고정했다 — 2026-06-17 babel 버전 미지정으로 흰 화면이 났던 일을 되풀이하지 않기 위해서다. ④React 구조분해에 useMemo 를 추가했다. ⑤AI 판단 코멘트는 비활성으로 뒀다 — 브라우저에서 Anthropic API 를 부르려면 키가 필요한데 이 저장소는 공개라 화면에 박을 수 없다. Supabase 엣지 함수를 만들어 경유시킨 뒤 연다. 기존 화면·표는 건드리지 않았다. -->
 <!-- (2026-08-19) Report 탭 가독성 조정(사용자 요청). ①사유별 도넛과 공급사별 막대의 2단 폭을 반반(1fr 1fr)에서 0.85fr 1.15fr 로 바꿨다 — 도넛은 범례가 오른쪽에 붙어 좁아도 읽히지만, 가로 막대는 폭이 곧 이름칸 + 막대 길이라 넓을수록 낫다. ②왼쪽 이름축의 자르는 길이는 16자 그대로 둔다 — 22자로 늘렸다가 사용자 지시로 되돌렸다(dev v20260819i 로 한 번 나갔던 상태). 16자가 넘는 이름은 …으로 자르고 전체는 막대 툴팁 제목에서 본다(data.labels 는 원문 그대로). 축 방향은 가로 막대 유지 — 상품명이 길어 세로로 두면 이름이 눕거나 잘린다(사용자와 합의). 집계·데이터 변경 없음. -->
 <!-- v20260819h_hbar_value_ticks -->
@@ -11663,13 +11664,12 @@ function emptyProject(name) {
 /* =========================================================
    메인 컴포넌트
    ========================================================= */
-function ToolCostCompare() {
+function ToolCostCompare({ nav, onProjects } = {}) {
   const [projects, setProjects] = useState(null);
   const [activeId, setActiveId] = useState(null);
   const [tab, setTab] = useState("cost");
   const [view, setView] = useState("dashboard");
   const [search, setSearch] = useState("");
-  const [sideOpen, setSideOpen] = useState(true);
   const [notice, setNotice] = useState("");
   const [saveState, setSaveState] = useState("idle");
   const [mode, setMode] = useState("personal");
@@ -11918,6 +11918,31 @@ function ToolCostCompare() {
     setView("project");
   };
 
+  /* ── 콘솔 사이드바 연동 ─────────────────────────────
+     목록은 콘솔 왼쪽에 있고 화면은 여기 있다. 그래서 프로젝트 이름은 위로 올려 보내고,
+     사이드바에서 누른 결과는 nav 로 받아 화면을 옮긴다. */
+  useEffect(() => {
+    if (!onProjects) return;
+    onProjects(
+      (projects || []).map((p) => ({
+        id: p.id,
+        name: p.name,
+        endsAt: p.contract ? p.contract.endsAt : "",
+      }))
+    );
+  }, [projects, onProjects]);
+
+  useEffect(() => {
+    if (!nav || !nav.seq) return;
+    if (nav.action === "add") { addProject(); return; }
+    if (nav.view === "dashboard") { setView("dashboard"); return; }
+    if (nav.id) {
+      setActiveId(nav.id);
+      setView("project");
+      if (nav.tab) setTab(nav.tab);
+    }
+  }, [nav ? nav.seq : 0]);
+
   const removeProject = (id) => {
     setProjects((prev) => {
       const next = prev.filter((p) => p.id !== id);
@@ -12049,12 +12074,6 @@ function ToolCostCompare() {
 
           <span className="tcc-headsep" />
 
-          <button
-            className="tcc-btn tcc-btn-ghost"
-            onClick={() => setSideOpen(!sideOpen)}
-          >
-            {sideOpen ? "목록 접기" : "목록 펼치기"}
-          </button>
           <button className="tcc-btn tcc-btn-ghost" onClick={exportJson}>
             백업 내려받기
           </button>
@@ -12172,7 +12191,7 @@ function ToolCostCompare() {
         </div>
       )}
 
-      <div className={"tcc-body" + (sideOpen ? "" : " is-collapsed")}>
+      <div className="tcc-body is-collapsed">
         <main className="tcc-content">
           {view === "dashboard" ? (
             <Dashboard
@@ -12203,6 +12222,17 @@ function ToolCostCompare() {
                   />
                 </div>
               </div>
+              <div className="tcc-tabbar">
+                {VIEWS.map(([k, label]) => (
+                  <button
+                    key={k}
+                    className={"tcc-tab" + (tab === k ? " is-on" : "")}
+                    onClick={() => setTab(k)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <div className="tcc-main">
                 {tab === "cost" && (
                   <CostTab project={project} patch={patch} exportCsv={exportCsv} />
@@ -12216,74 +12246,6 @@ function ToolCostCompare() {
           )}
         </main>
 
-        <aside className="tcc-side">
-          <button
-            className={"tcc-navhome" + (view === "dashboard" ? " is-on" : "")}
-            onClick={() => setView("dashboard")}
-          >
-            메인 화면
-          </button>
-
-          <input
-            className="tcc-navsearch"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="프로젝트 검색"
-          />
-
-          <div className="tcc-navlist">
-            {visibleProjects.length === 0 && (
-              <p className="tcc-hint tcc-navempty">검색 결과가 없습니다.</p>
-            )}
-            {visibleProjects.map((p) => {
-              const open = p.id === activeId && view === "project";
-              const d = daysUntil(p.contract.endsAt);
-              return (
-                <div key={p.id} className={"tcc-navgroup" + (open ? " is-open" : "")}>
-                  <button
-                    className="tcc-navproj"
-                    onClick={() => {
-                      if (open) {
-                        setView("dashboard");
-                      } else {
-                        setActiveId(p.id);
-                        setView("project");
-                      }
-                    }}
-                  >
-                    <span className="tcc-navproj-name">{p.name}</span>
-                    {d !== null && (
-                      <span
-                        className={
-                          "tcc-navd" + (d < 0 ? " is-past" : d <= 60 ? " is-near" : "")
-                        }
-                      >
-                        {d < 0 ? "종료" : "D-" + d}
-                      </span>
-                    )}
-                  </button>
-                  {open && (
-                    <div className="tcc-navsub">
-                      {VIEWS.map(([k, label]) => (
-                        <button
-                          key={k}
-                          className={"tcc-navtab" + (tab === k ? " is-on" : "")}
-                          onClick={() => setTab(k)}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <button className="tcc-navadd" onClick={addProject}>
-            + 새 프로젝트
-          </button>
-        </aside>
       </div>
     </div>
   );
@@ -14128,6 +14090,10 @@ const CSS = `
 .tcc-projname { flex: 1; min-width: 180px; font-size: 17px; font-weight: 700; border: none; background: none; color: var(--ink); font-family: inherit; padding: 4px 0; border-bottom: 1px solid transparent; }
 .tcc-projname:focus { outline: none; border-bottom-color: var(--accent); }
 .tcc-projbar-actions { display: flex; gap: 6px; }
+.tcc-tabbar { display: flex; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-top: none; padding: 0 8px; flex-wrap: wrap; }
+.tcc-tab { font-family: inherit; font-size: 13px; padding: 11px 14px; border: none; background: none; cursor: pointer; color: var(--ink2); border-bottom: 2px solid transparent; }
+.tcc-tab:hover { color: var(--ink); }
+.tcc-tab.is-on { color: var(--accent); font-weight: 700; border-bottom-color: var(--accent); }
 
 .tcc-main { background: var(--panel); border: 1px solid var(--line); border-top: none; border-radius: 0 0 7px 7px; padding: 22px; }
 .tcc-pane { display: flex; flex-direction: column; gap: 26px; }
@@ -14487,6 +14453,11 @@ function App() {
     products:'productMgmt', delays:'productMgmt', suppliers:'productMgmt',
   };
   // 현재 펼친 부모들 (다중 펼침 가능: 사용자 수동 조작 존중)
+  // 비용 비교 도구와 사이드바를 잇는 두 칸. 목록은 도구가 올려 주고, 클릭은 nav 로 내려보낸다.
+  const [costProjects,setCostProjects] = useState([]);
+  const [costNav,setCostNav] = useState({view:'dashboard',id:null,seq:0});
+  const goCost = (patch)=>{ navigateTo('costs'); setCostNav(v=>({...v,...patch,seq:v.seq+1})); };
+
   const [openGroups,setOpenGroups] = useState(()=>{
     const parent = pageToParent[page];
     return parent ? {[parent]:true} : {};
@@ -14626,15 +14597,60 @@ function App() {
             </div>
           )}
 
-          {/* 1뎁스: 비용 비교 (자식 없음 → 단순 이동) - master 전용 */}
+          {/* 부모: 비용 비교 — 자식은 도구 안의 프로젝트 목록이다 (master 전용) */}
           {isMaster && (
-            <div
-              className="nav-parent"
-              onClick={()=>navigateTo('costs')}
-              style={page==='costs' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
-            >
-              {Icon.costs}<span>비용 비교</span>
-            </div>
+            <>
+              <div
+                className="nav-parent"
+                onClick={()=>{ toggleGroup('costs'); navigateTo('costs'); }}
+                style={page==='costs' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
+              >
+                {Icon.costs}<span>비용 비교</span>
+                <span className={`chevron ${openGroups.costs?'expanded':''}`}>{openGroups.costs?'▼':'▶'}</span>
+              </div>
+              {openGroups.costs && (
+                <>
+                  <div
+                    className={`nav-child ${page==='costs'&&costNav.view==='dashboard'?'active':''}`}
+                    onClick={()=>goCost({view:'dashboard',id:null})}
+                  >
+                    메인 화면
+                  </div>
+                  {costProjects.map(p=>{
+                    // 계약 종료까지 남은 일수 — 지난 건 '종료', 60일 이내면 노랗게
+                    let d=null;
+                    if(p.endsAt){
+                      const t=new Date(p.endsAt+'T00:00:00');
+                      if(!isNaN(t.getTime())){
+                        const now=new Date(); const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+                        d=Math.round((t-today)/86400000);
+                      }
+                    }
+                    return (
+                      <div
+                        key={p.id}
+                        className={`nav-child ${page==='costs'&&costNav.view==='project'&&costNav.id===p.id?'active':''}`}
+                        onClick={()=>goCost({view:'project',id:p.id})}
+                        title={p.name}
+                        style={{display:'flex',alignItems:'center',gap:6}}
+                      >
+                        <span style={{flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+                        {d!=null && (
+                          <span style={{fontSize:9,fontWeight:700,padding:'1px 5px',borderRadius:3,whiteSpace:'nowrap',
+                            background:d<0?'rgba(246,109,109,.15)':(d<=60?'rgba(246,173,9,.15)':'rgba(220,232,255,.12)'),
+                            color:d<0?'#F66D6D':(d<=60?'#F6AD09':'var(--sub)')}}>
+                            {d<0?'종료':'D-'+d}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div className="nav-child" onClick={()=>goCost({action:'add'})} style={{opacity:.75}}>
+                    + 새 프로젝트
+                  </div>
+                </>
+              )}
+            </>
           )}
         </nav>
         <div className="sidebar-bottom">
@@ -14670,7 +14686,7 @@ function App() {
         {page==='delays'&&(isMaster||isManager)&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
         {page==='autoDelivery'&&(isMaster||isManager)&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='refunds'&&(isMaster?<RefundManagementPage currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
-        {page==='costs'&&(isMaster?<ToolCostCompare/>:<NoAccessPage/>)}
+        {page==='costs'&&(isMaster?<ToolCostCompare nav={costNav} onProjects={setCostProjects}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&isMaster&&<AgentAnalysisPage/>}
         {page==='agents'&&(isMaster?<AgentMgmtPage/>:<NoAccessPage/>)}
       </div>
