@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260820k_snapshot_savedby -->
+<!-- v20260820l_costtab_layout -->
+<!-- (2026-08-20) 비용표 탭 두 가지를 고쳤다(사용자 제보). ①상단 기준 값(가정값) 칸에서 숫자가 잘렸다 — 입력칸 폭이 82px 이라 1,000만 단위가 들어가면 넘쳤고, type="number" 가 위아래 화살표 자리를 따로 빼앗는 것도 겹쳤다. 화살표를 없애고(appearance) 폭을 118px 로 넓혔다. ②비교 표에서 메모를 펼치면 '비용 항목' 열이 넓어지며 옆 열들이 오른쪽으로 밀렸다. 표가 내용에 따라 열 너비를 정하는 기본 방식이라 칸 안에 무엇이 들어오느냐에 흔들린다. → 비용표에만 table-layout:fixed 를 걸어 열 너비를 고정했다(비용 항목 268px · 주기 96px · 도구 96px, 서비스 열은 남은 폭을 나눈다). 서비스가 늘면 표가 좁아지지 않도록 최소 폭을 화면에서 서비스 수로 계산해 준다(460 + 개수 x 170). 메모는 한 줄 입력칸이라 길게 쓰면 옆으로만 흘렀는데, 여러 줄 입력칸으로 바꿔 열 너비에 맞춰 접히게 했다(세로로 늘릴 수 있다). 기능 평가 등 다른 표는 건드리지 않았다. -->
 <!-- (2026-08-20) 검토 회차 목록에 저장한 계정을 함께 표시한다(사용자 요청). 날짜 옆에 «2026-08-20 저장 · someone@floc.kr» 꼴로 붙는다. 계정은 takeSnapshot() 한 곳에서만 찍으므로 사람이 누르는 저장과 되돌리기 때 자동으로 남는 [자동저장] 회차 양쪽에 똑같이 들어간다. 로그인 계정은 ToolCostCompare 가 받아 두던 것을 계약·이력 탭까지 me 로 내려보냈다. 그전에 저장해 둔 회차에는 이 값이 없으므로 날짜만 보인다 — 없는 값을 '미상' 같은 말로 채우지 않았다. 지어낸 기록처럼 보이지 않게 하기 위해서다. 회차의 값·계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 비용 비교 메뉴를 누르면 화면이 검게 죽던 것을 고쳤다(사용자 제보, F12 에 ReferenceError: mode is not defined). 바로 앞 작업에서 '팀 공유' 모드를 걷어내며 mode 상태를 지웠는데, 머리말 아래 '마지막 수정 · 누가 · 몇 분 전' 표시줄의 조건에 mode 참조가 하나 남아 있었다. 그 줄은 지금도 쓸모가 있으므로 조건에서 mode 부분만 떼어 살렸다. ★ 배운 것: npm run check 는 문법과 선언 순서는 잡지만 '지워진 변수를 아직 참조하는 곳'은 잡지 못한다. 상태를 지울 때는 그 이름을 전부 훑어 확인할 것 — 이번에 modeRef·setMode·switchOpen 은 세어 봤으면서 정작 bare 'mode' 를 안 셌다. -->
 <!-- (2026-08-20) 비용 비교 도구의 '나만 보기 / 팀 공유' 모드를 없앴다(사용자 지시). 콘솔에 들어온 이상 접근 통제는 콘솔 권한이 한다 — 이 메뉴는 master 전용이고 보기·쓰기·수정이 모두 같은 권한이므로, 도구가 개인/공유를 또 나누면 같은 자료가 두 벌로 갈라져 '어느 쪽이 진짜인가' 문제만 남는다. 이제 저장소는 하나뿐이다(cost_store 의 shared 행). 머리말의 모드 버튼과 전환 패널, 내 이름 입력, 설정 저장(PREF_KEY)을 걷어냈다. ★ 다만 그동안 '나만 보기'로 저장된 자료가 있을 수 있어, 공유 저장소가 비어 있을 때만 옛 개인 저장본을 한 번 읽어 옮겨 온다(readLegacyPersonal) — 안 그러면 지금까지 만든 프로젝트가 사라진다. 대신 누가 만들고 고쳤는지를 남긴다: 편집자는 로그인 계정(currentUserEmail)을 그대로 쓰고, 고친 사람·시각은 patch() 한 곳에서만 찍는다(화면마다 따로 챙기면 반드시 빠지는 곳이 생긴다). 새로 만들거나 복제할 때는 stampNew() 로 만든 사람을 남긴다. 프로젝트 이름 줄에 «만든 사람 A · 최근 편집 B (3분 전)» 로 보인다. 옛 자료에는 이 항목이 없으므로 migrate() 에서 빈 값으로 채운다. 다른 사람의 수정을 감지하는 30초 확인은 그대로 두었다 — master 가 여럿일 수 있어 여전히 필요하다. 계산·저장 구조는 건드리지 않았다. -->
@@ -12460,7 +12461,12 @@ function CostTab({ project, patch, exportCsv }) {
       </div>
 
       <div className="tcc-tablewrap">
-        <table className="tcc-table">
+        {/* 열 너비를 고정한다 — 메모를 펼쳐도 옆 열이 밀리지 않게.
+            서비스가 늘면 표가 그만큼 넓어지고 가로 스크롤로 본다. */}
+        <table
+          className="tcc-table tcc-table-cost"
+          style={{ minWidth: 460 + project.services.length * 170 }}
+        >
           <thead>
             <tr>
               <th className="tcc-th-item">비용 항목</th>
@@ -12489,9 +12495,10 @@ function CostTab({ project, patch, exportCsv }) {
                     {it.note ? "메모 있음" : "메모"}
                   </button>
                   {openNote === it.id && (
-                    <input
+                    <textarea
                       className="tcc-cellin tcc-notein"
                       value={it.note}
+                      rows={2}
                       placeholder="근거나 조건을 적어두세요"
                       onChange={(e) => updItem(it.id, "note", e.target.value)}
                     />
@@ -14095,7 +14102,11 @@ const CSS = `
 .tcc-varstrip { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 14px; background: var(--accent-soft); border-radius: 6px; align-items: center; }
 .tcc-varchip { display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 4px 8px; }
 .tcc-varchip-label { font-size: 12px; font-weight: 600; }
-.tcc-varchip-in { width: 82px; border: none; border-bottom: 1px solid var(--line); background: none; text-align: right; font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); padding: 1px 2px; }
+/* 폭이 82px 이라 1,000만 단위가 들어가면 잘렸다. type="number" 의 위아래 화살표가
+   자리를 더 빼앗는 것도 겹쳤다 — 화살표를 없애고 폭을 넓힌다. */
+.tcc-varchip-in { width: 118px; border: none; border-bottom: 1px solid var(--line); background: none; text-align: right; font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); padding: 1px 2px; -moz-appearance: textfield; }
+.tcc-varchip-in::-webkit-outer-spin-button,
+.tcc-varchip-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .tcc-varchip-in:focus { outline: none; border-bottom-color: var(--accent); }
 .tcc-varchip-unit { font-size: 11px; color: var(--ink2); }
 
@@ -14117,7 +14128,15 @@ const CSS = `
 .tcc-cellpre { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); text-align: right; padding: 2px 7px 0; min-height: 15px; }
 .tcc-cellpre.is-err { color: var(--danger); }
 .tcc-notebtn { margin-top: 3px; background: none; border: none; font-family: inherit; font-size: 11px; color: var(--ink2); cursor: pointer; padding: 0 7px; text-decoration: underline; text-underline-offset: 2px; }
-.tcc-notein { margin-top: 5px; border-color: var(--line); font-size: 12px; }
+/* 메모는 한 줄 입력칸이라 길게 쓰면 옆으로만 흘렀다. 여러 줄로 접어 보여준다. */
+.tcc-notein { margin-top: 5px; border-color: var(--line); font-size: 12px; line-height: 1.55; resize: vertical; min-height: 46px; }
+
+/* 비용표만 열 너비를 고정한다. 기능 평가 표 등 다른 표는 지금대로 둔다. */
+.tcc-table-cost { table-layout: fixed; }
+.tcc-table-cost .tcc-th-item { width: 268px; }
+.tcc-table-cost .tcc-th-cycle { width: 96px; }
+.tcc-table-cost .tcc-th-tool { width: 96px; }
+.tcc-table-cost td, .tcc-table-cost th { overflow-wrap: anywhere; }
 .tcc-mini { font-size: 11.5px; min-width: 28px; padding: 0 8px; border: 1px solid var(--line); background: none; color: var(--ink2); margin-right: 3px; }
 .tcc-mini:hover { border-color: var(--ink2); color: var(--ink); }
 .tcc-mini-del:hover { color: var(--danger); border-color: var(--danger); }
