@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821a_error_boundary -->
+<!-- (2026-08-21) 화면별 에러 경계를 넣었다. 지금까지는 화면 하나에서 렌더 오류가 나면 App 최상위까지 올라가 콘솔 전체가 검게 죽었다(2026-08-20 비용 비교 작업에서 실제로 겪었다 — 없는 이름 참조 하나였다). 같은 일이 배송지연·환불처럼 상담원이 매일 쓰는 화면에서 나면 전원이 손을 놓게 된다. 라우팅 지점(main 안의 page 분기)을 PageErrorBoundary 로 감싸 그 화면만 «문제가 생겼습니다» 안내로 바뀌게 하고, 사이드바와 다른 메뉴는 그대로 살아 있게 했다. 안내에는 어느 화면인지(PAGE_LABELS)와 오류 메시지를 함께 보이고 [다시 시도](nonce 를 올려 화면을 새로 마운트)·[새로고침] 두 버튼을 둔다. 스택은 개발자 콘솔에 남긴다. ★ 경계가 잡는 것은 렌더 중 오류뿐이고 이벤트 핸들러·async 콜백의 오류는 예전처럼 sbFail/try-catch 몫이다. 화면 로직·계산·쿼리는 한 줄도 건드리지 않았다. -->
 <!-- v20260820x_snap_horizon -->
 <!-- (2026-08-20) 검토 회차 카드에 그때의 비교 기간을 표시한다(사용자 요청). «2026-08-20 저장 · someone@floc.kr · 36개월 기준» 꼴이다. 회차 옆의 차액은 '지금 값으로 계산한 총비용 − 저장 당시 총비용'인데, 총비용은 비교 기간 전체 기준이라 기간을 바꾸면 비용이 그대로여도 차액이 크게 뜬다. 어느 기간으로 잰 금액인지 보이면 사람이 판단할 수 있다. 겸해서 그때와 지금의 기간이 다를 때만 «지금은 48개월 — 차액은 참고만»을 붉게 덧붙인다. 늘 띄우면 잔소리가 되고, 어긋난 때에만 보이면 신호가 된다. 회차에 저장된 기간(data.horizonMonths)을 읽어 쓰므로 계산은 건드리지 않았다. -->
 <!-- (2026-08-20) 두 가지. ①상단 가정값의 숫자가 계속 잘렸다(사용자 제보, 세 번째). 폭을 82→118px 로 넓히고 flex:none 으로 눌림도 막았는데도 잘렸다 — 운영에 규칙이 들어간 것과 가리는 조상 요소가 없는 것까지 확인했으므로, 남은 답은 '숫자가 실제로 118px 보다 길다'였다. 폭을 숫자로 못 박는 방식은 몇 자리가 들어올지 모르는 한 언제든 다시 깨진다 → 글자 수에 맞춰 늘어나게 했다(최소 96px, 글자당 9px). 이제 몇 자리든 잘리지 않는다. ②검토 회차의 차액 표시가 서비스를 이름으로 '정확히' 맞춰 찾고 있었다 — 이름에 공백이 하나 끼면 차액이 오류 없이 조용히 사라진다. 가정값에서 보이지 않는 공백에 실제로 당한 뒤라, 여기도 공백을 무시하고 맞추게 했다. -->
@@ -14528,6 +14530,50 @@ function RoleCheckFailedPage({email,error,onRetry}){
   );
 }
 
+// 화면 이름 — 오류 안내에 "어느 화면이 죽었는지"를 밝히는 데 쓴다.
+const PAGE_LABELS = {
+  dashboard:'대시보드', entry:'상담 입력', agentAnalysis:'상담원 분석',
+  products:'상품 관리', delays:'배송지연', suppliers:'공급사',
+  autoDelivery:'자동발송', refunds:'환불 관리', costs:'비용 비교 도구', agents:'인력 관리',
+};
+
+// ── 화면별 에러 경계 ──────────────────────────────────────────────────
+// 화면 하나에서 렌더 오류가 나면 App 최상위까지 올라가 콘솔 전체가 검게 죽는다
+// (2026-08-20 '팀 공유' 제거 때 실제로 겪었다 — 남은 이름 참조 하나로 화면이 통째로 사라졌다).
+// 라우팅 지점에 이 경계를 두면 그 화면만 안내로 바뀌고 사이드바·다른 화면은 살아남는다.
+// ★ 경계가 잡는 것은 '렌더 중' 오류뿐이다. 이벤트 핸들러나 async 콜백 안에서 난 오류는
+//   여기로 오지 않는다(React 설계) — 그쪽은 예전처럼 sbFail/try-catch 로 다뤄야 한다.
+class PageErrorBoundary extends React.Component {
+  constructor(props){ super(props); this.state = {error:null, nonce:0}; }
+  static getDerivedStateFromError(error){ return {error}; }
+  componentDidCatch(error, info){
+    // 화면에는 요약만 보이고, 추적에 필요한 스택은 개발자 콘솔에 남긴다.
+    console.error('[화면 오류] ' + (this.props.label || ''), error, info && info.componentStack);
+  }
+  render(){
+    const {error, nonce} = this.state;
+    // 다시 시도하면 nonce 가 바뀌며 화면이 통째로 새로 마운트된다(고장난 state 를 물려받지 않는다).
+    if(!error) return <React.Fragment key={nonce}>{this.props.children}</React.Fragment>;
+    const msg = (error && (error.message || String(error))) || '';
+    return (
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',padding:'40px 20px',textAlign:'center'}}>
+        <div style={{fontSize:48,marginBottom:16,opacity:.5}}>⚠️</div>
+        <div style={{fontSize:18,fontWeight:600,color:'var(--text)',marginBottom:8}}>
+          {this.props.label ? this.props.label + ' 화면에 문제가 생겼습니다.' : '이 화면에 문제가 생겼습니다.'}
+        </div>
+        <div style={{fontSize:13,color:'var(--sub)',marginBottom:6}}>
+          이 화면만 멈춘 것이고 다른 메뉴는 그대로 쓸 수 있습니다. 저장하지 않은 입력은 남아 있지 않습니다.
+        </div>
+        <div style={{fontSize:12,color:'var(--sub)',marginBottom:20,opacity:.8,maxWidth:560,wordBreak:'break-word'}}>{msg}</div>
+        <div style={{display:'flex',gap:8}}>
+          <button className="btn-primary" onClick={()=>this.setState(s=>({error:null,nonce:s.nonce+1}))}>다시 시도</button>
+          <button className="btn-cancel" onClick={()=>location.reload()}>새로고침</button>
+        </div>
+      </div>
+    );
+  }
+}
+
 function App() {
   const [session,setSession]=useState(null); const [page,setPage]=useState('dashboard'); const [editDate,setEditDate]=useState(null); const [loading,setLoading]=useState(true);
   // 권한은 서버(console_users)에서만 받는다. user_metadata 는 본인이 고칠 수 있어 신뢰하지 않는다.
@@ -14775,6 +14821,8 @@ function App() {
         </div>
       </div>
       <div className="main">
+        {/* 화면 하나가 죽어도 콘솔 전체는 살아남는다. key={page} 라 메뉴를 옮기면 오류 상태도 함께 지워진다. */}
+        <PageErrorBoundary key={page} label={PAGE_LABELS[page]}>
         {page==='dashboard'&&<DashboardPage/>}
         {page==='entry'&&(isMaster||isManager)&&<EntryPage editDate={editDate} onSaved={afterSave}/>}
         {page==='products'&&<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
@@ -14785,6 +14833,7 @@ function App() {
         {page==='costs'&&(isMaster?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&isMaster&&<AgentAnalysisPage/>}
         {page==='agents'&&(isMaster?<AgentMgmtPage/>:<NoAccessPage/>)}
+        </PageErrorBoundary>
       </div>
     </div>
   );
