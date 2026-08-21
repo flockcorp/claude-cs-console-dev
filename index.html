@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821d_cgrid_compact -->
+<!-- (2026-08-21) 앞 버전의 크기 통일을 사용자 지시대로 손봤다. ①결정 기록의 '선택한 서비스' 드롭다운은 높이만 맞추라는 뜻이었는데 폭까지 150px 로 줄여 서비스 이름이 들어가기에 너무 짧아졌다 — 폭은 예전처럼 칸 전체를 쓰게 되돌리고 높이·글자 크기만 통일한다. ②계약 정보 네 칸은 1fr 격자에 놓여 있어 화면이 넓어질수록 칸 사이가 휑하게 벌어졌다 — 이 격자에만 tcc-cgrid-compact 를 붙여 flex 로 바꾸고 간격 12px 로 좁혀 왼쪽으로 모아 붙인다. 네 칸의 입력칸 폭 150px 통일은 그대로 둔다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821c_cgrid_field_size -->
 <!-- (2026-08-21) 계약 이력 탭의 입력칸 크기를 통일했다(사용자 요청). 계약 시작일·계약 종료일·해지 통보 기한·재검토 착수가 서로 다른 폭과 높이로 놓여 줄이 들쭉날쭉했고, 아래 결정 기록의 '선택한 서비스'(select)와 '결정일'(date)도 마찬가지였다. 날짜·선택·숫자 입력칸은 브라우저가 주는 기본 크기가 저마다 달라 그냥 두면 맞지 않는다. .tcc-cgrid 안의 세 종류에 같은 폭(--tcc-field:150px)과 같은 높이(34px)·같은 글자 크기를 주고 flex:none 으로 눌리지 않게 했다 — 폭을 칸 크기에 맡기지 않으므로 창 너비를 바꿔도 칸이 변하지 않는다. 앞 버전에서 이 두 숫자 칸에 넣었던 글자 수 기반 인라인 폭은 통일 폭을 덮어써서 걷어냈다(150px 는 17자까지 들어가 잘릴 일이 없다). 다른 탭의 입력칸과 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821b_num_input_width -->
@@ -13394,7 +13396,7 @@ function HistoryTab({ project, patch, me }) {
         title="계약 정보"
         desc="종료일을 넣어두면 해지 통보 기한과 재검토 시작 시점을 알아서 계산합니다."
       >
-        <div className="tcc-cgrid">
+        <div className="tcc-cgrid tcc-cgrid-compact">
           <label>
             <span>계약 시작일</span>
             <input
@@ -14377,17 +14379,20 @@ const CSS = `
 .tcc-stale { font-size: 11px; color: var(--danger); white-space: nowrap; }
 
 /* 계약 정보 */
-.tcc-cgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; --tcc-field: 150px; }
-/* 계약 정보(시작일·종료일·해지 통보 기한·재검토 착수)와 결정 기록(선택한 서비스·결정일)의
-   입력칸 크기를 하나로 맞춘다(사용자 요청). 날짜·선택·숫자는 저마다 기본 크기가 달라
-   폭도 높이도 들쭉날쭉했다. 폭을 칸에 맡기면 창 너비에 따라 또 달라지므로 한 값으로 못 박고
-   flex:none 으로 눌리지 않게 한다 — 창을 좁혔다 넓혀도 칸 크기가 변하지 않는다. */
+.tcc-cgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+/* 날짜·선택·숫자 입력칸은 브라우저가 주는 기본 높이가 저마다 달라 줄이 들쭉날쭉했다.
+   높이와 글자 크기는 두 격자 모두 하나로 맞춘다. 폭은 칸마다 사정이 달라 여기서 정하지 않는다. */
 .tcc-cgrid label > .tcc-in,
 .tcc-cgrid label > .tcc-sel,
-.tcc-cgrid .tcc-inline > .tcc-in {
-  width: var(--tcc-field); flex: none;
-  height: 34px; padding: 6px 9px; font-size: 13px;
-}
+.tcc-cgrid .tcc-inline > .tcc-in { height: 34px; padding: 6px 9px; font-size: 13px; }
+
+/* 계약 정보 네 칸(시작일·종료일·해지 통보 기한·재검토 착수)만 폭까지 같게 맞추고
+   왼쪽으로 모아 붙인다(사용자 요청). 1fr 격자에 두면 칸이 화면 폭만큼 벌어져 사이가 휑했다.
+   결정 기록('선택한 서비스'·'결정일')은 폭을 건드리지 않는다 — 서비스 이름이 길어 넓어야 한다. */
+.tcc-cgrid-compact { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-start; }
+.tcc-cgrid-compact > label { flex: none; }
+.tcc-cgrid-compact label > .tcc-in,
+.tcc-cgrid-compact .tcc-inline > .tcc-in { width: 150px; flex: none; }
 .tcc-timeline { display: flex; flex-direction: column; gap: 1px; background: var(--line2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .tcc-tl { display: flex; align-items: center; gap: 12px; background: var(--panel); padding: 10px 14px; font-size: 12.5px; }
 .tcc-tl-label { width: 108px; color: var(--ink2); font-weight: 600; }
