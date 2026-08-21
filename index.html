@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821f_timeline_clip -->
+<!-- (2026-08-21) '재검토 착수의 숫자가 창 너비·화면 배율에 따라 잘렸다 안 잘렸다 한다'는 제보의 진짜 원인을 잡았다. 입력칸이 아니라 그 아래 일정 줄이었다 — 같은 이름이 두 곳에 있어 입력칸만 세 번 손대고도 낫지 않았다. 일정 줄(.tcc-tl)은 '재검토 착수 | 2026-11-22 | D-90' 을 한 줄에 늘어놓는데 줄바꿈이 없고, 감싼 .tcc-timeline 에 둥근 모서리를 위한 overflow:hidden 이 걸려 있다. 줄이 폭을 넘기면 오른쪽 끝의 'D-90' 이 그대로 잘려나갔고, 줄 폭은 창 너비와 배율에 따라 변하니 증상이 오갔다. → 잘라내는 대신 다음 줄로 넘기고(flex-wrap) 각 칸을 flex:none 으로 못 박아 눌리지 않게 했다. ★ 어제 가정값 칩과 같은 계열이다 — 감싼 쪽이 좁아질 때 안쪽이 안 줄면 그대로 잘린다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821e_field_widths -->
 <!-- (2026-08-21) 입력칸 폭 두 가지를 사용자 지시대로 조정했다. ①해지 통보 기한·재검토 착수는 두세 자리 숫자만 들어가는 칸인데 날짜 칸과 같은 150px 이라 과했다 — 40% 줄여 90px(날짜 칸의 60%)로 한다. 폭을 --tcc-field 하나에서 계산하므로 기준 폭을 바꾸면 두 칸도 같은 비율로 따라온다. ②결정 기록의 '결정일'을 계약 시작일과 같은 150px 로 맞춘다. 같은 격자의 '선택한 서비스'는 서비스 이름이 들어가야 하므로 폭을 건드리지 않았고, 자리(선택한 서비스 오른쪽)도 격자가 그대로 잡아 준다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821d_cgrid_compact -->
@@ -14404,10 +14406,15 @@ const CSS = `
    자리(선택한 서비스 오른쪽)는 격자가 그대로 잡아 준다. */
 .tcc-cgrid:not(.tcc-cgrid-compact) label > .tcc-in { width: 150px; flex: none; }
 .tcc-timeline { display: flex; flex-direction: column; gap: 1px; background: var(--line2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-.tcc-tl { display: flex; align-items: center; gap: 12px; background: var(--panel); padding: 10px 14px; font-size: 12.5px; }
-.tcc-tl-label { width: 108px; color: var(--ink2); font-weight: 600; }
-.tcc-tl-date { font-family: ui-monospace, monospace; }
-.tcc-tl-d { font-family: ui-monospace, monospace; color: var(--ink2); }
+/* 한 줄이 폭을 넘기면 감싼 .tcc-timeline 의 overflow:hidden 이 오른쪽 끝을 잘라낸다.
+   그 끝에 있는 것이 'D-90' 이라 재검토 착수의 숫자가 잘려 보였다(2026-08-21 사용자 제보).
+   줄 폭은 창 너비·화면 배율에 따라 변하므로 증상이 오갔다.
+   → 잘라내는 대신 다음 줄로 넘긴다(flex-wrap). 각 칸은 눌리지 않게 flex:none 으로 못 박는다.
+   ★ 어제 가정값 칩과 같은 계열이다 — 감싼 쪽이 좁아질 때 안쪽이 안 줄면 그대로 잘린다. */
+.tcc-tl { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; background: var(--panel); padding: 10px 14px; font-size: 12.5px; }
+.tcc-tl-label { width: 108px; flex: none; color: var(--ink2); font-weight: 600; }
+.tcc-tl-date { flex: none; white-space: nowrap; font-family: ui-monospace, monospace; }
+.tcc-tl-d { flex: none; white-space: nowrap; font-family: ui-monospace, monospace; color: var(--ink2); }
 .tcc-tl.is-near { background: #FFF8E8; }
 .tcc-tl.is-near .tcc-tl-d { color: #8A6100; font-weight: 700; }
 .tcc-tl.is-past { background: #FAFBFA; color: var(--ink2); }
