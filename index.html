@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821c_cgrid_field_size -->
+<!-- (2026-08-21) 계약 이력 탭의 입력칸 크기를 통일했다(사용자 요청). 계약 시작일·계약 종료일·해지 통보 기한·재검토 착수가 서로 다른 폭과 높이로 놓여 줄이 들쭉날쭉했고, 아래 결정 기록의 '선택한 서비스'(select)와 '결정일'(date)도 마찬가지였다. 날짜·선택·숫자 입력칸은 브라우저가 주는 기본 크기가 저마다 달라 그냥 두면 맞지 않는다. .tcc-cgrid 안의 세 종류에 같은 폭(--tcc-field:150px)과 같은 높이(34px)·같은 글자 크기를 주고 flex:none 으로 눌리지 않게 했다 — 폭을 칸 크기에 맡기지 않으므로 창 너비를 바꿔도 칸이 변하지 않는다. 앞 버전에서 이 두 숫자 칸에 넣었던 글자 수 기반 인라인 폭은 통일 폭을 덮어써서 걷어냈다(150px 는 17자까지 들어가 잘릴 일이 없다). 다른 탭의 입력칸과 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821b_num_input_width -->
 <!-- (2026-08-21) 계약 이력 탭의 '재검토 착수' 숫자 뒷자리가 잘려 보이던 것을 고쳤다(사용자 제보 — 창 가로 너비를 바꾸면 잘렸다 안 잘렸다 했다). 어제 가정값에서 겪은 것과 같은 계열이다. 두 가지가 겹쳐 있었다. ①입력칸(.tcc-in-mini/.tcc-in-num)이 flex 줄 안에 있으면서 flex:none 이 없어 자리가 모자라면 눌렸다 — 그래서 창 너비에 따라 증상이 오갔다. ②type=number 의 증감 화살표가 오른쪽 정렬한 숫자 위를 덮어 뒷자리를 가렸다. flex:none 을 주고 화살표를 없앴으며, 폭은 고정하지 않고 글자 수에 맞춰 늘어나게 했다(tccNumWidth). ★ 고정 폭은 답이 아니다 — 어제 82→118px 로 두 번 넓히고도 또 잘렸다. 같은 모양의 칸을 함께 고쳤다: 해지 통보 기한 · 설정 탭의 가정값 기본값과 범위 min/max · 비교 기간(개월). 가정값 칩도 같은 헬퍼를 쓰게 모았다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821a_error_boundary -->
@@ -13417,7 +13419,6 @@ function HistoryTab({ project, patch, me }) {
               <input
                 className="tcc-in tcc-in-mini"
                 type="number"
-                style={{ width: tccNumWidth(c.noticeDays, 78) }}
                 value={c.noticeDays}
                 onChange={(e) => updContract("noticeDays", e.target.value)}
               />
@@ -13430,7 +13431,6 @@ function HistoryTab({ project, patch, me }) {
               <input
                 className="tcc-in tcc-in-mini"
                 type="number"
-                style={{ width: tccNumWidth(c.reviewLeadDays, 78) }}
                 value={c.reviewLeadDays}
                 onChange={(e) => updContract("reviewLeadDays", e.target.value)}
               />
@@ -14377,7 +14377,17 @@ const CSS = `
 .tcc-stale { font-size: 11px; color: var(--danger); white-space: nowrap; }
 
 /* 계약 정보 */
-.tcc-cgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.tcc-cgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; --tcc-field: 150px; }
+/* 계약 정보(시작일·종료일·해지 통보 기한·재검토 착수)와 결정 기록(선택한 서비스·결정일)의
+   입력칸 크기를 하나로 맞춘다(사용자 요청). 날짜·선택·숫자는 저마다 기본 크기가 달라
+   폭도 높이도 들쭉날쭉했다. 폭을 칸에 맡기면 창 너비에 따라 또 달라지므로 한 값으로 못 박고
+   flex:none 으로 눌리지 않게 한다 — 창을 좁혔다 넓혀도 칸 크기가 변하지 않는다. */
+.tcc-cgrid label > .tcc-in,
+.tcc-cgrid label > .tcc-sel,
+.tcc-cgrid .tcc-inline > .tcc-in {
+  width: var(--tcc-field); flex: none;
+  height: 34px; padding: 6px 9px; font-size: 13px;
+}
 .tcc-timeline { display: flex; flex-direction: column; gap: 1px; background: var(--line2); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .tcc-tl { display: flex; align-items: center; gap: 12px; background: var(--panel); padding: 10px 14px; font-size: 12.5px; }
 .tcc-tl-label { width: 108px; color: var(--ink2); font-weight: 600; }
