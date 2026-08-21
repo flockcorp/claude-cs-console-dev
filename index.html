@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821b_num_input_width -->
+<!-- (2026-08-21) 계약 이력 탭의 '재검토 착수' 숫자 뒷자리가 잘려 보이던 것을 고쳤다(사용자 제보 — 창 가로 너비를 바꾸면 잘렸다 안 잘렸다 했다). 어제 가정값에서 겪은 것과 같은 계열이다. 두 가지가 겹쳐 있었다. ①입력칸(.tcc-in-mini/.tcc-in-num)이 flex 줄 안에 있으면서 flex:none 이 없어 자리가 모자라면 눌렸다 — 그래서 창 너비에 따라 증상이 오갔다. ②type=number 의 증감 화살표가 오른쪽 정렬한 숫자 위를 덮어 뒷자리를 가렸다. flex:none 을 주고 화살표를 없앴으며, 폭은 고정하지 않고 글자 수에 맞춰 늘어나게 했다(tccNumWidth). ★ 고정 폭은 답이 아니다 — 어제 82→118px 로 두 번 넓히고도 또 잘렸다. 같은 모양의 칸을 함께 고쳤다: 해지 통보 기한 · 설정 탭의 가정값 기본값과 범위 min/max · 비교 기간(개월). 가정값 칩도 같은 헬퍼를 쓰게 모았다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821a_error_boundary -->
 <!-- (2026-08-21) 화면별 에러 경계를 넣었다. 지금까지는 화면 하나에서 렌더 오류가 나면 App 최상위까지 올라가 콘솔 전체가 검게 죽었다(2026-08-20 비용 비교 작업에서 실제로 겪었다 — 없는 이름 참조 하나였다). 같은 일이 배송지연·환불처럼 상담원이 매일 쓰는 화면에서 나면 전원이 손을 놓게 된다. 라우팅 지점(main 안의 page 분기)을 PageErrorBoundary 로 감싸 그 화면만 «문제가 생겼습니다» 안내로 바뀌게 하고, 사이드바와 다른 메뉴는 그대로 살아 있게 했다. 안내에는 어느 화면인지(PAGE_LABELS)와 오류 메시지를 함께 보이고 [다시 시도](nonce 를 올려 화면을 새로 마운트)·[새로고침] 두 버튼을 둔다. 스택은 개발자 콘솔에 남긴다. ★ 경계가 잡는 것은 렌더 중 오류뿐이고 이벤트 핸들러·async 콜백의 오류는 예전처럼 sbFail/try-catch 몫이다. 화면 로직·계산·쿼리는 한 줄도 건드리지 않았다. -->
 <!-- v20260820x_snap_horizon -->
@@ -11328,6 +11330,11 @@ function agoText(iso) {
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 
+// 숫자 입력칸의 폭. 고정 폭은 긴 값에서 어김없이 잘린다(2026-08-20 가정값에서 세 번 겪었다) —
+// 글자 수에 맞춰 늘린다. min 은 '값이 짧거나 비어도 이만큼은 보인다'는 바닥값이다.
+const tccNumWidth = (value, min) =>
+  Math.max(min, String(value == null ? "" : value).length * 9 + 22);
+
 const won = (n) => {
   if (!isFinite(n)) return "-";
   return Math.round(n).toLocaleString("ko-KR");
@@ -12258,6 +12265,7 @@ function SetupTab({ project, patch }) {
               <input
                 className="tcc-in tcc-in-num"
                 type="number"
+                style={{ width: tccNumWidth(v.value, 110) }}
                 value={v.value}
                 onChange={(e) => updVar(v.id, "value", e.target.value)}
               />
@@ -12272,6 +12280,7 @@ function SetupTab({ project, patch }) {
                 <input
                   className="tcc-in tcc-in-mini"
                   type="number"
+                  style={{ width: tccNumWidth(v.min, 78) }}
                   value={v.min}
                   onChange={(e) => updVar(v.id, "min", e.target.value)}
                 />
@@ -12279,6 +12288,7 @@ function SetupTab({ project, patch }) {
                 <input
                   className="tcc-in tcc-in-mini"
                   type="number"
+                  style={{ width: tccNumWidth(v.max, 78) }}
                   value={v.max}
                   onChange={(e) => updVar(v.id, "max", e.target.value)}
                 />
@@ -12406,6 +12416,7 @@ function SetupTab({ project, patch }) {
           <input
             className="tcc-in tcc-in-num"
             type="number"
+            style={{ width: tccNumWidth(project.horizonMonths, 110) }}
             value={project.horizonMonths}
             onChange={(e) => patch(() => ({ horizonMonths: e.target.value }))}
           />
@@ -12496,7 +12507,7 @@ function CostTab({ project, patch, exportCsv }) {
               type="number"
               /* 폭을 고정값으로 잡았더니 긴 숫자에서 계속 잘렸다(118px 로도 모자랐다).
                  글자 수에 맞춰 늘린다 — 몇 자리가 들어와도 잘리지 않는다. */
-              style={{ width: Math.max(96, String(v.value == null ? "" : v.value).length * 9 + 22) }}
+              style={{ width: tccNumWidth(v.value, 96) }}
               value={v.value}
               onChange={(e) =>
                 patch((p) => ({
@@ -13406,6 +13417,7 @@ function HistoryTab({ project, patch, me }) {
               <input
                 className="tcc-in tcc-in-mini"
                 type="number"
+                style={{ width: tccNumWidth(c.noticeDays, 78) }}
                 value={c.noticeDays}
                 onChange={(e) => updContract("noticeDays", e.target.value)}
               />
@@ -13418,6 +13430,7 @@ function HistoryTab({ project, patch, me }) {
               <input
                 className="tcc-in tcc-in-mini"
                 type="number"
+                style={{ width: tccNumWidth(c.reviewLeadDays, 78) }}
                 value={c.reviewLeadDays}
                 onChange={(e) => updContract("reviewLeadDays", e.target.value)}
               />
@@ -14185,9 +14198,14 @@ const CSS = `
 .tcc-in { font-family: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--ink); }
 .tcc-in:focus { outline: none; border-color: var(--accent); }
 .tcc-in-label { flex: 1 1 150px; font-weight: 600; }
-.tcc-in-num { width: 110px; text-align: right; font-family: ui-monospace, monospace; }
+.tcc-in-num { width: 110px; flex: none; text-align: right; font-family: ui-monospace, monospace; }
 .tcc-in-unit { width: 70px; }
-.tcc-in-mini { width: 78px; text-align: right; font-family: ui-monospace, monospace; padding: 5px 7px; }
+.tcc-in-mini { width: 78px; flex: none; text-align: right; font-family: ui-monospace, monospace; padding: 5px 7px; }
+/* 숫자 입력칸의 증감 화살표를 없앤다 — 오른쪽 정렬한 숫자를 화살표가 덮어 뒷자리가 가려진다.
+   가정값 칩(.tcc-varchip-in)은 이미 같은 처리를 하고 있다. */
+.tcc-in-num, .tcc-in-mini { -moz-appearance: textfield; }
+.tcc-in-num::-webkit-outer-spin-button, .tcc-in-num::-webkit-inner-spin-button,
+.tcc-in-mini::-webkit-outer-spin-button, .tcc-in-mini::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .tcc-ta { font-family: inherit; font-size: 13px; line-height: 1.6; padding: 12px; border: 1px solid var(--line); border-radius: 5px; resize: vertical; color: var(--ink); }
 .tcc-ta:focus { outline: none; border-color: var(--accent); }
 .tcc-sel { font-family: inherit; font-size: 12.5px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--ink); }
