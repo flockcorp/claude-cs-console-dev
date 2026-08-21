@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- v20260821n_paylabel -->
-<!-- (2026-08-21) 결제수단 칸에 «PG사» 와 «어디서 들어온 주문인가» 를 함께 보여준다(사용자 요청). 실제 주문 2건으로 카페24 응답을 열어 확인했다 — payment_gateway_names(PG사 코드, 마켓 주문이면 null) · easypay_name(간편결제사) · bank_code_name(계좌이체·무통장 은행) · order_place_name(모바일웹/네이버 페이) · market_order_no(있으면 마켓 주문) 가 모두 온다. 그래서 결제수단 칸은 «계좌이체 (LG유플러스)» 처럼 PG사까지 담은 한 줄이 되고, 그 아래에 «🛒 네이버 페이 주문 · 마켓주문번호 …» 또는 «↩ 모바일웹 · 입금 토스뱅크» 를 참고로 적는다(저장하지 않는다 — 판단용이다). 마켓 주문은 주황색으로 눈에 띄게 했다: PG 를 안 타는 주문이라 환불 경로가 다르기 때문이다. ★ 조합은 엣지 함수(refund-fetch-order)가 만들어 ref_payment_label 로 내려주므로 두 창이 같은 문자열을 쓴다. 함수가 아직 옛 버전이면 그 칸이 없으므로 예전 필드(ref_payment_method)로 물러서게 해 뒀다 — 화면만 먼저 배포해도 깨지지 않는다. 함수 수정본은 백업 저장소에 준비돼 있고 배포는 별도다. -->
+<!-- (2026-08-21) 결제수단 칸에 «PG사» 와 «어디서 들어온 주문인가» 를 함께 보여준다(사용자 요청). 실제 주문 2건으로 카페24 응답을 열어 확인했다 — payment_gateway_names(PG사 코드, 마켓 주문이면 null) · easypay_name(간편결제사) · bank_code_name(계좌이체·무통장 은행) · order_place_name(모바일웹/네이버 페이) · market_order_no(있으면 마켓 주문) 가 모두 온다. 그래서 결제수단 칸은 «계좌이체 (토스페이먼츠)» 처럼 PG사까지 담은 한 줄이 되고, 그 아래에 «🛒 네이버 페이 주문 · 마켓주문번호 …» 또는 «↩ 모바일웹 · 입금 토스뱅크» 를 참고로 적는다(저장하지 않는다 — 판단용이다). 마켓 주문은 주황색으로 눈에 띄게 했다: PG 를 안 타는 주문이라 환불 경로가 다르기 때문이다. ★ 조합은 엣지 함수(refund-fetch-order)가 만들어 ref_payment_label 로 내려주므로 두 창이 같은 문자열을 쓴다. 함수가 아직 옛 버전이면 그 칸이 없으므로 예전 필드(ref_payment_method)로 물러서게 해 뒀다 — 화면만 먼저 배포해도 깨지지 않는다. 함수 수정본은 백업 저장소에 준비돼 있고 배포는 별도다. -->
 <!-- v20260821m_paymethod_field -->
 <!-- (2026-08-21) 환불 두 창의 «PG 정보» 칸을 «결제수단» 칸으로 바꾼다(사용자 지시). 선택지가 '수기 송금' 하나뿐이라 아무것도 알려주지 않던 자리여서, 카페24 주문서에서 읽어온 원 결제수단을 담는 칸으로 쓴다. 주문번호를 조회하면 자동으로 채워지고(추가 창은 덮어쓰기, 수정 창은 빈 칸만 채우고 값이 다르면 «수기 송금 → 신용카드» 처럼 알려만 준다 — 기존 규칙 그대로), 조회를 못 했거나 값이 이상하면 직접 고칠 수 있다. ★ select 를 자유 입력으로 바꾼 이유가 중요하다 — 옵션에 없는 값(예전 건의 '수기 송금'이나 새 값 '신용카드')이 들어오면 select 는 빈칸으로 보이고 그대로 저장하면 값이 날아간다. 그래서 두 창을 반드시 함께 바꿔야 했다. 기본값 '수기 송금'도 걷어냈다: 칸의 뜻이 '카페24 원 결제수단'이 된 이상 기본값을 지어내면 안 된다. 필수 항목 안내 문구도 'PG 정보' → '결제수단'으로 바꿨다. 저장 칸은 그대로 refunds.pg_info 를 쓴다 — DB·Edge Function 변경 없음. ⚠ 그래서 예전 행에는 '수기 송금', 새 행에는 '신용카드' 처럼 뜻이 다른 값이 섞인다. 예전 건은 수정 창에서 조회하면 정정할 수 있다. -->
 <!-- v20260821l_refund_paymethod -->
@@ -4834,7 +4834,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
       if(data.customer_name)  setCustomerName(data.customer_name);
       if(data.customer_phone) setCustomerPhone(data.customer_phone);
       setRefPaymentAmount(data.ref_payment_amount ?? null);
-      // ref_payment_label 은 «계좌이체 (LG유플러스)» 처럼 PG사까지 담은 한 줄이다.
+      // ref_payment_label 은 «계좌이체 (토스페이먼츠)» 처럼 PG사까지 담은 한 줄이다.
       // 엣지 함수가 아직 옛 버전이면 없으므로 옛 필드로 물러선다.
       const payLabel = data.ref_payment_label || data.ref_payment_method || '';
       setRefPaymentMethod(payLabel);
@@ -5098,7 +5098,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
             )}
           </div>
           <input type="text" value={pgInfo} onChange={e=>setPgInfo(e.target.value)}
-            placeholder="카페24 조회 시 자동 입력 (예: 계좌이체 (LG유플러스))"
+            placeholder="카페24 조회 시 자동 입력 (예: 계좌이체 (토스페이먼츠))"
             style={{...inp,marginBottom:orderInfo?4:14}}/>
           <OrderInfoLine info={orderInfo}/>
 
@@ -5234,7 +5234,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
         {label:'주문자명', cur:customerName,  next:(data.customer_name ||'').trim(), set:setCustomerName},
         {label:'휴대전화', cur:customerPhone, next:(data.customer_phone||'').trim(), set:setCustomerPhone},
         // 결제수단(옛 'PG 정보')도 같은 규칙을 탄다 — 빈 칸이면 채우고, 다르면 알려만 준다.
-        // ★ 예전 건은 이 칸에 '수기 송금'이 들어 있어 «수기 송금 → 계좌이체 (LG유플러스)» 로 뜬다.
+        // ★ 예전 건은 이 칸에 '수기 송금'이 들어 있어 «수기 송금 → 계좌이체 (토스페이먼츠)» 로 뜬다.
         //   그게 맞는 동작이다. 바꿀지는 [카페24 값으로 바꾸기]로 사람이 정한다.
         // ref_payment_label 은 PG사까지 담은 한 줄. 엣지 함수가 옛 버전이면 없으므로 물러선다.
         {label:'결제수단', cur:pgInfo,
@@ -5666,7 +5666,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
                 칸이 비어 보이고 저장 시 값이 날아간다 — 그래서 자유 입력으로 바꿨다. */}
           <div style={lbl}>결제수단 *</div>
           <input type="text" value={pgInfo} onChange={e=>setPgInfo(e.target.value)} disabled={isReadOnly}
-            placeholder="카페24 조회 시 자동 입력 (예: 계좌이체 (LG유플러스))"
+            placeholder="카페24 조회 시 자동 입력 (예: 계좌이체 (토스페이먼츠))"
             style={inp({marginBottom:orderInfo?4:14})}/>
           <OrderInfoLine info={orderInfo}/>
 
