@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821g_card_amount_overflow -->
+<!-- (2026-08-21) 결론 탭 상단 후보 카드에서 총비용이 클 때 금액이 줄바꿈 없이 카드를 넘어 옆 카드와 겹치던 것을 고쳤다(사용자 제보). 금액은 25px 고정 크기의 한 줄인데 자릿수가 늘면 카드 안쪽(약 198px)을 넘긴다. 두 겹으로 막았다. ①자릿수에 맞춰 글자 크기를 단계적으로 줄인다(tccTotalFont — 11자 25px, 14자 21px, 17자 18px, 그 이상 16px). 한 줄을 지키면서 카드 안에 들어온다. ②그래도 모자라는 극단적인 금액은 overflow-wrap 으로 접는다. 겸해서 .tcc-card 에 min-width:0 을 줬다 — 격자 칸은 기본이 min-width:auto 라 내용이 길면 칸 자체가 부풀어 옆 카드를 밀어내므로, 접기와 짝을 이뤄야 겹침이 사라진다. 카드 아래 항목값(월 환산·1점당 비용)에도 같은 안전망을 뒀다. 계산은 건드리지 않았다. -->
 <!-- v20260821f_timeline_clip -->
 <!-- (2026-08-21) '재검토 착수의 숫자가 창 너비·화면 배율에 따라 잘렸다 안 잘렸다 한다'는 제보의 진짜 원인을 잡았다. 입력칸이 아니라 그 아래 일정 줄이었다 — 같은 이름이 두 곳에 있어 입력칸만 세 번 손대고도 낫지 않았다. 일정 줄(.tcc-tl)은 '재검토 착수 | 2026-11-22 | D-90' 을 한 줄에 늘어놓는데 줄바꿈이 없고, 감싼 .tcc-timeline 에 둥근 모서리를 위한 overflow:hidden 이 걸려 있다. 줄이 폭을 넘기면 오른쪽 끝의 'D-90' 이 그대로 잘려나갔고, 줄 폭은 창 너비와 배율에 따라 변하니 증상이 오갔다. → 잘라내는 대신 다음 줄로 넘기고(flex-wrap) 각 칸을 flex:none 으로 못 박아 눌리지 않게 했다. ★ 어제 가정값 칩과 같은 계열이다 — 감싼 쪽이 좁아질 때 안쪽이 안 줄면 그대로 잘린다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821e_field_widths -->
@@ -11343,6 +11345,14 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 const tccNumWidth = (value, min) =>
   Math.max(min, String(value == null ? "" : value).length * 9 + 22);
 
+// 결론 탭 카드의 총비용 글자 크기. 금액이 길어지면 25px 로는 카드(안쪽 약 198px)를 넘겨
+// 옆 카드와 겹쳤다(2026-08-21 사용자 제보). 자릿수에 맞춰 단계적으로 줄여 한 줄을 지킨다.
+// 그래도 모자라는 극단적인 금액은 CSS 의 overflow-wrap 이 접어 준다 — 어느 쪽이든 카드 밖으로는 안 나간다.
+const tccTotalFont = (text) => {
+  const n = String(text).length;
+  return n <= 11 ? 25 : n <= 14 ? 21 : n <= 17 ? 18 : 16;
+};
+
 const won = (n) => {
   if (!isFinite(n)) return "-";
   return Math.round(n).toLocaleString("ko-KR");
@@ -13080,7 +13090,7 @@ function ResultTab({ project, patch }) {
             className={"tcc-card" + (r.efficiency === minEff ? " is-pick" : "")}
           >
             <div className="tcc-card-name">{r.name}</div>
-            <div className="tcc-card-total">
+            <div className="tcc-card-total" style={{ fontSize: tccTotalFont(won(r.total)) }}>
               {won(r.total)}
               <span className="tcc-card-cur">원</span>
             </div>
@@ -14302,16 +14312,20 @@ const CSS = `
 .tcc-guide code { font-family: ui-monospace, monospace; font-size: 11.5px; background: var(--panel); border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
 
 .tcc-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
-.tcc-card { border: 1px solid var(--line); border-radius: 7px; padding: 16px; background: var(--panel); }
+.tcc-card { border: 1px solid var(--line); border-radius: 7px; padding: 16px; background: var(--panel); min-width: 0; }
 .tcc-card.is-pick { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .tcc-card-name { font-size: 12.5px; font-weight: 700; color: var(--ink2); margin-bottom: 10px; }
-.tcc-card-total { font-family: ui-monospace, monospace; font-size: 25px; font-weight: 700; letter-spacing: -0.03em; }
+/* 긴 금액이 카드를 넘어 옆 카드와 겹치던 것을 막는다(2026-08-21 사용자 제보).
+   글자 크기는 자릿수에 맞춰 JSX 가 줄이고(tccTotalFont), 그래도 모자라면 여기서 접는다.
+   ★ 격자 칸은 min-width:auto 라 내용이 길면 칸 자체가 부풀어 옆으로 밀고 나간다 —
+     .tcc-card 의 min-width:0 이 그 부풀림을 막는 짝이다. 둘 중 하나만으로는 안 된다. */
+.tcc-card-total { font-family: ui-monospace, monospace; font-size: 25px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; overflow-wrap: anywhere; }
 .tcc-card-cur { font-size: 14px; margin-left: 2px; color: var(--ink2); }
 .tcc-card-sub { font-size: 11.5px; color: var(--ink2); margin-top: 1px; }
 .tcc-card-dl { margin: 13px 0 0; display: flex; flex-direction: column; gap: 5px; }
-.tcc-card-dl > div { display: flex; justify-content: space-between; font-size: 12px; border-top: 1px solid var(--line2); padding-top: 5px; }
+.tcc-card-dl > div { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; border-top: 1px solid var(--line2); padding-top: 5px; }
 .tcc-card-dl dt { color: var(--ink2); margin: 0; }
-.tcc-card-dl dd { margin: 0; font-family: ui-monospace, monospace; }
+.tcc-card-dl dd { margin: 0; font-family: ui-monospace, monospace; text-align: right; overflow-wrap: anywhere; }
 .tcc-card-flags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
 .tcc-flag { font-size: 10.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink2); }
 .tcc-flag-pick { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
