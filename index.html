@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821i_won_korean -->
+<!-- (2026-08-21) 결론 탭 카드의 총비용이 억을 넘으면 한글을 섞어 짧게 적는다(사용자 요청). 180,443,000 은 «1억 8천 443,000원», 1,050,000,000 은 «10억 5천원» 꼴이다. 억(1e8)·천만(1e7) 순으로 떼고 남은 천만 미만은 콤마 숫자로 두며, 억이나 천이 0 이면 그 조각은 적지 않는다. 억 미만 금액은 예전 그대로 숫자만 쓴다 — 짧아서 바꿀 이유가 없다. 자릿수가 줄어드는 만큼 카드를 넘길 일도 줄지만, 앞 버전의 글자 크기 축소·접기 안전망은 그대로 둔다. 정확한 원 단위 금액은 카드에 마우스를 올리면 툴팁으로 보인다 — 화면에서 숫자가 뭉뚱그려지는 대신 확인할 길을 남겨 둔 것이다. 표기만 바꿨고 계산·저장에 쓰이는 값은 건드리지 않았다. -->
 <!-- v20260821h_right_align_clip -->
 <!-- (2026-08-21) ★★ '재검토 착수의 숫자가 잘려 보인다'의 진짜 원인을 스크린샷 픽셀 분석으로 확정하고 고쳤다. 칸이 좁아서가 아니었다 — 해지 통보 기한과 재검토 착수는 박스 폭(89px)도 값 길이도 같았고 넘치지도 않았는데 한쪽만 '0' 의 오른쪽 획이 사라졌다. 오른쪽 정렬한 글자는 내용 영역의 오른쪽 끝에 딱 붙어 끝나므로, 칸의 화면상 위치(x=16 대 x=155)에 따라 소수점 픽셀 반올림이 갈리면서 마지막 글자의 한 열이 잘려 나간다. 창 너비·배율을 바꾸면 그 위치가 움직이니 잘렸다 안 잘렸다 했다. → 폭을 넓히는 것은 답이 아니다(글자는 여전히 오른쪽 끝에 붙는다). 오른쪽 여백을 왼쪽보다 3~4px 더 줘 글자가 경계에 닿지 않게 했다. 같은 구조인 곳을 모두 고쳤다: .tcc-in-mini · .tcc-in-num · 계약 이력의 숫자칸 · 가정값 칩(.tcc-varchip-in). 가정값 칩은 오른쪽 패딩이 2px 뿐이라, 2026-08-20 에 폭을 82→118px 로 두 번 넓히고도 낫지 않았던 진짜 이유가 여기 있었다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821g_card_amount_overflow -->
@@ -11360,6 +11362,28 @@ const won = (n) => {
   return Math.round(n).toLocaleString("ko-KR");
 };
 
+// 억을 넘는 금액은 한글을 섞어 짧게 적는다(사용자 요청).
+//   180,443,000 → "1억 8천 443,000"    ·    1,050,000,000 → "10억 5천"
+// 억 미만은 지금처럼 숫자만 쓴다 — 짧아서 굳이 바꿀 이유가 없다.
+// ★ 억(1e8) → 천만(1e7) 순으로 떼고 남은 천만 미만은 콤마 숫자로 둔다.
+//   자리끼리 섞이지 않게 억·천이 0 이면 그 조각은 아예 적지 않는다.
+const wonKo = (n) => {
+  if (!isFinite(n)) return "-";
+  const v = Math.round(n);
+  const a = Math.abs(v);
+  if (a < 1e8) return won(v);
+  const eok = Math.floor(a / 1e8);
+  const rest = a % 1e8;
+  const cheon = Math.floor(rest / 1e7);
+  const tail = rest % 1e7;
+  return (
+    (v < 0 ? "-" : "") +
+    eok + "억" +
+    (cheon ? " " + cheon + "천" : "") +
+    (tail ? " " + tail.toLocaleString("ko-KR") : "")
+  );
+};
+
 const CYCLES = [
   { key: "monthly", label: "매월" },
   { key: "yearly", label: "매년" },
@@ -13092,8 +13116,12 @@ function ResultTab({ project, patch }) {
             className={"tcc-card" + (r.efficiency === minEff ? " is-pick" : "")}
           >
             <div className="tcc-card-name">{r.name}</div>
-            <div className="tcc-card-total" style={{ fontSize: tccTotalFont(won(r.total)) }}>
-              {won(r.total)}
+            <div
+              className="tcc-card-total"
+              style={{ fontSize: tccTotalFont(wonKo(r.total)) }}
+              title={won(r.total) + "원"}
+            >
+              {wonKo(r.total)}
               <span className="tcc-card-cur">원</span>
             </div>
             <div className="tcc-card-sub">{project.horizonMonths}개월 총비용</div>
