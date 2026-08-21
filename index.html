@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260821h_right_align_clip -->
+<!-- (2026-08-21) ★★ '재검토 착수의 숫자가 잘려 보인다'의 진짜 원인을 스크린샷 픽셀 분석으로 확정하고 고쳤다. 칸이 좁아서가 아니었다 — 해지 통보 기한과 재검토 착수는 박스 폭(89px)도 값 길이도 같았고 넘치지도 않았는데 한쪽만 '0' 의 오른쪽 획이 사라졌다. 오른쪽 정렬한 글자는 내용 영역의 오른쪽 끝에 딱 붙어 끝나므로, 칸의 화면상 위치(x=16 대 x=155)에 따라 소수점 픽셀 반올림이 갈리면서 마지막 글자의 한 열이 잘려 나간다. 창 너비·배율을 바꾸면 그 위치가 움직이니 잘렸다 안 잘렸다 했다. → 폭을 넓히는 것은 답이 아니다(글자는 여전히 오른쪽 끝에 붙는다). 오른쪽 여백을 왼쪽보다 3~4px 더 줘 글자가 경계에 닿지 않게 했다. 같은 구조인 곳을 모두 고쳤다: .tcc-in-mini · .tcc-in-num · 계약 이력의 숫자칸 · 가정값 칩(.tcc-varchip-in). 가정값 칩은 오른쪽 패딩이 2px 뿐이라, 2026-08-20 에 폭을 82→118px 로 두 번 넓히고도 낫지 않았던 진짜 이유가 여기 있었다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260821g_card_amount_overflow -->
 <!-- (2026-08-21) 결론 탭 상단 후보 카드에서 총비용이 클 때 금액이 줄바꿈 없이 카드를 넘어 옆 카드와 겹치던 것을 고쳤다(사용자 제보). 금액은 25px 고정 크기의 한 줄인데 자릿수가 늘면 카드 안쪽(약 198px)을 넘긴다. 두 겹으로 막았다. ①자릿수에 맞춰 글자 크기를 단계적으로 줄인다(tccTotalFont — 11자 25px, 14자 21px, 17자 18px, 그 이상 16px). 한 줄을 지키면서 카드 안에 들어온다. ②그래도 모자라는 극단적인 금액은 overflow-wrap 으로 접는다. 겸해서 .tcc-card 에 min-width:0 을 줬다 — 격자 칸은 기본이 min-width:auto 라 내용이 길면 칸 자체가 부풀어 옆 카드를 밀어내므로, 접기와 짝을 이뤄야 겹침이 사라진다. 카드 아래 항목값(월 환산·1점당 비용)에도 같은 안전망을 뒀다. 계산은 건드리지 않았다. -->
 <!-- v20260821f_timeline_clip -->
@@ -14214,9 +14216,15 @@ const CSS = `
 .tcc-in { font-family: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); color: var(--ink); }
 .tcc-in:focus { outline: none; border-color: var(--accent); }
 .tcc-in-label { flex: 1 1 150px; font-weight: 600; }
-.tcc-in-num { width: 110px; flex: none; text-align: right; font-family: ui-monospace, monospace; }
+/* ★★ 오른쪽 정렬한 숫자가 마지막 획만 잘려 보이던 문제의 진짜 원인(2026-08-21 스크린샷 픽셀 분석으로 확정).
+   칸이 좁아서가 아니다 — 글자가 내용 영역의 오른쪽 끝에 '딱 붙어' 끝나므로, 칸의 화면상 위치에 따라
+   소수점 픽셀 반올림이 갈리면서 마지막 글자의 오른쪽 한 열이 잘려 나간다. 그래서 나란히 놓인 같은 칸도
+   한쪽만 잘리고, 창 너비·배율을 바꾸면 잘렸다 안 잘렸다 했다.
+   → 폭을 넓히는 것은 답이 아니다(글자는 여전히 오른쪽 끝에 붙는다). 오른쪽 여백을 더 줘서
+     글자가 경계에 닿지 않게 한다. 왼쪽보다 3~4px 더 두는 것으로 충분하다. */
+.tcc-in-num { width: 110px; flex: none; text-align: right; font-family: ui-monospace, monospace; padding-right: 13px; }
 .tcc-in-unit { width: 70px; }
-.tcc-in-mini { width: 78px; flex: none; text-align: right; font-family: ui-monospace, monospace; padding: 5px 7px; }
+.tcc-in-mini { width: 78px; flex: none; text-align: right; font-family: ui-monospace, monospace; padding: 5px 11px 5px 7px; }
 /* 숫자 입력칸의 증감 화살표를 없앤다 — 오른쪽 정렬한 숫자를 화살표가 덮어 뒷자리가 가려진다.
    가정값 칩(.tcc-varchip-in)은 이미 같은 처리를 하고 있다. */
 .tcc-in-num, .tcc-in-mini { -moz-appearance: textfield; }
@@ -14246,7 +14254,9 @@ const CSS = `
 /* 폭이 82px 이라 1,000만 단위가 들어가면 잘렸다. type="number" 의 위아래 화살표가
    자리를 더 빼앗는 것도 겹쳤다 — 화살표를 없애고 폭을 넓힌다. */
 /* flex 안에 있어 칩이 많아지면 이 칸이 눌려 다시 숫자가 잘렸다. 줄어들지 않게 못 박는다. */
-.tcc-varchip-in { width: 118px; flex: none; border: none; border-bottom: 1px solid var(--line); background: none; text-align: right; font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); padding: 1px 2px; -moz-appearance: textfield; }
+/* 오른쪽 패딩이 2px 뿐이라 글자가 경계에 붙어 마지막 획이 잘렸다 — 2026-08-20 에 폭을 두 번 넓히고도
+   낫지 않았던 진짜 이유다(위 ★★ 설명 참고). 오른쪽만 6px 로 띄운다. */
+.tcc-varchip-in { width: 118px; flex: none; border: none; border-bottom: 1px solid var(--line); background: none; text-align: right; font-family: ui-monospace, monospace; font-size: 12.5px; color: var(--ink); padding: 1px 6px 1px 2px; -moz-appearance: textfield; }
 .tcc-varchip-in::-webkit-outer-spin-button,
 .tcc-varchip-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .tcc-varchip-in:focus { outline: none; border-bottom-color: var(--accent); }
@@ -14403,6 +14413,8 @@ const CSS = `
 .tcc-cgrid label > .tcc-in,
 .tcc-cgrid label > .tcc-sel,
 .tcc-cgrid .tcc-inline > .tcc-in { height: 34px; padding: 6px 9px; font-size: 13px; }
+/* 오른쪽 정렬 숫자칸은 글자가 경계에 닿지 않게 오른쪽만 더 띄운다(위 ★★ 설명 참고). */
+.tcc-cgrid .tcc-inline > .tcc-in-mini { padding-right: 13px; }
 
 /* 계약 정보 네 칸(시작일·종료일·해지 통보 기한·재검토 착수)만 폭까지 같게 맞추고
    왼쪽으로 모아 붙인다(사용자 요청). 1fr 격자에 두면 칸이 화면 폭만큼 벌어져 사이가 휑했다.
