@@ -1179,16 +1179,65 @@ function AttendancePage() {
 
 // ── AGENT MANAGEMENT ───────────────────────────
 /* =========================================================
-   감사 로그 — 누가 고객의 계좌번호·연락처를 열었는가 (2026-08-24)
-   ★ 이 표에 없는 조회는 일어나지 않았다고 말할 수 있어야 한다. 그래서 원본은
-     서버 함수(reveal_refund_secrets)를 거치지 않으면 아예 브라우저로 오지 않고,
-     그 함수가 기록을 남긴다. 기록 테이블에는 INSERT/UPDATE/DELETE 정책이 없어
-     사용자가 자기 기록을 지우거나 위조할 수 없다.
+   변경 이력 — 환불·상품을 누가 언제 무엇을 어떻게 고쳤는가 (2026-08-24)
+   ★ 기록은 화면이 아니라 DB 트리거가 남긴다. 화면에서 남기면 화면을 거치지 않는
+     수정이 빠지고, 화면을 고칠 때마다 기록을 빠뜨릴 자리가 생긴다.
+   ★ 워크플로(카페24 상품 동기화)의 수정은 남기지 않는다 — 매번 수천 행을 건드려서
+     그대로 두면 이력이 동기화 기록으로 가득 차 사람이 한 수정을 찾을 수 없다.
+   ★ 계좌번호·연락처는 '바뀌었다'만 남고 값은 남지 않는다 — 이력 테이블이 또 하나의
+     개인정보 보관처가 되면 백업·보존 문제가 그대로 복제된다.
    ========================================================= */
-const AUDIT_ACTION_LABEL = {
-  reveal_refund_secrets: '환불 계좌·연락처 열람',
-  export_csv:            'CSV 내보내기',
+const AUDIT_ACTION_LABEL = { insert:'등록', update:'수정', delete:'삭제' };
+const AUDIT_TABLE_LABEL  = { refunds:'환불', products:'상품' };
+/* 자주 나오는 칸만 한글로 바꾼다. 없는 것은 컬럼 이름 그대로 보여준다 —
+   지어내서 틀린 이름을 붙이는 것보다 낫다. */
+const AUDIT_FIELD_LABEL = {
+  refund_amount:'환불 금액', bank_name:'은행', account_number:'계좌번호', account_holder:'예금주',
+  customer_name:'고객명', customer_phone:'연락처', order_id:'주문번호', pg_info:'결제수단',
+  notes:'특이사항', reason_id:'환불 사유', refund_completed:'환불 완료', cafe24_done:'후처리 완료',
+  needs_review:'추가 확인', review_note:'확인 요청 메모', review_state:'확인 상태',
+  hold_reason:'보류 사유', hold_until:'재개 예정일',
+  product_name:'상품명', supplier_name:'공급사', price:'가격', memo:'메모',
+  product_code:'상품코드', product_url:'상품 링크', cs_info:'CS 안내',
+  shipping_method:'배송 방법', shipping_fee:'배송비', return_fee:'반품비',
+  delay_memo:'지연 메모', is_active:'사용 여부', options:'옵션',
 };
+
+function auditValue(v){
+  if(v===null || v===undefined || v==='') return '(비어 있음)';
+  if(v===true) return '예';
+  if(v===false) return '아니오';
+  if(typeof v==='object') return JSON.stringify(v);
+  const s = String(v);
+  return s.length>60 ? s.slice(0,60)+'…' : s;
+}
+
+function AuditDetail({ detail }){
+  if(!detail) return <span style={{color:'var(--sub)'}}>—</span>;
+  if(detail.created) return <span style={{color:'var(--sub)'}}>새로 등록했습니다.</span>;
+  if(detail.deleted) return <span style={{color:'var(--sub)'}}>삭제했습니다.</span>;
+  const keys = Object.keys(detail);
+  if(!keys.length) return <span style={{color:'var(--sub)'}}>—</span>;
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:3}}>
+      {keys.map(k=>{
+        const v = detail[k];
+        const name = AUDIT_FIELD_LABEL[k] || k;
+        if(typeof v === 'string'){
+          return <div key={k}><b>{name}</b> <span style={{color:'var(--sub)'}}>{v}</span></div>;
+        }
+        return (
+          <div key={k}>
+            <b>{name}</b>{' '}
+            <span style={{color:'var(--sub)',textDecoration:'line-through'}}>{auditValue(v && v.from)}</span>
+            {' → '}
+            <span>{auditValue(v && v.to)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function AuditLogPage() {
   const [rows,setRows]     = useState([]);
@@ -1217,10 +1266,11 @@ function AuditLogPage() {
 
   return (
     <div style={{padding:'28px 32px'}}>
-      <h1 style={{fontSize:20,fontWeight:700,margin:'0 0 6px'}}>감사 로그</h1>
+      <h1 style={{fontSize:20,fontWeight:700,margin:'0 0 6px'}}>변경 이력</h1>
       <p style={{fontSize:12.5,color:'var(--sub)',margin:'0 0 18px',lineHeight:1.7}}>
-        고객의 계좌번호·연락처 <b>원본</b>을 열어본 기록입니다. 마스킹된 값을 보는 것은 기록되지 않습니다.
-        <br/>기록은 서버에서 남기므로 화면을 거치지 않는 조회도 잡히고, 지우거나 고칠 수 없습니다.
+        환불·상품을 <b>누가 언제 무엇을 어떻게 고쳤는지</b> 남긴 기록입니다.
+        <br/>DB 에서 직접 남기므로 화면을 거치지 않는 수정도 잡히고, 지우거나 고칠 수 없습니다.
+        카페24 동기화 같은 자동 작업은 남기지 않습니다 — 사람이 한 수정만 보입니다.
       </p>
 
       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:14}}>
@@ -1244,13 +1294,13 @@ function AuditLogPage() {
       </div>
 
       {(!loading && rows.length===0) ? (
-        <p style={{fontSize:13,color:'var(--sub)'}}>이 기간에 열람 기록이 없습니다.</p>
+        <p style={{fontSize:13,color:'var(--sub)'}}>이 기간에 바뀐 기록이 없습니다.</p>
       ) : (
         <div style={{overflowX:'auto',border:'1px solid var(--border)',borderRadius:8}}>
           <table style={{width:'100%',borderCollapse:'collapse',minWidth:640}}>
             <thead><tr>
               <th style={head}>시각</th><th style={head}>계정</th>
-              <th style={head}>행위</th><th style={head}>대상</th><th style={head}>상세</th>
+              <th style={head}>행위</th><th style={head}>대상</th><th style={head}>바뀐 내용</th>
             </tr></thead>
             <tbody>
               {rows.map(r=>{
@@ -1262,13 +1312,14 @@ function AuditLogPage() {
                       {t.getFullYear()}-{p(t.getMonth()+1)}-{p(t.getDate())} {p(t.getHours())}:{p(t.getMinutes())}:{p(t.getSeconds())}
                     </td>
                     <td style={{...cell,whiteSpace:'nowrap'}}>{r.user_label||r.user_id||'—'}</td>
-                    <td style={cell}>{AUDIT_ACTION_LABEL[r.action]||r.action}</td>
-                    <td style={{...cell,whiteSpace:'nowrap',fontFamily:'monospace',fontSize:11}}>
-                      {r.target_table ? r.target_table + (r.target_id ? ' #'+r.target_id : '') : '—'}
+                    <td style={{...cell,whiteSpace:'nowrap'}}>{AUDIT_ACTION_LABEL[r.action]||r.action}</td>
+                    <td style={{...cell,whiteSpace:'nowrap',fontSize:11}}>
+                      {r.target_table
+                        ? (AUDIT_TABLE_LABEL[r.target_table]||r.target_table)
+                          + (r.target_id ? ' #'+String(r.target_id).slice(0,8) : '')
+                        : '—'}
                     </td>
-                    <td style={{...cell,color:'var(--sub)',fontSize:11}}>
-                      {r.detail ? JSON.stringify(r.detail) : '—'}
-                    </td>
+                    <td style={{...cell,fontSize:11.5}}><AuditDetail detail={r.detail}/></td>
                   </tr>
                 );
               })}
@@ -4732,23 +4783,6 @@ const HELD_CHIP = {key:'held', label:'⏸ 보류', bg:'rgba(255,169,77,.18)', fg
 const KRW = (n)=>'₩'+Number(n||0).toLocaleString();
 
 // 환불 은행 마스터 (47개)
-/* 환불 목록에서 받아올 컬럼 (2026-08-24 감사 로그).
-   ★ select('*') 를 쓸 수 없다 — 원본 account_number·customer_phone 은 DB 에서
-     SELECT 권한 자체를 뺏었기 때문에 '*' 로 요청하면 통째로 거부된다.
-     대신 마스킹 생성 컬럼(_masked)을 받고, 원본은 reveal_refund_secrets 로만 얻는다.
-   ★ 컬럼을 추가하면 여기에도 넣어야 한다. 빠뜨리면 화면에서 값이 조용히 사라진다. */
-const REFUND_COLS = [
-  'id','created_at','created_by','updated_at','updated_by',
-  'reason_id','refund_amount','bank_name','account_holder',
-  'order_id','order_group_id','customer_name','product_name','supplier_name','pg_info',
-  'refund_completed','refund_completed_at','refund_completed_by',
-  'cafe24_done','cafe24_done_at','cafe24_done_by',
-  'notes','needs_review','review_note',
-  'review_requested_at','review_requested_by','review_resolved_at','review_resolved_by','review_state',
-  'hold_reason','hold_until','hold_at','hold_by',
-  'account_number_masked','customer_phone_masked',
-].join(',');
-
 const REFUND_BANKS = [
   '경남은행','광주은행','교보증권','국민은행','기업은행','농협중앙회','단위농협','대구은행','대신증권','도이치은행',
   '메리츠증권','미래에셋증권','부산은행','산림조합','산업은행','삼성증권','상호저축은행','새마을금고','수협','신용협동조합',
@@ -5308,34 +5342,13 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
   const [bankQuery,   setBankQuery]   = useState('');
   const [bankOpen,    setBankOpen]    = useState(false);
   const [bankHoverIdx,setBankHoverIdx]= useState(0);
-  const [accountNumber,setAccountNumber]=useState('');   // 아래 useEffect 가 서버에서 받아 채운다
+  const [accountNumber,setAccountNumber]=useState(row.account_number||'');
   const [accountHolder,setAccountHolder]=useState(row.account_holder||'');
   // 결제수단 — 옛 'PG 정보'. 값이 없으면 '수기 송금'을 넣던 것을 걷어냈다(v20260821m):
   // 이제 이 칸의 뜻이 '카페24 원 결제수단'이라 기본값을 지어내면 안 된다.
   const [pgInfo,      setPgInfo]      = useState(row.pg_info||'');
   const [customerName,setCustomerName]= useState(row.customer_name||'');
-  const [customerPhone,setCustomerPhone]=useState('');   // 위와 같다
-  const [secretsLoading,setSecretsLoading]=useState(true);
-  /* 계좌번호·연락처 원본은 목록 행에 없다(DB 에서 SELECT 권한을 뺐다).
-     수정하려면 현재 값이 필요하므로 창을 열 때 받아온다 — 그 자체가 '열람'이라
-     감사 로그에 남는 것이 맞다. 받아오기 전에는 두 칸이 비어 있고,
-     기존 필수항목 검사가 [수정 저장] 을 막아 주므로 빈 값이 저장될 일은 없다. */
-  useEffect(()=>{
-    let alive = true;
-    (async()=>{
-      setSecretsLoading(true);
-      const { data, error } = await sb.rpc('reveal_refund_secrets', { p_id: row.id });
-      if(!alive) return;
-      setSecretsLoading(false);
-      if(error){ sbFail('계좌번호 열람', error); return; }
-      const got = Array.isArray(data) ? data[0] : data;
-      if(got){
-        setAccountNumber(got.account_number||'');
-        setCustomerPhone(got.customer_phone||'');
-      }
-    })();
-    return()=>{ alive=false; };
-  },[row.id]);
+  const [customerPhone,setCustomerPhone]=useState(row.customer_phone||'');
   const [productName, setProductName] = useState(row.product_name||'');
   const [supplierName,setSupplierName]= useState(row.supplier_name||'');
   const [notes,       setNotes]       = useState(row.notes||'');
@@ -6375,7 +6388,7 @@ function RefundReportTab({ reasons }){
     const PAGE = 1000;
     while(true){
       const { data, error } = await sb.from('refunds')
-        .select(REFUND_COLS)
+        .select('*')
         .gte('created_at', fromIso)
         .lte('created_at', toIso)
         .order('created_at',{ascending:true})
@@ -6700,22 +6713,6 @@ function RefundManagementPage({ currentUserEmail }) {
   const [bulkProcessing,setBulkProcessing]=useState(false); // 일괄 처리 중 잠금
   const [loading,setLoading]=useState(true);
   const [refunds,setRefunds]=useState([]);
-  /* 계좌번호 열람 (2026-08-24 감사 로그)
-     목록에는 마스킹된 값만 온다. [보기] 를 누르면 reveal_refund_secrets 가
-     원본을 돌려주면서 console_audit_log 에 "누가 몇 번 건을 열었는지" 를 남긴다.
-     ★ 화면에서 마스킹하는 방식이 아니다 — 그건 원본이 이미 브라우저에 왔다는 뜻이라
-       기록도 통제도 되지 않는다. 원본은 이 함수를 거치지 않으면 아예 오지 않는다. */
-  const [revealed,setRevealed]=useState({});
-  const [revealing,setRevealing]=useState(null);
-  const revealSecrets = async (id)=>{
-    if(revealed[id] || revealing) return;
-    setRevealing(id);
-    const { data, error } = await sb.rpc('reveal_refund_secrets', { p_id: id });
-    setRevealing(null);
-    if(sbFail('계좌번호 열람', error)) return;
-    const got = Array.isArray(data) ? data[0] : data;
-    if(got) setRevealed(p=>({...p,[id]:got}));
-  };
   const [reasons,setReasons]=useState([]);
   // 필터
   const [fReason,setFReason]=useState('');           // reason_id 또는 ''
@@ -6729,7 +6726,7 @@ function RefundManagementPage({ currentUserEmail }) {
     setLoading(true);
     // 페이지네이션은 D-1에선 단순하게 500건까지 (충분히 큰 한도)
     const [r1,r2] = await Promise.all([
-      sb.from('refunds').select(REFUND_COLS).order('created_at',{ascending:false}).limit(500),
+      sb.from('refunds').select('*').order('created_at',{ascending:false}).limit(500),
       sb.from('refund_reasons').select('*').order('sort_order',{ascending:true}),
     ]);
     if(sbFail('환불 목록 조회',r1.error||r2.error)){ setLoading(false); return; }
@@ -6789,11 +6786,8 @@ function RefundManagementPage({ currentUserEmail }) {
     if(fWriter && r.created_by!==fWriter) return false;
     if(fSearch){
       const s = fSearch.toLowerCase();
-      // ★ 연락처는 마스킹된 값으로 찾는다 — 원본은 목록에 오지 않는다(감사 로그).
-      //   뒷 네 자리로는 그대로 찾히고, 가운데 자리로는 못 찾는다. 의도한 맞바꿈이다:
-      //   검색으로 연락처 전체를 되짚을 수 있으면 마스킹이 무의미해진다.
       const hay = [
-        r.order_id, r.customer_name, r.customer_phone_masked, r.product_name, r.supplier_name,
+        r.order_id, r.customer_name, r.customer_phone, r.product_name, r.supplier_name,
       ].map(x=>String(x||'').toLowerCase()).join(' ');
       if(!hay.includes(s)) return false;
     }
@@ -6816,10 +6810,7 @@ function RefundManagementPage({ currentUserEmail }) {
     const gid = orderGroupIdOf(r.order_id);
     if(!gid) return null;  // 주문번호 없으면 그룹 대상 아님
     const bank = (r.bank_name||'').trim();
-    // ★ 마스킹된 계좌번호로 묶는다 — 원본은 목록에 오지 않는다(감사 로그).
-    //   앞 네 자리와 뒤 두 자리가 남아 있어 서로 다른 계좌는 여전히 갈린다.
-    //   원본을 쓰던 때와 묶이는 결과가 달라지지 않는지 dev 에서 확인할 것.
-    const acct = (r.account_number_masked||'').trim();
+    const acct = (r.account_number||'').trim();
     const holder = (r.account_holder||'').trim();
     const st = refundStatusOf(r).key;  // 같은 처리 상태(환불 대기/후처리 대기/완료)끼리만 묶기
     return `${gid}|${bank}|${acct}|${holder}|${st}`;
@@ -7253,21 +7244,7 @@ function RefundManagementPage({ currentUserEmail }) {
                     <td style={td}>{reason ? <span style={refundColorStyle(reason.color)}>{reason.name}</span> : <span style={{color:'var(--sub)',fontSize:11}}>—</span>}</td>
                     <td style={{...td,textAlign:'center',fontWeight:600}}>{KRW(r.refund_amount)}</td>
                     <td style={td}>{r.bank_name||'—'}</td>
-                    <td style={{...td,fontFamily:'monospace',fontSize:11}}>
-                      {revealed[r.id]
-                        ? (revealed[r.id].account_number||'—')
-                        : r.account_number_masked
-                          ? (<span style={{display:'inline-flex',alignItems:'center',gap:6}}>
-                               {r.account_number_masked}
-                               <button type="button" onClick={()=>revealSecrets(r.id)} disabled={!!revealing}
-                                 title="원본을 보면 감사 로그에 기록됩니다"
-                                 style={{fontSize:10,padding:'1px 6px',borderRadius:4,cursor:revealing?'default':'pointer',
-                                   border:'1px solid var(--border)',background:'var(--bg)',color:'var(--sub)',fontFamily:'inherit'}}>
-                                 {revealing===r.id?'…':'보기'}
-                               </button>
-                             </span>)
-                          : '—'}
-                    </td>
+                    <td style={{...td,fontFamily:'monospace',fontSize:11}}>{r.account_number||'—'}</td>
                     <td style={td}>{r.account_holder||'—'}</td>
                     <td style={td}>{r.customer_name||'—'}</td>
                     <td style={{...td,fontFamily:'monospace',fontSize:11}} title={r.order_id}>{r.order_id}</td>
@@ -11133,16 +11110,6 @@ function DelayHistoryTab(){
         lines.push(line);
       });
       const csv = '\uFEFF' + lines.join('\n');  // BOM for Excel
-
-      /* 개인정보가 파일로 빠져나가는 자리다 — 몇 건을 누가 언제 내려받았는지 남긴다.
-         ★ 이 기록은 화면이 남기는 것이라 화면을 거치지 않는 조회까지 잡지는 못한다.
-           계좌번호처럼 서버 함수로 막아 둔 항목과 성격이 다르다는 점을 알고 쓸 것. */
-      sb.rpc('log_console_action', {
-        p_action: 'export_csv',
-        p_target_table: 'auto_delivery_logs',
-        p_target_id: null,
-        p_detail: { count: merged.length },
-      }).then(({error})=>{ if(error) console.warn('감사 로그 기록 실패', error); });
 
       const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
       const url = URL.createObjectURL(blob);
@@ -15246,7 +15213,7 @@ function App() {
           {isMaster && (
             <>
               <div className={`nav-item ${page==='auditLog'?'active':''}`} onClick={()=>navigateTo('auditLog')} style={{marginBottom:8}}>
-                <span style={{width:18,display:'inline-block',textAlign:'center'}}>🔎</span><span>감사 로그</span>
+                <span style={{width:18,display:'inline-block',textAlign:'center'}}>🕘</span><span>변경 이력</span>
               </div>
               <div className={`nav-item ${page==='agents'?'active':''}`} onClick={()=>navigateTo('agents')} style={{marginBottom:8}}>
                 {Icon.agents}<span>인력 관리</span>
