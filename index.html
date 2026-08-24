@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260824g_history_values -->
+<!-- v20260824h_deposit_cycle -->
+<!-- (2026-08-24) 비용 항목의 «주기» 에 «보증금(회수)» 를 더했다(제니 지시). 사무실 보증금처럼 나중에 돌려받는 예치금을 1회성으로 넣으면 총비용에 그대로 더해져, 보증금이 있는 안이 부당하게 불리해진다. 그렇다고 항목에서 빼 버리면 초기에 묶이는 자금 차이가 화면에서 사라진다. 그래서 «총비용에서는 빼되 나란히 보여준다» 로 갔다 — 비교의 공정성과 현실의 부담을 둘 다 잃지 않는 자리다. ★ 빼는 지점은 computeService 의 total 한 곳뿐이다: 총비용·1점당 비용·시뮬레이션이 전부 total 을 쓰므로 여기서 한 번 빼면 화면 어디서도 보증금이 지출로 섞이지 않는다. 비용표 합계에 «보증금(회수 · 총비용에 미포함)» 줄이 붙고(보증금이 있는 프로젝트에서만 나타난다), 결론 탭 카드에는 총비용 밑에 «+ 보증금 1,000만원 별도(회수)» 로 적힌다. CSV 내보내기에도 같은 줄을 넣었다. ★ AI 검토 프롬프트에도 보증금을 따로 알려 준다 — 모르면 보증금을 지출로 읽고 엉뚱한 의견을 쓴다. 기존 항목의 주기는 그대로이고 계산 결과도 달라지지 않는다(보증금 주기를 쓰기 전까지는 아무것도 바뀌지 않는다). -->
 <!-- (2026-08-24) 변경 이력이 «무엇을 고쳤는지» 를 못 보여주던 것을 고쳤다(제니 제보 — 계좌번호 한 자를 지웠는데 «특이사항 (비어 있음) → (비어 있음) · 계좌번호 (값은 남기지 않음)» 만 떴다). 두 가지가 잘못돼 있었다. ①null 과 빈 문자열을 다른 값으로 봤다 — DB 에서는 다르지만 사람 눈에는 둘 다 빈칸이라, 안 바뀐 칸이 «(비어 있음) → (비어 있음)» 으로 이력에 쌓였다. 이제 둘을 같게 본다. 겸해서 updated_by 도 변경에서 뺐다 — 저장할 때마다 바뀌는데 누가 고쳤는지는 이미 기록의 계정 칸에 있다. ②★계좌번호·연락처의 값을 안 남긴 것이 틀렸다. 개인정보를 이력에 복제하지 않으려는 판단이었는데, 그러면 계좌번호 수정 이력의 존재 이유가 사라진다 — 잘못 적어 고치는 일이 잦고 이력을 보는 목적이 정확히 «무엇을 무엇으로 고쳤나» 이기 때문이다. 이제 «계좌번호 3205246646 → 320524664» 처럼 값을 그대로 남긴다. ⚠ 그래서 console_audit_log 에도 계좌번호·연락처가 쌓인다 — 주간 덤프의 마스킹 스크립트(mask_dump.py)가 이 표의 detail 을 훑도록 함께 고쳐야 한다. 컬럼 이름을 손으로 적는 방식이라 새 표는 그냥 통과한다. 화면 코드는 바뀌지 않았다(DB 트리거만 고쳤다). -->
 <!-- (2026-08-24) 감사 기록의 방향을 «조회» 에서 «수정» 으로 바꿨다(제니 지시). 앞서 넣었던 조회 통제는 전부 되돌렸다 — 환불 화면은 원래 master 전용이라 조회를 막을 대상이 없었고, 계좌번호를 건마다 눌러 여는 방식은 실무에서 못 썼다. 실제로 필요한 것은 «누가 값을 바꿨나» 였다. 그래서 refunds·products 에 DB 트리거를 걸어 등록·수정·삭제를 남긴다. ★ 화면이 아니라 DB 가 남긴다: 화면에서 남기면 화면을 거치지 않는 수정이 빠지고, 화면을 고칠 때마다 기록을 빠뜨릴 자리가 생긴다. ★ 워크플로(카페24 상품 동기화)의 수정은 남기지 않는다 — auth.uid() 가 없는 service_role 이면 건너뛴다. 매번 수천 행을 건드리므로 안 거르면 이력이 동기화 기록으로 가득 차 사람이 한 수정을 찾을 수 없다. ★ 실제로 바뀐 값이 없으면 남기지 않는다(저장만 누른 경우). updated_at 은 변경으로 세지 않는다. 화면은 master 전용 «변경 이력» 메뉴이고 칸 이름을 한글로 바꿔 «환불 금액 48,900 → 49,000» 처럼 읽히게 했다. SQL 은 tools/change_history.sql 하나로 처음부터 적용된다. 환불 목록·검색·묶기는 조회 통제를 넣기 전 동작 그대로다. -->
 <!-- (2026-08-24) 조회 감사 로그를 붙였다(제니 지시) — «누가 고객의 계좌번호·연락처를 열어봤는가» 가 추적되지 않던 것을 메운다. ★ 화면에서만 기록하는 방식은 쓰지 않았다: 콘솔은 브라우저가 Supabase 를 직접 부르는 구조라, 화면이 남기는 로그는 화면을 거치지 않는 조회(개발자도구·API 직접 호출)를 잡지 못한다. 그래서 refunds 의 account_number·customer_phone 은 DB 에서 SELECT 권한 자체를 뺏고(별도 REVOKE 단계), security definer 함수 reveal_refund_secrets 로만 읽게 했다 — 그 함수가 console_audit_log 에 기록을 남기므로 우회할 수 없다. 목록에는 마스킹 생성 컬럼(account_number_masked·customer_phone_masked)이 내려오고 [보기] 를 눌러야 원본이 온다. ★ select('*') 를 쓸 수 없게 되므로 조회 두 곳을 REFUND_COLS 컬럼 나열로 바꿨다 — 컬럼을 추가하면 여기에도 넣어야 한다. ★ 수정 창은 원본이 목록 행에 없으므로 열 때 함수로 받아 채운다. 마스킹 값을 넣어 두면 그대로 저장돼 계좌번호가 망가지므로 빈 칸으로 시작하고, 기존 필수항목 검사가 그동안 [수정 저장] 을 막아 준다. 감사 로그는 master 전용 «감사 로그» 메뉴에서 본다 — 기록 테이블에는 INSERT/UPDATE/DELETE 정책이 없어 사용자가 자기 기록을 지우거나 위조할 수 없다. 겸해서 자동발송 CSV 내보내기에도 기록을 남겼다(개인정보가 파일로 나가는 자리다). 계산·저장 로직은 건드리지 않았다. -->
@@ -11643,6 +11644,10 @@ const CYCLES = [
   { key: "monthly", label: "매월" },
   { key: "yearly", label: "매년" },
   { key: "once", label: "1회성" },
+  // ★ 보증금은 나중에 돌려받는 예치금이지 지출이 아니다(2026-08-24 제니 지시).
+  //   1회성으로 넣으면 총비용에 더해져 보증금이 있는 안이 부당하게 불리해지고,
+  //   아예 빼면 초기 자금 부담 차이가 안 보인다. 그래서 총비용에서는 빼고 따로 보여준다.
+  { key: "deposit", label: "보증금(회수)" },
 ];
 
 const SERVICE_STATES = [
@@ -11771,6 +11776,7 @@ function computeService(project, serviceId) {
   let monthly = 0;
   let yearly = 0;
   let once = 0;
+  let deposit = 0;   // 보증금 — 돌려받는 돈이라 총비용에 넣지 않는다
   const errors = [];
 
   for (const item of project.costItems) {
@@ -11778,12 +11784,16 @@ function computeService(project, serviceId) {
     if (r.error) errors.push(item.label + ": " + r.error);
     if (item.cycle === "monthly") monthly += r.value;
     else if (item.cycle === "yearly") yearly += r.value;
+    else if (item.cycle === "deposit") deposit += r.value;
     else once += r.value;
   }
 
   const perMonth = monthly + yearly / 12;
+  // ★ total 에 deposit 을 더하지 않는 것이 이 함수의 핵심 약속이다.
+  //   비교(총비용·1점당 비용·시뮬레이션)는 전부 total 을 쓰므로, 여기서 한 번 빼면
+  //   화면 어디서도 보증금이 지출로 섞이지 않는다.
   const total = monthly * months + (yearly * months) / 12 + once;
-  return { monthly, yearly, once, perMonth, total, months, errors };
+  return { monthly, yearly, once, deposit, perMonth, total, months, errors };
 }
 
 function computeScore(project, serviceId) {
@@ -12322,6 +12332,11 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
       project.horizonMonths + "개월 총비용",
       "",
       ...project.services.map((s) => String(Math.round(computeService(project, s.id).total))),
+    ]);
+    rows.push([
+      "보증금(회수 · 총비용 미포함)",
+      "",
+      ...project.services.map((s) => String(Math.round(computeService(project, s.id).deposit))),
     ]);
     const csv = rows
       .map((r) => r.map((c) => '"' + String(c).replace(/"/g, '""') + '"').join(","))
@@ -12938,6 +12953,18 @@ function CostTab({ project, patch, exportCsv }) {
               ))}
               <td></td>
             </tr>
+            {totals.some((t) => t.deposit > 0) && (
+              <tr className="tcc-sum">
+                {/* 총비용과 섞이지 않는다는 것을 글로 적어 둔다 — 표만 보면 왜 안 더해졌는지 모른다. */}
+                <td colSpan={2}>보증금 <span style={{fontWeight:400,color:'var(--ink2)'}}>(회수 · 총비용에 미포함)</span></td>
+                {totals.map((t, i) => (
+                  <td key={i} className="tcc-num tcc-num-soft">
+                    {t.deposit > 0 ? won(t.deposit) + "원" : "—"}
+                  </td>
+                ))}
+                <td></td>
+              </tr>
+            )}
             <tr className="tcc-sum tcc-sum-strong">
               <td colSpan={2}>{project.horizonMonths}개월 총비용</td>
               {totals.map((t, i) => (
@@ -13168,7 +13195,7 @@ function ResultTab({ project, patch }) {
   const [err, setErr] = useState("");
 
   const rows = project.services.map((s) => {
-    const c = computeService(project, s.id);
+    const c = computeService(project, s.id);   // c.deposit 은 총비용에 안 들어간다(회수되는 돈)
     const sc = computeScore(project, s.id);
     return {
       id: s.id,
@@ -13234,9 +13261,15 @@ function ResultTab({ project, patch }) {
       lines.push(
         "- " + r.name + ": 월 환산 " + won(r.perMonth) + "원, 1회성 " + won(r.once) +
         "원, " + project.horizonMonths + "개월 총 " + won(r.total) + "원, 기능 총점 " +
-        r.score.toFixed(1) + "점"
+        r.score.toFixed(1) + "점" +
+        (r.deposit > 0 ? ", 보증금 " + won(r.deposit) + "원(회수되는 돈이라 총비용에 넣지 않음)" : "")
       )
     );
+    if (rows.some((r) => r.deposit > 0)) {
+      lines.push("");
+      lines.push("※ 보증금은 계약 종료 시 돌려받는 예치금이라 총비용에서 뺐습니다. "
+        + "다만 그만큼 초기 자금이 묶이므로, 보증금이 큰 안은 그 부담을 함께 언급하세요.");
+    }
     lines.push("");
     lines.push("[기능 평가 상세] (중요도 1-5, 점수 0-5)");
     project.featureItems.forEach((f) => {
@@ -13372,7 +13405,14 @@ function ResultTab({ project, patch }) {
               {wonKo(r.total)}
               <span className="tcc-card-cur">원</span>
             </div>
-            <div className="tcc-card-sub">{project.horizonMonths}개월 총비용</div>
+            <div className="tcc-card-sub">
+              {project.horizonMonths}개월 총비용
+              {r.deposit > 0 && (
+                <span style={{display:'block',marginTop:2,color:'var(--ink2)'}}>
+                  + 보증금 {wonKo(r.deposit)}원 별도(회수)
+                </span>
+              )}
+            </div>
             <dl className="tcc-card-dl">
               <div>
                 <dt>월 환산</dt>
