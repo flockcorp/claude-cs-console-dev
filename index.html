@@ -6789,8 +6789,11 @@ function RefundManagementPage({ currentUserEmail }) {
     if(fWriter && r.created_by!==fWriter) return false;
     if(fSearch){
       const s = fSearch.toLowerCase();
+      // ★ 연락처는 마스킹된 값으로 찾는다 — 원본은 목록에 오지 않는다(감사 로그).
+      //   뒷 네 자리로는 그대로 찾히고, 가운데 자리로는 못 찾는다. 의도한 맞바꿈이다:
+      //   검색으로 연락처 전체를 되짚을 수 있으면 마스킹이 무의미해진다.
       const hay = [
-        r.order_id, r.customer_name, r.customer_phone, r.product_name, r.supplier_name,
+        r.order_id, r.customer_name, r.customer_phone_masked, r.product_name, r.supplier_name,
       ].map(x=>String(x||'').toLowerCase()).join(' ');
       if(!hay.includes(s)) return false;
     }
@@ -6813,7 +6816,10 @@ function RefundManagementPage({ currentUserEmail }) {
     const gid = orderGroupIdOf(r.order_id);
     if(!gid) return null;  // 주문번호 없으면 그룹 대상 아님
     const bank = (r.bank_name||'').trim();
-    const acct = (r.account_number||'').trim();
+    // ★ 마스킹된 계좌번호로 묶는다 — 원본은 목록에 오지 않는다(감사 로그).
+    //   앞 네 자리와 뒤 두 자리가 남아 있어 서로 다른 계좌는 여전히 갈린다.
+    //   원본을 쓰던 때와 묶이는 결과가 달라지지 않는지 dev 에서 확인할 것.
+    const acct = (r.account_number_masked||'').trim();
     const holder = (r.account_holder||'').trim();
     const st = refundStatusOf(r).key;  // 같은 처리 상태(환불 대기/후처리 대기/완료)끼리만 묶기
     return `${gid}|${bank}|${acct}|${holder}|${st}`;
