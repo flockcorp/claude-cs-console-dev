@@ -255,7 +255,13 @@
     /* ★ 세로 중심: inline-flex + align-items:center + line-height:1 로 «글자를 알약 안에서»
        가운데 둔다. line-height 로 높이를 만들면 글꼴의 위/아래 여백이 비대칭이라
        글자가 살짝 위로 뜬다(2026-08-25 제니 지적). 높이는 padding 으로 만든다. */
+    /* ★ top:1px 은 «광학 보정» 이지 배치 수정이 아니다.
+       align-items:center 가 알약 박스를 이미 수학적 중앙에 놓는다. 그런데 옆의 글자는
+       자기 줄 상자 안에서 시각적 무게가 아래쪽에 쏠려 있어(위쪽 여백이 더 크다),
+       중앙에 놓인 알약이 상대적으로 높아 보인다. 그 차이만큼만 내린다.
+       ★ 값을 키우지 말 것 — 1px 을 넘기면 이번엔 낮아 보인다. */
     .nav-tag{flex:none;margin-left:6px;display:inline-flex;align-items:center;
+      position:relative;top:1px;
       font-size:9px;font-weight:700;line-height:1;padding:3px 5px;
       border-radius:3px;white-space:nowrap;text-transform:none;letter-spacing:0;
       color:#F6AD09;background:rgba(246,173,9,.16)}
