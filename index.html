@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260825c_tag_master_only -->
+<!-- (2026-08-25) 권한 뱃지를 실제 화면에서 보고 셋을 고쳤다(제니 지시). ①master 전용 메뉴에만 단다 — master·manager 3개(데이터 입력·배송지연 관리·디지털 상품 발송)에서는 뺐다. ②색을 콘솔의 노랑(#F6AD09)으로. ③글자를 「master」에서 「M」 한 글자로 줄였다. ★★ ①과 ③은 «메뉴명이 잘린다» 는 한 가지 제보에서 나왔다. 220px 사이드바에서 이름과 뱃지가 자리를 다툰다 — 「디지털 상품 발송」(가장 긴 이름)은 아이콘·여백 52 + 이름 약 99 + 뱃지 39 = 약 231 로 넘쳤고, 「비용 비교 도구」는 여기에 토글 화살표까지 겹쳐 역시 잘렸다. ①로 앞의 것이, ③으로 뒤의 것이 풀린다(뱃지 39 → 약 15px). ★ 대안 둘을 함께 검토해 제니가 골랐다 — 사이드바를 240px 로 넓히는 안(본문이 20px 줄어든다)과 메뉴명을 「비용 비교」로 되돌리는 안(2026-08-20 에 「비용 비교 도구」로 바꾼 결정을 뒤집게 된다). 「M」은 뜻이 한눈에 안 보이는 대신 본문 폭과 메뉴명을 둘 다 지킨다. 마우스를 올리면 「master 전용」이 뜬다. ★ 노랑은 이미 「지금 보고 있는 메뉴」(active)에 쓰는 색이라 뜻이 겹칠 수 있다고 말씀드렸고 그대로 진행했다. 뱃지 배경을 active 배경(.08)보다 진한 .16 으로 두어 알약 모양이 따로 읽히게 했다. ★ 테두리는 두지 않았다 — 220px 에서는 2px 도 이름 자리다. ★ nav-label(이름이 줄어들 수 있게 한 것)은 그대로 둔다. 이제 잘릴 이름이 없지만, 나중에 긴 이름이 생겨도 화면을 밀어내지 않고 이름만 줄어든다. 권한 판정·라우팅은 여전히 한 줄도 건드리지 않았다. -->
 <!-- v20260825b_role_tags -->
 <!-- (2026-08-25) 사이드바 메뉴 이름 옆에 «누가 볼 수 있는 메뉴인가» 를 뱃지로 달았다(제니 지시). 실제로는 두 등급이다 — master 전용 5개(상담원 분석·환불 관리·비용 비교 도구·변경 이력·인력 관리)와 master·manager 3개(데이터 입력·배송지연 관리·디지털 상품 발송). 둘 다 표시한다. ★ 이 뱃지는 남에게 알리는 것이 아니다 — 권한이 없는 사람에게는 그 메뉴가 «아예 안 보이므로», 보는 사람은 언제나 그 권한을 가진 본인뿐이다. 화면을 함께 볼 때나 «그 메뉴가 왜 없냐» 는 질문을 받을 때 쓰는 표시다. ★ 색이 아니라 «뱃지» 를 쓴 이유: 콘솔에서 빨강은 이미 «지남/위험»(비용 비교 D-day 종료)이고 노랑은 «지금 보고 있는 메뉴»(active)다. 메뉴명 색을 바꾸거나 빨간 점을 달면 이미 쓰는 뜻과 겹친다. 오른쪽 뱃지 자리는 비어 있었고, 프로젝트 D-day 뱃지로 같은 모양 언어를 이미 쓰고 있어 낯설지 않다. ★ 뱃지를 «권한 조건과 같은 자리» 에서 그린다(RoleTag) — isMaster 조건이 사이드바 곳곳에 흩어져 있어서, 조건과 떨어진 곳에 표시를 두면 «권한은 바꿨는데 뱃지는 그대로» 가 반드시 생긴다. ★ 메뉴 이름에 nav-label 을 씌워 줄어들 수 있게 했다 — 220px 사이드바에서 이름이 긴 메뉴는 뱃지와 자리를 다투는데, 안 줄어들면 그대로 넘쳐 잘린다(가정값 칩에서 겪은 것과 같은 계열이다). 권한 판정·라우팅은 한 줄도 건드리지 않았다. -->
 <!-- v20260825a_varrow_grid -->
@@ -218,10 +220,14 @@
     /* 권한 뱃지 — master 전용은 또렷하게, master·manager 는 옅게.
        ★ 부모 메뉴(.nav-parent)는 uppercase·letter-spacing 이 걸려 있어 그대로 두면
          뱃지만 «M A S T E R» 로 벌어진다. 뱃지에서는 둘 다 끈다. */
+    /* master 전용 뱃지.
+       ★ 테두리를 안 둔다 — 220px 사이드바에서는 2px 도 이름 자리다.
+       ★ 배경은 active 배경(.08)보다 진한 .16 — 같은 노랑이라 연하면
+         «지금 보고 있는 메뉴» 강조와 구분이 안 된다. 알약 모양이 따로 읽힐 만큼만 진하게.
+       ★ 부모 메뉴(.nav-parent)는 uppercase·letter-spacing 이 걸려 있어 뱃지에서만 둔다. */
     .nav-tag{flex:none;margin-left:auto;font-size:9px;font-weight:700;line-height:1.6;padding:1px 5px;
-      border-radius:3px;white-space:nowrap;text-transform:none;letter-spacing:0;color:var(--sub)}
-    .nav-tag.is-master{background:rgba(220,232,255,.14);border:1px solid rgba(220,232,255,.2)}
-    .nav-tag.is-mm{background:none;border:1px solid var(--border);opacity:.75}
+      border-radius:3px;white-space:nowrap;text-transform:none;letter-spacing:0;
+      color:#F6AD09;background:rgba(246,173,9,.16)}
     /* 뱃지가 있으면 화살표는 오른쪽으로 밀지 말고 뱃지 옆에 붙인다 —
        둘 다 margin-left:auto 면 남는 폭을 나눠 가져 뱃지가 한가운데로 간다. */
     .nav-parent .nav-tag + .chevron{margin-left:6px}
@@ -15245,14 +15251,10 @@ class PageErrorBoundary extends React.Component {
    ★ 반드시 «권한 조건과 같은 자리» 에 둔다. isMaster/isManager 조건이 사이드바 곳곳에
      흩어져 있어서, 조건과 떨어진 표를 따로 두면 조건을 바꿀 때 뱃지가 남는다.
    ★ 색으로 알리지 않는다 — 빨강은 «지남/위험», 노랑은 «지금 보는 메뉴» 로 이미 쓰고 있다. */
-function RoleTag({ need }) {
-  const isM = need === 'master';
-  return (
-    <span
-      className={'nav-tag ' + (isM ? 'is-master' : 'is-mm')}
-      title={isM ? 'master 만 볼 수 있는 메뉴입니다' : 'master·manager 만 볼 수 있는 메뉴입니다'}
-    >{isM ? 'master' : 'master\u00b7mg'}</span>
-  );
+function RoleTag() {
+  /* ★ 「M」 한 글자인 이유는 자리다 — 220px 사이드바에서 「master」(약 39px)를 달면
+     이름이 긴 메뉴가 잘린다. 뜻은 마우스를 올렸을 때 뜬다. */
+  return <span className="nav-tag" title="master 전용 메뉴입니다">M</span>;
 }
 
 function App() {
@@ -15366,12 +15368,12 @@ function App() {
             <>
               {(isMaster||isManager) && (
                 <div className={`nav-child ${page==='entry'?'active':''}`} onClick={()=>navigateTo('entry')}>
-                  <span className="nav-label">데이터 입력</span><RoleTag need="mm"/>
+                  데이터 입력
                 </div>
               )}
               {isMaster && (
                 <div className={`nav-child ${page==='agentAnalysis'?'active':''}`} onClick={()=>navigateTo('agentAnalysis')}>
-                  <span className="nav-label">상담원 분석</span><RoleTag need="master"/>
+                  <span className="nav-label">상담원 분석</span><RoleTag/>
                 </div>
               )}
             </>
@@ -15389,7 +15391,7 @@ function App() {
               </div>
               {(isMaster||isManager) && (
                 <div className={`nav-child ${page==='delays'?'active':''}`} onClick={()=>navigateTo('delays')}>
-                  <span className="nav-label">배송지연 관리</span><RoleTag need="mm"/>
+                  배송지연 관리
                 </div>
               )}
               <div className={`nav-child ${page==='suppliers'?'active':''}`} onClick={()=>navigateTo('suppliers')}>
@@ -15405,7 +15407,7 @@ function App() {
               onClick={()=>navigateTo('autoDelivery')}
               style={page==='autoDelivery' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
             >
-              {Icon.autoDelivery}<span className="nav-label">디지털 상품 발송</span><RoleTag need="mm"/>
+              {Icon.autoDelivery}<span>디지털 상품 발송</span>
             </div>
           )}
 
@@ -15416,7 +15418,7 @@ function App() {
               onClick={()=>navigateTo('refunds')}
               style={page==='refunds' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
             >
-              {Icon.refunds}<span className="nav-label">환불 관리</span><RoleTag need="master"/>
+              {Icon.refunds}<span className="nav-label">환불 관리</span><RoleTag/>
             </div>
           )}
 
@@ -15431,7 +15433,7 @@ function App() {
                 onClick={()=>{ setOpenGroups(prev=>({...prev, costs:true})); goCost({view:'dashboard',id:null}); }}
                 style={page==='costs'&&costState.view==='dashboard' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
               >
-                {Icon.costs}<span className="nav-label">비용 비교 도구</span><RoleTag need="master"/>
+                {Icon.costs}<span className="nav-label">비용 비교 도구</span><RoleTag/>
                 <span
                   className={`chevron ${openGroups.costs?'expanded':''}`}
                   onClick={(e)=>{ e.stopPropagation(); toggleGroup('costs'); }}
@@ -15480,10 +15482,10 @@ function App() {
           {isMaster && (
             <>
               <div className={`nav-item ${page==='auditLog'?'active':''}`} onClick={()=>navigateTo('auditLog')} style={{marginBottom:8}}>
-                <span style={{width:18,display:'inline-block',textAlign:'center'}}>🕘</span><span className="nav-label">변경 이력</span><RoleTag need="master"/>
+                <span style={{width:18,display:'inline-block',textAlign:'center'}}>🕘</span><span className="nav-label">변경 이력</span><RoleTag/>
               </div>
               <div className={`nav-item ${page==='agents'?'active':''}`} onClick={()=>navigateTo('agents')} style={{marginBottom:8}}>
-                {Icon.agents}<span className="nav-label">인력 관리</span><RoleTag need="master"/>
+                {Icon.agents}<span className="nav-label">인력 관리</span><RoleTag/>
               </div>
             </>
           )}
