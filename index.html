@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260825e_sync_alert_stronger -->
+<!-- (2026-08-25) 동기화 경고가 «화면에서 바로 눈에 안 들어온다» 는 제니 확인에 따라 세게 고쳤다. 왜 약했는지 세 가지 — ①자리가 약하다: 카드는 «숫자를 보는 곳» 이고, 똑같이 생긴 카드가 셋 나란히 있어 하나만 색이 바뀌어도 패턴이 충분히 안 깨진다. ②투명도 깜빡임은 경고로 안 읽힌다: 어두운 배경에서 불투명도가 45%로 내려가면 «흐려진다»(로딩 중)로 보이지 «위험하다»로 안 보인다. ③문구가 9px 카드 캡션 크기라 보조 설명으로 읽힌다. → ⓐ페이지 제목 바로 아래에 «전체 폭 경고 띠» 를 새로 넣었다. ⚠ 아이콘 + 14px 굵은 제목(「상품 동기화가 8일째 실패하고 있습니다」) + 12px 부연(마지막 성공·연속 실패 횟수) + 「로그 보기」 링크(GitHub Actions 의 해당 워크플로로 간다. dev/운영은 key 의 꼬리로 가른다). ⓑ깜빡임을 «투명도» 에서 «바깥으로 번지는 빛(box-shadow) 맥박» 으로 바꿨다 — 흐려지는 것이 아니라 번져 나오는 것이라 경고로 읽힌다. 색은 쓰는 쪽에서 CSS 변수 --sync-glow 로 넘긴다(실패=빨강·오래됨=노랑). ⓒ카드도 함께 강화 — 테두리 1px→2px(대신 안쪽 여백을 1px 줄여 카드 크기는 그대로 둔다. 크기가 변하면 옆 카드가 밀린다), 제목을 「⚠ 총 상품」으로, 문구를 9px→11px 굵게. ★ 판단은 syncAlert 한 곳에서만 한다 — 띠와 카드가 각자 계산하면 언젠가 한쪽만 고쳐져 «띠는 빨간데 카드는 멀쩡한» 상태가 생긴다. ★ prefers-reduced-motion 에서는 맥박만 끄고 빛은 남긴다 — 알아채는 것이 목적이기 때문이다. ★ 정상일 때는 띠가 아예 없고 카드도 예전 그대로다(테두리 1px·9px 회색 문구). 경고는 이상할 때만 자리를 차지한다. -->
 <!-- v20260825d_sync_status_alert -->
 <!-- (2026-08-25) 상품 동기화가 멈춘 것을 «콘솔에서도» 알 수 있게 두 곳을 손봤다(제니 지시). 배경: 카페24 동기화 토큰이 2026-08-18 에 죽었는데 8일간 아무도 몰랐다. 토큰이 죽은 것보다 아무도 모른 것이 더 큰 문제였고, GitHub Actions 워크플로 28개 중 실패를 처리하는 것이 하나도 없었다. 문자 알림(SOLAPI LMS)을 붙였고 이 커밋은 그 «두 번째 장치» 다 — 콘솔을 열기만 해도 보이게. ①상품 정보 화면 «총 상품» 카드의 숫자 아래에 「마지막 동기화: 08-25 04:30 · 신규 56건」 을 넣었다(master 전용). 실패면 「동기화 실패 · N회 연속 · 마지막 성공 N일 전」, 성공했지만 36시간 넘게 새 실행이 없으면 「동기화가 N일째 돌지 않음」 으로 바뀌고, 두 경우 모두 «카드 전체» 가 색을 바꾸며 깜빡인다(실패=빨강·오래됨=노랑). 36시간인 이유는 동기화가 하루 한 번 돌기 때문이다. 값은 새 표 ops_sync_status 에서 읽고 RLS 로 master 만 읽을 수 있다. ★ key 를 코드에 박지 않고 접두사(cafe24_sync_products%)로 찾는다 — 이 파일은 dev 에서 운영으로 그대로 이식되는데(promote.js 가 접속 정보 2줄만 바꾼다) dev DB 에는 …_dev, 운영 DB 에는 …_prod 만 있어서 한쪽 이름을 박으면 다른 환경에서 영영 안 보인다. ★ 깜빡임은 prefers-reduced-motion 을 존중해 끄되 «색» 은 남긴다 — 알아채는 것이 목적이다. ★ 조회가 막히거나 실패해도 화면을 세우지 않고 표시만 접는다. ②좌측 하단 계정 정보를 «누를 수 있게» 만들고(지금까지는 클릭이 안 됐다) 계정 정보 창을 새로 달았다. master 는 여기서 알림 받을 연락처를 넣고 수신 여부를 켠다(console_users.alert_phone / alert_enabled). 워크플로가 이 표를 읽어 문자를 보내므로, 체크한 master 가 둘이면 둘 다 받는다. 비워 두거나 체크를 끄면 안 받는데 그것도 정당한 선택이다(dev 는 폴백이 없어 정말 안 가고, 운영만 폴백 번호로 나가며 워크플로에 경고가 남는다). 연락처는 숫자만 남겨 저장해 010-1234-5678 로 넣든 01012345678 로 넣든 같은 값이 된다. ★ 알림 칸은 master 에게만 보인다 — 지금 console_users 는 자기 행을 «읽기만» 되고 쓰기는 master 정책으로만 열려 있어서, manager·crew 까지 받게 하려면 DB 정책부터 손봐야 한다. 권한 판정·라우팅·기존 카드 두 개(총 공급사·CS 정보 보유)는 건드리지 않았다. -->
 <!-- v20260825c_tag_master_only -->
@@ -259,9 +261,18 @@
        콘솔을 열기만 해도 보이도록 하는 두 번째 장치다.
        ★ 깜빡임을 싫어하는 사람도 있고 접근성 설정도 있어 prefers-reduced-motion 을 존중한다.
          그때는 깜빡이지 않되 «색» 은 그대로 남는다 — 알아채는 것이 목적이기 때문이다. */
-    @keyframes syncAlertPulse{0%,100%{opacity:1}50%{opacity:.45}}
-    .sync-alert{animation:syncAlertPulse 1.4s ease-in-out infinite}
-    @media (prefers-reduced-motion:reduce){.sync-alert{animation:none}}
+    /* ★ 투명도로 깜빡이면 «흐려진다» 로 보여 로딩처럼 읽힌다(2026-08-25 제니 지적).
+       바깥으로 «번지는» 빛이 커졌다 작아지는 편이 경고로 읽힌다.
+       색은 쓰는 쪽에서 --sync-glow 로 넘긴다(실패=빨강 · 오래됨=노랑). */
+    @keyframes syncAlertGlow{
+      0%,100%{box-shadow:0 0 0 0 var(--sync-glow-off,transparent)}
+      50%{box-shadow:0 0 16px 3px var(--sync-glow,transparent)}
+    }
+    .sync-alert{animation:syncAlertGlow 1.6s ease-in-out infinite}
+    @media (prefers-reduced-motion:reduce){
+      /* 움직임은 끄되 «빛» 은 남긴다 — 알아채는 것이 목적이다. */
+      .sync-alert{animation:none;box-shadow:0 0 14px 2px var(--sync-glow,transparent)}
+    }
     .main{flex:1;min-width:0}
     .page-header{padding:28px 32px 0;display:flex;align-items:center;justify-content:space-between}
     .page-title{font-size:20px;font-weight:700} .page-sub{font-size:13px;color:var(--sub);margin-top:2px}
@@ -2938,6 +2949,45 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const inputStyle={width:'100%',padding:'10px 12px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,color:'var(--text)',fontSize:14,fontFamily:'inherit',outline:'none'};
   const taStyle={...inputStyle,resize:'vertical'};
 
+  // ── 상품 동기화 상태 판정 ──────────────────────────────────────────────────
+  // 카드와 경고 띠가 «같은 판단» 을 써야 한다. 두 곳에서 따로 계산하면
+  // 언젠가 한쪽만 고쳐져 «띠는 빨간데 카드는 멀쩡한» 상태가 생긴다.
+  const syncAlert=(()=>{
+    if(!isMaster||syncStatus===undefined)return null;          // 아직 안 읽었거나 볼 권한이 없다
+    const HOUR=3600*1000, DAY=24*HOUR;
+    const STALE_MS=36*HOUR;   // 동기화는 하루 한 번 돈다. 36시간이면 뭔가 멈춘 것이다.
+    if(!syncStatus)return{tone:null,note:'동기화 기록 없음',headline:null,sub:null,href:null};
+    const okAt=syncStatus.last_success_at?new Date(syncStatus.last_success_at):null;
+    const since=okAt?(Date.now()-okAt.getTime()):null;
+    const days=since!=null?Math.floor(since/DAY):null;
+    const p2=n=>String(n).padStart(2,'0');
+    const fmt=d=>d?(p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes())):'—';
+    const daysWord=days==null?'':(days===0?'오늘':days+'일 전');
+    // 로그 자리는 key 로 가른다(…_dev / …_prod). 이 파일은 두 환경이 같은 코드다.
+    const wf=(syncStatus.key||'').endsWith('_prod')?'cafe24-sync-products-prod.yml':'cafe24-sync-products.yml';
+    const href='https://github.com/flockcorp/claude-cs-backup/actions/workflows/'+wf;
+    if(syncStatus.last_result==='failure'){
+      const n=syncStatus.consecutive_failures||1;
+      return{
+        tone:'red',
+        note:'동기화 실패'+(n>1?' · '+n+'회 연속':'')+(days!=null?' · 마지막 성공 '+daysWord:''),
+        headline:'상품 동기화가 '+(days!=null&&days>0?days+'일째 ':'')+'실패하고 있습니다',
+        sub:(okAt?'마지막 성공 '+fmt(okAt):'성공한 적이 없습니다')+(n>1?' · '+n+'회 연속 실패':''),
+        href,
+      };
+    }
+    if(since==null||since>STALE_MS){
+      return{
+        tone:'yellow',
+        note:'동기화가 '+(days!=null?days+'일째':'한동안')+' 돌지 않음',
+        headline:'상품 동기화가 '+(days!=null?days+'일째 ':'한동안 ')+'돌지 않았습니다',
+        sub:(okAt?'마지막 성공 '+fmt(okAt):'기록 없음')+' · 실패도 기록되지 않았습니다(작업 자체가 멈췄을 수 있습니다)',
+        href,
+      };
+    }
+    return{tone:null,note:'마지막 동기화: '+fmt(okAt)+(syncStatus.last_detail?' · '+syncStatus.last_detail:''),headline:null,sub:null,href};
+  })();
+
   return (
     <div>
       <div className="page-header" style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:12}}>
@@ -2956,45 +3006,23 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
             </div>
             {(()=>{
               // ── 총 상품 카드 ────────────────────────────────────────────────
-              // master 에게는 숫자 아래에 «마지막 동기화» 를 함께 보여준다.
-              // 동기화가 멈추면 카드 자체가 색을 바꾸고 깜빡인다 — 문자 알림과 별개로,
-              // 콘솔을 열기만 해도 눈에 들어오게 하려는 것이다.
-              // (2026-08-18 에 동기화가 죽고 8일간 아무도 몰랐다.)
-              const HOUR=3600*1000;
-              // 동기화는 하루 한 번 돈다. 36시간이 지나도록 성공이 없으면 뭔가 멈춘 것이다.
-              const STALE_MS=36*HOUR;
-              let tone=null,note=null;   // tone: null=정상 · 'red'=실패 · 'yellow'=오래됨
-              if(isMaster&&syncStatus!==undefined){
-                if(!syncStatus){note='동기화 기록 없음';}
-                else{
-                  const okAt=syncStatus.last_success_at?new Date(syncStatus.last_success_at):null;
-                  const since=okAt?(Date.now()-okAt.getTime()):null;
-                  const days=since!=null?Math.floor(since/(24*HOUR)):null;
-                  const p2=n=>String(n).padStart(2,'0');
-                  const fmt=d=>d?(p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes())):'—';
-                  if(syncStatus.last_result==='failure'){
-                    tone='red';
-                    note='동기화 실패'
-                      +(syncStatus.consecutive_failures>1?' · '+syncStatus.consecutive_failures+'회 연속':'')
-                      +(days!=null?' · 마지막 성공 '+(days===0?'오늘':days+'일 전'):'');
-                  }else if(since==null||since>STALE_MS){
-                    tone='yellow';
-                    note='동기화가 '+(days!=null?days+'일째':'한동안')+' 돌지 않음';
-                  }else{
-                    note='마지막 동기화: '+fmt(okAt)+(syncStatus.last_detail?' · '+syncStatus.last_detail:'');
-                  }
-                }
-              }
-              const bg=tone==='red'?'rgba(248,113,113,.12)':tone==='yellow'?'rgba(246,173,9,.12)':'var(--card)';
-              const bd=tone==='red'?'rgba(248,113,113,.65)':tone==='yellow'?'rgba(246,173,9,.65)':'var(--border)';
-              const nc=tone==='red'?'#f87171':tone==='yellow'?'var(--yellow)':'var(--sub)';
+              // 판단은 syncAlert 하나가 한다(위쪽 경고 띠와 같은 값을 쓴다).
+              // 멈춘 상태에서는 테두리를 2px 로 굵히고 ⚠ 를 달고 바깥으로 빛이 번진다.
+              // 테두리가 굵어진 만큼 안쪽 여백을 1px 줄여 카드 크기는 그대로 둔다
+              // — 크기가 변하면 옆 카드들이 함께 밀린다.
+              const a=syncAlert, tone=a?a.tone:null;
+              const red=tone==='red', yellow=tone==='yellow';
+              const bg=red?'rgba(248,113,113,.16)':yellow?'rgba(246,173,9,.16)':'var(--card)';
+              const bd=red?'#f87171':yellow?'#F6AD09':'var(--border)';
+              const nc=red?'#f87171':yellow?'var(--yellow)':'var(--sub)';
+              const glow=red?'rgba(248,113,113,.8)':yellow?'rgba(246,173,9,.75)':'transparent';
               return (
                 <div className={tone?'sync-alert':undefined}
-                  title={tone?'상품 동기화가 정상적으로 돌지 않고 있습니다. GitHub Actions 의 «Cafe24 - Sync New Products» 로그를 확인하세요.':undefined}
-                  style={{background:bg,border:'1px solid '+bd,borderRadius:8,padding:'8px 16px',textAlign:'center',maxWidth:240}}>
-                  <div style={{fontSize:10,color:'var(--sub)',marginBottom:2}}>총 상품</div>
+                  title={tone?'상품 동기화가 정상적으로 돌지 않고 있습니다.':undefined}
+                  style={{background:bg,border:(tone?'2px':'1px')+' solid '+bd,borderRadius:8,padding:tone?'7px 15px':'8px 16px',textAlign:'center',maxWidth:240,'--sync-glow':glow}}>
+                  <div style={{fontSize:10,color:tone?nc:'var(--sub)',marginBottom:2,fontWeight:tone?700:400}}>{tone?'⚠ 총 상품':'총 상품'}</div>
                   <div style={{fontSize:18,fontWeight:700,color:'var(--accent)'}}>{totalCount.products.toLocaleString()}<span style={{fontSize:11,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
-                  {note&&<div style={{fontSize:9,color:nc,marginTop:2,lineHeight:1.3,fontWeight:tone?600:400}}>{note}</div>}
+                  {a&&a.note&&<div style={{fontSize:tone?11:9,color:nc,marginTop:3,lineHeight:1.35,fontWeight:tone?700:400}}>{a.note}</div>}
                 </div>
               );
             })()}
@@ -3021,6 +3049,32 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
           )}
         </div>
       </div>
+      {/* ── 동기화 경고 띠 ────────────────────────────────────────────────────
+          카드만으로는 눈에 안 들어온다(2026-08-25 제니 확인). 카드는 «숫자를 보는 곳»
+          이고 똑같이 생긴 카드가 셋이라 하나만 색이 바뀌어도 패턴이 덜 깨진다.
+          그래서 제목 바로 아래에 무시하기 어려운 크기의 띠를 하나 더 둔다.
+          ★ 판단은 카드와 «같은» syncAlert 를 쓴다. 두 곳에서 따로 계산하면
+            언젠가 한쪽만 고쳐져 서로 다른 말을 하게 된다. */}
+      {syncAlert&&syncAlert.tone&&(()=>{
+        const red=syncAlert.tone==='red';
+        const c=red?'#f87171':'#F6AD09';
+        const bg=red?'rgba(248,113,113,.14)':'rgba(246,173,9,.14)';
+        const glow=red?'rgba(248,113,113,.6)':'rgba(246,173,9,.55)';
+        return (
+          <div className="sync-alert"
+            style={{margin:'16px 32px 0',padding:'12px 16px',background:bg,border:'2px solid '+c,borderRadius:10,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap','--sync-glow':glow}}>
+            <span style={{fontSize:20,lineHeight:1}}>⚠</span>
+            <div style={{flex:1,minWidth:200}}>
+              <div style={{fontSize:14,fontWeight:700,color:c}}>{syncAlert.headline}</div>
+              <div style={{fontSize:12,color:'var(--sub)',marginTop:3}}>{syncAlert.sub}</div>
+            </div>
+            {syncAlert.href&&(
+              <a href={syncAlert.href} target="_blank" rel="noreferrer"
+                style={{padding:'7px 14px',border:'1px solid '+c,borderRadius:8,color:c,fontSize:12,fontWeight:600,textDecoration:'none',whiteSpace:'nowrap'}}>로그 보기</a>
+            )}
+          </div>
+        );
+      })()}
       <div className="section" style={{paddingBottom:0}}>
         <div style={{display:'flex',gap:8,marginBottom:16}}>
           <TabBtn id="list" label="상품 목록"/>
