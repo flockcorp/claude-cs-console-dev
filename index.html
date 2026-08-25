@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260825b_role_tags -->
+<!-- (2026-08-25) 사이드바 메뉴 이름 옆에 «누가 볼 수 있는 메뉴인가» 를 뱃지로 달았다(제니 지시). 실제로는 두 등급이다 — master 전용 5개(상담원 분석·환불 관리·비용 비교 도구·변경 이력·인력 관리)와 master·manager 3개(데이터 입력·배송지연 관리·디지털 상품 발송). 둘 다 표시한다. ★ 이 뱃지는 남에게 알리는 것이 아니다 — 권한이 없는 사람에게는 그 메뉴가 «아예 안 보이므로», 보는 사람은 언제나 그 권한을 가진 본인뿐이다. 화면을 함께 볼 때나 «그 메뉴가 왜 없냐» 는 질문을 받을 때 쓰는 표시다. ★ 색이 아니라 «뱃지» 를 쓴 이유: 콘솔에서 빨강은 이미 «지남/위험»(비용 비교 D-day 종료)이고 노랑은 «지금 보고 있는 메뉴»(active)다. 메뉴명 색을 바꾸거나 빨간 점을 달면 이미 쓰는 뜻과 겹친다. 오른쪽 뱃지 자리는 비어 있었고, 프로젝트 D-day 뱃지로 같은 모양 언어를 이미 쓰고 있어 낯설지 않다. ★ 뱃지를 «권한 조건과 같은 자리» 에서 그린다(RoleTag) — isMaster 조건이 사이드바 곳곳에 흩어져 있어서, 조건과 떨어진 곳에 표시를 두면 «권한은 바꿨는데 뱃지는 그대로» 가 반드시 생긴다. ★ 메뉴 이름에 nav-label 을 씌워 줄어들 수 있게 했다 — 220px 사이드바에서 이름이 긴 메뉴는 뱃지와 자리를 다투는데, 안 줄어들면 그대로 넘쳐 잘린다(가정값 칩에서 겪은 것과 같은 계열이다). 권한 판정·라우팅은 한 줄도 건드리지 않았다. -->
 <!-- v20260825a_varrow_grid -->
 <!-- (2026-08-25) 설정 탭 «가정값» 줄의 가로 배치를 고쳤다(제니 지적). 세 가지가 한 원인에서 나왔다 — 줄마다 따로 노는 flex 였다. ①변수 이름 칸이 flex:1 이라 남는 폭을 전부 먹어 지나치게 길었다. ②어느 줄에 식을 적어 값 칸이 길어지면 그 줄만 이름 칸이 눌려 칸의 위치가 줄마다 어긋났다. ③식을 적으면 오른쪽에 «→ 계산값» 이 새로 끼어들어 범위·버튼이 그 줄에서만 밀렸다. → 목록 전체를 하나의 격자(grid)로 두고 각 줄은 display:contents 로 그 격자에 얹었다. 칸 폭이 «줄» 이 아니라 «열» 단위로 정해지므로, 한 줄의 값이 길어지면 모든 줄의 같은 칸이 함께 넓어지고 계산값·범위·버튼이 모두 같은 세로선에 선다. ★ 줄마다 grid 를 두면(=.tcc-varrow 를 격자로) 안 된다 — 격자는 자기 안에서만 열을 맞추므로 줄끼리는 여전히 어긋난다. 이름 칸은 고정 200px 로 줄였고 (늘어나던 폭의 대략 절반), 값 칸은 «가장 긴 값» 에 맞춘 폭 하나를 모든 줄이 나눠 쓴다 — 한글은 monospace 에서도 영문의 두 배 폭이라 글자당 9px 로 재던 tccNumWidth 로는 식이 든 칸이 늘 좁게 잡혔다. 범위 min/max 도 같은 이유로 줄마다 폭이 달랐어서 공유 폭 하나로 모았다. ★ 계산값 칸은 식이 없는 줄에도 «빈 칸» 으로 남겨 둬야 한다 — 격자에서 칸을 빼면 뒤의 칸이 한 칸씩 당겨져 줄이 통째로 어긋난다. 겸해서 식 쓰는 법 안내문을 접었다(제니 지시) — 늘 펼쳐 두면 정작 봐야 할 표가 아래로 밀린다. 계산·저장 로직은 건드리지 않았다. -->
 <!-- v20260824k_derived_vars -->
@@ -209,6 +211,20 @@
     .nav-child{display:flex;align-items:center;padding:8px 12px 8px 32px;border-radius:6px;font-size:12px;font-weight:500;color:var(--sub);cursor:pointer;transition:all .12s;margin-bottom:1px;border-left:3px solid transparent}
     .nav-child:hover{background:var(--hover);color:var(--text)}
     .nav-child.active{background:rgba(246,173,9,.08);color:#F6AD09;border-left-color:#F6AD09;font-weight:600}
+    /* ★ 메뉴 이름은 줄어들 수 있어야 한다. 220px 사이드바에서 이름이 긴 메뉴는 권한 뱃지와
+       자리를 다투는데, 이름이 안 줄면 그대로 넘쳐 잘린다(감싼 쪽이 좁아질 때 안쪽이 안 줄면
+       잘린다 — 가정값 칩에서 겪은 것과 같은 계열이다). 뱃지는 반대로 절대 줄지 않는다. */
+    .nav-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    /* 권한 뱃지 — master 전용은 또렷하게, master·manager 는 옅게.
+       ★ 부모 메뉴(.nav-parent)는 uppercase·letter-spacing 이 걸려 있어 그대로 두면
+         뱃지만 «M A S T E R» 로 벌어진다. 뱃지에서는 둘 다 끈다. */
+    .nav-tag{flex:none;margin-left:auto;font-size:9px;font-weight:700;line-height:1.6;padding:1px 5px;
+      border-radius:3px;white-space:nowrap;text-transform:none;letter-spacing:0;color:var(--sub)}
+    .nav-tag.is-master{background:rgba(220,232,255,.14);border:1px solid rgba(220,232,255,.2)}
+    .nav-tag.is-mm{background:none;border:1px solid var(--border);opacity:.75}
+    /* 뱃지가 있으면 화살표는 오른쪽으로 밀지 말고 뱃지 옆에 붙인다 —
+       둘 다 margin-left:auto 면 남는 폭을 나눠 가져 뱃지가 한가운데로 간다. */
+    .nav-parent .nav-tag + .chevron{margin-left:6px}
     /* 모바일 햄버거 버튼 */
     .mobile-hamburger{display:none;position:fixed;top:12px;left:12px;z-index:1100;width:40px;height:40px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-size:18px;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
     .mobile-hamburger:hover{background:var(--hover)}
@@ -15225,6 +15241,20 @@ class PageErrorBoundary extends React.Component {
   }
 }
 
+/* 사이드바 메뉴 이름 옆의 권한 뱃지.
+   ★ 반드시 «권한 조건과 같은 자리» 에 둔다. isMaster/isManager 조건이 사이드바 곳곳에
+     흩어져 있어서, 조건과 떨어진 표를 따로 두면 조건을 바꿀 때 뱃지가 남는다.
+   ★ 색으로 알리지 않는다 — 빨강은 «지남/위험», 노랑은 «지금 보는 메뉴» 로 이미 쓰고 있다. */
+function RoleTag({ need }) {
+  const isM = need === 'master';
+  return (
+    <span
+      className={'nav-tag ' + (isM ? 'is-master' : 'is-mm')}
+      title={isM ? 'master 만 볼 수 있는 메뉴입니다' : 'master·manager 만 볼 수 있는 메뉴입니다'}
+    >{isM ? 'master' : 'master\u00b7mg'}</span>
+  );
+}
+
 function App() {
   const [session,setSession]=useState(null); const [page,setPage]=useState('dashboard'); const [editDate,setEditDate]=useState(null); const [loading,setLoading]=useState(true);
   // 권한은 서버(console_users)에서만 받는다. user_metadata 는 본인이 고칠 수 있어 신뢰하지 않는다.
@@ -15336,12 +15366,12 @@ function App() {
             <>
               {(isMaster||isManager) && (
                 <div className={`nav-child ${page==='entry'?'active':''}`} onClick={()=>navigateTo('entry')}>
-                  데이터 입력
+                  <span className="nav-label">데이터 입력</span><RoleTag need="mm"/>
                 </div>
               )}
               {isMaster && (
                 <div className={`nav-child ${page==='agentAnalysis'?'active':''}`} onClick={()=>navigateTo('agentAnalysis')}>
-                  상담원 분석
+                  <span className="nav-label">상담원 분석</span><RoleTag need="master"/>
                 </div>
               )}
             </>
@@ -15359,7 +15389,7 @@ function App() {
               </div>
               {(isMaster||isManager) && (
                 <div className={`nav-child ${page==='delays'?'active':''}`} onClick={()=>navigateTo('delays')}>
-                  배송지연 관리
+                  <span className="nav-label">배송지연 관리</span><RoleTag need="mm"/>
                 </div>
               )}
               <div className={`nav-child ${page==='suppliers'?'active':''}`} onClick={()=>navigateTo('suppliers')}>
@@ -15375,7 +15405,7 @@ function App() {
               onClick={()=>navigateTo('autoDelivery')}
               style={page==='autoDelivery' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
             >
-              {Icon.autoDelivery}<span>디지털 상품 발송</span>
+              {Icon.autoDelivery}<span className="nav-label">디지털 상품 발송</span><RoleTag need="mm"/>
             </div>
           )}
 
@@ -15386,7 +15416,7 @@ function App() {
               onClick={()=>navigateTo('refunds')}
               style={page==='refunds' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
             >
-              {Icon.refunds}<span>환불 관리</span>
+              {Icon.refunds}<span className="nav-label">환불 관리</span><RoleTag need="master"/>
             </div>
           )}
 
@@ -15401,7 +15431,7 @@ function App() {
                 onClick={()=>{ setOpenGroups(prev=>({...prev, costs:true})); goCost({view:'dashboard',id:null}); }}
                 style={page==='costs'&&costState.view==='dashboard' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
               >
-                {Icon.costs}<span>비용 비교 도구</span>
+                {Icon.costs}<span className="nav-label">비용 비교 도구</span><RoleTag need="master"/>
                 <span
                   className={`chevron ${openGroups.costs?'expanded':''}`}
                   onClick={(e)=>{ e.stopPropagation(); toggleGroup('costs'); }}
@@ -15450,10 +15480,10 @@ function App() {
           {isMaster && (
             <>
               <div className={`nav-item ${page==='auditLog'?'active':''}`} onClick={()=>navigateTo('auditLog')} style={{marginBottom:8}}>
-                <span style={{width:18,display:'inline-block',textAlign:'center'}}>🕘</span><span>변경 이력</span>
+                <span style={{width:18,display:'inline-block',textAlign:'center'}}>🕘</span><span className="nav-label">변경 이력</span><RoleTag need="master"/>
               </div>
               <div className={`nav-item ${page==='agents'?'active':''}`} onClick={()=>navigateTo('agents')} style={{marginBottom:8}}>
-                {Icon.agents}<span>인력 관리</span>
+                {Icon.agents}<span className="nav-label">인력 관리</span><RoleTag need="master"/>
               </div>
             </>
           )}
