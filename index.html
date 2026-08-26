@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826f_faq_upload_ui -->
+<!-- (2026-08-26) FAQ 답변 업로드(양식 B) 화면을 붙였다. 앞 판(v20260826e)에서 만든 병합 함수를 이제 사람이 쓸 수 있다. ①상품 등록/수정 화면 아래 «엑셀 일괄 업로드» 에 양식 선택 두 개(상품 정보 / FAQ 답변)를 넣었다. ★ 기존 «상품 정보» 상자는 조건문으로 감싸기만 하고 한 줄도 안 고쳤다 — 매일 쓰는 기능이라 코드 경로·상태·파일칸을 통째로 갈랐다(faqFileRef·handleFaqUpload·downloadFaqTemplate). 실제로 지운 줄은 메시지 줄 하나뿐이고(줄바꿈 표시 추가) 나머지는 전부 추가다. ②양식 다운로드는 «머리글만» 있는 시트와 «작성안내» 시트 두 장이다. 예시 행을 넣으면 지우지 않고 그대로 올리는 일이 생기고, 안내를 같은 시트에 두면 데이터로 섞인다 — 업로드는 1번 시트만 읽는다. ③파일을 고르면 «미리보기» 창이 뜨고 여기까지는 아무것도 저장되지 않는다. 처리 예정(대상 상품·신규·갱신·유형이동·그대로·미회신·오류), 오류 상세(행번호·상품코드·사유), 상품별 변경 내역(펼치면 병합 «결과 텍스트 그 자체» 를 보여 준다). ★★ 병합을 미리보기 단계에서 «실제로» 돌려 결과를 들고 있다가, 확정 버튼은 그것을 그대로 저장만 한다 — 확정 때 다시 계산하면 미리보기에 보인 숫자와 저장되는 내용이 어긋날 수 있다. ★ «그대로» 를 갱신과 나눠 센다. 같은 파일을 다시 올렸을 때 「갱신 318건」으로 보이면 사람은 318건이 바뀐다고 읽는다. ④확정 업로드는 상품 «건별» 로 쓴다. 하나가 실패해도 이미 저장된 것은 그대로 둔다 — 수천 건 중 하나 때문에 전부 되돌리면 다시 올리는 비용이 더 크다. 진행률을 창과 패널 양쪽에 띄운다. ★ 존재하지 않는 상품코드는 저장하지 않고 오류 목록에 넣는다. 조용히 넘어가면 «올렸는데 왜 없지» 가 된다. ★ 상품 조회는 200개씩 나눈다 — 이 저장소가 이미 쓰는 크기이고 URL 길이 한계 때문이다(문서의 500은 그 한계를 안 본 값이다). ★ 선행 조건: products.cs_faq_map — dev 적용 완료, 운영은 이식 때. 양식 A·조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826e_faq_merge_core -->
 <!-- (2026-08-26) FAQ 답변 업로드(양식 B)의 «병합 로직» 순수 함수 셋을 넣었다. 아직 화면에 붙이지 않았다 — 부르는 곳이 없으므로 이 판은 동작이 한 줄도 바뀌지 않는다. 배경: 공급사 952곳에서 상품 8,000개 × 문항 30개의 FAQ 답변을 «여러 번 나눠서» 받는다. 기존 상품 업로드(양식 A)는 cs_info 를 «기존 + 신규» 로 이어 붙이므로, 두 번째 업로드에서 내용이 날아가지는 않지만 같은 Q&A 가 계속 쌓인다(핸드오프 문서에는 «덮어써서 날아간다» 고 적혀 있었으나 코드 확인 결과 이어붙이기다 — 결론은 같고 증상만 다르다). ①serializeCs 는 parseCs 가 만든 구조를 다시 텍스트로 되돌린다. 섹션 순서를 저장 순서가 아니라 표시 순서(불량→변심→상품→기타)로 못 박고, 항목이 없는 섹션도 머리글을 남긴다 — 그래야 parseCs(serializeCs(parseCs(x)))가 parseCs(x)와 같아진다(왕복 안정성). ②parseFaqUploadFile 은 업로드 행을 검증·정규화한다. 검사 순서를 답변→유형→열쇠로 둔 이유는, 답변이 없는 행은 «미회신» 이지 오류가 아니라서 먼저 걸러야 오류 목록이 아직 회신 안 온 문항으로 뒤덮이지 않기 때문이다. ③mergeFaqAnswers 가 본체다. cs_faq_map(문항ID → 마지막으로 저장한 문구)으로 «어디에 있는지» 를 찾으므로, 공급사가 문항 문구를 고쳐 보내거나 우리가 문구를 다듬어도 같은 자리를 찾아 갱신한다. ★★ 문항 열은 매칭에 쓰지 않는다 — 그걸 쓰면 문구가 바뀌는 순간 중복이 쌓인다. 그게 이 색인을 만든 이유다. ★ 업로드에 없는 기존 Q&A 는 손대지 않는다(Zendesk 유래 데이터와 이미지가 걸려 있다). ★ 값이 그대로면 «갱신» 으로 세지 않고 «그대로» 로 센다 — 같은 파일을 다시 올렸을 때 미리보기가 「갱신 318건」이라고 하면 사람은 318건이 바뀐다고 읽는다. ★ 색인이 아직 없을 때만 같은 유형 안에서 같은 문구를 한 번 더 찾는다(문서에 없는 보강) — 첫 업로드에서 이미 같은 질문이 든 상품에 똑같은 Q 를 하나 더 만들지 않기 위해서다. ★ parseCs 는 한 줄도 고치지 않았다. 읽기용으로 «빌려 쓰고», 인자로 받는다. ★ 시험은 tools/faq_merge_test.js 가 이 파일에서 코드를 «꺼내서» 돌린다(npm run test:faq). 사본을 따로 두면 화면을 고쳤을 때 시험이 옛 코드를 검사하게 되고, 그러면 있는 편이 더 나쁘다. 14갈래 통과 — 신규·갱신·문구개정·공급사수정·유형이동·FAQ흡수·Q only·여러줄·멱등성·왕복안정성·파일검증·기존보존·중복방지. ★ 선행 조건: products.cs_faq_map (jsonb NOT NULL '{}') — dev 적용 완료, 운영은 이식 때. -->
 <!-- v20260826d_collapse_cs_on_tab -->
@@ -2416,6 +2418,15 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const [zdStatus,setZdStatus]=useState('');
   const [zdProgress,setZdProgress]=useState(0);
   const [dupInfo,setDupInfo]=useState(null);
+  // ── FAQ 답변 업로드(양식 B) ────────────────────────────────────────────────
+  // ★ 양식 A 와 «상태도 함수도 파일칸도» 나눈다. 한 경로를 공유하면 언젠가 한쪽을
+  //   고치다 다른 쪽이 딸려 온다 — 양식 A 는 매일 쓰는 기능이라 건드리면 안 된다.
+  const [formKind,setFormKind]=useState('A');        // 'A' 상품 정보 · 'B' FAQ 답변
+  const faqFileRef=useRef(null);
+  const [faqPreview,setFaqPreview]=useState(null);   // 확정 전 미리보기(아직 아무것도 안 썼다)
+  const [faqBusy,setFaqBusy]=useState('');           // '' | '읽는 중' | '저장 중'
+  const [faqProgress,setFaqProgress]=useState({done:0,total:0});
+  const [faqOpenCodes,setFaqOpenCodes]=useState(new Set()); // 상품별 변경 내역 펼침
   const [checkedIds,setCheckedIds]=useState(new Set());
   const [expandedCs,setExpandedCs]=useState(new Set());
   const [page,setPage]=useState(1);
@@ -3147,6 +3158,118 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     ];
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'상품정보');
     XLSX.writeFile(wb,'상품_정보_등록_양식.xlsx');
+  };
+
+  // ── FAQ 답변 업로드(양식 B) ────────────────────────────────────────────────
+  // ★ 아래 셋은 양식 A 의 downloadTemplate·handleUpload 와 «코드 경로를 공유하지 않는다».
+  //   양식 A 는 매일 쓰는 기능이라, 한쪽을 고치다 다른 쪽이 딸려 오면 안 된다.
+  const FAQ_UPLOAD_COLS=['상품코드','문항ID','유형','문항','답변'];
+
+  const downloadFaqTemplate=()=>{
+    const wb=XLSX.utils.book_new();
+    // 1번 시트는 «머리글만». 예시 행을 넣으면 지우지 않고 그대로 올리는 일이 생긴다.
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([FAQ_UPLOAD_COLS]),'FAQ답변');
+    // 안내는 별도 시트에 둔다 — 업로드는 1번 시트만 읽으므로 섞일 수 없다.
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+      ['작성 안내'],
+      [''],
+      ['상품코드','콘솔에 등록된 상품코드. 카페24 상품번호가 아닙니다.'],
+      ['문항ID','G-불량-01 / C-가전-04 / K-세탁기-03 처럼 문항마다 정해진 값. 매칭 열쇠입니다.'],
+      ['유형','불량 · 변심 · 상품 · 기타 넷 중 하나. 다른 값이면 그 행은 건너뜁니다.'],
+      ['문항','사람이 읽기 위한 참고용. 매칭에는 쓰지 않습니다(문구가 바뀌어도 문항ID로 찾습니다).'],
+      ['답변','비어 있으면 «미회신» 으로 보고 건너뜁니다. 나중에 채워서 다시 올리면 됩니다.'],
+      [''],
+      ['★ 같은 파일을 여러 번 올려도 안전합니다. 이미 있는 답변은 덮어쓰고, 없던 것만 새로 넣습니다.'],
+      ['★ 이 파일에 없는 기존 Q&A 는 건드리지 않습니다.'],
+    ]),'작성안내');
+    XLSX.writeFile(wb,'FAQ_답변_업로드_양식.xlsx');
+  };
+
+  // 파일을 읽어 «무엇이 어떻게 바뀌는지» 를 계산한다. 여기서는 아무것도 쓰지 않는다.
+  // ★ 병합을 미리보기 단계에서 «실제로» 돌려 결과를 들고 있는다. 확정 버튼은 그것을
+  //   그대로 저장만 한다 — 그래야 미리보기에 보인 숫자와 저장되는 내용이 어긋날 수 없다.
+  const handleFaqUpload=async(e)=>{
+    const file=e.target.files?.[0]; if(!file) return;
+    e.target.value='';                       // 같은 파일을 다시 골라도 onChange 가 돌게
+    setFaqBusy('읽는 중'); setUploadMsg(''); setFaqPreview(null);
+    try{
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      const missing=FAQ_UPLOAD_COLS.filter(c=>!(raw.length&&c in raw[0]));
+      if(!raw.length) throw new Error('빈 파일입니다.');
+      if(missing.length) throw new Error('열이 없습니다: '+missing.join(', ')+'\n양식 다운로드로 받은 파일을 쓰세요.');
+
+      const {valid,skipped}=parseFaqUploadFile(raw);
+      const errors=skipped.filter(s=>s.reason!=='no_answer');
+      const noAnswer=skipped.filter(s=>s.reason==='no_answer').length;
+
+      // 상품코드로 묶는다 — 상품 하나당 병합을 한 번만 돌린다.
+      const byCode={};
+      valid.forEach(v=>{ (byCode[v.productCode]=byCode[v.productCode]||[]).push(v); });
+      const codes=Object.keys(byCode);
+
+      // 기존 값 조회. 200개씩 나눈다 — 이 저장소가 이미 쓰는 크기다(URL 길이 한계).
+      const BATCH=200;
+      const found={};
+      for(let i=0;i<codes.length;i+=BATCH){
+        const chunk=codes.slice(i,i+BATCH);
+        const{data,error}=await sb.from('products')
+          .select('id,product_code,product_name,cs_info,cs_faq_map').in('product_code',chunk);
+        if(error) throw new Error('상품 조회 실패: '+error.message);
+        (data||[]).forEach(p=>{ found[p.product_code]=p; });
+        setFaqProgress({done:Math.min(i+BATCH,codes.length),total:codes.length});
+      }
+
+      const plans=[]; let added=0,updated=0,moved=0,unchanged=0;
+      codes.forEach(code=>{
+        const p=found[code];
+        if(!p){
+          // 없는 상품코드는 저장하지 않는다. 조용히 넘어가면 «올렸는데 왜 없지» 가 된다.
+          byCode[code].forEach(v=>errors.push({row:v.row,reason:'no_product',
+            detail:'존재하지 않는 상품코드',productCode:code,faqId:v.faqId}));
+          return;
+        }
+        const r=mergeFaqAnswers(p.cs_info||'',p.cs_faq_map||{},byCode[code],parseCs);
+        r.skipped.forEach(s=>errors.push(s));
+        added+=r.added; updated+=r.updated; moved+=r.moved; unchanged+=r.unchanged;
+        plans.push({id:p.id,code,name:p.product_name||'',
+          csInfo:r.csInfo,faqMap:r.faqMap,
+          added:r.added,updated:r.updated,moved:r.moved,unchanged:r.unchanged,
+          changed:(r.added+r.updated)>0});
+      });
+
+      setFaqPreview({fileName:file.name,plans,errors,noAnswer,
+        totalRows:raw.length,products:plans.length,
+        added,updated,moved,unchanged});
+      setFaqOpenCodes(new Set());
+    }catch(err){
+      setUploadMsg('❌ '+err.message);
+    }
+    setFaqBusy(''); setFaqProgress({done:0,total:0});
+  };
+
+  // 미리보기에서 계산해 둔 것을 «그대로» 저장한다.
+  // ★ 건별로 쓴다. 하나가 실패해도 이미 저장된 것은 그대로 둔다(전체 롤백 안 함) —
+  //   수천 건 중 하나 때문에 전부 되돌리면 다시 올리는 비용이 더 크다.
+  const confirmFaqUpload=async()=>{
+    if(!faqPreview) return;
+    const targets=faqPreview.plans.filter(p=>p.changed);
+    setFaqBusy('저장 중'); setFaqProgress({done:0,total:targets.length});
+    let ok=0; const failed=[];
+    for(let i=0;i<targets.length;i++){
+      const t=targets[i];
+      const{error}=await sb.from('products')
+        .update({cs_info:t.csInfo,cs_faq_map:t.faqMap}).eq('id',t.id);
+      if(error) failed.push({code:t.code,message:error.message}); else ok++;
+      setFaqProgress({done:i+1,total:targets.length});
+    }
+    setFaqBusy(''); setFaqPreview(null); setFaqProgress({done:0,total:0});
+    setUploadMsg(failed.length
+      ? '⚠️ '+ok+'개 상품 저장 · '+failed.length+'개 실패 ('+failed.slice(0,3).map(f=>f.code).join(', ')+(failed.length>3?' 외':'')+')'
+      : '✅ '+ok+'개 상품에 FAQ 답변을 반영했습니다.');
+    load(page,search,searchField,cafeFilter);
   };
 
   const requiredFields=[
@@ -3964,6 +4087,18 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
             {/* 엑셀 일괄 업로드 (하단) */}
             <div style={{borderTop:'1px solid var(--border)',paddingTop:20,marginTop:4}}>
               <div className="entry-section-title">엑셀 일괄 업로드</div>
+              {/* ★ 양식 선택만 새로 넣는다. 아래 «상품 정보» 쪽 상자는 한 줄도 안 바꿨다. */}
+              <div style={{display:'flex',gap:6,marginBottom:10}}>
+                {[['A','상품 정보','상품·배송·옵션을 한 번에 올립니다'],
+                  ['B','FAQ 답변','공급사에게 받은 FAQ 답변을 «기존 것을 지우지 않고» 채웁니다']].map(([k,label,tip])=>(
+                  <button key={k} onClick={()=>{setFormKind(k);setUploadMsg('');setFaqPreview(null);}} title={tip}
+                    style={{padding:'7px 16px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',
+                      background:formKind===k?'var(--primary)':'transparent',
+                      color:formKind===k?'#fff':'var(--sub)',
+                      border:'1px solid '+(formKind===k?'var(--primary)':'var(--border)')}}>{label}</button>
+                ))}
+              </div>
+              {formKind==='A'?(
               <div style={{display:'flex',gap:12,alignItems:'flex-start',padding:'16px',background:'var(--bg)',border:'1px dashed var(--border)',borderRadius:10,flexWrap:'wrap'}}>
                 <div style={{flex:1,fontSize:11,color:'var(--sub)',lineHeight:2}}>
                   카페24에서 다운로드한 상품 엑셀 파일을 그대로 업로드하세요.<br/>
@@ -3977,7 +4112,27 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                   <button className="btn-template" onClick={downloadTemplate} style={{width:'100%'}}>⬇ 양식 다운로드</button>
                 </div>
               </div>
-              {uploadMsg&&<div className={uploadMsg.startsWith('✅')?'success-msg':'error-msg'} style={{marginTop:8}}>{uploadMsg}</div>}
+              ):(
+              <div style={{display:'flex',gap:12,alignItems:'flex-start',padding:'16px',background:'var(--bg)',border:'1px dashed var(--border)',borderRadius:10,flexWrap:'wrap'}}>
+                <div style={{flex:1,fontSize:11,color:'var(--sub)',lineHeight:2}}>
+                  공급사에게 받은 <b style={{color:'var(--text)'}}>FAQ 답변</b>을 상품별로 채웁니다. 열은 <b style={{color:'var(--text)'}}>상품코드 · 문항ID · 유형 · 문항 · 답변</b> 다섯입니다.<br/>
+                  <span>이미 있는 답변은 갱신하고 없던 것만 새로 넣습니다. <b style={{color:'var(--text)'}}>이 파일에 없는 기존 Q&A 는 건드리지 않습니다.</b></span><br/>
+                  <span style={{color:'var(--accent)'}}>※ 여러 번 나눠서 올려도 됩니다. 답변이 빈 행은 «미회신» 으로 보고 건너뜁니다.</span>
+                </div>
+                <div style={{display:'flex',gap:8,flexDirection:'column',alignItems:'flex-end',minWidth:160}}>
+                  <button className="btn-upload" onClick={()=>faqFileRef.current?.click()} disabled={!!faqBusy}
+                    style={{width:'100%',color:'#fff',fontWeight:700}}>{faqBusy||'📂 파일 업로드'}</button>
+                  <input ref={faqFileRef} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={handleFaqUpload}/>
+                  <button className="btn-template" onClick={downloadFaqTemplate} style={{width:'100%'}}>⬇ 양식 다운로드</button>
+                </div>
+              </div>
+              )}
+              {faqBusy&&faqProgress.total>0&&(
+                <div style={{marginTop:8,fontSize:12,color:'var(--sub)'}}>
+                  {faqBusy} {faqProgress.done.toLocaleString()} / {faqProgress.total.toLocaleString()}
+                </div>
+              )}
+              {uploadMsg&&<div className={uploadMsg.startsWith('✅')?'success-msg':'error-msg'} style={{marginTop:8,whiteSpace:'pre-wrap'}}>{uploadMsg}</div>}
             </div>
           </div>
         </div>
@@ -4340,6 +4495,97 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               <button onClick={()=>{ if(migRunning){ if(!confirm('진행 중입니다. 정말 닫으시겠습니까? 일부 데이터만 이전될 수 있습니다.')) return; } setMigModal(false); }}
                 style={{padding:'9px 18px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--sub)',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
                 {migRunning?'닫기':'취소'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FAQ 답변 업로드 — 확정 전 미리보기. 여기까지는 아무것도 저장되지 않았다. */}
+      {faqPreview&&(
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}}
+          onClick={e=>{if(e.target===e.currentTarget&&!faqBusy)setFaqPreview(null);}}>
+          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:16,padding:26,width:'95%',maxWidth:760,maxHeight:'85vh',overflowY:'auto'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+              <div style={{fontSize:17,fontWeight:700}}>FAQ 답변 업로드 확인</div>
+              <button onClick={()=>{if(!faqBusy)setFaqPreview(null);}} style={{background:'none',border:'none',color:'var(--sub)',fontSize:20,cursor:'pointer',lineHeight:1}}>✕</button>
+            </div>
+            <div style={{fontSize:12,color:'var(--sub)',marginBottom:16}}>
+              {faqPreview.fileName} · 총 {faqPreview.totalRows.toLocaleString()}행
+              <b style={{color:'var(--accent)',marginLeft:8}}>아직 저장되지 않았습니다</b>
+            </div>
+
+            <div style={{fontSize:11,fontWeight:700,color:'var(--sub)',letterSpacing:'.06em',margin:'0 0 10px',padding:'6px 10px',background:'rgba(42,71,141,.08)',borderRadius:6}}>처리 예정</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',gap:8,marginBottom:16}}>
+              {[['대상 상품',faqPreview.products,'var(--text)'],
+                ['신규 추가',faqPreview.added,'#22d3a0'],
+                ['기존 갱신',faqPreview.updated,'#F6AD09'],
+                ['유형 이동',faqPreview.moved,'#78AAFF'],
+                ['그대로',faqPreview.unchanged,'var(--sub)'],
+                ['미회신 건너뜀',faqPreview.noAnswer,'var(--sub)'],
+                ['오류',faqPreview.errors.length,faqPreview.errors.length?'var(--red)':'var(--sub)']].map(([label,n,c])=>(
+                <div key={label} style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px'}}>
+                  <div style={{fontSize:10,color:'var(--sub)',marginBottom:3}}>{label}</div>
+                  <div style={{fontSize:18,fontWeight:700,color:c}}>{Number(n||0).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+            {/* ★ «그대로» 를 갱신과 나눠 센다. 같은 파일을 다시 올렸을 때 «갱신 318건» 으로
+                보이면 사람은 318건이 바뀐다고 읽는다. */}
+
+            {faqPreview.errors.length>0&&(
+              <>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--red)',letterSpacing:'.06em',margin:'0 0 8px',padding:'6px 10px',background:'rgba(248,113,113,.10)',borderRadius:6}}>오류 상세 — 이 행들은 저장되지 않습니다</div>
+                <div style={{maxHeight:150,overflowY:'auto',marginBottom:16,fontSize:12}}>
+                  {faqPreview.errors.slice(0,200).map((e,i)=>(
+                    <div key={i} style={{display:'flex',gap:10,padding:'4px 8px',borderBottom:'1px solid var(--border)'}}>
+                      <span style={{color:'var(--sub)',width:56,flexShrink:0}}>행 {e.row}</span>
+                      <span style={{color:'var(--sub)',width:110,flexShrink:0,fontFamily:'monospace',fontSize:11}}>{e.productCode||'(공백)'}</span>
+                      <span style={{color:'var(--text)'}}>{e.detail}</span>
+                    </div>
+                  ))}
+                  {faqPreview.errors.length>200&&<div style={{padding:'6px 8px',color:'var(--sub)'}}>… 외 {faqPreview.errors.length-200}건</div>}
+                </div>
+              </>
+            )}
+
+            <div style={{fontSize:11,fontWeight:700,color:'var(--sub)',letterSpacing:'.06em',margin:'0 0 8px',padding:'6px 10px',background:'rgba(42,71,141,.08)',borderRadius:6}}>상품별 변경 내역</div>
+            <div style={{maxHeight:220,overflowY:'auto',marginBottom:18,fontSize:12}}>
+              {faqPreview.plans.length===0&&<div style={{padding:12,color:'var(--sub)'}}>바뀔 상품이 없습니다.</div>}
+              {faqPreview.plans.map(p=>{
+                const open=faqOpenCodes.has(p.code);
+                return (
+                  <div key={p.code} style={{borderBottom:'1px solid var(--border)'}}>
+                    <div onClick={()=>setFaqOpenCodes(s=>{const n=new Set(s);n.has(p.code)?n.delete(p.code):n.add(p.code);return n;})}
+                      style={{display:'flex',gap:10,alignItems:'center',padding:'6px 8px',cursor:'pointer'}}>
+                      <span style={{color:'var(--sub)',width:12}}>{open?'▾':'▸'}</span>
+                      <span style={{fontFamily:'monospace',fontSize:11,color:'#8FA8D0',width:110,flexShrink:0}}>{p.code}</span>
+                      <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+                      <span style={{color:'#22d3a0',flexShrink:0}}>신규 {p.added}</span>
+                      <span style={{color:'#F6AD09',flexShrink:0}}>갱신 {p.updated}</span>
+                      {p.unchanged>0&&<span style={{color:'var(--sub)',flexShrink:0}}>그대로 {p.unchanged}</span>}
+                    </div>
+                    {open&&(
+                      <pre style={{margin:0,padding:'8px 12px 12px 30px',background:'var(--bg)',color:'var(--sub)',fontSize:11,whiteSpace:'pre-wrap',maxHeight:220,overflowY:'auto'}}>{p.csInfo}</pre>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {faqBusy==='저장 중'&&(
+              <div style={{fontSize:12,color:'var(--accent)',marginBottom:10}}>
+                저장 중 {faqProgress.done.toLocaleString()} / {faqProgress.total.toLocaleString()} — 창을 닫지 마세요.
+              </div>
+            )}
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+              <button onClick={()=>setFaqPreview(null)} disabled={!!faqBusy}
+                style={{padding:'9px 18px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--sub)',fontSize:13,cursor:faqBusy?'default':'pointer',fontFamily:'inherit'}}>취소</button>
+              <button onClick={confirmFaqUpload} disabled={!!faqBusy||faqPreview.plans.filter(p=>p.changed).length===0}
+                style={{padding:'9px 22px',background:'var(--primary)',border:'none',borderRadius:8,color:'#fff',fontSize:13,fontWeight:700,
+                  cursor:(faqBusy||faqPreview.plans.filter(p=>p.changed).length===0)?'default':'pointer',fontFamily:'inherit',
+                  opacity:(faqBusy||faqPreview.plans.filter(p=>p.changed).length===0)?.5:1}}>
+                확정 업로드 ({faqPreview.plans.filter(p=>p.changed).length}개 상품)
               </button>
             </div>
           </div>
