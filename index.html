@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826q_account_page -->
+<!-- (2026-08-26) 계정 정보를 «창» 에서 «화면» 으로 바꾸고 상품 관리 우측을 정리했다(제니 지시). ①좌측 하단 계정 정보를 누르면 모달이 아니라 화면(page=account)이 열린다. 상단이 «계정»(이메일·권한·운영 실패 알림), 하단이 «메뉴별 설정» 이다. 창 크기로는 메뉴별 설정이 계속 붙을 자리를 감당할 수 없다. 사이드바의 그 자리도 지금 보고 있는 화면이면 active 로 보이게 했다. ②«상품 정보 전체 삭제» 를 상품 관리 우측에서 이 «메뉴별 설정» 으로 옮겼다. ★ 되돌릴 수 없는 것은 매일 쓰는 자리에 두지 않는다 — 상품 목록을 보다가 잘못 누를 수 있는 자리에 있었다. 확인을 두 번 받는 것(confirm + 「전체삭제」 타이핑)은 옮기기 전 그대로다. 무엇이 사라지는지도 버튼 옆에 적었다 — CS 정보·메모·이미지가 함께 사라지고, 카페24 동기화가 상품을 다시 만들어도 사람이 쌓은 값은 돌아오지 않는다. ③«Zendesk CS 가져오기»·«이미지 Storage 이전» 버튼을 비노출했다(더 이상 쓰지 않는다). 기능 자체는 남아 있고 여는 길만 없앴다 — 되살리려면 버튼만 되돌리면 된다. ④우측 상단은 KPI 카드 셋만 남고 크기를 10% 키웠다(숫자 18→20px · 이름 10→11px · 부연 9→10px · 여백 8/16→9/18px). 총 상품 카드의 «경고 상태» 는 테두리가 2px 로 굵어지는 만큼 여백을 1px 줄여 크기를 유지하는 규칙을 그대로 지켰다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826p_tab_rename -->
 <!-- (2026-08-26) 업로드 탭 이름을 제니가 정한 말로 바꿨다 — CS 정보·메모 → 「일괄 등록(덮어쓰기)」, FAQ 답변 → 「추가 등록」, 문항 마스터 → 「FAQ 문항 코드」. 이름에 «덮어쓰기»·«추가» 가 들어가니 무엇을 하는 양식인지 고르기 전에 알 수 있다. ★ 이름을 부르는 곳이 탭 버튼 말고도 여럿이라 열세 자리를 함께 고쳤다 — 양식이 어긋났을 때의 안내(「위의 [추가 등록] 을 눌러 그쪽에서 올리세요」), 상자 설명, 양식 다운로드의 작성안내 시트, 확인 창 제목 넷. 한 곳만 고치면 「[FAQ 답변] 을 누르세요」 라고 하는데 그런 탭이 없는 상태가 된다. ★ 파일 위쪽 변경이력 주석의 옛 이름은 그날의 기록이라 그대로 둔다. 겸해서 덮어쓰기 경고 문구를 제니가 준 문장으로 바꿨다 — 「업로드 파일로 전체 변경이 됩니다. FAQ를 추가하고 싶은 경우는 「추가 등록」 양식으로 업로드 하세요.」 그전 문구는 색인 초기화까지 설명하느라 길었는데, 사람이 확정 버튼 앞에서 읽어야 할 것은 «전체 변경» 과 «추가하려면 저쪽» 둘이다. 동작은 한 줄도 바뀌지 않았다. -->
 <!-- v20260826o_form_a_rowwise -->
@@ -2997,16 +2999,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     }
     setLoading(false);
   };
-  const deleteAll=async()=>{
-    if(!window.confirm('⚠️ 등록된 상품 정보 전체를 삭제합니다.\n이 작업은 되돌릴 수 없습니다.\n\n정말 삭제하시겠습니까?')) return;
-    const confirm2=window.prompt('전체 삭제를 확인하려면 "전체삭제" 를 입력하세요.');
-    if(confirm2!=='전체삭제'){toast('취소되었습니다.','info');return;}
-    setLoading(true);
-    const{error}=await sb.from('products').delete().neq('product_code','__never__').gt('created_at','1900-01-01');
-    if(error){toast('삭제 실패: '+error.message);}
-    else{toast('전체 삭제 완료.');}
-    setSearch(''); setPage(1); setCafeFilter('all'); load(1,'','all','all');
-  };
+  // ★ «상품 정보 전체 삭제» 는 계정 정보·설정 화면의 «메뉴별 설정» 으로 옮겼다
+  //   (2026-08-26 제니 지시). 되돌릴 수 없는 것은 매일 쓰는 자리에 두지 않는다.
   useEffect(()=>{
     // 검색어 변경 시: 즉시 loading 표시(깜빡임 방지) + 체크박스 전체 해제 + 300ms debounce 조회
     setLoading(true);
@@ -3658,15 +3652,15 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
         </div>
         <div style={{display:'flex',alignItems:'flex-start',gap:12}}>
           <div style={{display:'flex',gap:12}}>
-            <div onClick={canManageSupplier?(()=>setSupModal(true)):undefined} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'8px 16px',textAlign:'center',cursor:canManageSupplier?'pointer':'default',transition:'all .15s'}}
+            <div onClick={canManageSupplier?(()=>setSupModal(true)):undefined} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 18px',textAlign:'center',cursor:canManageSupplier?'pointer':'default',transition:'all .15s'}}
               onMouseEnter={canManageSupplier?(e)=>{e.currentTarget.style.borderColor='#2A478D';e.currentTarget.style.background='#1a2e55';}:undefined}
               onMouseLeave={canManageSupplier?(e)=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='var(--card)';}:undefined}>
               {/* ★ 세는 기준을 «상품이 있는 공급사» 에서 «거래중인 공급사» 로 바꿨다(제니 지시).
                   옛 문구 「상품 정보가 있는 총 공급사 수만 가져옵니다」 는 «상품 정보» 를
                   «상품 데이터» 로도 «CS 정보» 로도 읽을 수 있어 뜻이 흐렸다. */}
-              <div style={{fontSize:10,color:'var(--sub)',marginBottom:2}}>거래중 총 공급사{canManageSupplier&&<span style={{color:'#F6AD09'}}> ⚙</span>}</div>
-              <div style={{fontSize:18,fontWeight:700,color:'var(--accent)'}}>{totalCount.suppliers===null?'—':totalCount.suppliers}<span style={{fontSize:11,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
-              <div style={{fontSize:9,color:'var(--sub)',marginTop:2,lineHeight:1.3}}>거래중인 공급사의 수를 가져옵니다.</div>
+              <div style={{fontSize:11,color:'var(--sub)',marginBottom:2}}>거래중 총 공급사{canManageSupplier&&<span style={{color:'#F6AD09'}}> ⚙</span>}</div>
+              <div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{totalCount.suppliers===null?'—':totalCount.suppliers}<span style={{fontSize:12,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
+              <div style={{fontSize:10,color:'var(--sub)',marginTop:2,lineHeight:1.3}}>거래중인 공급사의 수를 가져옵니다.</div>
             </div>
             {(()=>{
               // ── 총 상품 카드 ────────────────────────────────────────────────
@@ -3683,34 +3677,26 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               return (
                 <div className={tone?'alert-pulse':undefined}
                   title={tone?'상품 동기화가 정상적으로 돌지 않고 있습니다.':undefined}
-                  style={{background:bg,border:(tone?'2px':'1px')+' solid '+bd,borderRadius:8,padding:tone?'7px 15px':'8px 16px',textAlign:'center',maxWidth:240,'--alert-glow':glow}}>
-                  <div style={{fontSize:10,color:tone?nc:'var(--sub)',marginBottom:2,fontWeight:tone?700:400}}>{tone?'⚠ 총 상품':'총 상품'}</div>
-                  <div style={{fontSize:18,fontWeight:700,color:'var(--accent)'}}>{totalCount.products.toLocaleString()}<span style={{fontSize:11,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
-                  {a&&a.note&&<div style={{fontSize:tone?11:9,color:nc,marginTop:3,lineHeight:1.35,fontWeight:tone?700:400}}>{a.note}</div>}
+                  style={{background:bg,border:(tone?'2px':'1px')+' solid '+bd,borderRadius:8,padding:tone?'8px 17px':'9px 18px',textAlign:'center',maxWidth:264,'--alert-glow':glow}}>
+                  <div style={{fontSize:11,color:tone?nc:'var(--sub)',marginBottom:2,fontWeight:tone?700:400}}>{tone?'⚠ 총 상품':'총 상품'}</div>
+                  <div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{totalCount.products.toLocaleString()}<span style={{fontSize:12,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
+                  {a&&a.note&&<div style={{fontSize:tone?12:10,color:nc,marginTop:3,lineHeight:1.35,fontWeight:tone?700:400}}>{a.note}</div>}
                 </div>
               );
             })()}
             {isMaster&&(
-              <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'8px 16px',textAlign:'center'}}>
-                <div style={{fontSize:10,color:'var(--sub)',marginBottom:2}}>CS 정보 보유</div>
-                <div style={{fontSize:18,fontWeight:700,color:'var(--yellow)'}}>{totalCount.withCs.toLocaleString()}<span style={{fontSize:11,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
-                <div style={{fontSize:9,color:'var(--sub)',marginTop:2}}>{totalCount.products>0?((totalCount.withCs/totalCount.products)*100).toFixed(1):0}%</div>
+              <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 18px',textAlign:'center'}}>
+                <div style={{fontSize:11,color:'var(--sub)',marginBottom:2}}>CS 정보 보유</div>
+                <div style={{fontSize:20,fontWeight:700,color:'var(--yellow)'}}>{totalCount.withCs.toLocaleString()}<span style={{fontSize:12,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
+                <div style={{fontSize:10,color:'var(--sub)',marginTop:2}}>{totalCount.products>0?((totalCount.withCs/totalCount.products)*100).toFixed(1):0}%</div>
               </div>
             )}
           </div>
-          {isMaster&&(
-            <div style={{display:'flex',flexDirection:'column',gap:6,minWidth:180}}>
-              <button onClick={deleteAll} style={{width:'100%',padding:'8px 14px',background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,color:'#f87171',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>🗑 상품 정보 전체 삭제</button>
-              <button
-                onClick={()=>{setZdModal(true);setZdStatus('');setZdProgress(0);}}
-                style={{width:'100%',padding:'8px 14px',background:'rgba(246,173,9,.1)',border:'1px solid rgba(246,173,9,.4)',borderRadius:8,color:'var(--yellow)',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
-                📥 Zendesk CS 가져오기</button>
-              <button
-                onClick={()=>{setMigModal(true);setMigStatus('');setMigProgress({done:0,total:0,migrated:0,failed:0});}}
-                style={{width:'100%',padding:'8px 14px',background:'rgba(34,211,160,.1)',border:'1px solid rgba(34,211,160,.4)',borderRadius:8,color:'#22d3a0',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
-                ☁️ 이미지 Storage 이전</button>
-            </div>
-          )}
+          {/* ★ 우측 버튼 셋을 걷어냈다(제니 지시 2026-08-26).
+              · 상품 정보 전체 삭제 → 계정 정보·설정 화면의 «메뉴별 설정» 으로 옮겼다.
+                되돌릴 수 없는 것은 매일 쓰는 자리에 두지 않는다.
+              · Zendesk CS 가져오기 · 이미지 Storage 이전 → 더 이상 쓰지 않아 비노출.
+                기능 자체는 남아 있지만 여는 길이 없다. 되살리려면 여기에 버튼만 되돌리면 된다. */}
         </div>
       </div>
       {/* ── 동기화 경고 띠 ────────────────────────────────────────────────────
@@ -16540,7 +16526,7 @@ function RoleTag() {
 //   ★ 비워 두거나 체크를 끄면 «안 받겠다» 는 뜻이고 그것도 정당한 선택이다.
 //     다만 운영은 아무도 안 받으면 폴백 번호로 나가고 워크플로에 경고가 남는다.
 // ─────────────────────────────────────────────────────────────────────────────
-function AccountModal({session,role,onClose}){
+function AccountPage({session,role}){
   const isMaster=role==='master';
   const [phone,setPhone]=useState('');
   const [enabled,setEnabled]=useState(false);
@@ -16577,24 +16563,37 @@ function AccountModal({session,role,onClose}){
     setSaving(false);
     if(error){sbFail('알림 설정 저장',error,{write:true});return;}
     toast(enabled&&digits?'저장했습니다. 이 번호로 운영 실패 알림이 갑니다.':'저장했습니다. 알림을 받지 않습니다.','info');
-    onClose();
+  };
+
+  // ★ «상품 정보 전체 삭제» 를 상품 관리 화면에서 이 화면으로 옮겼다(제니 지시).
+  //   확인을 두 번 받는 것(confirm + «전체삭제» 타이핑)은 옮기기 전 그대로다.
+  const [busy,setBusy]=useState(false);
+  const deleteAllProducts=async()=>{
+    if(!window.confirm('⚠️ 등록된 상품 정보 전체를 삭제합니다.\n이 작업은 되돌릴 수 없습니다.\n\n정말 삭제하시겠습니까?')) return;
+    const ok=window.prompt('전체 삭제를 확인하려면 "전체삭제" 를 입력하세요.');
+    if(ok!=='전체삭제'){toast('취소되었습니다.','info');return;}
+    setBusy(true);
+    const{error}=await sb.from('products').delete().neq('product_code','__never__').gt('created_at','1900-01-01');
+    setBusy(false);
+    if(error){toast('삭제 실패: '+error.message);}
+    else{toast('전체 삭제 완료.');}
   };
 
   const label={master:'MASTER',manager:'MANAGER',crew:'CREW'}[role]||'UNKNOWN';
   const row={display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid var(--border)'};
 
   return (
-    <div onClick={onClose} style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,.7)',zIndex:1950,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,width:440,maxWidth:'94vw',maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
-        <div style={{padding:'16px 22px',background:'#162244',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div>
-            <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>계정 정보</div>
-            <div style={{fontSize:11,color:'var(--sub)',marginTop:3}}>{isMaster?'운영 실패 알림을 받을 연락처를 설정합니다':'로그인 계정 정보'}</div>
-          </div>
-          <button onClick={onClose} style={{background:'none',border:'none',color:'var(--sub)',fontSize:20,cursor:'pointer'}}>✕</button>
+    <div>
+      <div className="section" style={{paddingBottom:0}}>
+        <h1 style={{fontSize:18,fontWeight:700,color:'var(--text)',margin:0,marginBottom:4}}>계정 정보 · 설정</h1>
+        <div style={{fontSize:12,color:'var(--sub)',marginBottom:18}}>
+          {isMaster?'로그인 계정과 운영 알림, 그리고 메뉴별 설정을 여기서 관리합니다':'로그인 계정 정보'}
         </div>
-
-        <div style={{padding:'14px 22px 18px',overflowY:'auto'}}>
+      </div>
+      <div className="section" style={{paddingTop:0,maxWidth:620}}>
+        <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden'}}>
+        <div style={{padding:'12px 20px',background:'#162244',borderBottom:'1px solid var(--border)',fontSize:13,fontWeight:700,color:'#fff'}}>계정</div>
+        <div style={{padding:'14px 20px 18px'}}>
           <div style={row}>
             <span style={{fontSize:12,color:'var(--sub)'}}>이메일</span>
             <span style={{fontSize:12,color:'var(--text)',wordBreak:'break-all',textAlign:'right'}}>{session.user.email}</span>
@@ -16631,12 +16630,35 @@ function AccountModal({session,role,onClose}){
           ))}
         </div>
 
-        <div style={{padding:'12px 22px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8}}>
-          <button onClick={onClose} style={{padding:'8px 16px',background:'none',border:'1px solid var(--border)',borderRadius:8,color:'var(--sub)',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>닫기</button>
-          {isMaster&&<button onClick={save} disabled={saving||loading}
-            style={{padding:'8px 18px',background:saving?'var(--border)':'var(--primary)',border:'none',borderRadius:8,color:'#fff',fontSize:12,fontWeight:600,cursor:saving?'default':'pointer',fontFamily:'inherit'}}>
-            {saving?'저장 중…':'저장'}</button>}
+        {isMaster&&(
+          <div style={{padding:'12px 20px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end'}}>
+            <button onClick={save} disabled={saving||loading}
+              style={{padding:'8px 18px',background:saving?'var(--border)':'var(--primary)',border:'none',borderRadius:8,color:'#fff',fontSize:12,fontWeight:600,cursor:saving?'default':'pointer',fontFamily:'inherit'}}>
+              {saving?'저장 중…':'저장'}</button>
+          </div>
+        )}
         </div>
+
+        {/* ── 메뉴별 설정 ────────────────────────────────────────────────────
+            메뉴 화면에 두면 «매일 쓰는 자리» 에 위험한 버튼이 섞인다. 되돌릴 수
+            없는 것은 일부러 찾아와야 하는 곳에 둔다(제니 지시 2026-08-26). */}
+        {isMaster&&(
+          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',marginTop:18}}>
+            <div style={{padding:'12px 20px',background:'#162244',borderBottom:'1px solid var(--border)',fontSize:13,fontWeight:700,color:'#fff'}}>메뉴별 설정</div>
+            <div style={{padding:'16px 20px'}}>
+              <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:10}}>상품 관리 · 상품 정보</div>
+              <div style={{display:'flex',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}>
+                <div style={{flex:1,minWidth:220,fontSize:11,color:'var(--sub)',lineHeight:1.7}}>
+                  등록된 상품 정보를 <b style={{color:'#f87171'}}>전부 지웁니다.</b> CS 정보·메모·이미지도 함께 사라지며 되돌릴 수 없습니다.
+                  <br/>카페24 동기화가 상품을 다시 만들지만 <b style={{color:'var(--text)'}}>사람이 쌓은 값은 돌아오지 않습니다.</b>
+                </div>
+                <button onClick={deleteAllProducts} disabled={busy}
+                  style={{padding:'9px 16px',background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.4)',borderRadius:8,color:'#f87171',fontSize:12,fontWeight:600,cursor:busy?'default':'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
+                  {busy?'삭제 중…':'🗑 상품 정보 전체 삭제'}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -16650,7 +16672,6 @@ function App() {
   const [meError,setMeError]=useState(null); const [meRetry,setMeRetry]=useState(0);
   const role=me?.console_role||null;
   // 좌측 하단 계정 정보를 누르면 열리는 창. 연락처·알림 수신을 여기서 고친다.
-  const [acctModal,setAcctModal]=useState(false);
   const isMaster = role==='master';
   const isManager= role==='manager';
   const isCrew   = role==='crew';
@@ -16912,8 +16933,10 @@ function App() {
               </div>
             </>
           )}
-          <div className="user-info" onClick={()=>setAcctModal(true)}
-            title="계정 정보 · 알림 설정">
+          {/* ★ 창이 아니라 «화면» 으로 간다(제니 지시 2026-08-26). 계정 정보 밑에
+              메뉴별 설정이 붙을 자리라 창 크기로는 감당이 안 된다. */}
+          <div className={"user-info"+(page==='account'?' active':'')} onClick={()=>navigateTo('account')}
+            title="계정 정보 · 설정">
             <div className="user-avatar">{session.user.email?.[0]?.toUpperCase()}</div>
             <div style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:3}}>
               <div className="user-email">{session.user.email}</div>
@@ -16932,12 +16955,12 @@ function App() {
           <button className="btn-logout" onClick={()=>sb.auth.signOut()}>로그아웃</button>
         </div>
       </div>
-      {acctModal&&<AccountModal session={session} role={role} onClose={()=>setAcctModal(false)}/>}
       <div className="main">
         {/* 화면 하나가 죽어도 콘솔 전체는 살아남는다. key={page} 라 메뉴를 옮기면 오류 상태도 함께 지워진다. */}
         <PageErrorBoundary key={page} label={PAGE_LABELS[page]}>
         {page==='dashboard'&&<DashboardPage/>}
         {page==='entry'&&(isMaster||isManager)&&<EntryPage editDate={editDate} onSaved={afterSave}/>}
+        {page==='account'&&<AccountPage session={session} role={role}/>}
         {page==='products'&&<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
         {page==='suppliers'&&<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
         {page==='delays'&&(isMaster||isManager)&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
