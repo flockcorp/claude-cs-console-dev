@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826b_status_tag_contrast -->
+<!-- (2026-08-26) 앞 판을 화면에서 보고 둘을 고쳤다(제니 확인). ①「뱃지 글자가 뭉개져 보인다」 — 어두운 사이드바용 색을 흰 배경 표에 그대로 가져다 쓴 것이 원인이다. 연한 빨강 글자(#F87171)를 연한 빨강 바탕(rgba(248,113,113,.16))에 올리면 둘 다 연해서 글자가 바탕에 잠긴다. 사이드바에서는 바탕이 어두워 그 조합이 또렷했지만 여기는 흰 표다. → 흰 배경 규칙으로 바꿨다: «진한 글자 + 연한 바탕 + 같은 계열 테두리»(판매중지 #B42318/#FEE4E2, 미진열 #3A5580/#E4ECF9, 공급사 미사용 #93500A/#FDEBD0). 겸해 글꼴과 크기도 고쳤다 — 뱃지가 상품코드 칸 안에 있는데 그 칸이 monospace 라 한글이 그 글꼴로 떨어져 더 뭉개졌다. 본문 글꼴로 되돌리고 9→10px 로 올렸다. 공급사 관리의 「미사용」 뱃지도 같은 색으로 맞췄다 — 같은 뜻이 화면마다 다른 색이면 안 된다. ②「공급사 관리에서 미사용 뱃지가 확인 안 된다」 — 화면이 아니라 데이터 문제였다. dev DB 의 공급사 상태 칸이 956곳 전부 비어 있었다(2026-08-25 공급사 동기화를 운영에만 적용하고 dev 는 빠뜨렸다). dev 에 적용해 채웠고, 그러자 마켓비·재미월드처럼 use=F·status=P 인 곳이 드러났다. ★ 겸해서 공급사 관리에도 «카페24 상태» 필터를 붙였다(미사용·거래중지 / 정상 / 아직 안 가져옴, 각 개수 표시). 957곳 사이에 흩어진 몇 곳을 필터 없이 찾는 것은 상품 8,700건에서 판매중지를 찾는 것과 같은 문제다. ★ 판정은 supIsOff 한 곳에서만 한다 — 뱃지·필터·개수가 같은 함수를 본다. 세 곳에 따로 적으면 «뱃지는 붙었는데 필터에 안 걸리는» 공급사가 반드시 생긴다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826a_cafe24_product_status -->
 <!-- (2026-08-26) 카페24에서 가져온 «상품 판매·진열 상태» 와 «공급사 거래 상태» 를 화면에 띄웠다(제니 요청). 배경: 수정 동기화 워크플로(cafe24-sync-products-update)가 카페24의 selling·display 를 콘솔에 채우기 시작했는데, 화면에 보여 주는 곳이 없어 «동기화가 무엇을 했는지 알 수가 없다» 는 상태였다. 값이 DB 에만 있으면 없는 것과 같다. ①상품 목록: 상품 코드 «밑» 에 「판매중지」·「미진열」·「공급사 미사용」 뱃지를 단다. ★ 상품명 뒤가 아니라 코드 밑인 이유는 상품명 길이가 제각각이라 뒤에 붙이면 줄마다 뱃지 자리가 달라져 정렬이 무너지기 때문이다(제니 결정). ②상품 상세 창·수정 창 맨 위에 경고 띠. 「이 상품은 카페24에서 '판매중지' 상태입니다」. ★ 맥박(.alert-pulse)은 일부러 안 썼다 — 그건 화면을 열자마자 알아채야 하는 전역 사고(동기화 사망)에 쓰는 것이고, 여기는 이미 그 상품을 열어 본 사람에게 하는 말이다. 아무 데나 달면 정작 사고가 났을 때 그 뜻이 닳는다. ③공급사 관리: 공급사명 «뒤» 에 「미사용」 뱃지. 열을 새로 만들지 않은 이유는 그 표의 grid 열 정의가 세 곳(그룹헤더·컬럼헤더·행)에 똑같이 적혀 있고 minWidth 가 1301 이라, 열 하나를 더하면 셋을 다 고치고 폭을 다시 맞춰야 하기 때문이다(사이드바 M 뱃지에서 겪은 것과 같은 계열). ④목록 등록/수정 날짜 칸에 「맞춤 MM-DD」 한 줄과, 검색줄에 «카페24 상태» 필터(판매중지·미진열·맞춘 것·아직 안 맞춘 것)를 넣었다 — 판매중지 상품은 8,700건 사이에 흩어져 있어 필터가 없으면 어디에 붙었는지 찾을 수 없다. ★★ 상태는 «두 층» 이고 문구를 가른다: 「이 상품이 판매중지」 ≠ 「공급사가 미사용이라 이 상품도 못 판다」. 상품이 판매중이어도 공급사가 미사용이면 못 판다. ★ 판정은 cafe24Status 한 곳에서만 한다 — 목록·상세·수정 창이 각자 계산하면 언젠가 한 곳만 고쳐져 «목록엔 판매중지인데 수정 창은 멀쩡한» 상태가 생긴다(동기화 경고 띠에서 이미 정한 원칙이다). ★ null 은 «아직 안 가져온 것» 이지 «판매중» 이 아니다. 그런 상품에는 아무 표시도 하지 않는다 — 수정 동기화가 아직 그 상품 차례에 닿지 않았을 뿐이다. ★ 선행 조건: tools/products_search_view.sql 을 다시 적용해야 «검색 중에도» 상태 표시와 필터가 산다. 그 뷰는 2026-08-07 에 select p.* 로 만들어져 뒤에 생긴 칸(cafe24_*)을 모른다. 안 해도 검색 자체는 멀쩡하고 검색 중에만 표시가 빠진다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260825i_tag_gap_costnav -->
@@ -2345,16 +2347,22 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const Cafe24Tags=({p})=>{
     const s=cafe24Status(p);
     if(!s||(!s.stopped&&!s.hidden&&!s.supOff)) return null;
-    const tag=(text,fg,bg,tip)=>(
+    // ★ 이 표는 «흰 배경» 이다. 사이드바(어두운 배경)의 뱃지 색을 그대로 가져오면
+    //   연한 글자 + 연한 배경이 되어 글자가 뭉개진다(2026-08-26 제니 제보 — 실제로 그랬다).
+    //   흰 배경에서는 «진한 글자 + 연한 바탕 + 같은 계열 테두리» 라야 또렷하다.
+    // ★ 부모 칸(상품코드)이 monospace 라 그대로 두면 한글이 그 글꼴로 떨어져 더 뭉개진다.
+    //   글꼴을 본문 글꼴로 되돌리고 크기도 9→10px 로 올린다.
+    const tag=(text,fg,bg,bd,tip)=>(
       <span key={text} title={tip}
-        style={{display:'inline-flex',alignItems:'center',fontSize:9,fontWeight:700,lineHeight:1,
-          padding:'3px 5px',borderRadius:3,whiteSpace:'nowrap',color:fg,background:bg}}>{text}</span>
+        style={{display:'inline-flex',alignItems:'center',fontFamily:'inherit',fontSize:10,fontWeight:700,
+          lineHeight:1,padding:'3px 6px',borderRadius:4,whiteSpace:'nowrap',
+          color:fg,background:bg,border:'1px solid '+bd}}>{text}</span>
     );
     return (
-      <div style={{display:'flex',flexWrap:'wrap',gap:3,marginTop:3}}>
-        {s.stopped&&tag('판매중지','#F87171','rgba(248,113,113,.16)','카페24에서 이 상품을 «판매함» 으로 두지 않았습니다')}
-        {s.hidden&&tag('미진열','#8FA8D0','rgba(143,168,208,.18)','카페24에서 이 상품을 «진열함» 으로 두지 않았습니다')}
-        {s.supOff&&tag('공급사 미사용','#F6AD09','rgba(246,173,9,.16)','공급사 '+s.supName+' 가 카페24에서 미사용·거래중지 상태입니다')}
+      <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:4,fontFamily:"'Pretendard','Inter',sans-serif"}}>
+        {s.stopped&&tag('판매중지','#B42318','#FEE4E2','#FDA29B','카페24에서 이 상품을 «판매함» 으로 두지 않았습니다')}
+        {s.hidden&&tag('미진열','#3A5580','#E4ECF9','#B4CCF0','카페24에서 이 상품을 «진열함» 으로 두지 않았습니다')}
+        {s.supOff&&tag('공급사 미사용','#93500A','#FDEBD0','#F0BE72','공급사 '+s.supName+' 가 카페24에서 미사용·거래중지 상태입니다')}
       </div>
     );
   };
@@ -4305,6 +4313,12 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
   const [sortBy,setSortBy]=useState('name');       // name | products_desc | products_asc | unset_first
   const [filterChannel,setFilterChannel]=useState('all'); // all|kakao|nateon|email|none
   const [filterCond,setFilterCond]=useState('all');       // all|unset|<cond>
+  // 카페24 거래 상태로 좁혀 보기. all|off(미사용·거래중지)|on(정상)|unknown(아직 안 가져옴)
+  const [filterCafe,setFilterCafe]=useState('all');
+  // ★ «미사용» 의 정의를 한 곳에 둔다 — 뱃지와 필터와 개수가 같은 함수를 본다.
+  //   세 곳에 따로 적으면 «뱃지는 붙었는데 필터에 안 걸리는» 공급사가 반드시 생긴다.
+  const supIsOff=s=>s.cafe24Use===false||s.cafe24State==='P';
+  const supIsUnknown=s=>s.cafe24Use==null&&!s.cafe24State;
   const [edit,setEdit]=useState({});               // 인라인 편집 임시 상태 {name: {fee,cond,threshold,memo}}
   const [saving,setSaving]=useState(null);
   // CSV 업로드 모달
@@ -4707,8 +4721,17 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
       if(filterCond==='unset') {if(s.cond) return false;}
       else if(s.cond!==filterCond) return false;
     }
+    if(filterCafe==='off'&&!supIsOff(s)) return false;
+    if(filterCafe==='on'&&(supIsOff(s)||supIsUnknown(s))) return false;
+    if(filterCafe==='unknown'&&!supIsUnknown(s)) return false;
     return true;
   });
+  const cafeCounts={
+    all:suppliers.length,
+    off:suppliers.filter(supIsOff).length,
+    on:suppliers.filter(s=>!supIsOff(s)&&!supIsUnknown(s)).length,
+    unknown:suppliers.filter(supIsUnknown).length,
+  };
   const sorted=[...filtered].sort((a,b)=>{
     if(sortBy==='name') return a.name.localeCompare(b.name,'ko');
     if(sortBy==='products_desc') return (productCounts[b.name]||0)-(productCounts[a.name]||0);
@@ -4805,6 +4828,16 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
             <option value="unset">미설정 ({condUnset})</option>
             {SUP_SHIP_CONDS.map(c=><option key={c} value={c}>{c} ({condCounts[c]})</option>)}
           </select>
+          {/* ★ 957곳 사이에 흩어진 «미사용» 공급사를 필터 없이는 찾을 수 없다.
+              개수를 옵션에 붙여, 고르기 전에도 몇 곳인지 보이게 한다. */}
+          <select value={filterCafe} onChange={e=>setFilterCafe(e.target.value)}
+            title="카페24가 알려 준 사용여부·거래상태로 좁혀 봅니다"
+            style={{padding:'8px 10px',background:filterCafe==='all'?'var(--card)':'rgba(246,173,9,.12)',border:'1px solid '+(filterCafe==='all'?'var(--border)':'#F6AD09'),borderRadius:6,color:'var(--text)',fontSize:12,fontFamily:'inherit'}}>
+            <option value="all">카페24 상태: 전체 ({cafeCounts.all})</option>
+            <option value="off">미사용·거래중지 ({cafeCounts.off})</option>
+            <option value="on">정상 ({cafeCounts.on})</option>
+            <option value="unknown">아직 안 가져옴 ({cafeCounts.unknown})</option>
+          </select>
         </div>
 
         {/* 결과 카운트 */}
@@ -4899,15 +4932,17 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                   <span style={{color:'#1A2240',fontWeight:500,flex:'0 1 auto',minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.name}</span>
                   {(()=>{
                     // 사용여부 F 또는 거래상태 P 면 그 공급사 상품은 팔 수 없다.
-                    const off=s.cafe24Use===false||s.cafe24State==='P';
-                    if(!off) return null;
+                    // 판정은 supIsOff 한 곳에서만 한다 — 필터·개수도 같은 함수를 본다.
+                    if(!supIsOff(s)) return null;
                     const why=s.cafe24Use===false
                       ?'카페24에서 «사용함» 이 꺼져 있습니다'
                       :'카페24 거래상태가 «거래중지» 입니다';
+                    // ★ 흰 배경 표라 «진한 글자 + 연한 바탕 + 같은 계열 테두리» 로 둔다.
+                    //   상품 목록 뱃지와 같은 색을 쓴다 — 같은 뜻이 화면마다 다른 색이면 안 된다.
                     return <span title={why}
                       style={{flex:'none',marginLeft:6,display:'inline-flex',alignItems:'center',position:'relative',top:1,
-                        fontSize:9,fontWeight:700,lineHeight:1,padding:'3px 5px',borderRadius:3,whiteSpace:'nowrap',
-                        color:'#B45309',background:'rgba(246,173,9,.22)'}}>미사용</span>;
+                        fontSize:10,fontWeight:700,lineHeight:1,padding:'3px 6px',borderRadius:4,whiteSpace:'nowrap',
+                        color:'#93500A',background:'#FDEBD0',border:'1px solid #F0BE72'}}>미사용</span>;
                   })()}
                 </span>
                 {/* 그룹 내 구분선 (공급사명 ↔ 상품수) */}
