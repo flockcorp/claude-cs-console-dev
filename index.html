@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826j_faq_form_mismatch -->
+<!-- (2026-08-26) 업로드 양식이 어긋났을 때 «그걸» 알리게 했다(제니 제보 — FAQ 답변 파일을 [문항 마스터] 탭에 올렸더니 「문항 문구 누락」 4건만 떴다). 두 업로드 상자가 나란히 있고 생김새가 같아서, 마스터를 올린 뒤 탭을 안 바꾸고 그대로 답변 파일을 올리기 쉽다. 그때 행 단위 오류만 뱉으면 사람은 «파일이 잘못됐다» 고 읽는다 — 실제로는 «탭이 잘못» 이다. ①마스터 업로드에 「답변」 열이 있으면 «이 파일은 FAQ 답변 양식으로 보입니다. [FAQ 답변] 에서 올리세요» 로 멈춘다. ②반대 방향도 잡는다 — 답변 업로드에 「답변」 이 없고 「필수구분」·「적용범위」 가 있으면 «문항 마스터 양식으로 보입니다» 로 멈춘다. ★★ 겸해서 말과 코드가 어긋난 곳을 고쳤다 — 화면과 양식 안내는 «상품코드·문항ID·답변 세 열만 채우면 된다» 고 하는데, 코드는 다섯 열이 모두 «있어야» 통과시켰다. 「유형」·「문항」 은 문항 마스터가 채우므로 그 두 열이 아예 없는 파일도 받는다. 공급사 952곳에 «세 열만» 이라고 안내해 놓고 다섯 열을 요구하면 그 안내가 거짓말이 된다. 양식 다운로드는 다섯 열 그대로 둔다(사람이 문구를 눈으로 보며 채울 수 있어야 한다). 병합 로직은 건드리지 않았다. -->
 <!-- v20260826i_faq_master_view -->
 <!-- (2026-08-26) 문항 마스터를 «확인할 자리» 를 만들었다(제니 질문 — 「등록된 문항 마스터 값을 확인하려면 어떻게 하나」. 확인할 화면이 없었다. 올려 둔 값을 볼 수 없으면 그 표는 있으나 마나다). ①「문항 마스터」 양식 상자에 [📋 등록된 문항 보기] 를 넣었다. 총 문항 수와 유형별 분포, 문항ID·문항·키워드·카테고리·태그로 찾는 검색, 유형 필터, 목록(문항ID·유형·필수·적용범위·문항). ★ 2,580행을 통째로 그리면 창이 무거워지므로 앞 300개만 그리고 «앞 300개만 그립니다» 를 화면에 적는다 — 다 못 보여 준다는 사실을 숨기지 않는다. ②[⬇ 현재 값 내려받기] — 지금 등록된 값을 업로드 양식과 «같은 8열» 로 받는다. 확인만 하는 것보다 «받아서 고쳐 다시 올린다» 가 실제 작업 흐름이라, 받은 파일을 그대로 고쳐 올릴 수 있게 맞췄다. ③업로드 미리보기에 「이 파일에 없는 기존 문항 N개는 그대로 둡니다(지우지 않습니다)」 를 명시했다 — 일부만 추려 올렸을 때 나머지가 사라졌다고 오해하거나, 반대로 지워질 거라 기대하면 둘 다 사고가 된다. 마스터 조회는 1,000행씩 끝까지 받는다. 병합·업로드 로직은 건드리지 않았다. -->
 <!-- v20260826h_faq_master -->
@@ -3211,7 +3213,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   // ── FAQ 답변 업로드(양식 B) ────────────────────────────────────────────────
   // ★ 아래 셋은 양식 A 의 downloadTemplate·handleUpload 와 «코드 경로를 공유하지 않는다».
   //   양식 A 는 매일 쓰는 기능이라, 한쪽을 고치다 다른 쪽이 딸려 오면 안 된다.
+  // 양식 다운로드에 넣는 열(사람이 보기 좋게 다섯) / 실제로 «있어야만» 하는 열(셋)
   const FAQ_UPLOAD_COLS=['상품코드','문항ID','유형','문항','답변'];
+  const FAQ_REQUIRED_COLS=['상품코드','문항ID','답변'];
 
   const downloadFaqTemplate=()=>{
     const wb=XLSX.utils.book_new();
@@ -3251,7 +3255,15 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       if(!raw.length) throw new Error('빈 파일입니다.');
       // 열 이름의 공백은 무시하고 견준다(「문항 ID」 처럼 손으로 띄어 쓴 파일 대응).
       const seen=new Set(Object.keys(raw[0]).map(k=>String(k).replace(/\s+/g,'')));
-      const missing=FAQ_UPLOAD_COLS.filter(c=>!seen.has(c.replace(/\s+/g,'')));
+      // ★ 반대 방향도 잡는다 — 마스터 파일을 여기에 올린 경우.
+      if(!seen.has('답변')&&(seen.has('필수구분')||seen.has('적용범위'))){
+        throw new Error('이 파일은 «문항 마스터» 양식으로 보입니다(「답변」 열이 없습니다).\n'
+          +'위의 [문항 마스터] 를 눌러 그쪽에서 올리세요.');
+      }
+      // ★ 꼭 있어야 하는 열은 셋뿐이다. 「유형」·「문항」 은 문항 마스터가 채우므로
+      //   아예 없는 파일도 받는다 — 공급사에게 «세 열만 채워 달라» 고 안내해 놓고
+      //   다섯 열을 요구하면 말과 코드가 어긋난다(2026-08-26에 실제로 어긋나 있었다).
+      const missing=FAQ_REQUIRED_COLS.filter(c=>!seen.has(c.replace(/\s+/g,'')));
       if(missing.length) throw new Error('열이 없습니다: '+missing.join(', ')+'\n양식 다운로드로 받은 파일을 쓰세요.');
 
       const {valid:parsed,skipped}=parseFaqUploadFile(raw);
@@ -3361,6 +3373,13 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       const raw=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{defval:''});
       if(!raw.length) throw new Error('「'+sheet+'」 시트가 비어 있습니다.');
       const seen=new Set(Object.keys(raw[0]).map(k=>String(k).replace(/\s+/g,'')));
+      // ★ 양식이 어긋났으면 «그걸» 알린다. 두 업로드 상자가 나란히 있고 생김새가 같아서
+      //   탭을 안 바꾸고 올리기 쉽다(2026-08-26 제니 — 실제로 그랬다). 그때 「문항 문구
+      //   누락 4건」 만 뱉으면 사람은 파일이 잘못됐다고 읽는다.
+      if(seen.has('답변')){
+        throw new Error('이 파일은 «FAQ 답변» 양식으로 보입니다(「답변」 열이 있습니다).\n'
+          +'위의 [FAQ 답변] 을 눌러 그쪽에서 올리세요.');
+      }
       ['문항ID','유형','문항'].forEach(c=>{ if(!seen.has(c)) throw new Error('「'+sheet+'」 시트에 '+c+' 열이 없습니다.'); });
 
       const rowsOut=[],errs=[]; const ids=new Set();
