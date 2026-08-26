@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826c_filter_dropdown_readable -->
+<!-- (2026-08-26) 새로 붙인 «카페24 상태» 필터를 고르고 나서 다시 펼치면 목록의 글자가 안 보였다(제니 제보). 원인: «걸려 있음» 을 알리려고 select 의 배경을 옅은 노랑(rgba(246,173,9,.12))으로 칠했는데, 펼친 목록(option)이 select 의 배경을 그대로 물려받는다. 콘솔은 어두운 테마라 글자색이 밝은데 바탕이 옅은 노랑이 되니 밝은 글자가 밝은 바탕에 잠겼다. ★ option 은 브라우저가 그리는 부분이라 CSS 로 안심하고 칠할 수 있는 곳이 아니다 — 배경으로 상태를 알리는 방식 자체를 버렸다. 대신 셋으로 알린다: 테두리를 노랑으로, 글자를 굵게, 바깥에 노란 링(box-shadow). ★ 링을 box-shadow 로 준 이유는 자리를 차지하지 않아 옆 필터가 밀리지 않기 때문이다(테두리를 굵히면 그만큼 안쪽 여백을 줄여야 한다). 상품 정보의 같은 필터도 같은 방식으로 만들어 뒀으므로 함께 고쳤다 — 한쪽만 고치면 같은 제보를 다시 받는다. 필터 로직·개수 계산은 건드리지 않았다. -->
 <!-- v20260826b_status_tag_contrast -->
 <!-- (2026-08-26) 앞 판을 화면에서 보고 둘을 고쳤다(제니 확인). ①「뱃지 글자가 뭉개져 보인다」 — 어두운 사이드바용 색을 흰 배경 표에 그대로 가져다 쓴 것이 원인이다. 연한 빨강 글자(#F87171)를 연한 빨강 바탕(rgba(248,113,113,.16))에 올리면 둘 다 연해서 글자가 바탕에 잠긴다. 사이드바에서는 바탕이 어두워 그 조합이 또렷했지만 여기는 흰 표다. → 흰 배경 규칙으로 바꿨다: «진한 글자 + 연한 바탕 + 같은 계열 테두리»(판매중지 #B42318/#FEE4E2, 미진열 #3A5580/#E4ECF9, 공급사 미사용 #93500A/#FDEBD0). 겸해 글꼴과 크기도 고쳤다 — 뱃지가 상품코드 칸 안에 있는데 그 칸이 monospace 라 한글이 그 글꼴로 떨어져 더 뭉개졌다. 본문 글꼴로 되돌리고 9→10px 로 올렸다. 공급사 관리의 「미사용」 뱃지도 같은 색으로 맞췄다 — 같은 뜻이 화면마다 다른 색이면 안 된다. ②「공급사 관리에서 미사용 뱃지가 확인 안 된다」 — 화면이 아니라 데이터 문제였다. dev DB 의 공급사 상태 칸이 956곳 전부 비어 있었다(2026-08-25 공급사 동기화를 운영에만 적용하고 dev 는 빠뜨렸다). dev 에 적용해 채웠고, 그러자 마켓비·재미월드처럼 use=F·status=P 인 곳이 드러났다. ★ 겸해서 공급사 관리에도 «카페24 상태» 필터를 붙였다(미사용·거래중지 / 정상 / 아직 안 가져옴, 각 개수 표시). 957곳 사이에 흩어진 몇 곳을 필터 없이 찾는 것은 상품 8,700건에서 판매중지를 찾는 것과 같은 문제다. ★ 판정은 supIsOff 한 곳에서만 한다 — 뱃지·필터·개수가 같은 함수를 본다. 세 곳에 따로 적으면 «뱃지는 붙었는데 필터에 안 걸리는» 공급사가 반드시 생긴다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826a_cafe24_product_status -->
@@ -3254,9 +3256,15 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               style={{flex:1,minWidth:200,padding:'8px 12px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none'}}/>
             {/* ★ 카페24 상태로 좁혀 보기. 판매중지 상품은 8,700건 사이에 흩어져 있어
                 이 필터가 없으면 «어디에 붙었는지» 를 찾을 수 없다. */}
+            {/* ★ 걸려 있음을 «배경색» 으로 알리면 안 된다 — 펼친 목록(option)이 select 의
+                배경을 그대로 물려받아 글자가 안 보인다(2026-08-26 제니 제보).
+                배경은 그대로 두고 테두리·굵기·바깥 링으로 알린다. 링은 box-shadow 라
+                자리를 차지하지 않아 옆 것이 밀리지도 않는다. */}
             <select value={cafeFilter} onChange={e=>setCafeFilter(e.target.value)}
               title="카페24에서 가져온 상태로 좁혀 봅니다"
-              style={{padding:'8px 12px',background:cafeFilter==='all'?'var(--card)':'rgba(246,173,9,.12)',border:'1px solid '+(cafeFilter==='all'?'var(--border)':'#F6AD09'),borderRadius:8,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none'}}>
+              style={{padding:'8px 12px',background:'var(--card)',border:'1px solid '+(cafeFilter==='all'?'var(--border)':'#F6AD09'),borderRadius:8,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none',
+                fontWeight:cafeFilter==='all'?400:700,
+                boxShadow:cafeFilter==='all'?'none':'0 0 0 2px rgba(246,173,9,.35)'}}>
               <option value="all">카페24 상태: 전체</option>
               <option value="stopped">판매중지</option>
               <option value="hidden">미진열</option>
@@ -4830,9 +4838,13 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
           </select>
           {/* ★ 957곳 사이에 흩어진 «미사용» 공급사를 필터 없이는 찾을 수 없다.
               개수를 옵션에 붙여, 고르기 전에도 몇 곳인지 보이게 한다. */}
+          {/* ★ 배경색으로 «걸려 있음» 을 알리지 않는다 — 펼친 목록이 그 배경을 물려받아
+              글자가 안 보인다(2026-08-26 제니 제보). 테두리·굵기·바깥 링으로 알린다. */}
           <select value={filterCafe} onChange={e=>setFilterCafe(e.target.value)}
             title="카페24가 알려 준 사용여부·거래상태로 좁혀 봅니다"
-            style={{padding:'8px 10px',background:filterCafe==='all'?'var(--card)':'rgba(246,173,9,.12)',border:'1px solid '+(filterCafe==='all'?'var(--border)':'#F6AD09'),borderRadius:6,color:'var(--text)',fontSize:12,fontFamily:'inherit'}}>
+            style={{padding:'8px 10px',background:'var(--card)',border:'1px solid '+(filterCafe==='all'?'var(--border)':'#F6AD09'),borderRadius:6,color:'var(--text)',fontSize:12,fontFamily:'inherit',
+              fontWeight:filterCafe==='all'?400:700,
+              boxShadow:filterCafe==='all'?'none':'0 0 0 2px rgba(246,173,9,.35)'}}>
             <option value="all">카페24 상태: 전체 ({cafeCounts.all})</option>
             <option value="off">미사용·거래중지 ({cafeCounts.off})</option>
             <option value="on">정상 ({cafeCounts.on})</option>
