@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826n_form_a_cs_only -->
+<!-- (2026-08-26) 양식 A 를 «상품 정보» 에서 «CS 정보·메모» 로 다시 썼다(제니 결정). 배경: 상품명·가격·배송·옵션은 카페24 자동 동기화가 매일 맞춘다 — 엑셀로 올려도 다음 날 새벽 덮이므로 그 열들은 무의미했다. 무의미할 뿐 아니라 실제로 데이터를 지우고 있었다: ①반품배송비를 0 으로 덮었다(카페24 양식 경로가 return_fee:0 을 박아 넣었다). 운영에 값이 든 상품이 7,478건이고, 수정 동기화가 «절대 안 건드림» 으로 분류한 칸이다 — 동기화는 지키는데 업로드가 지우고 있었다. ②옵션 열이 없거나 비면 기존 옵션이 통째로 지워졌다(parseOptions('') → []). 이제 «상품코드 · CS정보 · 메모» 셋만 받는다. ★ 자리매김: «보조수단 · 통째 교체가 필요한 일괄 작업용»(제니). 문항 단위로 쌓는 것은 양식 B(FAQ 답변)의 몫이다. ★ CS정보는 이어붙이기가 아니라 «통째 교체» 다 — 이어붙이기가 중복의 원인이었다. ★ 빈 칸은 안 건드린다. 열을 비워서 기존 값을 지울 수는 없다 — 지우는 것은 되돌릴 수 없으므로 «빈 칸» 같은 조용한 신호로 하면 안 된다. ★★ CS정보를 바꾸면 그 상품의 cs_faq_map(FAQ 색인)을 함께 비운다. 통째로 바꾸면 색인이 가리키던 문구가 사라지는데, 그대로 두면 «거짓 색인» 이 남아 다음 FAQ 답변 업로드에서 못 찾고 중복을 만든다. 미리보기에서 «색인 초기화 N개» 로 미리 알린다. ★ 기존 상품만 고친다. 없는 상품코드는 만들지 않고 오류로 알린다(제니 확인 — 카페24에 없는 상품을 콘솔에 먼저 넣는 경우는 없다). ★ 값이 같은 상품은 아예 쓰지 않는다. ★ 확정 전 미리보기에서 상품별로 «바뀌기 전 / 바뀐 뒤» 를 나란히 본다. 되돌릴 수 없는 일은 누르기 전에 보여야 한다. ★ 확정은 건별로 쓴다 — 하나가 실패해도 저장된 것은 그대로 둔다. 함께 걷어낸 것: parseC24(카페24 양식 분기) · parseOptions · dupInfo 확인 패널 · confirmUpload · cancelUpload. 부르는 곳이 모두 사라졌다. 탭 이름도 [상품 정보] → [CS 정보·메모] 로 바꿨다. 양식 B·문항 마스터·조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826m_active_supplier_kpi -->
 <!-- (2026-08-26) 상품 정보 화면의 «총 공급사» 카드를 «거래중 총 공급사» 로 바꿨다(제니 지시). 이름·문구·세는 기준이 서로 어긋나 있던 것을 맞춘다. 그전에는 supplier_product_counts 뷰(= products.supplier_name 으로 group by)의 행 수를 셌다. 그건 «상품이 붙어 있는 공급사명의 가짓수» 일 뿐 거래 여부와 무관하고, 안내 문구 「상품 정보가 있는 총 공급사 수만 가져옵니다」 는 «상품 정보» 를 «상품 데이터» 로도 «CS 정보» 로도 읽을 수 있어 뜻이 흐렸다. 이제 suppliers 에서 cafe24_status=A(거래중) 인 곳을 센다. 카드 이름은 「거래중 총 공급사」, 문구는 「거래중인 공급사의 수를 가져옵니다」. ★ 거래 상태는 카페24가 주는 값이고 공급사 동기화(cafe24-sync-suppliers-apply)가 채운다 — A 거래중 · P 거래중지. ★ 사용여부(cafe24_use_supplier)는 «다른 축» 이라 여기서 보지 않는다. 거래중(A)인데 사용안함(F)인 공급사가 있을 수 있고, 둘을 섞으면 어느 쪽 숫자인지 알 수 없게 된다. 공급사 관리 화면의 「미사용」 뱃지는 둘 중 하나라도 걸리면 붙는데, 그건 «팔 수 있나» 를 보는 표시라 목적이 다르다. ★ 아직 공급사 동기화가 훑지 않은 곳은 cafe24_status 가 null 이라 안 세어진다 — 거래중인지 «모르는» 것을 거래중으로 셀 수는 없다. ★ ⚙ 버튼(공급사 관리 열기)과 권한 조건은 그대로 뒀다(제니 확인). ★ supplier_product_counts 뷰는 그대로 남는다 — 공급사 관리 화면의 «상품수» 열이 계속 쓴다. 조회 실패 시 «—» 표시와 한 번만 알리는 동작도 그대로다. -->
 <!-- v20260826l_upload_only_on_new -->
@@ -2265,14 +2267,6 @@ async function migrateBase64ToStorage(dataUrl, productCode){
   return data.publicUrl;
 }
 
-function parseOptions(str){
-  if(!str||str==='nan') return [];
-  return str.split('//').map(part=>{
-    const m=part.match(/^([^{]+)\{([^}]*)\}/);
-    if(!m) return null;
-    return {name:m[1].trim(), values:m[2].split('|').map(v=>v.trim()).filter(Boolean)};
-  }).filter(Boolean);
-}
 
 // ── FAQ 답변 업로드(양식 B) — 순수 함수 ──────────────────────────────────────
 // 공급사 952곳에서 상품 8,000개 × 문항 30개의 FAQ 답변을 «여러 번 나눠서» 받는다.
@@ -2468,7 +2462,10 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const [imgModal,setImgModal]=useState(null); // {images:[url,...], title:''}
   const [zdStatus,setZdStatus]=useState('');
   const [zdProgress,setZdProgress]=useState(0);
-  const [dupInfo,setDupInfo]=useState(null);
+  // 양식 A(CS 정보·메모) 확정 전 미리보기. 여기까지는 아무것도 저장되지 않는다.
+  const [csPreview,setCsPreview]=useState(null);
+  const [csProgress,setCsProgress]=useState({done:0,total:0});
+  const [csOpenCodes,setCsOpenCodes]=useState(new Set());
   // ── FAQ 답변 업로드(양식 B) ────────────────────────────────────────────────
   // ★ 양식 A 와 «상태도 함수도 파일칸도» 나눈다. 한 경로를 공유하면 언젠가 한쪽을
   //   고치다 다른 쪽이 딸려 온다 — 양식 A 는 매일 쓰는 기능이라 건드리면 안 된다.
@@ -3044,52 +3041,6 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       return '['+c+']\n'+items.map(qa=>(qa.q?'Q. '+qa.q+'\n':'')+(qa.a?'A. '+qa.a:'').trim()).join('\n\n');
     }).filter(Boolean).join('\n\n');
   };
-  const parseC24=(rows)=>{
-    // 배송방법 코드 매핑
-    const methodMap={'A':'택배','B':'빠른등기','C':'일반등기','D':'직배송','E':'퀵배송','F':'기타','G':'화물배송','H':'매장직접수령','I':'배송필요없음'};
-    // 배송비 구분 코드 매핑
-    const condMap={'T':'무료','R':'고정 배송비','M':'금액 조건부 무료','N':'수량 비례','C':'수량별 차등','D':'금액별 차등','W':'무게별 차등'};
-    // 선결제 코드 매핑
-    const payMap={'P':'선결제','C':'착불','B':'선결제/착불'};
-
-    return rows.map(r=>{
-      const bungyu=String(r['배송비 구분']||'T');
-      const sunjel=String(r['배송비 선결제 설정']||'P');
-      const bInput=String(r['배송비입력']||'0');
-      const bInfo=String(r['배송정보']||'T');
-      const method=String(r['배송방법']||'A');
-
-      let shipCond=condMap[bungyu]||'무료';
-      let shipFee=0, shipThreshold=0;
-
-      if(bungyu==='M'){
-        // 금액 조건부: 30000|3000 형식
-        const parts=bInput.split('|');
-        shipThreshold=Number(parts[0])||0;
-        shipFee=Number(parts[1])||0;
-      } else {
-        shipFee=Number(bInput)||0;
-      }
-
-      const pno=String(r['상품번호']||'').trim();
-      return {
-        supplier_name:  String(r['공급사명']||'').trim(),
-        product_code:   String(r['상품코드']||'').trim(),
-        product_name:   String(r['상품명']||'').trim(),
-        product_url:    pno?'https://oneroommaking.com/product/detail.html?product_no='+pno:'',
-        shipping_method: methodMap[method]||'택배',
-        shipping_info:  bInfo==='T'?'개별 설정':'기본 설정',
-        payment_type:   payMap[sunjel]||'선결제',
-        shipping_cond:  shipCond,
-        shipping_fee:   shipFee,
-        shipping_threshold: shipThreshold,
-        return_fee_type:'A', return_fee:0, return_fee_text:'',
-        cs_info:'', memo:'',
-        options: parseOptions(String(r['옵션입력']||'')),
-        updated_at: new Date().toISOString(),
-      };
-    }).filter(r=>r.product_name);
-  };
   const parseCs=(text)=>{
     const map={};
     if(!text) return map;
@@ -3125,101 +3076,141 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     return map;
   };
 
+  // ── 양식 A: CS 정보·메모 일괄 업로드 ──────────────────────────────────────
+  // 2026-08-26 개편(제니 결정). 그전에는 상품명·가격·배송·옵션까지 통째로 받았는데,
+  // 그 칸들은 카페24 자동 동기화가 매일 맞춘다 — 엑셀로 올려도 다음 날 새벽 덮인다.
+  // 게다가 실제로 데이터를 지우고 있었다:
+  //   ① 반품배송비를 0 으로 덮었다(카페24 양식 경로는 return_fee:0 을 박아 넣었다).
+  //      운영에 값이 든 상품이 7,478건이고, 동기화가 «절대 안 건드림» 으로 분류한 칸이다.
+  //   ② 옵션 열이 없거나 비면 기존 옵션이 통째로 지워졌다(parseOptions('') → []).
+  // → 이제 «상품코드 · CS정보 · 메모» 셋만 받는다. 자리매김은 «보조수단 · 통째 교체가
+  //   필요한 일괄 작업용» 이다(제니).
+  //
+  // ★ CS정보는 «이어붙이기» 가 아니라 «통째 교체» 다. 이어붙이기가 중복의 원인이었다.
+  //   문항 단위로 쌓는 것은 양식 B(FAQ 답변)의 몫이다.
+  // ★ 빈 칸은 «안 건드린다». 열을 비워서 기존 값을 지울 수는 없다 —
+  //   지우는 것은 되돌릴 수 없으므로 «빈 칸» 같은 조용한 신호로 하면 안 된다.
+  // ★ 기존 상품만 고친다. 없는 상품코드는 만들지 않고 오류로 알린다
+  //   (제니 확인: 카페24에 없는 상품을 콘솔에 먼저 넣는 경우는 없다).
+  const CS_UPLOAD_COLS=['상품코드','CS정보','메모'];
+
   const handleUpload=async(e)=>{
     const file=e.target.files?.[0]; if(!file) return;
-    setUploading(true); setUploadMsg('');
+    e.target.value='';
+    setUploading(true); setUploadMsg(''); setCsPreview(null);
     try{
       const buf=await file.arrayBuffer();
       const wb=XLSX.read(buf,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
-      // C24(Cafe24) 양식과 일반 양식 구분: '배송비 선결제 설정'은 C24 전용 컬럼
-      const isC24=rows.length>0&&'배송비 선결제 설정' in rows[0];
-      let records=[];
-      if(isC24){
-        records=parseC24(rows);
-      } else {
-        records=rows.map(r=>{
-          const pno=String(r['상품번호']||'').trim();
-          const urlCol=String(r['상품URL']||r['url']||'').trim();
-          return {
-          supplier_name: String(r['공급사명']||'').trim(),
-          product_code:  String(r['상품코드']||'').trim(),
-          product_name:  String(r['상품명']||'').trim(),
-          // 상품번호가 있으면 URL 자동 생성, 없으면 상품URL 컬럼 값 사용
-          product_url:   pno?'https://oneroommaking.com/product/detail.html?product_no='+pno:urlCol,
-          shipping_method: String(r['배송방법']||'').includes('직배')?'직배송':'택배',
-          shipping_cond: (()=>{const c=String(r['배송비 조건']||r['배송비 구분']||'B');
-            if(c==='F') return '00원 이상 무료';
-            if(c==='Q') return '수량 비례';
-            if(c==='C') return '착불';
-            if(c==='E') return '기타';
-            return '기본';})(),
-          shipping_threshold: (()=>{const c=String(r['배송비 조건']||r['배송비 구분']||'B');
-            if(c==='F'){const p=String(r['배송비']||r['배송비입력']||'').split('|');return p.length>1?Number(p[0])||0:0;}
-            return 0;})(),
-          shipping_fee: (()=>{const v=String(r['배송비']||r['배송비입력']||'0');const p=v.split('|');return Number(p[p.length-1])||0;})(),
-          return_fee_type: String(r['반품배송비 구분']||'A').trim(),
-          return_fee:      String(r['반품배송비 구분']||'A').trim()==='A'?(Number(r['반품배송비']||0)||0):0,
-          return_fee_text: String(r['반품배송비 구분']||'A').trim()==='B'?String(r['반품배송비']||'').trim():'',
-          cs_info:         String(r['CS정보']||'').trim().replace(/\r\n/g,'\n'),
-          memo:          String(r['메모']||'').trim().replace(/\r\n/g,'\n'),
-          options:       parseOptions(String(r['옵션입력']||'')),
-          updated_at:    new Date().toISOString(),
-        };}).filter(r=>r.product_name);
+      const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      if(!raw.length) throw new Error('빈 파일입니다.');
+      const seen=new Set(Object.keys(raw[0]).map(k=>String(k).replace(/\s+/g,'')));
+      // 양식이 어긋난 경우를 먼저 잡는다(FAQ 답변 파일을 여기에 올린 경우).
+      if(seen.has('문항ID')||seen.has('답변')){
+        throw new Error('이 파일은 «FAQ 답변» 양식으로 보입니다.\n위의 [FAQ 답변] 을 눌러 그쪽에서 올리세요.');
       }
-      const codes=records.map(r=>r.product_code).filter(Boolean);
-      // 대량 코드 처리: 200개씩 배치로 기존 상품 조회 (전체 필드 — 병합에 cs_info/memo 필요)
-      const BATCH=200;
-      let existingList=[];
-      for(let i=0;i<codes.length;i+=BATCH){
-        const chunk=codes.slice(i,i+BATCH);
-        const{data,error:qErr}=await sb.from('products').select('*').in('product_code',chunk);
-        if(!qErr&&data) existingList=[...existingList,...data];
-      }
-      // 중복 상품은 병합: 상품/배송 정보는 덮어쓰기, CS 정보·메모는 기존에 추가
-      const existingMap=Object.fromEntries(existingList.map(p=>[p.product_code,p]));
-      const dupCodeSet=new Set(existingList.map(d=>d.product_code));
-      const newRecords=records.filter(r=>!dupCodeSet.has(r.product_code));
-      const mergedRecords=records.filter(r=>dupCodeSet.has(r.product_code)).map(r=>{
-        const ex=existingMap[r.product_code]||{};
-        return {
-          ...r, // 기본 상품 정보·배송·반품 등 전부 덮어쓰기
-          // CS 정보: 기존 + '\n\n' + 신규 (둘 중 하나 비었으면 비지 않은 쪽만)
-          cs_info: [ex.cs_info,r.cs_info].map(v=>(v||'').trim()).filter(Boolean).join('\n\n'),
-          // 메모: 기존 + '\n\n' + 신규
-          memo:    [ex.memo,r.memo].map(v=>(v||'').trim()).filter(Boolean).join('\n\n'),
-          // id 유지 (upsert onConflict=product_code는 기존 row를 UPDATE하므로 cs_images 등 다른 필드는 건드리지 않음)
-        };
+      if(!seen.has('상품코드')) throw new Error('「상품코드」 열이 없습니다.\n양식 다운로드로 받은 파일을 쓰세요.');
+      if(!seen.has('CS정보')&&!seen.has('메모')) throw new Error('「CS정보」 나 「메모」 열이 하나는 있어야 합니다.');
+
+      const rows=[],errors=[]; const byCode={};
+      raw.forEach((r,idx)=>{
+        const rowNo=idx+2;
+        const keyOf={}; Object.keys(r).forEach(k=>{keyOf[String(k).replace(/\s+/g,'')]=k;});
+        const g=n=>{const k=keyOf[n];return k===undefined?'':String(r[k]===null||r[k]===undefined?'':r[k]).replace(/\r\n/g,'\n').trim();};
+        const code=g('상품코드'), cs=g('CS정보'), memo=g('메모');
+        if(!code){
+          if(cs||memo) errors.push({row:rowNo,detail:'상품코드 누락'});
+          return;                      // 완전히 빈 줄은 조용히 넘긴다
+        }
+        if(!cs&&!memo){ errors.push({row:rowNo,detail:'CS정보·메모가 모두 비었습니다 ('+code+')'}); return; }
+        if(byCode[code]){ errors.push({row:rowNo,detail:'같은 상품코드가 파일에 두 번 있습니다 ('+code+')'}); return; }
+        byCode[code]=true;
+        rows.push({row:rowNo,code,cs,memo});
       });
-      // 중복 있으면 확인 UI 노출
-      if(existingList.length>0){setDupInfo({newRecords,mergedRecords,dupList:existingList,totalCount:records.length});setTab('list');setUploading(false);return;}
-      // 중복 없음: 전체 신규 등록
-      const UBATCH=200;
-      let uErr=null;
-      for(let i=0;i<records.length;i+=UBATCH){
-        const chunk=records.slice(i,i+UBATCH);
-        const{error}=await sb.from('products').insert(chunk);
-        if(error){uErr=error;break;}
+
+      const codes=rows.map(r=>r.code);
+      const found={};
+      for(let i=0;i<codes.length;i+=200){
+        const chunk=codes.slice(i,i+200);
+        const{data,error}=await sb.from('products')
+          .select('id,product_code,product_name,cs_info,memo,cs_faq_map').in('product_code',chunk);
+        if(error) throw new Error('상품 조회 실패: '+error.message);
+        (data||[]).forEach(p=>{ found[p.product_code]=p; });
       }
-      const error=uErr;
-      if(error) throw new Error(error.message);
-      // 신규 공급사 일괄 자동 등록
-      const newSups=[...new Set(records.map(r=>r.supplier_name).filter(Boolean))];
-      await Promise.all(newSups.map(n=>ensureSupplier(n)));
-      setUploadMsg('✅ '+records.length+'개 상품 등록 완료'); load(1,search,searchField,cafeFilter);
-    }catch(err){setUploadMsg('❌ 오류: '+err.message);}
-    setUploading(false); e.target.value='';
+
+      const plans=[]; let csChanged=0,memoChanged=0,faqReset=0;
+      rows.forEach(r=>{
+        const p=found[r.code];
+        if(!p){ errors.push({row:r.row,detail:'존재하지 않는 상품코드 ('+r.code+')'}); return; }
+        const patch={}; const willCs=r.cs&&r.cs!==String(p.cs_info||'').trim();
+        const hadIndex=p.cs_faq_map&&Object.keys(p.cs_faq_map).length>0;
+        if(r.cs&&r.cs!==String(p.cs_info||'').trim()){
+          patch.cs_info=r.cs;
+          // ★ CS정보를 통째로 바꾸면 FAQ 색인이 가리키던 문구가 사라진다. 그대로 두면
+          //   «거짓 색인» 이 남아 다음 FAQ 답변 업로드에서 못 찾고 중복을 만든다.
+          patch.cs_faq_map={};
+          csChanged++;
+          if(hadIndex) faqReset++;
+        }
+        if(r.memo&&r.memo!==String(p.memo||'').trim()){ patch.memo=r.memo; memoChanged++; }
+        if(!Object.keys(patch).length) return;   // 값이 같으면 쓰지 않는다
+        plans.push({id:p.id,code:r.code,name:p.product_name||'',patch,
+          before:{cs:String(p.cs_info||''),memo:String(p.memo||'')},hadIndex:!!(willCs&&hadIndex)});
+      });
+
+      setCsPreview({fileName:file.name,totalRows:raw.length,rows:rows.length,
+        plans,errors,csChanged,memoChanged,faqReset});
+      setCsOpenCodes(new Set());
+    }catch(err){ setUploadMsg('❌ '+err.message); }
+    setUploading(false);
+  };
+
+  const confirmCsUpload=async()=>{
+    if(!csPreview) return;
+    const targets=csPreview.plans;
+    setUploading(true); setCsProgress({done:0,total:targets.length});
+    let ok=0; const failed=[];
+    // ★ 건별로 쓴다. 하나가 실패해도 이미 저장된 것은 그대로 둔다.
+    for(let i=0;i<targets.length;i++){
+      const t=targets[i];
+      const{error}=await sb.from('products').update(t.patch).eq('id',t.id);
+      if(error) failed.push(t.code); else ok++;
+      setCsProgress({done:i+1,total:targets.length});
+    }
+    setUploading(false); setCsPreview(null); setCsProgress({done:0,total:0});
+    setUploadMsg(failed.length
+      ? '⚠️ '+ok+'개 저장 · '+failed.length+'개 실패 ('+failed.slice(0,3).join(', ')+(failed.length>3?' 외':'')+')'
+      : '✅ '+ok+'개 상품의 CS 정보·메모를 반영했습니다.');
+    load(page,search,searchField,cafeFilter);
   };
 
   const downloadTemplate=()=>{
     const wb=XLSX.utils.book_new();
-    const data=[
-      ['공급사명','상품번호','상품코드','상품명','판매가','배송방법','배송비 구분','배송비입력','반품배송비 구분','반품배송비','옵션입력','CS정보','메모'],
-      ['홍길동상사','12345','SKU-001','순면 이불','59000','택배','T','3000','A','6000','색상{화이트|차콜}//사이즈{S|M}','[상품]\nQ. 세탁은 어떻게 하나요?\nA. 30도 이하 찬물 단독 세탁 권장합니다.\n\n[불량]\nQ. 파손된 상품을 받았어요\nA. 파손 부위 사진과 함께 고객센터로 문의 부탁드립니다.\n\n[변심]\nQ. 단순 변심 반품 가능한가요?\nA. 7일 이내 왕복 배송비 부담 후 가능합니다.',''],
-    ];
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),'상품정보');
-    XLSX.writeFile(wb,'상품_정보_등록_양식.xlsx');
+    // 머리글만. 예시 행을 넣으면 지우지 않고 그대로 올리는 일이 생긴다.
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([CS_UPLOAD_COLS]),'CS정보');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
+      ['작성 안내'],
+      [''],
+      ['상품코드','콘솔에 «이미 등록된» 상품코드. 없는 코드는 만들지 않고 오류로 알립니다.'],
+      ['CS정보','그 상품의 CS 정보를 «통째로» 이 내용으로 바꿉니다. 형식은 아래 참고.'],
+      ['메모','그 상품의 메모를 통째로 바꿉니다.'],
+      [''],
+      ['★ 빈 칸은 «건드리지 않습니다». 열을 비워서 기존 값을 지울 수는 없습니다.'],
+      ['★ CS정보를 바꾸면 그 상품의 FAQ 색인이 초기화됩니다.'],
+      ['   문항 단위로 «쌓는» 것은 [FAQ 답변] 양식의 몫입니다. 이 양식은 통째로 바꿀 때 씁니다.'],
+      ['★ 상품명·가격·배송·옵션은 카페24 자동 동기화가 맡습니다. 이 양식에는 없습니다.'],
+      [''],
+      ['CS정보 형식'],
+      ['[상품]'],
+      ['Q. 세탁은 어떻게 하나요?'],
+      ['A. 30도 이하 찬물 단독 세탁 권장합니다.'],
+      [''],
+      ['[불량]'],
+      ['Q. 파손된 상품을 받았어요'],
+      ['A. 파손 부위 사진과 함께 고객센터로 문의 부탁드립니다.'],
+      [''],
+      ['유형은 불량 · 변심 · 상품 · 기타 넷입니다. Q. 와 A. 는 점과 공백까지 정확해야 합니다.'],
+    ]),'작성안내');
+    XLSX.writeFile(wb,'CS정보_일괄_업로드_양식.xlsx');
   };
 
   // ── FAQ 답변 업로드(양식 B) ────────────────────────────────────────────────
@@ -3581,35 +3572,6 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     await Promise.all([...checkedIds].map(id=>sb.from('products').delete().eq('id',id)));
     setCheckedIds(new Set()); load(page,search,searchField,cafeFilter);
   };
-  const confirmUpload=async()=>{
-    if(!dupInfo)return; setUploading(true); setUploadMsg('');
-    try{
-      const UBATCH=200; let uErr2=null;
-      // 1) 중복 상품: 병합된 내용으로 UPDATE (upsert with onConflict=product_code)
-      for(let i=0;i<dupInfo.mergedRecords.length&&!uErr2;i+=UBATCH){
-        const chunk=dupInfo.mergedRecords.slice(i,i+UBATCH);
-        const{error:ue}=await sb.from('products').upsert(chunk,{onConflict:'product_code'});
-        if(ue){uErr2=ue;break;}
-      }
-      // 2) 신규 상품: INSERT
-      for(let i=0;i<dupInfo.newRecords.length&&!uErr2;i+=UBATCH){
-        const chunk=dupInfo.newRecords.slice(i,i+UBATCH);
-        const{error:ue}=await sb.from('products').insert(chunk);
-        if(ue){uErr2=ue;break;}
-      }
-      if(uErr2) throw new Error(uErr2.message);
-      // 신규 공급사 일괄 자동 등록 (병합·신규 양쪽 다 포함)
-      const allSups=[...new Set([...dupInfo.mergedRecords,...dupInfo.newRecords].map(r=>r.supplier_name).filter(Boolean))];
-      await Promise.all(allSups.map(n=>ensureSupplier(n)));
-      setUploadMsg('✅ 병합 '+dupInfo.mergedRecords.length+'개 + 신규 '+dupInfo.newRecords.length+'개 처리 완료'); load(1,search,searchField,cafeFilter);
-    }catch(err){setUploadMsg('❌ 오류: '+err.message);}
-    setDupInfo(null); setUploading(false);
-    if(fileRef.current) fileRef.current.value='';
-  };
-  const cancelUpload=()=>{
-    setDupInfo(null); setUploadMsg('업로드를 취소했습니다.');
-    if(fileRef.current) fileRef.current.value='';
-  };
   const del=async id=>{
     if(!confirm('삭제하시겠습니까?'))return;
     const{error}=await sb.from('products').delete().eq('id',id);
@@ -3801,32 +3763,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               <button onClick={()=>setCheckedIds(new Set())} style={{padding:'6px 12px',background:'none',border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>선택 해제</button>
             </div>
           )}
-          {dupInfo&&(
-            <div style={{background:'#0d1628',border:'1px solid #F6AD09',borderRadius:10,padding:20,marginBottom:16}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:6}}>이미 등록된 상품이 포함되어 있습니다</div>
-              <div style={{fontSize:12,color:'var(--sub)',marginBottom:10,lineHeight:1.7}}>
-                업로드 파일 <span style={{color:'var(--accent)',fontWeight:700}}>{dupInfo.totalCount}개</span> 중, 이미 등록된 <span style={{color:'var(--yellow)',fontWeight:700}}>{dupInfo.mergedRecords.length}개</span>는 병합 업데이트되고, 신규 <span style={{color:'#22d3a0',fontWeight:700}}>{dupInfo.newRecords.length}개</span>는 새로 등록됩니다.
-              </div>
-              <div style={{background:'rgba(42,71,141,.15)',border:'1px solid rgba(42,71,141,.35)',borderRadius:6,padding:'8px 12px',marginBottom:12,fontSize:11,color:'var(--text)',lineHeight:1.7}}>
-                <div style={{fontWeight:700,color:'var(--accent)',marginBottom:4}}>📌 병합 규칙 (이미 등록된 {dupInfo.mergedRecords.length}개 상품)</div>
-                <div>• <span style={{color:'#f87171',fontWeight:600}}>상품 정보·배송 정보·옵션</span>: 엑셀 파일 값으로 <span style={{color:'#f87171',fontWeight:600}}>덮어쓰기</span></div>
-                <div>• <span style={{color:'#22d3a0',fontWeight:600}}>CS 정보·메모</span>: 기존 내용 뒤에 엑셀 내용 <span style={{color:'#22d3a0',fontWeight:600}}>추가</span> (기존 내용은 그대로 유지)</div>
-              </div>
-              <div style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'8px 12px',marginBottom:14,maxHeight:140,overflowY:'auto'}}>
-                <div style={{fontSize:10,color:'var(--sub)',fontWeight:600,marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>병합 대상</div>
-                {dupInfo.dupList.map((d,i)=>(
-                  <div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'4px 0',borderBottom:'1px solid var(--border)',fontSize:12}}>
-                    <span style={{fontFamily:'monospace',background:'rgba(42,71,141,.25)',color:'var(--accent)',padding:'1px 6px',borderRadius:3,fontSize:11}}>{d.product_code}</span>
-                    <span style={{color:'var(--text)',flex:1}}>{d.product_name}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{display:'flex',gap:10}}>
-                <button onClick={confirmUpload} style={{flex:1,padding:'11px',background:'#1a4fc4',border:'1px solid #2a63e0',borderRadius:8,color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>확인 — 업로드 실행</button>
-                <button onClick={cancelUpload}  style={{flex:1,padding:'11px',background:'#a01a1a',border:'1px solid #c82020',borderRadius:8,color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>취소 — 업로드 중단</button>
-              </div>
-            </div>
-          )}
+          {/* ★ 옛 «이미 등록된 상품이 포함되어 있습니다» 확인 패널은 걷어냈다.
+              양식 A 가 상품·배송·옵션을 더 이상 받지 않으므로 «병합 규칙» 을 설명할 것이
+              없어졌다. 새 확인은 아래 모달(csPreview)이 맡는다. */}
           {loading?<div className="loading">{search?'🔍 검색 중입니다...':'불러오는 중...'}</div>:products.length===0?<div className="empty-state">등록된 상품이 없습니다</div>:
             <div style={{background:'#fff',borderRadius:0,overflow:'visible',border:'1px solid #c8d8f0'}}>
               <table className="hist" style={{background:'#fff',width:'100%',borderCollapse:'collapse'}}>
@@ -4349,7 +4288,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               <div className="entry-section-title">엑셀 일괄 업로드</div>
               {/* ★ 양식 선택만 새로 넣는다. 아래 «상품 정보» 쪽 상자는 한 줄도 안 바꿨다. */}
               <div style={{display:'flex',gap:6,marginBottom:10}}>
-                {[['A','상품 정보','상품·배송·옵션을 한 번에 올립니다'],
+                {[['A','CS 정보·메모','상품의 CS 정보·메모를 통째로 바꿉니다(일괄 작업용)'],
                   ['B','FAQ 답변','공급사에게 받은 FAQ 답변을 «기존 것을 지우지 않고» 채웁니다'],
                   ['M','문항 마스터','문항ID·문항 문구·유형의 기준표. 답변 업로드에서 빈 칸을 이걸로 채웁니다']].map(([k,label,tip])=>(
                   <button key={k} onClick={()=>{setFormKind(k);setUploadMsg('');setFaqPreview(null);setMasterPreview(null);}} title={tip}
@@ -4379,9 +4318,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               ):formKind==='A'?(
               <div style={{display:'flex',gap:12,alignItems:'flex-start',padding:'16px',background:'var(--bg)',border:'1px dashed var(--border)',borderRadius:10,flexWrap:'wrap'}}>
                 <div style={{flex:1,fontSize:11,color:'var(--sub)',lineHeight:2}}>
-                  카페24에서 다운로드한 상품 엑셀 파일을 그대로 업로드하세요.<br/>
-                  <span>공급사명·상품코드·상품명·배송방법·배송비 구분·선결제 설정·배송비·옵션·CS정보가 자동으로 반영됩니다.</span><br/>
-                  <span style={{color:'var(--accent)'}}>※ 평소 상품 정보는 카페24 자동 동기화로 관리됩니다. 이 업로드는 보조 수단입니다.</span>
+                  상품의 <b style={{color:'var(--text)'}}>CS 정보·메모를 통째로 바꿉니다.</b> 열은 <b style={{color:'var(--text)'}}>상품코드 · CS정보 · 메모</b> 셋입니다.<br/>
+                  <span>빈 칸은 건드리지 않고, <b style={{color:'var(--text)'}}>이미 등록된 상품만</b> 고칩니다(없는 상품코드는 오류로 알립니다).</span><br/>
+                  <span style={{color:'var(--accent)'}}>※ 상품명·가격·배송·옵션은 카페24 자동 동기화가 맡습니다. 문항 단위로 «쌓는» 것은 [FAQ 답변] 쪽입니다 — 이 양식은 통째로 바꿔야 할 때 씁니다.</span>
                 </div>
                 <div style={{display:'flex',gap:8,flexDirection:'column',alignItems:'flex-end',minWidth:160}}>
                   <button className="btn-upload" onClick={()=>fileRef.current?.click()} disabled={uploading}
@@ -4774,6 +4713,107 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               <button onClick={()=>{ if(migRunning){ if(!confirm('진행 중입니다. 정말 닫으시겠습니까? 일부 데이터만 이전될 수 있습니다.')) return; } setMigModal(false); }}
                 style={{padding:'9px 18px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--sub)',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}>
                 {migRunning?'닫기':'취소'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 양식 A: CS 정보·메모 업로드 — 확정 전 미리보기. 여기까지는 아무것도 저장되지 않았다. */}
+      {csPreview&&(
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}}
+          onClick={e=>{if(e.target===e.currentTarget&&!uploading)setCsPreview(null);}}>
+          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:16,padding:26,width:'95%',maxWidth:760,maxHeight:'85vh',overflowY:'auto'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+              <div style={{fontSize:17,fontWeight:700}}>CS 정보·메모 업로드 확인</div>
+              <button onClick={()=>{if(!uploading)setCsPreview(null);}} style={{background:'none',border:'none',color:'var(--sub)',fontSize:20,cursor:'pointer',lineHeight:1}}>✕</button>
+            </div>
+            <div style={{fontSize:12,color:'var(--sub)',marginBottom:16}}>
+              {csPreview.fileName} · 총 {csPreview.totalRows.toLocaleString()}행
+              <b style={{color:'var(--accent)',marginLeft:8}}>아직 저장되지 않았습니다</b>
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(120px,1fr))',gap:8,marginBottom:14}}>
+              {[['바뀔 상품',csPreview.plans.length,'var(--text)'],
+                ['CS정보 교체',csPreview.csChanged,'#F6AD09'],
+                ['메모 교체',csPreview.memoChanged,'#78AAFF'],
+                ['오류',csPreview.errors.length,csPreview.errors.length?'var(--red)':'var(--sub)']].map(([l,n,c])=>(
+                <div key={l} style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px'}}>
+                  <div style={{fontSize:10,color:'var(--sub)',marginBottom:3}}>{l}</div>
+                  <div style={{fontSize:18,fontWeight:700,color:c}}>{Number(n||0).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* ★★ 통째로 바꾼다는 것과 색인이 초기화된다는 것을 «확정 전에» 못 박는다.
+                되돌릴 수 없는 일은 누르기 전에 알아야 한다. */}
+            <div style={{fontSize:12,color:'#B45309',background:'rgba(246,173,9,.12)',border:'1px solid #F6AD09',borderRadius:8,padding:'10px 12px',marginBottom:14,lineHeight:1.7}}>
+              이 상품들의 <b>CS 정보를 통째로 바꿉니다</b>(덧붙이는 것이 아닙니다).
+              {csPreview.faqReset>0&&<> 그중 <b>{csPreview.faqReset}개</b>는 FAQ 색인이 초기화됩니다 — 다음 [FAQ 답변] 업로드는 문구 대조로 자리를 찾습니다.</>}
+              <div style={{marginTop:4}}>빈 칸은 건드리지 않습니다. 값이 같은 상품은 아예 쓰지 않습니다.</div>
+            </div>
+
+            {csPreview.errors.length>0&&(
+              <>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--red)',letterSpacing:'.06em',margin:'0 0 8px',padding:'6px 10px',background:'rgba(248,113,113,.10)',borderRadius:6}}>오류 상세 — 이 행들은 저장되지 않습니다</div>
+                <div style={{maxHeight:150,overflowY:'auto',marginBottom:16,fontSize:12}}>
+                  {csPreview.errors.slice(0,200).map((e,i)=>(
+                    <div key={i} style={{display:'flex',gap:10,padding:'4px 8px',borderBottom:'1px solid var(--border)'}}>
+                      <span style={{color:'var(--sub)',width:56,flexShrink:0}}>행 {e.row}</span>
+                      <span style={{color:'var(--text)'}}>{e.detail}</span>
+                    </div>
+                  ))}
+                  {csPreview.errors.length>200&&<div style={{padding:'6px 8px',color:'var(--sub)'}}>… 외 {csPreview.errors.length-200}건</div>}
+                </div>
+              </>
+            )}
+
+            <div style={{fontSize:11,fontWeight:700,color:'var(--sub)',letterSpacing:'.06em',margin:'0 0 8px',padding:'6px 10px',background:'rgba(42,71,141,.08)',borderRadius:6}}>상품별 — 펼치면 바뀌기 전/후를 봅니다</div>
+            <div style={{maxHeight:240,overflowY:'auto',marginBottom:18,fontSize:12}}>
+              {csPreview.plans.length===0&&<div style={{padding:12,color:'var(--sub)'}}>바뀔 상품이 없습니다.</div>}
+              {csPreview.plans.map(p=>{
+                const open=csOpenCodes.has(p.code);
+                return (
+                  <div key={p.code} style={{borderBottom:'1px solid var(--border)'}}>
+                    <div onClick={()=>setCsOpenCodes(s2=>{const n=new Set(s2);n.has(p.code)?n.delete(p.code):n.add(p.code);return n;})}
+                      style={{display:'flex',gap:10,alignItems:'center',padding:'6px 8px',cursor:'pointer'}}>
+                      <span style={{color:'var(--sub)',width:12}}>{open?'▾':'▸'}</span>
+                      <span style={{fontFamily:'monospace',fontSize:11,color:'#8FA8D0',width:110,flexShrink:0}}>{p.code}</span>
+                      <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
+                      {p.patch.cs_info!==undefined&&<span style={{color:'#F6AD09',flexShrink:0}}>CS정보</span>}
+                      {p.patch.memo!==undefined&&<span style={{color:'#78AAFF',flexShrink:0}}>메모</span>}
+                      {p.hadIndex&&<span style={{color:'var(--red)',flexShrink:0}}>색인 초기화</span>}
+                    </div>
+                    {open&&(
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,padding:'4px 12px 12px 30px'}}>
+                        <div>
+                          <div style={{fontSize:10,color:'var(--sub)',marginBottom:3}}>지금 (바뀌기 전)</div>
+                          <pre style={{margin:0,padding:8,background:'var(--bg)',color:'var(--sub)',fontSize:11,whiteSpace:'pre-wrap',maxHeight:200,overflowY:'auto',borderRadius:6}}>{p.before.cs||'(비어 있음)'}</pre>
+                        </div>
+                        <div>
+                          <div style={{fontSize:10,color:'#F6AD09',marginBottom:3}}>바뀐 뒤</div>
+                          <pre style={{margin:0,padding:8,background:'var(--bg)',color:'var(--text)',fontSize:11,whiteSpace:'pre-wrap',maxHeight:200,overflowY:'auto',borderRadius:6}}>{p.patch.cs_info!==undefined?p.patch.cs_info:(p.before.cs||'(그대로)')}</pre>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {uploading&&csProgress.total>0&&(
+              <div style={{fontSize:12,color:'var(--accent)',marginBottom:10}}>
+                저장 중 {csProgress.done.toLocaleString()} / {csProgress.total.toLocaleString()} — 창을 닫지 마세요.
+              </div>
+            )}
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+              <button onClick={()=>setCsPreview(null)} disabled={uploading}
+                style={{padding:'9px 18px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--sub)',fontSize:13,cursor:uploading?'default':'pointer',fontFamily:'inherit'}}>취소</button>
+              <button onClick={confirmCsUpload} disabled={uploading||csPreview.plans.length===0}
+                style={{padding:'9px 22px',background:'var(--primary)',border:'none',borderRadius:8,color:'#fff',fontSize:13,fontWeight:700,
+                  cursor:(uploading||csPreview.plans.length===0)?'default':'pointer',fontFamily:'inherit',
+                  opacity:(uploading||csPreview.plans.length===0)?.5:1}}>
+                확정 업로드 ({csPreview.plans.length}개 상품)
               </button>
             </div>
           </div>
