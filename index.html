@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826k_faq_stale_form -->
+<!-- (2026-08-26) FAQ 답변을 올린 뒤 «상품 수정» 화면의 [저장] 을 누르면 방금 올린 답변이 통째로 사라지던 것을 고쳤다(제니 제보 — P0000XUZ 수정 화면에서 올리고 저장했더니 되돌아갔다. 원인 진단도 제니가 정확히 짚었다). 왜 그런가: 업로드 상자가 «상품 수정» 화면 안에 있는데, 업로드는 DB 를 직접 고치고 폼은 [수정] 을 누른 순간의 값을 그대로 들고 있다. 그 상태에서 [저장] 을 누르면 폼의 옛 cs_info 가 DB 를 덮는다. 폼이 DB 를 통째로 덮어쓰는 구조라, DB 를 옆에서 바꿨으면 폼도 같이 맞춰야 한다. ①확정 업로드가 끝나면 «지금 열어 둔 상품» 이 방금 바뀐 목록에 있는지 보고, 있으면 그 폼의 cs_info·cs_faq_map·_qaMap 을 새 값으로 맞춘다. ★ cs_faq_map 도 함께 맞춘다 — 색인만 옛 값으로 되돌아가면 다음 업로드에서 같은 질문이 중복으로 쌓인다. ②확정 «전에» 미리보기 창에서 알린다 — 「지금 수정 화면에 열어 둔 상품(P0000XUZ)이 이 목록에 있습니다. 확정하면 그 화면의 CS 정보도 새로 불러옵니다」. 화면에서 고치던 내용이 사라지는 것은 확정 전에 알아야 한다. ③겸해서 cs_info→폼 구조 변환을 buildQaMap 하나로 모았다. startEdit 와 새로고침이 같은 함수를 쓴다 — 두 곳에 베껴 두면 한쪽만 고쳐져 «수정 창에서만 이미지가 안 붙는» 상태가 생긴다. ★ 남은 한계: 이미지는 카테고리 안 «순번» 으로 붙는다. 병합은 섹션 끝에 붙이므로 기존 순번이 밀리지 않지만, «유형 이동» 이 일어난 카테고리에서는 순번이 하나씩 당겨진다. 유형이 바뀌는 일이 흔해지면 이미지를 순번이 아니라 질문에 묶는 구조로 바꿔야 한다. 병합 로직·양식 A 는 건드리지 않았다. -->
 <!-- v20260826j_faq_form_mismatch -->
 <!-- (2026-08-26) 업로드 양식이 어긋났을 때 «그걸» 알리게 했다(제니 제보 — FAQ 답변 파일을 [문항 마스터] 탭에 올렸더니 「문항 문구 누락」 4건만 떴다). 두 업로드 상자가 나란히 있고 생김새가 같아서, 마스터를 올린 뒤 탭을 안 바꾸고 그대로 답변 파일을 올리기 쉽다. 그때 행 단위 오류만 뱉으면 사람은 «파일이 잘못됐다» 고 읽는다 — 실제로는 «탭이 잘못» 이다. ①마스터 업로드에 「답변」 열이 있으면 «이 파일은 FAQ 답변 양식으로 보입니다. [FAQ 답변] 에서 올리세요» 로 멈춘다. ②반대 방향도 잡는다 — 답변 업로드에 「답변」 이 없고 「필수구분」·「적용범위」 가 있으면 «문항 마스터 양식으로 보입니다» 로 멈춘다. ★★ 겸해서 말과 코드가 어긋난 곳을 고쳤다 — 화면과 양식 안내는 «상품코드·문항ID·답변 세 열만 채우면 된다» 고 하는데, 코드는 다섯 열이 모두 «있어야» 통과시켰다. 「유형」·「문항」 은 문항 마스터가 채우므로 그 두 열이 아예 없는 파일도 받는다. 공급사 952곳에 «세 열만» 이라고 안내해 놓고 다섯 열을 요구하면 그 안내가 거짓말이 된다. 양식 다운로드는 다섯 열 그대로 둔다(사람이 문구를 눈으로 보며 채울 수 있어야 한다). 병합 로직은 건드리지 않았다. -->
 <!-- v20260826i_faq_master_view -->
@@ -3482,10 +3484,25 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       if(error) failed.push({code:t.code,message:error.message}); else ok++;
       setFaqProgress({done:i+1,total:targets.length});
     }
+    // ★★ 지금 «상품 수정» 화면에 열어 둔 상품이 방금 바뀌었다면, 그 화면도 새로 불러온다.
+    //   (2026-08-26 제니 제보) 안 그러면 폼이 «업로드 전» cs_info 를 그대로 들고 있다가
+    //   [저장] 을 누르는 순간 그 옛 값으로 되돌려 버린다 — 방금 올린 답변이 통째로 사라진다.
+    //   폼이 DB 를 덮어쓰는 구조라, DB 를 옆에서 바꿨으면 폼도 같이 맞춰야 한다.
+    //   ★ cs_faq_map 도 함께 맞춘다. 색인만 옛 값으로 되돌아가면 다음 업로드에서 중복이 생긴다.
+    const mine=editId?targets.find(t=>t.id===editId):null;
+    if(mine){
+      setForm(f=>Object.assign({},f,{
+        cs_info:mine.csInfo,
+        cs_faq_map:mine.faqMap,
+        _qaMap:buildQaMap(mine.csInfo,f.cs_images),
+      }));
+    }
+
     setFaqBusy(''); setFaqPreview(null); setFaqProgress({done:0,total:0});
-    setUploadMsg(failed.length
+    setUploadMsg((failed.length
       ? '⚠️ '+ok+'개 상품 저장 · '+failed.length+'개 실패 ('+failed.slice(0,3).map(f=>f.code).join(', ')+(failed.length>3?' 외':'')+')'
-      : '✅ '+ok+'개 상품에 FAQ 답변을 반영했습니다.');
+      : '✅ '+ok+'개 상품에 FAQ 답변을 반영했습니다.')
+      +(mine?'\n※ 지금 열어 둔 상품('+mine.code+')의 CS 정보도 화면에 새로 불러왔습니다.':''));
     load(page,search,searchField,cafeFilter);
   };
 
@@ -3530,15 +3547,21 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     setTimeout(()=>{setForm({...EMPTY_PRODUCT});setEditId(null);setTab('list');},800);
   };
 
+  // cs_info 를 폼이 쓰는 구조로 펴고 cs_images 를 붙인다.
+  // ★ startEdit 와 «FAQ 업로드 뒤 새로고침» 이 같은 함수를 쓴다. 두 곳에 베껴 두면
+  //   한쪽만 고쳐져 «수정 창에서만 이미지가 안 붙는» 상태가 생긴다.
+  const buildQaMap=(csInfo,csImages)=>{
+    const parsedMap=parseCs(csInfo||'');
+    try{
+      const csImgs=JSON.parse(csImages||'{}');
+      Object.entries(csImgs).forEach(([cat,itemImgs])=>{
+        if(parsedMap[cat]) parsedMap[cat]=parsedMap[cat].map((qa,i)=>({...qa,images:(itemImgs[i]||[]).filter(Boolean).map(url=>({url}))}));
+      });
+    }catch(e){}
+    return parsedMap;
+  };
   const startEdit=p=>{
-    const parsedMap=parseCs(p.cs_info||'');
-      // cs_images 이미지 복원
-      try{
-        const csImgs=JSON.parse(p.cs_images||'{}');
-        Object.entries(csImgs).forEach(([cat,itemImgs])=>{
-          if(parsedMap[cat]) parsedMap[cat]=parsedMap[cat].map((qa,i)=>({...qa,images:(itemImgs[i]||[]).filter(Boolean).map(url=>({url}))}));
-        });
-      }catch(e){}
+    const parsedMap=buildQaMap(p.cs_info,p.cs_images);
       setForm({...EMPTY_PRODUCT,...p,options:p.options||[],return_fee:p.return_fee||'',return_fee_type:p.return_fee_type||'A',return_fee_text:p.return_fee_text||'',_qaMap:parsedMap,_csTab:Object.keys(parsedMap)[0]||'불량',return_fee:p.return_fee||'',return_fee_type:p.return_fee_type||'A',
       price:p.price||'',shipping_fee:p.shipping_fee||'',shipping_threshold:p.shipping_threshold||''});
     setEditId(p.id); setDetailProd(null); setTab('add'); setMsg('');
@@ -4947,6 +4970,18 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               })}
             </div>
 
+            {/* ★ 지금 수정 창에 열어 둔 상품이 이 목록에 있으면 «확정 전에» 알린다.
+                확정하면 그 화면의 CS 정보를 새로 불러오므로, 화면에서 고치던 내용은 사라진다. */}
+            {(()=>{
+              const mine=editId?faqPreview.plans.find(p=>p.id===editId&&p.changed):null;
+              if(!mine) return null;
+              return (
+                <div style={{fontSize:12,color:'#B45309',background:'rgba(246,173,9,.12)',border:'1px solid #F6AD09',borderRadius:8,padding:'10px 12px',marginBottom:12}}>
+                  지금 「상품 수정」 화면에 열어 둔 상품(<b>{mine.code}</b>)이 이 목록에 있습니다.
+                  확정하면 그 화면의 CS 정보도 <b>새로 불러옵니다</b> — 화면에서 고치던 내용이 있다면 사라집니다.
+                </div>
+              );
+            })()}
             {faqBusy==='저장 중'&&(
               <div style={{fontSize:12,color:'var(--accent)',marginBottom:10}}>
                 저장 중 {faqProgress.done.toLocaleString()} / {faqProgress.total.toLocaleString()} — 창을 닫지 마세요.
