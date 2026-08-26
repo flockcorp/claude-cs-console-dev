@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826l_upload_only_on_new -->
+<!-- (2026-08-26) 엑셀 일괄 업로드 상자를 «상품 등록» 화면에서만 보이게 했다(제니 제안). 일괄 업로드는 열어 둔 한 상품과 아무 상관이 없는데 «상품 수정» 화면 안에 들어 있었고, 그래서 업로드가 DB 를 고친 뒤 그 화면의 [저장] 이 옛 값으로 되돌리는 사고가 났다(직전 판에서 폼 새로고침으로 증상은 막았다). 자리를 옮기면 그 부류가 통째로 사라진다 — 증상을 막는 것보다 상황이 생기지 않게 하는 편이 낫다. 조건은 editId 가 없을 때(=신규 등록)만 그린다. ★ 직전 판에서 넣었던 «수정 화면에 열어 둔 상품이 목록에 있습니다» 경고는 이제 뜰 일이 없어 걷어냈다. 다만 확정 뒤 폼을 다시 맞추는 처리(confirmFaqUpload 끝의 setForm)는 남겨 뒀다 — 지금은 닿지 않는 길이지만, 나중에 이 상자를 다시 수정 화면에도 보이게 바꾸면 그 한 줄이 없을 때 같은 사고가 조용히 되살아난다. 그 이유를 코드 옆에 적어 뒀다. 양식 A·병합 로직·조회·저장은 건드리지 않았다. -->
 <!-- v20260826k_faq_stale_form -->
 <!-- (2026-08-26) FAQ 답변을 올린 뒤 «상품 수정» 화면의 [저장] 을 누르면 방금 올린 답변이 통째로 사라지던 것을 고쳤다(제니 제보 — P0000XUZ 수정 화면에서 올리고 저장했더니 되돌아갔다. 원인 진단도 제니가 정확히 짚었다). 왜 그런가: 업로드 상자가 «상품 수정» 화면 안에 있는데, 업로드는 DB 를 직접 고치고 폼은 [수정] 을 누른 순간의 값을 그대로 들고 있다. 그 상태에서 [저장] 을 누르면 폼의 옛 cs_info 가 DB 를 덮는다. 폼이 DB 를 통째로 덮어쓰는 구조라, DB 를 옆에서 바꿨으면 폼도 같이 맞춰야 한다. ①확정 업로드가 끝나면 «지금 열어 둔 상품» 이 방금 바뀐 목록에 있는지 보고, 있으면 그 폼의 cs_info·cs_faq_map·_qaMap 을 새 값으로 맞춘다. ★ cs_faq_map 도 함께 맞춘다 — 색인만 옛 값으로 되돌아가면 다음 업로드에서 같은 질문이 중복으로 쌓인다. ②확정 «전에» 미리보기 창에서 알린다 — 「지금 수정 화면에 열어 둔 상품(P0000XUZ)이 이 목록에 있습니다. 확정하면 그 화면의 CS 정보도 새로 불러옵니다」. 화면에서 고치던 내용이 사라지는 것은 확정 전에 알아야 한다. ③겸해서 cs_info→폼 구조 변환을 buildQaMap 하나로 모았다. startEdit 와 새로고침이 같은 함수를 쓴다 — 두 곳에 베껴 두면 한쪽만 고쳐져 «수정 창에서만 이미지가 안 붙는» 상태가 생긴다. ★ 남은 한계: 이미지는 카테고리 안 «순번» 으로 붙는다. 병합은 섹션 끝에 붙이므로 기존 순번이 밀리지 않지만, «유형 이동» 이 일어난 카테고리에서는 순번이 하나씩 당겨진다. 유형이 바뀌는 일이 흔해지면 이미지를 순번이 아니라 질문에 묶는 구조로 바꿔야 한다. 병합 로직·양식 A 는 건드리지 않았다. -->
 <!-- v20260826j_faq_form_mismatch -->
@@ -4324,7 +4326,14 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
 
             </div>
 
-            {/* 엑셀 일괄 업로드 (하단) */}
+            {/* 엑셀 일괄 업로드 (하단) — ★ «등록» 화면에서만 보인다(editId 가 없을 때).
+                일괄 업로드는 열어 둔 한 상품과 아무 상관이 없는데, «수정» 화면 안에 두면
+                업로드가 DB 를 고친 뒤 그 화면의 [저장] 이 옛 값으로 되돌린다.
+                2026-08-26 에 실제로 그랬다(P0000XUZ — 올린 답변이 저장 한 번에 사라졌다).
+                폼 새로고침으로 증상은 막았지만, 자리를 옮기면 그 부류가 통째로 사라진다.
+                ★ 여기를 다시 «수정» 화면에도 보이게 바꾸려면, 업로드가 DB 를 고친 뒤
+                  폼을 다시 맞추는 처리(confirmFaqUpload 끝의 setForm)가 반드시 함께 살아 있어야 한다. */}
+            {!editId&&(
             <div style={{borderTop:'1px solid var(--border)',paddingTop:20,marginTop:4}}>
               <div className="entry-section-title">엑셀 일괄 업로드</div>
               {/* ★ 양식 선택만 새로 넣는다. 아래 «상품 정보» 쪽 상자는 한 줄도 안 바꿨다. */}
@@ -4392,6 +4401,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               )}
               {uploadMsg&&<div className={uploadMsg.startsWith('✅')?'success-msg':'error-msg'} style={{marginTop:8,whiteSpace:'pre-wrap'}}>{uploadMsg}</div>}
             </div>
+            )}
           </div>
         </div>
       )}
@@ -4970,18 +4980,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               })}
             </div>
 
-            {/* ★ 지금 수정 창에 열어 둔 상품이 이 목록에 있으면 «확정 전에» 알린다.
-                확정하면 그 화면의 CS 정보를 새로 불러오므로, 화면에서 고치던 내용은 사라진다. */}
-            {(()=>{
-              const mine=editId?faqPreview.plans.find(p=>p.id===editId&&p.changed):null;
-              if(!mine) return null;
-              return (
-                <div style={{fontSize:12,color:'#B45309',background:'rgba(246,173,9,.12)',border:'1px solid #F6AD09',borderRadius:8,padding:'10px 12px',marginBottom:12}}>
-                  지금 「상품 수정」 화면에 열어 둔 상품(<b>{mine.code}</b>)이 이 목록에 있습니다.
-                  확정하면 그 화면의 CS 정보도 <b>새로 불러옵니다</b> — 화면에서 고치던 내용이 있다면 사라집니다.
-                </div>
-              );
-            })()}
+            {/* ★ «수정 화면에 열어 둔 상품이 목록에 있습니다» 경고는 걷어냈다.
+                업로드 상자를 «등록» 화면에서만 보이게 바꿔(editId 가 없을 때만),
+                업로드 중에 수정 폼이 열려 있는 상황 자체가 생기지 않기 때문이다. */}
             {faqBusy==='저장 중'&&(
               <div style={{fontSize:12,color:'var(--accent)',marginBottom:10}}>
                 저장 중 {faqProgress.done.toLocaleString()} / {faqProgress.total.toLocaleString()} — 창을 닫지 마세요.
