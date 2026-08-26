@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826e_faq_merge_core -->
+<!-- (2026-08-26) FAQ 답변 업로드(양식 B)의 «병합 로직» 순수 함수 셋을 넣었다. 아직 화면에 붙이지 않았다 — 부르는 곳이 없으므로 이 판은 동작이 한 줄도 바뀌지 않는다. 배경: 공급사 952곳에서 상품 8,000개 × 문항 30개의 FAQ 답변을 «여러 번 나눠서» 받는다. 기존 상품 업로드(양식 A)는 cs_info 를 «기존 + 신규» 로 이어 붙이므로, 두 번째 업로드에서 내용이 날아가지는 않지만 같은 Q&A 가 계속 쌓인다(핸드오프 문서에는 «덮어써서 날아간다» 고 적혀 있었으나 코드 확인 결과 이어붙이기다 — 결론은 같고 증상만 다르다). ①serializeCs 는 parseCs 가 만든 구조를 다시 텍스트로 되돌린다. 섹션 순서를 저장 순서가 아니라 표시 순서(불량→변심→상품→기타)로 못 박고, 항목이 없는 섹션도 머리글을 남긴다 — 그래야 parseCs(serializeCs(parseCs(x)))가 parseCs(x)와 같아진다(왕복 안정성). ②parseFaqUploadFile 은 업로드 행을 검증·정규화한다. 검사 순서를 답변→유형→열쇠로 둔 이유는, 답변이 없는 행은 «미회신» 이지 오류가 아니라서 먼저 걸러야 오류 목록이 아직 회신 안 온 문항으로 뒤덮이지 않기 때문이다. ③mergeFaqAnswers 가 본체다. cs_faq_map(문항ID → 마지막으로 저장한 문구)으로 «어디에 있는지» 를 찾으므로, 공급사가 문항 문구를 고쳐 보내거나 우리가 문구를 다듬어도 같은 자리를 찾아 갱신한다. ★★ 문항 열은 매칭에 쓰지 않는다 — 그걸 쓰면 문구가 바뀌는 순간 중복이 쌓인다. 그게 이 색인을 만든 이유다. ★ 업로드에 없는 기존 Q&A 는 손대지 않는다(Zendesk 유래 데이터와 이미지가 걸려 있다). ★ 값이 그대로면 «갱신» 으로 세지 않고 «그대로» 로 센다 — 같은 파일을 다시 올렸을 때 미리보기가 「갱신 318건」이라고 하면 사람은 318건이 바뀐다고 읽는다. ★ 색인이 아직 없을 때만 같은 유형 안에서 같은 문구를 한 번 더 찾는다(문서에 없는 보강) — 첫 업로드에서 이미 같은 질문이 든 상품에 똑같은 Q 를 하나 더 만들지 않기 위해서다. ★ parseCs 는 한 줄도 고치지 않았다. 읽기용으로 «빌려 쓰고», 인자로 받는다. ★ 시험은 tools/faq_merge_test.js 가 이 파일에서 코드를 «꺼내서» 돌린다(npm run test:faq). 사본을 따로 두면 화면을 고쳤을 때 시험이 옛 코드를 검사하게 되고, 그러면 있는 편이 더 나쁘다. 14갈래 통과 — 신규·갱신·문구개정·공급사수정·유형이동·FAQ흡수·Q only·여러줄·멱등성·왕복안정성·파일검증·기존보존·중복방지. ★ 선행 조건: products.cs_faq_map (jsonb NOT NULL '{}') — dev 적용 완료, 운영은 이식 때. -->
 <!-- v20260826d_collapse_cs_on_tab -->
 <!-- (2026-08-26) 상품 목록의 «CS 보기» 펼침을 화면을 옮기면 접는다(제니 지시). 여러 줄을 펼쳐 둔 채 상품 수정 화면에 다녀오면 그대로 펼쳐져 있어서, 돌아온 목록이 떠날 때와 다른 모양으로 보였다. 목록은 접힌 상태로 시작하는 것이 기본이다. ★ 접는 자리를 «탭이 바뀔 때» 한 곳으로 뒀다 — 목록→수정, 수정→목록, 등록→목록 어느 방향이든 같은 규칙이 걸린다. 들어갈 때·나올 때를 따로 잡으면 새 진입 경로가 생길 때마다 빠뜨릴 자리가 늘어난다(예전에 [수정] 버튼과 상세 창에서 각각 탭을 바꾸던 것처럼). ★ 펼침 상태는 그 화면에 머무는 동안만 뜻이 있는 값이라 버려도 잃는 것이 없다 — 검색어·쪽 번호·필터처럼 «어디를 보고 있는가» 를 담은 값이 아니다. 그래서 그 셋은 그대로 두었다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826c_filter_dropdown_readable -->
@@ -2255,6 +2257,142 @@ function parseOptions(str){
     return {name:m[1].trim(), values:m[2].split('|').map(v=>v.trim()).filter(Boolean)};
   }).filter(Boolean);
 }
+
+// ── FAQ 답변 업로드(양식 B) — 순수 함수 ──────────────────────────────────────
+// 공급사 952곳에서 상품 8,000개 × 문항 30개의 FAQ 답변을 «여러 번 나눠서» 받는다.
+// 기존 상품 업로드(양식 A)는 cs_info 를 «기존 + 신규» 로 이어 붙이므로, 두 번째
+// 업로드에서 내용이 날아가지는 않지만 같은 Q&A 가 계속 쌓인다. 그래서 «병합» 이 필요하다.
+//
+// ★ 여기 있는 셋은 순수 함수다 — 화면도 DB 도 모른다. 그래서 라이브 없이 시험할 수 있고
+//   (node tools/faq_merge_test.js), 그 시험은 «이 파일에서 코드를 꺼내» 검사한다.
+//   사본을 따로 두면 반드시 갈라진다.
+// ★ parseCs 는 «읽기용으로 재사용만» 한다. 한 줄도 고치지 않는다 —
+//   Zendesk 유래 데이터·Q-only 항목·인라인 A 분리 같은 예외가 얽혀 있는 고정 영역이다.
+// [FAQ-MERGE-BLOCK-START]
+const FAQ_TYPES=['불량','변심','상품','기타'];
+
+// parseCs 가 만든 구조를 다시 cs_info 텍스트로 되돌린다.
+// ★ 섹션 순서를 «저장 순서» 가 아니라 표시 순서(불량→변심→상품→기타)로 못 박는다.
+// ★ 항목이 없는 섹션도 머리글을 남긴다 — 그래야 parseCs(serializeCs(parseCs(x)))가
+//   parseCs(x) 와 같아진다(왕복 안정성). 빈 섹션은 화면에 아무것도 그리지 않는다.
+function serializeCs(map){
+  const cats=FAQ_TYPES.filter(c=>map&&Object.prototype.hasOwnProperty.call(map,c));
+  return cats.map(cat=>{
+    const lines=['['+cat+']'];
+    (map[cat]||[]).forEach(it=>{
+      lines.push('Q. '+String(it.q||'').trim());
+      const a=String(it.a||'').trim();
+      // A 가 없는 Q-only 항목은 Q 만 쓴다(Zendesk 유래 데이터에 실제로 있다).
+      if(a) lines.push('A. '+a);
+    });
+    return lines.join('\n');
+  }).join('\n\n');
+}
+
+// 업로드 파일의 행 배열을 검증·정규화한다.
+// ★ 검사 순서는 답변 → 유형 → 열쇠다. 답변이 없는 행은 «미회신» 이지 오류가 아니라서,
+//   먼저 걸러야 오류 목록이 아직 회신 안 온 문항으로 뒤덮이지 않는다.
+// ★ «문항» 열은 매칭에 쓰지 않는다. 공급사가 고쳐 써도 문항ID 로 찾기 때문이다.
+//   다만 저장할 «질문 문구» 로는 쓴다(마스터 최신 문구로 갱신하는 효과).
+function parseFaqUploadFile(rows){
+  const valid=[],skipped=[];
+  (rows||[]).forEach((r,i)=>{
+    // 엑셀 1행은 머리글이라 사람이 보는 행 번호는 +2 다.
+    const rowNo=i+2;
+    const pick=(...names)=>{
+      for(let k=0;k<names.length;k++){
+        const v=r[names[k]];
+        if(v!==undefined&&v!==null&&String(v).trim()!=='') return String(v).trim();
+      }
+      return '';
+    };
+    const productCode=pick('상품코드');
+    const faqId=pick('문항ID','문항 ID');
+    const type=pick('유형');
+    const question=pick('문항');
+    const answer=(r['답변']===undefined||r['답변']===null)
+      ?'':String(r['답변']).replace(/\r\n/g,'\n').trim();
+    if(!answer){
+      skipped.push({row:rowNo,reason:'no_answer',detail:'답변 없음(미회신)',productCode,faqId});return;
+    }
+    if(FAQ_TYPES.indexOf(type)<0){
+      skipped.push({row:rowNo,reason:'invalid_type',detail:'유형값 오류: "'+type+'"',productCode,faqId});return;
+    }
+    if(!productCode||!faqId){
+      skipped.push({row:rowNo,reason:'missing_key',
+        detail:productCode?'문항ID 누락':'상품코드 누락',productCode,faqId});return;
+    }
+    valid.push({row:rowNo,productCode,faqId,type,question,answer});
+  });
+  return {valid,skipped};
+}
+
+// 병합 본체. 한 상품의 cs_info·cs_faq_map 과 그 상품의 업로드 행들을 받는다.
+// ★ 업로드에 없는 기존 Q&A 는 손대지 않는다 — Zendesk 유래 데이터와 이미지가 걸려 있다.
+// ★ parseCs 를 인자로 받는다. 그 함수는 ProductsPage 안에 있는 고정 영역이라
+//   여기로 끌어오지 않고 «빌려 쓴다». 시험도 같은 방식으로 넘긴다.
+function mergeFaqAnswers(csInfo,faqMap,uploadRows,parseCs){
+  const sections=parseCs(csInfo||'');
+  const map=Object.assign({},faqMap||{});
+  let added=0,updated=0,moved=0,unchanged=0;
+  const skipped=[];
+  const ensure=cat=>{ if(!sections[cat]) sections[cat]=[]; return sections[cat]; };
+  const norm=v=>String(v||'').trim();
+
+  (uploadRows||[]).forEach(row=>{
+    const prevQ=map[row.faqId];
+    // 문항 문구가 비면 직전 문구를 쓴다. 둘 다 없으면 질문 자체가 없는 것이라 못 넣는다.
+    const newQ=norm(row.question||prevQ||'');
+    if(!newQ){
+      skipped.push({row:row.row,reason:'no_question',detail:'문항 문구도 직전 문구도 없음',
+        productCode:row.productCode,faqId:row.faqId});
+      return;
+    }
+
+    // ① 직전 문구로 «어디에 있는지» 찾는다. 문구가 바뀌었어도 여기서 잡힌다.
+    let at=null;
+    if(prevQ){
+      for(let k=0;k<FAQ_TYPES.length&&!at;k++){
+        const cat=FAQ_TYPES[k],arr=sections[cat]||[];
+        for(let i=0;i<arr.length;i++){
+          if(norm(arr[i].q)===norm(prevQ)){at={cat,i};break;}
+        }
+      }
+    }
+    // ② 색인이 «아직 없을 때만» 같은 유형 안에서 같은 문구를 한 번 더 찾는다.
+    //    첫 업로드에서 이미 같은 질문이 들어 있는 상품에 똑같은 Q 를 하나 더 만들지
+    //    않기 위해서다. 색인이 있으면 ①이 정답이므로 이 길로 오지 않는다.
+    if(!at&&!prevQ){
+      const arr=sections[row.type]||[];
+      for(let i=0;i<arr.length;i++){
+        if(norm(arr[i].q)===newQ){at={cat:row.type,i};break;}
+      }
+    }
+
+    if(at){
+      const cur=sections[at.cat][at.i];
+      if(at.cat===row.type){
+        // 값이 그대로면 «갱신» 으로 세지 않는다 — 미리보기에서 «갱신 318건» 이라고
+        // 하면 사람은 318건이 바뀐다고 읽는다. 같은 파일을 다시 올린 경우가 그렇다.
+        if(norm(cur.q)===newQ&&norm(cur.a)===norm(row.answer)) unchanged++;
+        else updated++;
+        sections[at.cat][at.i]={q:newQ,a:row.answer};
+      }else{
+        // 유형이 바뀌었다 — 옛 섹션에서 빼고 새 섹션 끝에 붙인다(중복 방지).
+        sections[at.cat].splice(at.i,1);
+        ensure(row.type).push({q:newQ,a:row.answer});
+        updated++; moved++;
+      }
+    }else{
+      ensure(row.type).push({q:newQ,a:row.answer});
+      added++;
+    }
+    map[row.faqId]=newQ;
+  });
+
+  return {csInfo:serializeCs(sections),faqMap:map,added,updated,moved,unchanged,skipped};
+}
+// [FAQ-MERGE-BLOCK-END]
 
 function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const [tab,setTab]=useState('list');
