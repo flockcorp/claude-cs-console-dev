@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826a_cafe24_product_status -->
+<!-- (2026-08-26) 카페24에서 가져온 «상품 판매·진열 상태» 와 «공급사 거래 상태» 를 화면에 띄웠다(제니 요청). 배경: 수정 동기화 워크플로(cafe24-sync-products-update)가 카페24의 selling·display 를 콘솔에 채우기 시작했는데, 화면에 보여 주는 곳이 없어 «동기화가 무엇을 했는지 알 수가 없다» 는 상태였다. 값이 DB 에만 있으면 없는 것과 같다. ①상품 목록: 상품 코드 «밑» 에 「판매중지」·「미진열」·「공급사 미사용」 뱃지를 단다. ★ 상품명 뒤가 아니라 코드 밑인 이유는 상품명 길이가 제각각이라 뒤에 붙이면 줄마다 뱃지 자리가 달라져 정렬이 무너지기 때문이다(제니 결정). ②상품 상세 창·수정 창 맨 위에 경고 띠. 「이 상품은 카페24에서 '판매중지' 상태입니다」. ★ 맥박(.alert-pulse)은 일부러 안 썼다 — 그건 화면을 열자마자 알아채야 하는 전역 사고(동기화 사망)에 쓰는 것이고, 여기는 이미 그 상품을 열어 본 사람에게 하는 말이다. 아무 데나 달면 정작 사고가 났을 때 그 뜻이 닳는다. ③공급사 관리: 공급사명 «뒤» 에 「미사용」 뱃지. 열을 새로 만들지 않은 이유는 그 표의 grid 열 정의가 세 곳(그룹헤더·컬럼헤더·행)에 똑같이 적혀 있고 minWidth 가 1301 이라, 열 하나를 더하면 셋을 다 고치고 폭을 다시 맞춰야 하기 때문이다(사이드바 M 뱃지에서 겪은 것과 같은 계열). ④목록 등록/수정 날짜 칸에 「맞춤 MM-DD」 한 줄과, 검색줄에 «카페24 상태» 필터(판매중지·미진열·맞춘 것·아직 안 맞춘 것)를 넣었다 — 판매중지 상품은 8,700건 사이에 흩어져 있어 필터가 없으면 어디에 붙었는지 찾을 수 없다. ★★ 상태는 «두 층» 이고 문구를 가른다: 「이 상품이 판매중지」 ≠ 「공급사가 미사용이라 이 상품도 못 판다」. 상품이 판매중이어도 공급사가 미사용이면 못 판다. ★ 판정은 cafe24Status 한 곳에서만 한다 — 목록·상세·수정 창이 각자 계산하면 언젠가 한 곳만 고쳐져 «목록엔 판매중지인데 수정 창은 멀쩡한» 상태가 생긴다(동기화 경고 띠에서 이미 정한 원칙이다). ★ null 은 «아직 안 가져온 것» 이지 «판매중» 이 아니다. 그런 상품에는 아무 표시도 하지 않는다 — 수정 동기화가 아직 그 상품 차례에 닿지 않았을 뿐이다. ★ 선행 조건: tools/products_search_view.sql 을 다시 적용해야 «검색 중에도» 상태 표시와 필터가 산다. 그 뷰는 2026-08-07 에 select p.* 로 만들어져 뒤에 생긴 칸(cafe24_*)을 모른다. 안 해도 검색 자체는 멀쩡하고 검색 중에만 표시가 빠진다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260825i_tag_gap_costnav -->
 <!-- (2026-08-25) 뱃지 간격·세로중심과 비용 메뉴 두 가지를 함께 고쳤다(제니 제보). ①뱃지와 이름 사이 간격이 줄마다 달랐다 — 「상담원 분석」(.nav-child)은 gap 이 없어 6px, 나머지(.nav-item·.nav-parent)는 gap:10px 이 뱃지 앞에도 들어가 16px 였다. 제니가 6px 쪽을 택해, gap 을 음수 여백(calc(6px - 10px))으로 상쇄해 어느 줄이든 6px 이 되게 했다. gap 자체를 지우지 않은 이유는 그것이 아이콘과 이름 사이 간격도 함께 맡고 있기 때문이다. ②뱃지 글자가 텍스트보다 살짝 위로 떠 보였다 — line-height 로 알약 높이를 만들면 글꼴의 위/아래 여백이 비대칭이라 글자가 위로 밀린다. inline-flex + align-items:center + line-height:1 로 바꾸고 높이는 padding 으로 만들어 «알약 안에서» 글자를 가운데 뒀다. ③비용 프로젝트 목록이 새로고침하면 비어 있었다 — 목록은 ToolCostCompare 가 올려 주는데(onProjects) 그 컴포넌트는 비용 화면을 열어야 그려지기 때문이다. master 이면 앱이 뜰 때 cost_store(toolcost:team:v1, shared)를 한 번 «읽기만» 해서 사이드바를 먼저 채운다. 이미 목록이 있으면 덮지 않고, 실패해도 조용히 둔다(화면을 열면 어차피 채워지므로 로그인마다 경고를 띄울 일이 아니다). 저장·마이그레이션·샘플 생성은 여전히 ToolCostCompare 의 몫이다. ④「비용 비교 도구」 텍스트로 펼치기는 되는데 접기가 안 됐다 — 클릭이 언제나 costs:true 로 고정돼 있었다. 이미 «메인 화면» 을 보고 있고 펼쳐져 있을 때만 접기로 동작하게 했다. 무조건 토글로 바꾸지 않은 이유는, 프로젝트를 보다가 메인으로 돌아올 때마다 목록이 사라지면 안 되기 때문이다(그 보호가 원래 이 코드의 취지였다). 권한 판정·라우팅은 건드리지 않았다. -->
 <!-- v20260825h_tag_after_label -->
@@ -2258,6 +2260,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const [msg,setMsg]=useState('');
   const [search,setSearch]=useState('');
   const [searchField,setSearchField]=useState('all');
+  // 카페24 상태로 좁혀 보기. 서버에서 거른다(8,700건을 브라우저로 받아 거르지 않는다).
+  // all | stopped(판매중지) | hidden(미진열) | synced(맞춘 것) | unsynced(아직 안 맞춘 것)
+  const [cafeFilter,setCafeFilter]=useState('all');
   const [detailProd,setDetailProd]=useState(null);
   const [detailMode,setDetailMode]=useState('basic');
   const [uploading,setUploading]=useState(false);
@@ -2282,6 +2287,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   // ── 공급사 소통 채널 관리
   const canManageSupplier = isMaster || isManager; // master·manager만 채널 변경 가능
   const [supplierMap,setSupplierMap]=useState({}); // { name: 'kakao'|'nateon'|'email'|null }
+  // 카페24가 알려 준 공급사 상태 { name: {use:true|false|null, status:'A'|'P'|null} }
+  // ★ 상품 상태(판매중지)와 «다른 층» 이다 — 상품은 팔 수 있는데 공급사가 미사용일 수 있다.
+  const [supStatusMap,setSupStatusMap]=useState({});
   const [supModal,setSupModal]=useState(false); // 공급사 관리 모달
   const [supModalSearch,setSupModalSearch]=useState('');
   const [supModalFilter,setSupModalFilter]=useState('all'); // all|kakao|nateon|email|none
@@ -2306,13 +2314,91 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     const ch=supplierMap[name]||'none';
     return SUP_CHANNELS[ch]||SUP_CHANNELS.none;
   };
+
+  // ── 카페24 상태 판정 ────────────────────────────────────────────────────
+  // ★ 판정은 여기 한 곳에서만 한다. 목록 뱃지·상세 창·수정 창이 «같은 값» 을 쓴다.
+  //   세 곳에서 따로 계산하면 언젠가 한 곳만 고쳐져 «목록엔 판매중지인데 수정 창은
+  //   멀쩡한» 상태가 반드시 생긴다(동기화 경고 띠에서 이미 한 번 정한 원칙이다).
+  //
+  // ★ 상태는 «두 층» 이고 뜻이 다르다.
+  //     상품  : 카페24에서 이 상품을 «판매함/진열함» 으로 두었는가
+  //     공급사: 그 공급사가 카페24에서 «사용/거래중» 인가
+  //   「이 상품이 판매중지」와 「공급사가 미사용이라 이 상품도 못 판다」는 다른 말이다.
+  //
+  // ★ null 은 «아직 안 가져온 것» 이다. 판매중이라는 뜻이 아니므로 아무것도 표시하지 않는다.
+  //   수정 동기화가 훑은 상품만 값이 있고, 나머지는 그 차례를 기다리는 중이다.
+  const cafe24Status=p=>{
+    if(!p) return null;
+    const sup=supStatusMap[p.supplier_name]||null;
+    const known=p.cafe24_selling!=null||p.cafe24_display!=null;
+    return {
+      known,
+      stopped: p.cafe24_selling===false,
+      hidden:  p.cafe24_display===false,
+      // 사용여부 F 이거나 거래상태 P(거래중지) 면 그 공급사 상품은 팔 수 없다.
+      supOff:  !!sup&&(sup.use===false||sup.status==='P'),
+      supName: p.supplier_name||'',
+      syncedAt:p.cafe24_synced_at||null,
+    };
+  };
+  // 목록에서 상품 코드 밑에 다는 작은 표시. 이상이 없으면 아무것도 그리지 않는다.
+  const Cafe24Tags=({p})=>{
+    const s=cafe24Status(p);
+    if(!s||(!s.stopped&&!s.hidden&&!s.supOff)) return null;
+    const tag=(text,fg,bg,tip)=>(
+      <span key={text} title={tip}
+        style={{display:'inline-flex',alignItems:'center',fontSize:9,fontWeight:700,lineHeight:1,
+          padding:'3px 5px',borderRadius:3,whiteSpace:'nowrap',color:fg,background:bg}}>{text}</span>
+    );
+    return (
+      <div style={{display:'flex',flexWrap:'wrap',gap:3,marginTop:3}}>
+        {s.stopped&&tag('판매중지','#F87171','rgba(248,113,113,.16)','카페24에서 이 상품을 «판매함» 으로 두지 않았습니다')}
+        {s.hidden&&tag('미진열','#8FA8D0','rgba(143,168,208,.18)','카페24에서 이 상품을 «진열함» 으로 두지 않았습니다')}
+        {s.supOff&&tag('공급사 미사용','#F6AD09','rgba(246,173,9,.16)','공급사 '+s.supName+' 가 카페24에서 미사용·거래중지 상태입니다')}
+      </div>
+    );
+  };
+  // 상세 창·수정 창 맨 위에 서는 «띠». 이상이 없으면 아무 자리도 차지하지 않는다.
+  // ★ 맥박(.alert-pulse)은 쓰지 않는다 — 그건 «화면을 열자마자 알아채야 하는» 전역 사고
+  //   (동기화 사망)에 쓰는 것이고, 여기는 이미 그 상품을 보고 있는 사람에게 하는 말이다.
+  //   아무 데나 맥박을 달면 정작 사고가 났을 때 그 뜻이 닳는다.
+  const Cafe24Notice=({p})=>{
+    const s=cafe24Status(p);
+    if(!s||(!s.stopped&&!s.hidden&&!s.supOff)) return null;
+    // 판매중지·공급사 미사용은 «못 판다», 미진열만이면 «안 보인다» — 무게가 다르므로 색을 가른다.
+    const red=s.stopped||s.supOff;
+    const c=red?'#F87171':'#F6AD09';
+    const what=s.stopped&&s.hidden?"'판매중지·미진열'":(s.stopped?"'판매중지'":"'미진열'");
+    return (
+      <div style={{marginBottom:16,padding:'11px 14px',background:red?'rgba(248,113,113,.10)':'rgba(246,173,9,.10)',
+        border:'2px solid '+c,borderRadius:10,display:'flex',alignItems:'flex-start',gap:11}}>
+        <span style={{fontSize:18,lineHeight:1.1}}>⚠</span>
+        <div style={{flex:1,minWidth:0}}>
+          {(s.stopped||s.hidden)&&(
+            <div style={{fontSize:14,fontWeight:700,color:c}}>이 상품은 카페24에서 {what} 상태입니다</div>
+          )}
+          {/* ★ 공급사 층은 «다른 말» 이므로 문장을 따로 둔다. 상품은 판매중인데
+              공급사가 미사용이면 그래도 못 판다 — 이유가 다르면 문구도 달라야 한다. */}
+          {s.supOff&&(
+            <div style={{fontSize:14,fontWeight:700,color:c,marginTop:(s.stopped||s.hidden)?4:0}}>
+              공급사 「{s.supName}」 가 카페24에서 미사용·거래중지 상태입니다
+            </div>
+          )}
+          <div style={{fontSize:12,color:'var(--sub)',marginTop:4}}>
+            {s.syncedAt?'카페24와 맞춘 때: '+s.syncedAt.slice(0,16).replace('T',' '):'카페24와 맞춘 기록이 없습니다'}
+          </div>
+        </div>
+      </div>
+    );
+  };
   const loadSuppliers=async()=>{
-    const{data,error:supErr}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type');
+    const{data,error:supErr}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type,cafe24_use_supplier,cafe24_status');
     if(sbFail('공급사 정보 조회',supErr)) return;
     if(data){
-      const m={}; const sm={};
+      const m={}; const sm={}; const st={};
       data.forEach(s=>{
         m[s.name]=s.channel||null;
+        st[s.name]={use:s.cafe24_use_supplier,status:s.cafe24_status||null};
         sm[s.name]={
           fee: s.default_shipping_fee,
           cond: s.default_shipping_cond||'',
@@ -2324,6 +2410,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       });
       setSupplierMap(m);
       setSupShipMap(sm);
+      setSupStatusMap(st);
     }
   };
   // 공급사 채널 변경 (즉시 저장) — admin/manager만 가능
@@ -2582,7 +2669,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
 
       setZdProgress(100);
       setZdStatus(`✅ 완료! Zendesk ${updates.length}개 아티클 처리 (기존 CS 정보 없는 상품에만 적용)`);
-      load(page,search,searchField);
+      load(page,search,searchField,cafeFilter);
     }catch(err){
       setZdStatus('❌ 오류: '+err.message);
     }
@@ -2593,7 +2680,19 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const escLike=s=>s.replace(/([\\%_])/g,'\\$1');
   // 검색 필드 → products_search 뷰의 정규화 컬럼 (tools/products_search_view.sql)
   const SEARCH_COL={all:'n_all',supplier:'n_supplier',code:'n_code',name:'n_name',url:'n_url'};
-  const load=async(pg=1,q='',field='all')=>{
+  // 카페24 상태 조건을 조회에 얹는다. 목록과 검색이 «같은 함수» 를 쓴다 —
+  // 두 곳에 따로 적으면 한쪽만 고쳐져 «검색하면 필터가 풀리는» 상태가 된다.
+  // ★ 검색 경로는 products_search 뷰를 본다. 그 뷰는 2026-08-07 에 select p.* 로 만들어져
+  //   뒤에 생긴 칸(cafe24_*)을 «모른다» — tools/products_search_view.sql 을 다시 적용해야
+  //   검색 중에도 이 필터와 상태 표시가 산다. 안 하면 검색했을 때만 조용히 사라진다.
+  const applyCafeFilter=(query,f)=>{
+    if(f==='stopped')  return query.eq('cafe24_selling',false);
+    if(f==='hidden')   return query.eq('cafe24_display',false);
+    if(f==='synced')   return query.not('cafe24_synced_at','is',null);
+    if(f==='unsynced') return query.is('cafe24_synced_at',null);
+    return query;
+  };
+  const load=async(pg=1,q='',field='all',cf='all')=>{
     setLoading(true);
     if(q){
       // 검색: 서버 측 like — products_search 뷰의 정규화 컬럼(공백·대소문자 제거) 대상.
@@ -2605,6 +2704,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       let query=sb.from('products_search').select('*',{count:'exact'});
       // 항(;)마다 조건을 겹쳐 걸면 PostgREST 가 AND 로 묶는다 — 기존 every() 와 같은 의미
       terms.forEach(t=>{query=query.like(col,'%'+escLike(t)+'%');});
+      query=applyCafeFilter(query,cf);
       const{data,count,error}=await query
         .order('updated_at',{ascending:false,nullsFirst:false})
         .order('created_at',{ascending:false})
@@ -2627,7 +2727,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     } else {
       // 검색 없음: 서버 페이지네이션
       const from=(pg-1)*PAGE_SIZE, to=from+PAGE_SIZE-1;
-      const{data,count}=await sb.from('products').select('*',{count:'exact'})
+      const{data,count}=await applyCafeFilter(
+          sb.from('products').select('*',{count:'exact'}),cf)
         .order('updated_at',{ascending:false,nullsFirst:false})
         .order('created_at',{ascending:false})
         .range(from,to);
@@ -2680,16 +2781,26 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     const{error}=await sb.from('products').delete().neq('product_code','__never__').gt('created_at','1900-01-01');
     if(error){toast('삭제 실패: '+error.message);}
     else{toast('전체 삭제 완료.');}
-    setSearch(''); setPage(1); load(1,'','all');
+    setSearch(''); setPage(1); setCafeFilter('all'); load(1,'','all','all');
   };
   useEffect(()=>{
     // 검색어 변경 시: 즉시 loading 표시(깜빡임 방지) + 체크박스 전체 해제 + 300ms debounce 조회
     setLoading(true);
     setCheckedIds(new Set());
-    const t=setTimeout(()=>{load(1,search,searchField);setPage(1);},300);
+    const t=setTimeout(()=>{load(1,search,searchField,cafeFilter);setPage(1);},300);
     return ()=>clearTimeout(t);
   },[search,searchField]);
-  useEffect(()=>{load(page,search,searchField);},[page]);
+  useEffect(()=>{load(page,search,searchField,cafeFilter);},[page]);
+  // 상태 필터는 검색어와 달리 «고르는» 값이라 기다릴 이유가 없다. 바로 1쪽부터 다시 본다.
+  // ★ 첫 렌더에서는 돌지 않게 한다 — 위 두 useEffect 가 이미 첫 조회를 맡고 있어,
+  //   여기서 또 부르면 화면을 열 때마다 같은 조회가 두 번 나간다.
+  const cafeFilterFirst=useRef(true);
+  useEffect(()=>{
+    if(cafeFilterFirst.current){cafeFilterFirst.current=false;return;}
+    setCheckedIds(new Set());
+    setPage(1);
+    load(1,search,searchField,cafeFilter);
+  },[cafeFilter]);
 
   const setF=(k,v)=>setForm(p=>({...p,[k]:v}));
   const addOption=()=>setForm(p=>({...p,options:[...(p.options||[]),{name:'',values:[]}]}));
@@ -2868,7 +2979,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       // 신규 공급사 일괄 자동 등록
       const newSups=[...new Set(records.map(r=>r.supplier_name).filter(Boolean))];
       await Promise.all(newSups.map(n=>ensureSupplier(n)));
-      setUploadMsg('✅ '+records.length+'개 상품 등록 완료'); load(1,search,searchField);
+      setUploadMsg('✅ '+records.length+'개 상품 등록 완료'); load(1,search,searchField,cafeFilter);
     }catch(err){setUploadMsg('❌ 오류: '+err.message);}
     setUploading(false); e.target.value='';
   };
@@ -2920,7 +3031,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     if(error){setMsg('저장 실패: '+error.message);return;}
     // 공급사 자동 등록 (신규 공급사명이면 suppliers 테이블에 channel=null로 추가)
     ensureSupplier(form.supplier_name);
-    setMsg('저장되었습니다!'); load(page,search,searchField);
+    setMsg('저장되었습니다!'); load(page,search,searchField,cafeFilter);
     setTimeout(()=>{setForm({...EMPTY_PRODUCT});setEditId(null);setTab('list');},800);
   };
 
@@ -2940,7 +3051,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const bulkDelete=async()=>{
     if(!confirm(checkedIds.size+'개 상품을 삭제하시겠습니까?'))return;
     await Promise.all([...checkedIds].map(id=>sb.from('products').delete().eq('id',id)));
-    setCheckedIds(new Set()); load(page,search,searchField);
+    setCheckedIds(new Set()); load(page,search,searchField,cafeFilter);
   };
   const confirmUpload=async()=>{
     if(!dupInfo)return; setUploading(true); setUploadMsg('');
@@ -2962,7 +3073,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       // 신규 공급사 일괄 자동 등록 (병합·신규 양쪽 다 포함)
       const allSups=[...new Set([...dupInfo.mergedRecords,...dupInfo.newRecords].map(r=>r.supplier_name).filter(Boolean))];
       await Promise.all(allSups.map(n=>ensureSupplier(n)));
-      setUploadMsg('✅ 병합 '+dupInfo.mergedRecords.length+'개 + 신규 '+dupInfo.newRecords.length+'개 처리 완료'); load(1,search,searchField);
+      setUploadMsg('✅ 병합 '+dupInfo.mergedRecords.length+'개 + 신규 '+dupInfo.newRecords.length+'개 처리 완료'); load(1,search,searchField,cafeFilter);
     }catch(err){setUploadMsg('❌ 오류: '+err.message);}
     setDupInfo(null); setUploading(false);
     if(fileRef.current) fileRef.current.value='';
@@ -2975,7 +3086,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     if(!confirm('삭제하시겠습니까?'))return;
     const{error}=await sb.from('products').delete().eq('id',id);
     if(sbFail('상품 삭제',error,{write:true})) return;
-    load(page,search,searchField);
+    load(page,search,searchField,cafeFilter);
   };
 
 
@@ -3133,6 +3244,17 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
             </select>
             <input type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="검색어 입력... (띄어쓰기 무시, ;로 AND 검색)"
               style={{flex:1,minWidth:200,padding:'8px 12px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none'}}/>
+            {/* ★ 카페24 상태로 좁혀 보기. 판매중지 상품은 8,700건 사이에 흩어져 있어
+                이 필터가 없으면 «어디에 붙었는지» 를 찾을 수 없다. */}
+            <select value={cafeFilter} onChange={e=>setCafeFilter(e.target.value)}
+              title="카페24에서 가져온 상태로 좁혀 봅니다"
+              style={{padding:'8px 12px',background:cafeFilter==='all'?'var(--card)':'rgba(246,173,9,.12)',border:'1px solid '+(cafeFilter==='all'?'var(--border)':'#F6AD09'),borderRadius:8,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none'}}>
+              <option value="all">카페24 상태: 전체</option>
+              <option value="stopped">판매중지</option>
+              <option value="hidden">미진열</option>
+              <option value="synced">카페24와 맞춘 것</option>
+              <option value="unsynced">아직 안 맞춘 것</option>
+            </select>
             <button className="btn-filter" onClick={()=>{setForm({...EMPTY_PRODUCT});setEditId(null);setTab('add');}}>+ 상품 등록</button>
           </div>
           {checkedIds.size>0&&(
@@ -3232,7 +3354,12 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                         </span>
                       );
                     })()}</td>
-                    <td style={{fontSize:11,color:'#4a6090',fontFamily:'monospace'}}>{p.product_code||'-'}</td>
+                    {/* ★ 상태 표시를 상품명이 아니라 «코드 밑» 에 단다(제니 결정) —
+                        상품명은 길이가 제각각이라 뒤에 붙이면 줄마다 자리가 달라져 정렬이 무너진다. */}
+                    <td style={{fontSize:11,color:'#4a6090',fontFamily:'monospace'}}>
+                      <div>{p.product_code||'-'}</div>
+                      <Cafe24Tags p={p}/>
+                    </td>
                     <td style={{cursor:'pointer',color:'var(--primary)',textDecoration:'underline',textDecorationStyle:'dotted',maxWidth:280,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onClick={()=>{setDetailProd(p);setDetailMode('basic');}} title={p.product_name}>{p.product_name}</td>
 
                     <td style={{fontSize:11,color:'#1a3060'}}>
@@ -3262,6 +3389,13 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                       <div style={{display:'flex',flexDirection:'column',gap:2}}>
                         <span style={{fontSize:11,color:'#2a4060',fontWeight:500}}>{p.created_at?p.created_at.slice(0,10):'-'}</span>
                         <span style={{fontSize:10,color:'var(--sub)'}}>수정 {p.updated_at?p.updated_at.slice(0,10):'-'}</span>
+                        {/* ★ «카페24와 맞춘 때». 수정 동기화가 훑은 상품만 값이 있다.
+                            이 줄이 없으면 «동기화가 무엇을 건드렸는지» 를 화면에서 알 길이 없다. */}
+                        {p.cafe24_synced_at&&(
+                          <span style={{fontSize:10,color:'#22d3a0'}} title={'카페24와 마지막으로 맞춘 때: '+p.cafe24_synced_at.slice(0,16).replace('T',' ')}>
+                            맞춤 {p.cafe24_synced_at.slice(0,10)}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -3390,6 +3524,11 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       {tab==='add'&&(
         <div className="section" style={{paddingTop:0}}>
           <div className="entry-card">
+            {/* ★ 수정 창 맨 위에 띠를 세운다. 「이 상품 왜 주문이 안 들어와요」 를 받았을 때
+                가장 먼저 열어 보는 자리가 여기다. 등록(신규)일 때는 대상이 없어 안 뜬다. */}
+            {/* form 은 [수정] 을 누를 때 그 행을 통째로 받는다({...EMPTY_PRODUCT,...p}) —
+                목록을 다시 불러도, 검색 결과에서 들어와도 값이 딸려 있다. */}
+            {editId&&<Cafe24Notice p={form}/>}
 
             {/* 2컬럼 레이아웃 */}
             <div style={{display:'grid',gridTemplateColumns:'380px 1fr',gap:20,alignItems:'start'}}>
@@ -3687,7 +3826,11 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       {tab==='list'&&totalCount.filtered>0&&(
         <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',gap:16,padding:'14px 0',marginTop:4}}>
           <span style={{fontSize:12,color:'var(--sub)',justifySelf:'start'}}>
-            {search?`검색 결과 ${totalCount.filtered.toLocaleString()}개`:`전체 ${totalCount.products.toLocaleString()}개`} 중 {Math.min((page-1)*PAGE_SIZE+1,totalCount.filtered).toLocaleString()}–{Math.min(page*PAGE_SIZE,totalCount.filtered).toLocaleString()}번째
+            {/* ★ 상태 필터가 걸려 있으면 «전체 8,715개» 라고 하면 안 된다 — 그 숫자는
+                거르기 전 수라 지금 보고 있는 목록과 뜻이 어긋난다. */}
+            {search?`검색 결과 ${totalCount.filtered.toLocaleString()}개`
+              :(cafeFilter!=='all'?`조건에 맞는 ${totalCount.filtered.toLocaleString()}개`
+                :`전체 ${totalCount.products.toLocaleString()}개`)} 중 {Math.min((page-1)*PAGE_SIZE+1,totalCount.filtered).toLocaleString()}–{Math.min(page*PAGE_SIZE,totalCount.filtered).toLocaleString()}번째
           </span>
           <div style={{display:'flex',gap:6,alignItems:'center'}}>
             {[['<<',1],['<',page-1]].map(([label,target])=>(
@@ -4051,9 +4194,19 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               <div style={{fontSize:17,fontWeight:700}}>{detailProd.product_name}</div>
               <button onClick={()=>setDetailProd(null)} style={{background:'none',border:'none',color:'var(--sub)',fontSize:20,cursor:'pointer',lineHeight:1}}>✕</button>
             </div>
+            <Cafe24Notice p={detailProd}/>
             {(detailMode==='basic'?[
               ['공급사',   <span className="agent-badge">{detailProd.supplier_name||'-'}</span>],
               ['상품코드', detailProd.product_code||'-'],
+              // 이상이 없을 때도 «언제 맞췄는지» 는 알아야 한다. 띠는 이상할 때만 서고
+              // 이 줄은 언제나 선다 — 둘은 답하는 질문이 다르다.
+              ['카페24', (()=>{
+                const s=cafe24Status(detailProd);
+                if(!s||!s.known) return <span style={{color:'var(--sub)'}}>아직 카페24와 맞춘 적이 없습니다</span>;
+                const state=s.stopped&&s.hidden?'판매중지 · 미진열':(s.stopped?'판매중지':(s.hidden?'미진열':'판매중 · 진열중'));
+                return <span>{state}<span style={{color:'var(--sub)',fontSize:11,marginLeft:8}}>
+                  맞춘 때 {s.syncedAt?s.syncedAt.slice(0,16).replace('T',' '):'-'}</span></span>;
+              })()],
               ['URL', detailProd.product_url?<a href={detailProd.product_url} target="_blank" rel="noreferrer" style={{color:'var(--accent)'}}>링크 열기</a>:'-'],
             ]:[
               ['URL', detailProd.product_url?<a href={detailProd.product_url} target="_blank" rel="noreferrer" style={{color:'var(--accent)'}}>링크 열기</a>:'-'],
@@ -4173,7 +4326,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
   const loadAll=async()=>{
     setLoading(true);
     // 1. suppliers 테이블
-    const{data:supRows,error:supErr}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type,cafe24_supplier_code,updated_at');
+    const{data:supRows,error:supErr}=await sb.from('suppliers').select('name,channel,default_shipping_fee,default_shipping_cond,default_shipping_threshold,shipping_memo,default_shipping_method,default_payment_type,cafe24_supplier_code,cafe24_use_supplier,cafe24_status,updated_at');
     if(sbFail('공급사 목록 조회',supErr)){ setLoading(false); return; }
     const supList=(supRows||[]).map(s=>({
       name:s.name,
@@ -4185,6 +4338,10 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
       method:s.default_shipping_method||'',
       payment:s.default_payment_type||'',
       cafe24Code:s.cafe24_supplier_code||'',
+      // 카페24가 알려 준 거래 상태. use_supplier=사용여부(T/F) · status=거래상태(A 거래중/P 거래중지).
+      // 공급사 동기화(cafe24-sync-suppliers-apply)가 채운다. null 이면 아직 안 가져온 것.
+      cafe24Use:s.cafe24_use_supplier,
+      cafe24State:s.cafe24_status||null,
       updated_at:s.updated_at,
     }));
     // 2. 공급사별 상품 수 — 집계 뷰에서 받는다(약 955행).
@@ -4734,7 +4891,25 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                 background:isDirty?'rgba(246,173,9,.18)':'#FFFFFF',
                 // 좌측 막대는 boxShadow inset로 처리 — width/padding 영향 없음
                 boxShadow:isDirty?'inset 3px 0 0 #F6AD09':'none'}}>
-                <span style={{color:'#1A2240',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={s.name}>{s.name}</span>
+                {/* ★ 열을 새로 만들지 않고 «이름 뒤 뱃지» 로 단다. 이 표는 grid 열 정의가
+                    세 곳(그룹헤더·컬럼헤더·행)에 똑같이 적혀 있고 minWidth 가 1301 이라,
+                    열을 하나 더하면 셋을 다 고치고 폭도 다시 맞춰야 한다.
+                    이름 뒤에 붙이면 그 계열의 문제가 통째로 사라진다(사이드바 M 뱃지와 같은 이유). */}
+                <span style={{display:'flex',alignItems:'center',minWidth:0}} title={s.name}>
+                  <span style={{color:'#1A2240',fontWeight:500,flex:'0 1 auto',minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.name}</span>
+                  {(()=>{
+                    // 사용여부 F 또는 거래상태 P 면 그 공급사 상품은 팔 수 없다.
+                    const off=s.cafe24Use===false||s.cafe24State==='P';
+                    if(!off) return null;
+                    const why=s.cafe24Use===false
+                      ?'카페24에서 «사용함» 이 꺼져 있습니다'
+                      :'카페24 거래상태가 «거래중지» 입니다';
+                    return <span title={why}
+                      style={{flex:'none',marginLeft:6,display:'inline-flex',alignItems:'center',position:'relative',top:1,
+                        fontSize:9,fontWeight:700,lineHeight:1,padding:'3px 5px',borderRadius:3,whiteSpace:'nowrap',
+                        color:'#B45309',background:'rgba(246,173,9,.22)'}}>미사용</span>;
+                  })()}
+                </span>
                 {/* 그룹 내 구분선 (공급사명 ↔ 상품수) */}
                 <span style={{borderLeft:'1px solid #DCE8FF',height:28}}></span>
                 <span style={{textAlign:'right',color:productCount>0?'#1A2240':'#8895B0',fontVariantNumeric:'tabular-nums',fontSize:11}}>{productCount.toLocaleString()}</span>
