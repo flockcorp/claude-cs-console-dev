@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260826h_faq_master -->
+<!-- (2026-08-26) 문항 마스터를 콘솔에 들였다(제니 요청 — 「문항이 비어 있으면 문항ID에 매칭된 기본 문항을 자동으로 넣어 주는 게 좋겠다」). ①업로드 양식에 «문항 마스터» 를 더했다. 문항ID·적용범위·카테고리·키워드·태그·유형·필수구분·문항 8열이고, 파일이 여러 장이면 「문항마스터」 시트를 이름으로 골라 읽는다(마스터 파일은 가이드·문항마스터·태그규칙 세 장이다). 확정 전에 신규/덮어쓰기/오류와 유형별 분포를 보여 준다. ②FAQ 답변 업로드가 마스터를 조회해 «문항»·«유형» 의 빈 칸을 채운다. ★ 파일에 값이 있으면 파일이 이긴다 — 공급사가 그 상품에만 해당하는 문구로 고쳐 보낸 것을 마스터가 되돌리면 안 된다. ★★ 그래서 공급사에게 보내는 파일이 «상품코드·문항ID·답변» 세 열로 줄어든다. 952곳에 돌릴 파일이라 열이 적을수록 사고가 줄고, 유형 오타로 행이 통째로 버려지는 일도 없어진다. ③유형 검증을 옮겼다 — «비어 있는» 유형은 파일 검증에서 막지 않는다(마스터가 채울 수 있으므로). 적혀 있는데 네 값이 아닌 것만 막고, 채우고도 없으면 그때 no_type 으로 거른다. ★ 마스터를 못 읽어도 업로드는 멈추지 않는다 — 파일에 적힌 값으로 돈다. 마스터는 «거들 뿐» 이다. ★ 마스터 표(faq_master)의 권한은 products 와 같은 등급이다. 읽기는 콘솔 사용자 전부, 쓰기는 master·manager — 상담원이 마스터를 바꾸면 전 상품의 질문 문구가 흔들린다. ★ 미리보기에 «마스터에서 채움: 질문 문구 N건 · 유형 N건» 을 띄운다. 자동으로 채워진 값은 사람이 한 번은 보고 넘어가야 한다. 시험 19갈래로 늘렸다(마스터 채움·파일 우선·마스터에 없는 문항·유형 못 채운 경우). ★ 선행 조건: sql/faq_master.sql — dev 적용 완료, 운영은 이식 때. 양식 A·조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826g_faq_hint_and_headers -->
 <!-- (2026-08-26) FAQ 업로드에서 «문항» 열을 비우고 올렸더니 「문항 문구도 직전 문구도 없음」 만 떴다(제니 제보). 무엇을 하면 되는지 알 수 없는 문구였다. ①오류 문구에 할 일을 넣었다 — 「문항」 열이 비었습니다, 이 문항ID(C-가전-04)를 처음 올리는 것이라 질문 문구가 필요합니다. ②양식의 작성안내를 고쳤다 — 「참고용」 이라고만 적어 비워도 되는 것처럼 읽혔다. 매칭에는 안 쓰지만 «콘솔에 저장될 질문 문구» 라서, 그 문항ID를 처음 올릴 때는 반드시 채워야 하고 두 번째부터는 비워도 직전 문구를 쓴다. ③열 이름의 공백을 무시하고 견준다 — 「문항 ID」·「상품 코드」 처럼 손으로 띄어 쓴 파일을 «열이 없다» 로 돌려보내면 사람은 무엇이 틀렸는지 알 수 없다. 시험을 17갈래로 늘렸다. -->
 <!-- v20260826f_faq_upload_ui -->
@@ -2324,7 +2326,9 @@ function parseFaqUploadFile(rows){
     if(!answer){
       skipped.push({row:rowNo,reason:'no_answer',detail:'답변 없음(미회신)',productCode,faqId});return;
     }
-    if(FAQ_TYPES.indexOf(type)<0){
+    // ★ «비어 있는» 유형은 여기서 막지 않는다 — 문항 마스터에서 채울 수 있기 때문이다.
+    //   채우고도 없으면 그때 걸러진다. 적혀 있는데 네 값이 아닌 것만 여기서 막는다.
+    if(type&&FAQ_TYPES.indexOf(type)<0){
       skipped.push({row:rowNo,reason:'invalid_type',detail:'유형값 오류: "'+type+'"',productCode,faqId});return;
     }
     if(!productCode||!faqId){
@@ -2334,6 +2338,25 @@ function parseFaqUploadFile(rows){
     valid.push({row:rowNo,productCode,faqId,type,question,answer});
   });
   return {valid,skipped};
+}
+
+// 문항 마스터로 «문항»·«유형» 의 빈 칸을 채운다.
+// ★ 파일에 값이 있으면 파일이 이긴다. 마스터는 «비어 있을 때만» 거든다 —
+//   공급사가 그 상품에만 해당하는 문구로 고쳐 보낸 경우를 마스터가 되돌리면 안 된다.
+// ★ 왜 필요한가: 매칭은 문항ID 로 하지만 cs_info 에 저장되는 «질문 문구» 는 문항 열에서
+//   온다. 마스터가 있으면 공급사에게 보내는 파일이 상품코드·문항ID·답변 셋으로 줄어든다.
+function applyFaqMaster(rows,master){
+  return (rows||[]).map(r=>{
+    const m=master&&master[r.faqId];
+    if(!m) return r;
+    const needQ=!r.question,needT=!r.type;
+    return Object.assign({},r,{
+      question:r.question||String(m.question||'').trim(),
+      type:r.type||String(m.type||'').trim(),
+      filledQ:needQ&&!!String(m.question||'').trim(),
+      filledT:needT&&!!String(m.type||'').trim(),
+    });
+  });
 }
 
 // 병합 본체. 한 상품의 cs_info·cs_faq_map 과 그 상품의 업로드 행들을 받는다.
@@ -2349,6 +2372,14 @@ function mergeFaqAnswers(csInfo,faqMap,uploadRows,parseCs){
   const norm=v=>String(v||'').trim();
 
   (uploadRows||[]).forEach(row=>{
+    // 유형이 없으면 어느 섹션에 넣을지 정할 수 없다. 파일에도 마스터에도 없는 경우다.
+    // ★ 여기서 한 번 더 본다 — 이 함수는 화면 밖(시험)에서도 불리므로 스스로 지킨다.
+    if(FAQ_TYPES.indexOf(row.type)<0){
+      skipped.push({row:row.row,reason:'no_type',
+        detail:'유형이 없습니다 — 파일에도 문항 마스터('+row.faqId+')에도 없습니다',
+        productCode:row.productCode,faqId:row.faqId});
+      return;
+    }
     const prevQ=map[row.faqId];
     // 문항 문구가 비면 직전 문구를 쓴다. 둘 다 없으면 질문 자체가 없는 것이라 못 넣는다.
     const newQ=norm(row.question||prevQ||'');
@@ -2356,7 +2387,7 @@ function mergeFaqAnswers(csInfo,faqMap,uploadRows,parseCs){
       // ★ 무엇을 하면 되는지까지 적는다. 「문구가 없음」 만으로는 사람이 파일을 어떻게
       //   고쳐야 하는지 알 수 없다(2026-08-26 제니 제보 — 실제로 그랬다).
       skipped.push({row:row.row,reason:'no_question',
-        detail:'「문항」 열이 비었습니다 — 이 문항ID('+row.faqId+')를 처음 올리는 것이라 질문 문구가 필요합니다',
+        detail:'질문 문구가 없습니다 — 문항 마스터('+row.faqId+')에도 없고 파일의 「문항」 열도 비었습니다',
         productCode:row.productCode,faqId:row.faqId});
       return;
     }
@@ -2437,6 +2468,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const [faqBusy,setFaqBusy]=useState('');           // '' | '읽는 중' | '저장 중'
   const [faqProgress,setFaqProgress]=useState({done:0,total:0});
   const [faqOpenCodes,setFaqOpenCodes]=useState(new Set()); // 상품별 변경 내역 펼침
+  const masterFileRef=useRef(null);
+  const [masterPreview,setMasterPreview]=useState(null);    // 문항 마스터 확정 전 미리보기
   const [checkedIds,setCheckedIds]=useState(new Set());
   const [expandedCs,setExpandedCs]=useState(new Set());
   const [page,setPage]=useState(1);
@@ -3185,12 +3218,13 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       [''],
       ['상품코드','콘솔에 등록된 상품코드. 카페24 상품번호가 아닙니다.'],
       ['문항ID','G-불량-01 / C-가전-04 / K-세탁기-03 처럼 문항마다 정해진 값. 매칭 열쇠입니다.'],
-      ['유형','불량 · 변심 · 상품 · 기타 넷 중 하나. 다른 값이면 그 행은 건너뜁니다.'],
-      ['문항','콘솔에 저장될 «질문 문구» 입니다. ★ 그 문항ID를 처음 올릴 때는 반드시 채워야 합니다.'],
-      ['','  매칭에는 쓰지 않습니다(문구가 바뀌어도 문항ID로 찾습니다). 한 번 올린 뒤에는 비워도 되고,'],
-      ['','  채우면 그 문구로 갱신됩니다 — 오탈자를 고칠 때 그렇게 씁니다.'],
+      ['유형','불량 · 변심 · 상품 · 기타 넷 중 하나. ★ 비워도 됩니다 — 문항 마스터에서 채웁니다.'],
+      ['문항','콘솔에 저장될 «질문 문구». ★ 비워도 됩니다 — 문항 마스터에서 채웁니다.'],
+      ['','  적으면 적은 값이 이깁니다(그 상품에만 해당하는 문구로 고쳐 보낼 때 그렇게 씁니다).'],
+      ['','  매칭에는 쓰지 않습니다 — 문구가 바뀌어도 문항ID로 같은 자리를 찾습니다.'],
       ['답변','비어 있으면 «미회신» 으로 보고 건너뜁니다. 나중에 채워서 다시 올리면 됩니다.'],
       [''],
+      ['★ 그래서 공급사에게는 «상품코드 · 문항ID · 답변» 세 열만 채워 달라고 하면 됩니다.'],
       ['★ 같은 파일을 여러 번 올려도 안전합니다. 이미 있는 답변은 덮어쓰고, 없던 것만 새로 넣습니다.'],
       ['★ 이 파일에 없는 기존 Q&A 는 건드리지 않습니다.'],
     ]),'작성안내');
@@ -3215,9 +3249,40 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       const missing=FAQ_UPLOAD_COLS.filter(c=>!seen.has(c.replace(/\s+/g,'')));
       if(missing.length) throw new Error('열이 없습니다: '+missing.join(', ')+'\n양식 다운로드로 받은 파일을 쓰세요.');
 
-      const {valid,skipped}=parseFaqUploadFile(raw);
+      const {valid:parsed,skipped}=parseFaqUploadFile(raw);
       const errors=skipped.filter(s=>s.reason!=='no_answer');
       const noAnswer=skipped.filter(s=>s.reason==='no_answer').length;
+
+      // ── 문항 마스터에서 «문항»·«유형» 의 빈 칸을 채운다 ──────────────────
+      // ★ 이것 덕분에 공급사에게 보내는 파일이 상품코드·문항ID·답변 셋으로 줄어든다.
+      //   952곳에 돌릴 파일이라 열이 적을수록 사고가 줄고, 유형 오타로 행이 통째로
+      //   버려지는 일도 없어진다.
+      // ★ 마스터가 비어 있어도(아직 안 올렸어도) 파일에 문항·유형이 적혀 있으면
+      //   그대로 돈다 — 마스터는 «거들 뿐» 이다.
+      const needIds=[...new Set(parsed.map(v=>v.faqId))];
+      const master={};
+      for(let i=0;i<needIds.length;i+=200){
+        const chunk=needIds.slice(i,i+200);
+        const{data,error}=await sb.from('faq_master')
+          .select('faq_id,question,type').in('faq_id',chunk);
+        // 마스터를 못 읽어도 업로드 자체를 멈추지는 않는다. 파일에 적힌 값으로 간다.
+        if(error){ console.error('문항 마스터 조회 실패:',error); break; }
+        (data||[]).forEach(m=>{ master[m.faq_id]=m; });
+      }
+      const valid0=applyFaqMaster(parsed,master);
+      const filledQ=valid0.filter(v=>v.filledQ).length;
+      const filledT=valid0.filter(v=>v.filledT).length;
+      // 유형이 파일에도 마스터에도 없으면 어느 섹션에 넣을지 정할 수 없다.
+      const valid=[];
+      valid0.forEach(v=>{
+        if(FAQ_TYPES.indexOf(v.type)<0){
+          errors.push({row:v.row,reason:'no_type',
+            detail:'유형이 없습니다 — 파일의 「유형」 열도 비었고 문항 마스터에도 '+v.faqId+' 가 없습니다',
+            productCode:v.productCode,faqId:v.faqId});
+          return;
+        }
+        valid.push(v);
+      });
 
       // 상품코드로 묶는다 — 상품 하나당 병합을 한 번만 돌린다.
       const byCode={};
@@ -3256,12 +3321,96 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
 
       setFaqPreview({fileName:file.name,plans,errors,noAnswer,
         totalRows:raw.length,products:plans.length,
-        added,updated,moved,unchanged});
+        added,updated,moved,unchanged,filledQ,filledT,
+        masterLoaded:Object.keys(master).length});
       setFaqOpenCodes(new Set());
     }catch(err){
       setUploadMsg('❌ '+err.message);
     }
     setFaqBusy(''); setFaqProgress({done:0,total:0});
+  };
+
+  // ── 문항 마스터 업로드 ─────────────────────────────────────────────────────
+  // ★ 마스터를 콘솔이 들고 있어야 «문항ID 만으로» 문구·유형을 채울 수 있다.
+  //   코드에 박지 않는 이유는 2,580문항이고, 문구를 다듬을 때마다 배포할 수는 없어서다.
+  const FAQ_MASTER_COLS={faq_id:'문항ID',scope:'적용범위',category:'카테고리',
+    keyword:'키워드',tag:'태그',type:'유형',required:'필수구분',question:'문항'};
+
+  const downloadFaqMasterTemplate=()=>{
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,
+      XLSX.utils.aoa_to_sheet([Object.values(FAQ_MASTER_COLS)]),'문항마스터');
+    XLSX.writeFile(wb,'FAQ_문항마스터_양식.xlsx');
+  };
+
+  const handleFaqMasterUpload=async(e)=>{
+    const file=e.target.files?.[0]; if(!file) return;
+    e.target.value='';
+    setFaqBusy('읽는 중'); setUploadMsg(''); setMasterPreview(null);
+    try{
+      const buf=await file.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array'});
+      // ★ 마스터 파일은 «가이드·문항마스터·태그규칙» 여러 장이다. 이름으로 고르고,
+      //   없으면 첫 장을 쓴다 — 첫 장이 가이드면 열이 없어 아래에서 걸린다.
+      const sheet=wb.SheetNames.find(n=>String(n).replace(/\s+/g,'')==='문항마스터')||wb.SheetNames[0];
+      const raw=XLSX.utils.sheet_to_json(wb.Sheets[sheet],{defval:''});
+      if(!raw.length) throw new Error('「'+sheet+'」 시트가 비어 있습니다.');
+      const seen=new Set(Object.keys(raw[0]).map(k=>String(k).replace(/\s+/g,'')));
+      ['문항ID','유형','문항'].forEach(c=>{ if(!seen.has(c)) throw new Error('「'+sheet+'」 시트에 '+c+' 열이 없습니다.'); });
+
+      const rowsOut=[],errs=[]; const ids=new Set();
+      raw.forEach((r,i)=>{
+        const rowNo=i+2;
+        const keyOf={}; Object.keys(r).forEach(k=>{keyOf[String(k).replace(/\s+/g,'')]=k;});
+        const g=name=>{const k=keyOf[name];return k===undefined?'':String(r[k]===null||r[k]===undefined?'':r[k]).trim();};
+        const id=g('문항ID'),q=g('문항'),t=g('유형');
+        if(!id&&!q) return;                       // 완전히 빈 줄은 조용히 넘긴다
+        if(!id){errs.push({row:rowNo,detail:'문항ID 누락'});return;}
+        if(!q){errs.push({row:rowNo,detail:'문항 문구 누락 ('+id+')'});return;}
+        if(FAQ_TYPES.indexOf(t)<0){errs.push({row:rowNo,detail:'유형값 오류 "'+t+'" ('+id+')'});return;}
+        if(ids.has(id)){errs.push({row:rowNo,detail:'문항ID 중복 ('+id+')'});return;}
+        ids.add(id);
+        rowsOut.push({faq_id:id,scope:g('적용범위'),category:g('카테고리'),keyword:g('키워드'),
+          tag:g('태그'),type:t,required:g('필수구분'),question:q,
+          updated_at:new Date().toISOString()});
+      });
+
+      // 신규/갱신을 가르려면 지금 무엇이 있는지 알아야 한다. id 만 받으므로 가볍다.
+      const existing=new Set();
+      for(let p=0;;p++){
+        const{data,error}=await sb.from('faq_master').select('faq_id')
+          .range(p*1000,p*1000+999);
+        if(error) throw new Error('문항 마스터 조회 실패: '+error.message);
+        (data||[]).forEach(x=>existing.add(x.faq_id));
+        if(!data||data.length<1000) break;
+      }
+      const added=rowsOut.filter(r=>!existing.has(r.faq_id)).length;
+      const byType={}; rowsOut.forEach(r=>{byType[r.type]=(byType[r.type]||0)+1;});
+      setMasterPreview({fileName:file.name,sheet,rows:rowsOut,errs,
+        total:rowsOut.length,added,updated:rowsOut.length-added,
+        existing:existing.size,byType});
+    }catch(err){
+      setUploadMsg('❌ '+err.message);
+    }
+    setFaqBusy('');
+  };
+
+  const confirmFaqMasterUpload=async()=>{
+    if(!masterPreview) return;
+    const rows=masterPreview.rows;
+    setFaqBusy('저장 중'); setFaqProgress({done:0,total:rows.length});
+    let ok=0,failMsg='';
+    for(let i=0;i<rows.length;i+=500){
+      const chunk=rows.slice(i,i+500);
+      const{error}=await sb.from('faq_master').upsert(chunk,{onConflict:'faq_id'});
+      if(error){ failMsg=error.message; break; }
+      ok+=chunk.length;
+      setFaqProgress({done:ok,total:rows.length});
+    }
+    setFaqBusy(''); setMasterPreview(null); setFaqProgress({done:0,total:0});
+    setUploadMsg(failMsg
+      ? '⚠️ '+ok+'문항까지 저장하고 멈췄습니다: '+failMsg
+      : '✅ 문항 마스터 '+ok+'문항을 반영했습니다.');
   };
 
   // 미리보기에서 계산해 둔 것을 «그대로» 저장한다.
@@ -4104,15 +4253,30 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               {/* ★ 양식 선택만 새로 넣는다. 아래 «상품 정보» 쪽 상자는 한 줄도 안 바꿨다. */}
               <div style={{display:'flex',gap:6,marginBottom:10}}>
                 {[['A','상품 정보','상품·배송·옵션을 한 번에 올립니다'],
-                  ['B','FAQ 답변','공급사에게 받은 FAQ 답변을 «기존 것을 지우지 않고» 채웁니다']].map(([k,label,tip])=>(
-                  <button key={k} onClick={()=>{setFormKind(k);setUploadMsg('');setFaqPreview(null);}} title={tip}
+                  ['B','FAQ 답변','공급사에게 받은 FAQ 답변을 «기존 것을 지우지 않고» 채웁니다'],
+                  ['M','문항 마스터','문항ID·문항 문구·유형의 기준표. 답변 업로드에서 빈 칸을 이걸로 채웁니다']].map(([k,label,tip])=>(
+                  <button key={k} onClick={()=>{setFormKind(k);setUploadMsg('');setFaqPreview(null);setMasterPreview(null);}} title={tip}
                     style={{padding:'7px 16px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',
                       background:formKind===k?'var(--primary)':'transparent',
                       color:formKind===k?'#fff':'var(--sub)',
                       border:'1px solid '+(formKind===k?'var(--primary)':'var(--border)')}}>{label}</button>
                 ))}
               </div>
-              {formKind==='A'?(
+              {formKind==='M'?(
+              <div style={{display:'flex',gap:12,alignItems:'flex-start',padding:'16px',background:'var(--bg)',border:'1px dashed var(--border)',borderRadius:10,flexWrap:'wrap'}}>
+                <div style={{flex:1,fontSize:11,color:'var(--sub)',lineHeight:2}}>
+                  <b style={{color:'var(--text)'}}>문항 마스터</b>는 문항ID마다 «질문 문구» 와 «유형» 을 정해 둔 기준표입니다. 열은 <b style={{color:'var(--text)'}}>문항ID · 적용범위 · 카테고리 · 키워드 · 태그 · 유형 · 필수구분 · 문항</b> 입니다.<br/>
+                  <span>이걸 올려 두면 <b style={{color:'var(--text)'}}>FAQ 답변 파일에서 「문항」·「유형」 열을 비워도</b> 문항ID로 채웁니다 — 공급사에게 보내는 파일이 <b style={{color:'var(--text)'}}>상품코드·문항ID·답변</b> 셋으로 줄어듭니다.</span><br/>
+                  <span style={{color:'var(--accent)'}}>※ 문항ID가 같으면 덮어씁니다. 상품의 CS 정보는 이 업로드로 바뀌지 않습니다.</span>
+                </div>
+                <div style={{display:'flex',gap:8,flexDirection:'column',alignItems:'flex-end',minWidth:160}}>
+                  <button className="btn-upload" onClick={()=>masterFileRef.current?.click()} disabled={!!faqBusy}
+                    style={{width:'100%',color:'#fff',fontWeight:700}}>{faqBusy||'📂 파일 업로드'}</button>
+                  <input ref={masterFileRef} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={handleFaqMasterUpload}/>
+                  <button className="btn-template" onClick={downloadFaqMasterTemplate} style={{width:'100%'}}>⬇ 양식 다운로드</button>
+                </div>
+              </div>
+              ):formKind==='A'?(
               <div style={{display:'flex',gap:12,alignItems:'flex-start',padding:'16px',background:'var(--bg)',border:'1px dashed var(--border)',borderRadius:10,flexWrap:'wrap'}}>
                 <div style={{flex:1,fontSize:11,color:'var(--sub)',lineHeight:2}}>
                   카페24에서 다운로드한 상품 엑셀 파일을 그대로 업로드하세요.<br/>
@@ -4129,7 +4293,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               ):(
               <div style={{display:'flex',gap:12,alignItems:'flex-start',padding:'16px',background:'var(--bg)',border:'1px dashed var(--border)',borderRadius:10,flexWrap:'wrap'}}>
                 <div style={{flex:1,fontSize:11,color:'var(--sub)',lineHeight:2}}>
-                  공급사에게 받은 <b style={{color:'var(--text)'}}>FAQ 답변</b>을 상품별로 채웁니다. 열은 <b style={{color:'var(--text)'}}>상품코드 · 문항ID · 유형 · 문항 · 답변</b> 다섯입니다.<br/>
+                  공급사에게 받은 <b style={{color:'var(--text)'}}>FAQ 답변</b>을 상품별로 채웁니다. 꼭 필요한 열은 <b style={{color:'var(--text)'}}>상품코드 · 문항ID · 답변</b> 셋입니다 — 「유형」·「문항」은 비워 두면 <b style={{color:'var(--text)'}}>문항 마스터</b>에서 채웁니다.<br/>
                   <span>이미 있는 답변은 갱신하고 없던 것만 새로 넣습니다. <b style={{color:'var(--text)'}}>이 파일에 없는 기존 Q&A 는 건드리지 않습니다.</b></span><br/>
                   <span style={{color:'var(--accent)'}}>※ 여러 번 나눠서 올려도 됩니다. 답변이 빈 행은 «미회신» 으로 보고 건너뜁니다.</span>
                 </div>
@@ -4515,6 +4679,67 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
         </div>
       )}
 
+      {/* 문항 마스터 업로드 — 확정 전 미리보기 */}
+      {masterPreview&&(
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}}
+          onClick={e=>{if(e.target===e.currentTarget&&!faqBusy)setMasterPreview(null);}}>
+          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:16,padding:26,width:'95%',maxWidth:620,maxHeight:'85vh',overflowY:'auto'}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:6}}>
+              <div style={{fontSize:17,fontWeight:700}}>문항 마스터 업로드 확인</div>
+              <button onClick={()=>{if(!faqBusy)setMasterPreview(null);}} style={{background:'none',border:'none',color:'var(--sub)',fontSize:20,cursor:'pointer',lineHeight:1}}>✕</button>
+            </div>
+            <div style={{fontSize:12,color:'var(--sub)',marginBottom:16}}>
+              {masterPreview.fileName} · 「{masterPreview.sheet}」 시트
+              <b style={{color:'var(--accent)',marginLeft:8}}>아직 저장되지 않았습니다</b>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',gap:8,marginBottom:14}}>
+              {[['올릴 문항',masterPreview.total,'var(--text)'],
+                ['신규',masterPreview.added,'#22d3a0'],
+                ['덮어쓰기',masterPreview.updated,'#F6AD09'],
+                ['오류',masterPreview.errs.length,masterPreview.errs.length?'var(--red)':'var(--sub)']].map(([l,n,c])=>(
+                <div key={l} style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px'}}>
+                  <div style={{fontSize:10,color:'var(--sub)',marginBottom:3}}>{l}</div>
+                  <div style={{fontSize:18,fontWeight:700,color:c}}>{Number(n||0).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{fontSize:12,color:'var(--sub)',marginBottom:16}}>
+              유형별 — {FAQ_TYPES.map(t=>t+' '+(masterPreview.byType[t]||0)).join(' · ')}
+              <div style={{marginTop:4}}>지금 콘솔에 있는 문항: {masterPreview.existing.toLocaleString()}개</div>
+            </div>
+            {masterPreview.errs.length>0&&(
+              <>
+                <div style={{fontSize:11,fontWeight:700,color:'var(--red)',letterSpacing:'.06em',margin:'0 0 8px',padding:'6px 10px',background:'rgba(248,113,113,.10)',borderRadius:6}}>오류 상세 — 이 행들은 저장되지 않습니다</div>
+                <div style={{maxHeight:180,overflowY:'auto',marginBottom:16,fontSize:12}}>
+                  {masterPreview.errs.slice(0,200).map((e,i)=>(
+                    <div key={i} style={{display:'flex',gap:10,padding:'4px 8px',borderBottom:'1px solid var(--border)'}}>
+                      <span style={{color:'var(--sub)',width:56,flexShrink:0}}>행 {e.row}</span>
+                      <span style={{color:'var(--text)'}}>{e.detail}</span>
+                    </div>
+                  ))}
+                  {masterPreview.errs.length>200&&<div style={{padding:'6px 8px',color:'var(--sub)'}}>… 외 {masterPreview.errs.length-200}건</div>}
+                </div>
+              </>
+            )}
+            {faqBusy==='저장 중'&&(
+              <div style={{fontSize:12,color:'var(--accent)',marginBottom:10}}>
+                저장 중 {faqProgress.done.toLocaleString()} / {faqProgress.total.toLocaleString()} — 창을 닫지 마세요.
+              </div>
+            )}
+            <div style={{display:'flex',gap:10,justifyContent:'flex-end'}}>
+              <button onClick={()=>setMasterPreview(null)} disabled={!!faqBusy}
+                style={{padding:'9px 18px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--sub)',fontSize:13,cursor:faqBusy?'default':'pointer',fontFamily:'inherit'}}>취소</button>
+              <button onClick={confirmFaqMasterUpload} disabled={!!faqBusy||masterPreview.total===0}
+                style={{padding:'9px 22px',background:'var(--primary)',border:'none',borderRadius:8,color:'#fff',fontSize:13,fontWeight:700,
+                  cursor:(faqBusy||masterPreview.total===0)?'default':'pointer',fontFamily:'inherit',
+                  opacity:(faqBusy||masterPreview.total===0)?.5:1}}>
+                확정 업로드 ({masterPreview.total.toLocaleString()}문항)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FAQ 답변 업로드 — 확정 전 미리보기. 여기까지는 아무것도 저장되지 않았다. */}
       {faqPreview&&(
         <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.5)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center'}}
@@ -4546,6 +4771,13 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
             </div>
             {/* ★ «그대로» 를 갱신과 나눠 센다. 같은 파일을 다시 올렸을 때 «갱신 318건» 으로
                 보이면 사람은 318건이 바뀐다고 읽는다. */}
+            {(faqPreview.filledQ>0||faqPreview.filledT>0)&&(
+              <div style={{fontSize:12,color:'var(--sub)',margin:'-8px 0 16px',padding:'8px 12px',background:'rgba(42,71,141,.06)',borderRadius:8}}>
+                문항 마스터에서 채움 — 질문 문구 <b style={{color:'var(--text)'}}>{faqPreview.filledQ}</b>건
+                {faqPreview.filledT>0&&<> · 유형 <b style={{color:'var(--text)'}}>{faqPreview.filledT}</b>건</>}
+                <span style={{marginLeft:8}}>(파일에 적힌 값이 있으면 그쪽이 우선입니다)</span>
+              </div>
+            )}
 
             {faqPreview.errors.length>0&&(
               <>
