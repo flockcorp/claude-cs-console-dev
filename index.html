@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260831i_bell_badge -->
+<!-- v20260831j_account_layout -->
+<!-- (2026-08-31) 공급사 «배송비 미설정» 판정을 넓히고, 알림 기준을 설정값으로 빼고, 계정 화면 순서를 다시 짰다(제니 요청 A안). ①판정: 그전에는 «배송조건이 비었나» 만 봤는데 실측하니 조건 미설정은 0곳이고, 정작 답할 값이 없는 곳은 «조건은 있는데 금액도 메모도 없는» 7곳이었다(전부 «수량 비례» — 개당 얼마인지가 어디에도 없다). 이제 그것까지 센다. ★ «무료» 는 금액이 없는 것이 정상이라 안 세고, 차등형은 메모에 구간이 적혀 있으면 안 센다 — 안 그러면 멀쩡한 13곳이 함께 잡혀 숫자를 아무도 안 믿게 된다. ★★ 판정을 화면과 알림이 «같은 함수»(SUP_SHIP_UNSET)로 한다. 두 곳에 적으면 언젠가 한쪽만 고쳐져 «카드는 7곳인데 알림은 안 뜨는» 상태가 된다. 카드를 누르면 나오는 목록도 같은 함수를 쓰므로 숫자와 목록이 정확히 맞는다(필터에 «배송비 확인 필요» 항목 신설, 기존 «미설정» 은 «조건 미설정» 으로 이름을 바로잡았다 — 둘은 다른 것이다). ②카드에 툴팁으로 «무엇을 세는지» 를 적었다 — 숫자만 있으면 «무료인 곳도 세나?» 를 코드를 열어야 알 수 있다. ③알림 기준 셋(잔액 원 미만 · 채널 곳 이상 · 배송비 곳 이상)을 코드에서 빼 공용 설정 표(console_settings)에 뒀다. 10 이라는 숫자가 상황과 안 맞았기 때문이다. 쓰기는 master 만. ④계정 화면 순서를 «만든 순» 에서 «읽는 순» 으로 다시 짰다: 계정 → 확인이 필요합니다 → 잔액 → 알림 설정 → 메뉴별 설정. 그전에는 알림에 관한 것이 세 곳에 흩어져 있어(연락처는 계정 카드, 기준은 잔액 카드, 목록은 모아보기) 같은 주제를 찾아 세 번 스크롤해야 했다. ★ «받는 사람» 과 «알리는 기준» 을 «알림 설정» 하나로 모았다. ★ 잔액 카드에는 기준을 읽기 전용 한 줄로만 남겼다 — 같은 값을 두 곳에서 고칠 수 있으면 언젠가 서로 다른 말을 하게 된다. ★ 공급사 기준 둘은 한 설정값에 함께 들어가므로 저장 버튼도 하나다(둘로 두면 «하나만 저장된» 상태가 생긴다). ★ 선행 SQL: sql/console_settings.sql · sql/supplier_unset_alert_setting.sql (dev·운영 적용 완료). 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- (2026-08-31) 알림 개수 뱃지가 종을 덮어 종 모양이 안 보이던 것을 고쳤다(제니 제보). 원인은 크기다 — 종 이모지가 15px 인데 뱃지도 14px 이라, «아이콘 위에 작은 뱃지» 라는 흔한 방식을 그대로 쓰면 뱃지가 아이콘을 거의 다 덮는다. 큰 아이콘 위의 작은 점이라야 성립하는 방식이었다. 고친 것 셋: ①종을 15→17px 로 키웠다 ②뱃지를 14→12px 로 줄이고 글자도 9→8px ③위치를 종 «안» 이 아니라 오른쪽 위 «모서리 바깥»(top/right −3)으로 뺐다. ★ 뱃지에 사이드바 바탕색(--surface)으로 2px 테두리를 둘렀다 — 이게 없으면 뱃지와 종이 한 덩어리로 보여 다시 뭉갠다. 테두리가 자리를 먹지 않도록 box-sizing:content-box 로 두어 원 크기는 그대로다. 판정·문구·말풍선은 건드리지 않았다. -->
 <!-- (2026-08-31) 알림을 «본문 배너» 에서 «좌측 하단 종» 으로 옮겼다(제니 요청). 배너는 대시보드 맨 위를 가리고, 한 번 닫으면 그 로그인 동안 어디에도 없는 것이 됐다 — 계정 화면까지 찾아가야 다시 볼 수 있었다. 종은 늘 같은 자리에 있어 언제든 다시 펼친다. ①계정 정보 줄 오른쪽에 🔔. 알림이 있으면 색이 살아나고 오른쪽 위에 개수 뱃지가 붙는다. 없으면 회색으로 조용히 있는다 — 늘 노랗게 켜져 있으면 «켜져 있음» 이 배경이 되어 정작 알림이 왔을 때 눈에 안 띈다. ②종에서 오른쪽으로 말풍선이 나온다(꼬리는 왼쪽). 사이드바가 220px 라 안에 펼치면 문구가 두 글자씩 접힌다 — 본문 위로 띄운다. ★★ 말풍선 자리를 좌표로 박지 않고 «종에서 직접 잰다»(getBoundingClientRect). 사이드바는 overflow-y:auto 로 스크롤되는 영역이라 박아 두면 메뉴를 굴렸을 때 종에서 떨어진다. ★ 위가 아니라 «아래» 를 맞춰 위로 자라게 했다 — 종이 화면 맨 밑이라 아래로 자라면 알림이 두 개만 돼도 화면 밖으로 나간다. ★ position:fixed 는 사이드바의 overflow 에 잘리지 않는다(fixed 는 조상의 overflow 를 벗어난다). z-index 는 사이드바(1000)보다 위인 1100. ★ 종을 눌러도 계정 화면으로 «이동하지 않는다» — 부모 줄의 클릭이 그 일을 하므로 stopPropagation 으로 끊는다. 종은 «펼치기» 다. ★ 알림이 있으면 로그인 직후 한 번 저절로 펼친다. 종만 있고 안 펼치면 아무도 누르지 않는다. 닫으면 그때부터는 사람이 눌러야 열린다. ★ 판정·문구는 그대로 ALERT_RULES 하나를 본다 — 종·말풍선·계정 화면의 «알림 모아보기» 가 같은 목록이다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- (2026-08-31) 잔액 알림 기준을 화면에서 정하게 하고, 충전 바로가기를 넣었다(제니 요청). ①잔액이 «기준 미만» 이면 로그인할 때 알림이 뜬다. 기본 3만원. ★ 기준 금액을 코드에 박지 않고 공용 설정 표(console_settings)에 둔다 — «한 사람의 취향» 이 아니라 «운영 기준» 이라 누가 로그인하든 같아야 한다. 계정 화면 잔액 영역 아래에서 master 가 고쳐 저장하고, 저장한 값으로 곧바로 판정한다. 그 밖의 권한에는 지금 기준을 읽기 전용으로 보여 준다 — 자기가 못 바꾸더라도 왜 알림이 뜨는지는 알아야 한다(쓰기는 RLS 로도 master 만 막혀 있다). ②ALERT_RULES 의 모양을 넓혔다. 그전에는 «몇 개 이상» 만 있었는데 잔액은 «얼마 미만» 이라, 판정 자체를 규칙이 들고 있게 check() 로 바꿨다. 새 알림은 여전히 배열에 한 줄만 더하면 배너·모아보기·바로가기가 함께 따라온다. ★★ 잔액을 못 읽으면 알림을 «띄우지 않는다». 조회가 실패했을 뿐인데 «잔액 부족» 이라고 알리면 있지도 않은 사고를 쫓게 된다 — 0원과 «모름» 은 다른 말이고, 엣지 함수도 같은 원칙으로 만들었다. 반대로 기준 금액을 못 읽으면 기본 30000 을 쓴다 — 설정을 못 읽었다고 알림이 통째로 꺼지면 «조용히 안 나가는» 그 사고를 그대로 다시 만들기 때문이다. 두 폴백의 방향이 반대인 이유가 이것이다. ③«충전하러 가기» 버튼. ★ 충전 페이지가 아니라 SOLAPI 콘솔 «첫 화면» 으로 보낸다 — 깊은 주소는 서비스 개편으로 조용히 죽는데 그러면 급할 때 404 를 만난다. 첫 화면은 바뀌지 않고 충전은 거기서 한 번이다. 새 탭으로 연다. ★ 선행 조건: sql/console_settings.sql (dev·운영 적용·검증 완료). 조회·저장·권한 판정은 건드리지 않았다. -->
@@ -5687,8 +5688,11 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
 
   // 통계 (KPI)
   const total = suppliers.length;
-  const channelUnsetCount = suppliers.filter(s=>!s.channel).length;
-  const condUnsetCount = suppliers.filter(s=>!s.cond).length;
+  // ★★ 판정을 이 화면에서 따로 적지 않는다. 알림(ALERT_RULES)이 쓰는 것과
+  //   «같은 함수» 를 부른다 — 두 곳에 조건을 적으면 언젠가 한쪽만 고쳐져
+  //   «카드는 7곳인데 알림은 안 뜨는» 상태가 된다.
+  const channelUnsetCount = suppliers.filter(SUP_CHANNEL_UNSET).length;
+  const condUnsetCount = suppliers.filter(SUP_SHIP_UNSET).length;
 
   // 필터/정렬 적용
   const filtered=suppliers.filter(s=>{
@@ -5698,7 +5702,10 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
       else if(s.channel!==filterChannel) return false;
     }
     if(filterCond!=='all'){
-      if(filterCond==='unset') {if(s.cond) return false;}
+      // ★ «배송비 확인 필요» 는 조건 값이 아니라 «판정» 이다. 카드가 세는 것과
+      //   같은 함수를 써서, 카드를 눌렀을 때 나오는 목록이 그 숫자와 정확히 맞는다.
+      if(filterCond==='needsfee') {if(!SUP_SHIP_UNSET(s)) return false;}
+      else if(filterCond==='unset') {if(s.cond) return false;}
       else if(s.cond!==filterCond) return false;
     }
     if(filterCafe==='off'&&!supIsOff(s)) return false;
@@ -5792,8 +5799,19 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
             {card('총 공급사',total,false,isAll,reset,'모든 필터를 풀고 전체를 봅니다')}
             {card('채널 미설정',channelUnsetCount,channelUnsetCount>0,filterChannel==='none',
               ()=>{reset();setFilterChannel('none');},'소통 채널이 정해지지 않은 공급사만 봅니다')}
-            {card('배송비 미설정',condUnsetCount,condUnsetCount>0,filterCond==='unset',
-              ()=>{reset();setFilterCond('unset');},'배송 조건이 비어 있는 공급사만 봅니다 — 카페24에서 확인해 넣어야 하는 곳입니다')}
+            {card('배송비 미설정',condUnsetCount,condUnsetCount>0,filterCond==='needsfee',
+              ()=>{reset();setFilterCond('needsfee');},
+              // ★ 세는 기준을 툴팁으로 밝힌다(제니 요청 2026-08-31). 숫자만 있으면
+              //   «무료인 곳도 세나?» 를 사람이 코드를 열어야 알 수 있다.
+              // ★ 줄바꿈은 템플릿 문자열로 준다. 백슬래시 이스케이프는 패치
+              //   스크립트를 지나며 진짜 줄바꿈이 되어 문자열이 깨진다(또 겪었다).
+`배송비를 알 방법이 없는 공급사입니다.
+· 배송조건이 비어 있거나
+· 조건은 있는데 금액도 메모도 없는 곳 (예: 「수량 비례」 인데 개당 얼마인지 없음)
+
+세지 않는 것:
+· 「무료」 — 금액이 없는 것이 정상입니다
+· 차등형 — 메모에 구간이 적혀 있으면 정상입니다`)}
           </>);
         })()}
       </div>
@@ -5825,7 +5843,9 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
           <select value={filterCond} onChange={e=>setFilterCond(e.target.value)}
             style={{padding:'8px 10px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:6,color:'var(--text)',fontSize:12,fontFamily:'inherit'}}>
             <option value="all">배송조건: 전체 ({total})</option>
-            <option value="unset">미설정 ({condUnset})</option>
+            {/* ★ 이것은 조건 «값» 이 아니라 «판정» 이다 — 카드와 같은 함수를 쓴다. */}
+            <option value="needsfee">배송비 확인 필요 ({condUnsetCount})</option>
+            <option value="unset">조건 미설정 ({condUnset})</option>
             {SUP_SHIP_CONDS.map(c=><option key={c} value={c}>{c} ({condCounts[c]})</option>)}
           </select>
           {/* ★ 957곳 사이에 흩어진 «미사용» 공급사를 필터 없이는 찾을 수 없다.
@@ -16695,16 +16715,73 @@ function RoleTag() {
 // ★ 알림은 «상태» 다. 이력이 아니다.
 //   지금 조건에 걸리는 것만 보여 준다 — 고치면 사라진다. 「언제부터 걸렸나」 를
 //   쌓으려면 DB 표가 있어야 하고, 그건 필요해질 때 만든다(제니와 이야기한 대로).
+// ── 공급사 «미설정» 판정 ─────────────────────────────────────────────────────
+// ★★ 화면(카드·필터)과 알림이 «같은 함수» 를 쓴다. 두 곳에 조건을 적으면 언젠가
+//   한쪽만 고쳐져 «카드는 7곳인데 알림은 안 뜨는» 상태가 된다.
+//   받는 모양은 {channel, cond, fee, memo} 로 맞춘다(공급사 화면의 supList 와 같다).
+const SUP_CHANNEL_UNSET = s => !s.channel;
+
+// «배송비를 알 방법이 없는 곳» — 2026-08-31 에 뜻을 넓혔다.
+//   그전에는 «배송조건이 비었나» 만 봤는데, 실측해 보니 조건 미설정은 0곳이고
+//   정작 답할 값이 없는 곳은 «조건은 있는데 금액도 메모도 없는» 7곳이었다
+//   (전부 «수량 비례» — 개당 얼마인지가 어디에도 없다).
+// ★ «무료» 는 금액이 없는 것이 정상이다. 차등형은 메모에 구간이 적혀 있으면 정상.
+//   그 둘을 걸러 내지 않으면 멀쩡한 13곳이 함께 잡혀 숫자를 아무도 안 믿게 된다.
+const SUP_SHIP_UNSET = s => {
+  const cond = (s.cond||'').trim();
+  if(!cond) return true;                                  // 조건 자체가 없다
+  if(cond === '무료') return false;                        // 무료 = 금액이 없는 것이 맞다
+  const hasFee  = s.fee !== null && s.fee !== undefined && s.fee !== '';
+  const hasMemo = !!(s.memo||'').trim();
+  return !hasFee && !hasMemo;                             // 금액도 메모도 없으면 답할 값이 없다
+};
+
+// ── 알림 기준 (사람이 계정 화면에서 정한다) ──────────────────────────────────
+// ★ 못 읽으면 기본값을 쓴다 — 설정을 못 읽었다고 알림이 통째로 꺼지면
+//   «조용히 안 나가는» 그 사고를 그대로 다시 만든다.
+const ALERT_KEY_SOLAPI   = 'solapi_balance_alert';
+const ALERT_KEY_SUPPLIER = 'supplier_unset_alert';
+const ALERT_DEFAULTS = {balance:30000, channel:10, shipping:10};
+async function loadAlertSettings(){
+  const out = {...ALERT_DEFAULTS};
+  try{
+    const {data} = await sb.from('console_settings').select('key,value')
+      .in('key',[ALERT_KEY_SOLAPI,ALERT_KEY_SUPPLIER]);
+    (data||[]).forEach(r=>{
+      const v = r.value||{};
+      if(r.key===ALERT_KEY_SOLAPI){
+        const n = Number(v.threshold);
+        if(Number.isFinite(n)&&n>0) out.balance = n;
+      }else if(r.key===ALERT_KEY_SUPPLIER){
+        const c = Number(v.channel), s = Number(v.shipping);
+        if(Number.isFinite(c)&&c>0) out.channel = c;
+        if(Number.isFinite(s)&&s>0) out.shipping = s;
+      }
+    });
+  }catch(e){
+    console.error('알림 기준 조회 실패 — 기본값을 쓴다:',e);
+  }
+  return out;
+}
+
+// 공급사 목록은 규칙 둘이 함께 쓴다. 한 번만 받아 ctx 에 들고 있는다.
+async function alertSuppliers(ctx){
+  if(!ctx._sup){
+    const {data,error} = await sb.from('suppliers')
+      .select('name,channel,default_shipping_cond,default_shipping_fee,shipping_memo');
+    if(error) throw error;
+    ctx._sup = (data||[]).map(r=>({channel:r.channel, cond:r.default_shipping_cond,
+                                   fee:r.default_shipping_fee, memo:r.shipping_memo}));
+  }
+  return ctx._sup;
+}
+
 const ALERT_RULES = [
   {
     key: 'supplier_channel_unset',
-    // ★ 화면의 «채널 미설정» 카드와 «같은 판정» 이다(공급사 관리의 !s.channel).
-    //   여기만 고치고 저기를 안 고치면 숫자가 갈린다.
-    check: async () => {
-      const {count} = await sb.from('suppliers').select('name',{count:'exact',head:true})
-        .or('channel.is.null,channel.eq.');
-      const n = count||0;
-      return {hit: n >= 10, n};
+    check: async (ctx) => {
+      const n = (await alertSuppliers(ctx)).filter(SUP_CHANNEL_UNSET).length;
+      return {hit: n >= ctx.cfg.channel, n, extra: ctx.cfg.channel};
     },
     title: '채널 미설정 공급사',
     message: n => `채널 미설정 공급사가 ${n}개 있습니다. 확인하여 채널을 설정해주세요.`,
@@ -16712,31 +16789,27 @@ const ALERT_RULES = [
   },
   {
     key: 'supplier_shipping_unset',
-    // ★ 화면의 «배송비 미설정» 카드와 같은 판정(!s.cond = default_shipping_cond 가 빈 값).
-    check: async () => {
-      const {count} = await sb.from('suppliers').select('name',{count:'exact',head:true})
-        .or('default_shipping_cond.is.null,default_shipping_cond.eq.');
-      const n = count||0;
-      return {hit: n >= 10, n};
+    check: async (ctx) => {
+      const n = (await alertSuppliers(ctx)).filter(SUP_SHIP_UNSET).length;
+      return {hit: n >= ctx.cfg.shipping, n, extra: ctx.cfg.shipping};
     },
     title: '배송비 미설정 공급사',
     message: n => `배송비 미설정 공급사가 ${n}개 있습니다. 확인 후 배송비 데이터를 입력해주세요.`,
     page: 'suppliers', where: '공급사 관리',
   },
   {
-    // ── 문자·알림톡 잔액 (2026-08-31 제니 요청) ─────────────────────────────
+    // ── 문자·알림톡 잔액 ────────────────────────────────────────────────────
     //   잔액이 떨어지면 문자·알림톡이 «조용히» 안 나간다. 그게 가장 나쁜 고장이라
     //   숫자를 보여 주는 것만으로는 부족하고, 기준 아래로 내려가면 먼저 알려야 한다.
-    //   ★ 기준 금액은 사람이 화면에서 고친다(console_settings). 여기서 박지 않는다.
-    //   ★ 못 읽으면 알림을 «띄우지 않는다». 잔액 조회가 실패했을 뿐인데
-    //     «잔액 부족» 이라고 알리면 있지도 않은 사고를 쫓게 된다 —
-    //     0원과 «모름» 은 완전히 다른 말이다(엣지 함수도 같은 원칙으로 만들었다).
+    // ★ 못 읽으면 알림을 «띄우지 않는다». 조회가 실패했을 뿐인데 «잔액 부족» 이라고
+    //   알리면 있지도 않은 사고를 쫓게 된다 — 0원과 «모름» 은 완전히 다른 말이다.
+    //   기준을 못 읽을 때와 «폴백 방향이 반대» 인 이유가 이것이다:
+    //   전자는 없는 사고를 만들고, 후자는 있는 사고를 감춘다.
     key: 'solapi_balance_low',
-    check: async () => {
-      const threshold = await loadSolapiThreshold();
+    check: async (ctx) => {
       const {data,error} = await sb.functions.invoke('solapi-balance',{body:{}});
       if(error || !data || !data.ok || typeof data.balance !== 'number') return {hit:false, n:0};
-      return {hit: data.balance < threshold, n: data.balance, extra: threshold};
+      return {hit: data.balance < ctx.cfg.balance, n: data.balance, extra: ctx.cfg.balance};
     },
     title: '문자·알림톡 잔액 부족',
     message: (n, threshold) =>
@@ -16745,30 +16818,14 @@ const ALERT_RULES = [
   },
 ];
 
-// SOLAPI 잔액 알림 기준 금액. 화면에서 고칠 수 있고 공용 표에 저장된다.
-// ★ 못 읽으면 30000 을 쓴다 — 설정을 못 읽었다고 알림이 통째로 꺼지면
-//   «조용히 안 나가는» 그 사고를 그대로 다시 만든다.
-const SOLAPI_THRESHOLD_KEY = 'solapi_balance_alert';
-const SOLAPI_THRESHOLD_DEFAULT = 30000;
-async function loadSolapiThreshold(){
-  try{
-    const {data} = await sb.from('console_settings').select('value')
-      .eq('key',SOLAPI_THRESHOLD_KEY).maybeSingle();
-    const v = data && data.value && Number(data.value.threshold);
-    return Number.isFinite(v) && v > 0 ? v : SOLAPI_THRESHOLD_DEFAULT;
-  }catch(e){
-    console.error('잔액 알림 기준 조회 실패:',e);
-    return SOLAPI_THRESHOLD_DEFAULT;
-  }
-}
-
 // 규칙을 전부 돌려 «지금 걸린 것» 만 남긴다.
 // ★ 하나가 실패해도 나머지는 보여 준다 — 알림이 통째로 사라지는 것이 가장 나쁘다.
 async function loadAlerts(){
   const out = [];
+  const ctx = {cfg: await loadAlertSettings()};
   for(const r of ALERT_RULES){
     try{
-      const {hit,n,extra} = await r.check();
+      const {hit,n,extra} = await r.check(ctx);
       if(hit) out.push({key:r.key,title:r.title,text:r.message(n,extra),
                         count:n,page:r.page,where:r.where});
     }catch(e){
@@ -16778,6 +16835,25 @@ async function loadAlerts(){
   return out;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 계정 정보 · 설정
+// ---------------------------------------------------------------------------
+// ★ 순서를 «만든 순» 에서 «읽는 순» 으로 다시 짰다(2026-08-31 제니 요청).
+//   그전에는 기능이 생길 때마다 아래로 붙어서, 알림에 관한 것이 세 곳에
+//   흩어져 있었다 — 「어디로 받나」(계정 카드) · 「언제 알리나」(잔액 카드) ·
+//   「지금 뭐가 걸렸나」(모아보기). 같은 주제를 찾아 세 번 스크롤해야 했다.
+//
+//   지금 순서: 나 → 지금 무슨 일이 있나 → 상태 → 조정 → 되돌릴 수 없는 것
+//     ① 계정            이메일·권한 (읽기 전용)
+//     ② 확인이 필요합니다  알림 모아보기 — 이 화면에 들어오는 주된 이유다
+//     ③ 문자·알림톡 잔액   숫자 · 충전하러 가기 (보는 곳)
+//     ④ 알림 설정        받는 사람 + 기준 전부 (정하는 곳, 한 곳으로 모았다)
+//     ⑤ 메뉴별 설정      상품 정보 전체 삭제 (master, 맨 아래)
+//
+// ★★ 같은 값을 두 곳에서 고칠 수 있게 두지 않는다. 잔액 카드에는 기준을
+//   «읽기 전용 한 줄» 로만 남기고 편집기는 ④에만 둔다 — 두 곳에서 고칠 수 있으면
+//   언젠가 서로 다른 말을 하게 된다.
+// ═══════════════════════════════════════════════════════════════════════════
 function AccountPage({session,role,alerts,onGo}){
   const isMaster=role==='master';
   const [phone,setPhone]=useState('');
@@ -16801,14 +16877,11 @@ function AccountPage({session,role,alerts,onGo}){
     return()=>{alive=false;};
   },[session.user.id]);
 
-  // ── SOLAPI 충전 잔액 (2026-08-31 제니 요청) ───────────────────────────────
-  //   문자·알림톡이 «잔액이 떨어져» 안 나가는 사고를 막으려면 충전액을 봐야 하는데,
-  //   그때마다 SOLAPI 에 로그인하는 것이 번거롭다. 여기서 바로 보이게 한다.
-  //   ★ 키는 화면에 없다. 이 콘솔 저장소는 «공개» 라 SOLAPI 키·시크릿을 둘 수 없어
+  // ── SOLAPI 충전 잔액 ──────────────────────────────────────────────────────
+  //   ★ 키는 화면에 없다. 이 저장소는 «공개» 라 SOLAPI 키·시크릿을 둘 수 없어
   //     엣지 함수(solapi-balance)가 대신 부르고 숫자만 돌려준다.
   //   ★ 못 가져와도 계정 화면은 멀쩡해야 한다 — 잔액은 곁다리 정보다.
-  //     실패하면 그 자리에 이유만 적고 [다시 확인] 을 둔다.
-  const [bal,setBal]=useState(null);      // {balance,point,fetched_at} | null
+  const [bal,setBal]=useState(null);
   const [balErr,setBalErr]=useState('');
   const [balLoading,setBalLoading]=useState(true);
   const loadBalance=async()=>{
@@ -16826,34 +16899,41 @@ function AccountPage({session,role,alerts,onGo}){
   };
   useEffect(()=>{loadBalance();},[]);
 
-  // ── 잔액 알림 기준 금액 (2026-08-31 제니 요청) ────────────────────────────
-  //   «얼마 미만이면 알릴지» 를 사람이 정한다. 공용 설정이라 누가 로그인하든 같다.
-  //   ★ 쓰기는 master 만이다(RLS 로도 막혀 있다) — 운영 기준을 바꾸는 일이다.
-  //     manager 에게는 «지금 기준» 을 읽기 전용으로 보여 준다. 자기가 못 바꾸더라도
-  //     왜 알림이 뜨는지는 알아야 한다.
-  const [thr,setThr]=useState('');
-  const [thrSaved,setThrSaved]=useState(null);
-  const [thrSaving,setThrSaving]=useState(false);
+  // ── 알림 기준 셋 ──────────────────────────────────────────────────────────
+  //   잔액(원 미만) · 채널 미설정(곳 이상) · 배송비 미설정(곳 이상).
+  //   ★ 코드에 박지 않고 공용 설정 표에 둔다 — «한 사람의 취향» 이 아니라
+  //     «운영 기준» 이라 누가 로그인하든 같아야 한다. 쓰기는 master 만(RLS 로도).
+  //   ★ 그 밖의 권한에는 읽기 전용으로 보여 준다. 자기가 못 바꾸더라도
+  //     «왜 이 알림이 뜨는지» 는 알아야 한다.
+  const [cfg,setCfg]=useState(null);          // 저장된 값
+  const [draft,setDraft]=useState(null);      // 입력 중인 값
+  const [cfgSaving,setCfgSaving]=useState('');
   useEffect(()=>{
     let alive=true;
-    loadSolapiThreshold().then(v=>{ if(!alive)return; setThr(String(v)); setThrSaved(v); });
+    loadAlertSettings().then(v=>{ if(!alive)return; setCfg(v); setDraft({...v}); });
     return()=>{alive=false;};
   },[]);
-  const thrNum=Number(String(thr).replace(/[^0-9]/g,''));
-  const thrOk=Number.isFinite(thrNum)&&thrNum>0;
-  const saveThr=async()=>{
-    if(!thrOk){toast('기준 금액은 1원 이상의 숫자로 넣어주세요.');return;}
-    setThrSaving(true);
+  const num=v=>Number(String(v==null?'':v).replace(/[^0-9]/g,''));
+  const okNum=v=>Number.isFinite(num(v))&&num(v)>0;
+  const dirty=(k)=>cfg&&draft&&num(draft[k])!==cfg[k];
+  const saveCfg=async(which)=>{
+    if(!draft) return;
+    const bad = which==='balance' ? !okNum(draft.balance)
+              : (!okNum(draft.channel)||!okNum(draft.shipping));
+    if(bad){toast('기준은 1 이상의 숫자로 넣어주세요.');return;}
+    setCfgSaving(which);
+    const row = which==='balance'
+      ? {key:ALERT_KEY_SOLAPI,   value:{threshold:num(draft.balance)}}
+      : {key:ALERT_KEY_SUPPLIER, value:{channel:num(draft.channel), shipping:num(draft.shipping)}};
     const{error}=await sb.from('console_settings').upsert({
-      key:SOLAPI_THRESHOLD_KEY,
-      value:{threshold:thrNum},
-      updated_at:new Date().toISOString(),
-      updated_by:session.user.email||null,
+      ...row, updated_at:new Date().toISOString(), updated_by:session.user.email||null,
     },{onConflict:'key'});
-    setThrSaving(false);
-    if(error){toast('기준 금액 저장 실패: '+(error.message||''));return;}
-    setThrSaved(thrNum);
-    toast('기준 금액을 '+thrNum.toLocaleString()+'원으로 저장했습니다.');
+    setCfgSaving('');
+    if(error){toast('기준 저장 실패: '+(error.message||''));return;}
+    setCfg(c=>({...c,
+      ...(which==='balance'?{balance:num(draft.balance)}
+                           :{channel:num(draft.channel),shipping:num(draft.shipping)})}));
+    toast('알림 기준을 저장했습니다.');
   };
 
   // 숫자만 남긴다. 010-1234-5678 로 넣든 01012345678 로 넣든 같은 값이 되게 한다.
@@ -16865,11 +16945,11 @@ function AccountPage({session,role,alerts,onGo}){
     if(enabled&&!digits){toast('알림을 받으려면 연락처를 먼저 넣어주세요.');return;}
     setSaving(true);
     const{error}=await sb.from('console_users')
-      .update({alert_phone:digits||null,alert_enabled:enabled&&!!digits})
+      .update({alert_phone:digits||null,alert_enabled:enabled})
       .eq('user_id',session.user.id);
     setSaving(false);
-    if(error){sbFail('알림 설정 저장',error,{write:true});return;}
-    toast(enabled&&digits?'저장했습니다. 이 번호로 운영 실패 알림이 갑니다.':'저장했습니다. 알림을 받지 않습니다.','info');
+    if(error){toast('저장 실패: '+error.message);return;}
+    toast('알림 설정을 저장했습니다.');
   };
 
   // ★ «상품 정보 전체 삭제» 를 상품 관리 화면에서 이 화면으로 옮겼다(제니 지시).
@@ -16888,92 +16968,108 @@ function AccountPage({session,role,alerts,onGo}){
 
   const label={master:'MASTER',manager:'MANAGER',crew:'CREW'}[role]||'UNKNOWN';
   const row={display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid var(--border)'};
+  const card={background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',marginTop:18};
+  const head={padding:'12px 20px',background:'#162244',borderBottom:'1px solid var(--border)',fontSize:13,fontWeight:700,color:'#fff'};
+  const numInput={width:110,padding:'8px 10px',background:'var(--bg)',border:'1px solid var(--border)',
+    borderRadius:6,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none',
+    textAlign:'right',fontVariantNumeric:'tabular-nums'};
+  const saveBtn=(active)=>({padding:'8px 14px',borderRadius:8,fontSize:12,fontWeight:700,fontFamily:'inherit',
+    whiteSpace:'nowrap',background:active?'#2A478D':'transparent',
+    border:'1px solid '+(active?'#2A478D':'var(--border)'),color:active?'#fff':'var(--sub)',
+    cursor:active?'pointer':'default'});
 
   return (
     <div>
       <div className="section" style={{paddingBottom:0}}>
         <h1 style={{fontSize:18,fontWeight:700,color:'var(--text)',margin:0,marginBottom:4}}>계정 정보 · 설정</h1>
-        <div style={{fontSize:12,color:'var(--sub)',marginBottom:18}}>
+        <p className="page-sub" style={{margin:0}}>
           {isMaster?'로그인 계정과 운영 알림, 그리고 메뉴별 설정을 여기서 관리합니다':'로그인 계정 정보'}
-        </div>
+        </p>
       </div>
+
       <div className="section" style={{paddingTop:0,maxWidth:620}}>
-        <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden'}}>
-        <div style={{padding:'12px 20px',background:'#162244',borderBottom:'1px solid var(--border)',fontSize:13,fontWeight:700,color:'#fff'}}>계정</div>
-        <div style={{padding:'14px 20px 18px'}}>
-          <div style={row}>
-            <span style={{fontSize:12,color:'var(--sub)'}}>이메일</span>
-            <span style={{fontSize:12,color:'var(--text)',wordBreak:'break-all',textAlign:'right'}}>{session.user.email}</span>
-          </div>
-          <div style={{...row,borderBottom:isMaster?'1px solid var(--border)':'none'}}>
-            <span style={{fontSize:12,color:'var(--sub)'}}>권한</span>
-            <span style={{fontSize:11,fontWeight:700,fontFamily:'monospace',letterSpacing:'.06em',color:'#F6AD09'}}>{label}</span>
-          </div>
 
-          {!isMaster&&(
-            <div style={{marginTop:14,fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
-              운영 실패 알림은 현재 master 계정만 받습니다.
+        {/* ── ① 계정 ─────────────────────────────────────────────────────────
+            «나» 를 먼저 보여 준다. 읽기 전용이라 짧다 — 설정은 아래 ④로 모았다. */}
+        <div style={{...card,marginTop:0}}>
+          <div style={head}>계정</div>
+          <div style={{padding:'14px 20px 18px'}}>
+            <div style={row}>
+              <span style={{fontSize:12,color:'var(--sub)'}}>이메일</span>
+              <span style={{fontSize:12,color:'var(--text)',wordBreak:'break-all',textAlign:'right'}}>{session.user.email}</span>
             </div>
-          )}
+            <div style={{...row,borderBottom:'none'}}>
+              <span style={{fontSize:12,color:'var(--sub)'}}>권한</span>
+              <span style={{fontSize:11,fontWeight:700,fontFamily:'monospace',letterSpacing:'.06em',color:'#F6AD09'}}>{label}</span>
+            </div>
+          </div>
+        </div>
 
-          {isMaster&&(loading?(
-            <div style={{marginTop:16,fontSize:12,color:'var(--sub)'}}>불러오는 중…</div>
-          ):(
-            <div style={{marginTop:16}}>
-              <div style={{fontSize:12,fontWeight:600,color:'var(--text)',marginBottom:8}}>운영 실패 알림</div>
-              <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.6,marginBottom:12}}>
-                상품 동기화 같은 정기 작업이 실패하면 이 번호로 문자가 갑니다.
-                <br/>비워 두거나 체크를 끄면 알림을 받지 않습니다.
+        {/* ── ② 확인이 필요합니다 ────────────────────────────────────────────
+            이 화면에 들어오는 주된 이유다. 그래서 위로 올렸다(제니 요청 전에는
+            세 번째에 묻혀 있었다). 좌측 하단 «종» 의 말풍선과 «같은 목록» 이다
+            — 판정은 ALERT_RULES 한 곳에서만 한다.
+            ★ 어느 메뉴의 일인지와 바로가기를 함께 둔다. 알림만 있고 갈 곳이
+              없으면 «그래서 어디로 가라는 거지» 가 남는다. */}
+        <div style={card}>
+          <div style={{...head,display:'flex',alignItems:'center',gap:8}}>
+            <span>확인이 필요합니다</span>
+            {alerts&&alerts.length>0&&(
+              <span style={{display:'inline-flex',alignItems:'center',lineHeight:1,padding:'3px 7px',
+                borderRadius:99,background:'rgba(246,173,9,.16)',color:'#F6AD09',fontSize:10,fontWeight:700}}>
+                {alerts.length}
+              </span>
+            )}
+          </div>
+          <div style={{padding:'16px 20px'}}>
+            {!alerts||alerts.length===0?(
+              <div style={{fontSize:12,color:'var(--sub)'}}>지금 확인이 필요한 알림이 없습니다.</div>
+            ):alerts.map(a=>(
+              <div key={a.key} style={{display:'flex',gap:12,alignItems:'flex-start',
+                padding:'11px 0',borderBottom:'1px solid var(--border)'}}>
+                <span style={{fontSize:15,lineHeight:1.2}}>⚠</span>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,color:'var(--text)',fontWeight:600,lineHeight:1.6}}>{a.text}</div>
+                  <div style={{fontSize:10,color:'var(--sub)',marginTop:3}}>{a.where}</div>
+                </div>
+                <button onClick={()=>onGo&&onGo(a.page)}
+                  style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',
+                    borderRadius:6,color:'var(--text)',fontSize:11,fontWeight:600,cursor:'pointer',
+                    fontFamily:'inherit',whiteSpace:'nowrap'}}>바로가기</button>
               </div>
-              <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="010-0000-0000 (선택)"
-                style={{width:'100%',padding:'10px 12px',background:'var(--bg)',border:'1px solid '+(phoneOk?'var(--border)':'rgba(248,113,113,.7)'),borderRadius:8,color:'var(--text)',fontSize:14,fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
-              {!phoneOk&&<div style={{fontSize:10,color:'#f87171',marginTop:5}}>010으로 시작하는 10~11자리 숫자로 넣어주세요.</div>}
-              <label style={{display:'flex',alignItems:'center',gap:8,marginTop:12,cursor:'pointer',fontSize:12,color:'var(--text)'}}>
-                <input type="checkbox" checked={enabled} onChange={e=>setEnabled(e.target.checked)}
-                  style={{width:15,height:15,accentColor:'#F6AD09',cursor:'pointer'}}/>
-                이 번호로 알림 받기
-              </label>
+            ))}
+            <div style={{fontSize:10,color:'var(--sub)',marginTop:12,lineHeight:1.7}}>
+              ※ 지금 조건에 걸린 것만 보여 줍니다 — 처리하면 사라집니다.
+              좌측 하단 🔔 에서도 같은 내용을 봅니다.
             </div>
-          ))}
-        </div>
-
-        {isMaster&&(
-          <div style={{padding:'12px 20px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end'}}>
-            <button onClick={save} disabled={saving||loading}
-              style={{padding:'8px 18px',background:saving?'var(--border)':'var(--primary)',border:'none',borderRadius:8,color:'#fff',fontSize:12,fontWeight:600,cursor:saving?'default':'pointer',fontFamily:'inherit'}}>
-              {saving?'저장 중…':'저장'}</button>
           </div>
-        )}
         </div>
 
-        {/* ── SOLAPI 충전 잔액 (2026-08-31 제니 요청) ─────────────────────────
-            문자·알림톡은 잔액이 떨어지면 조용히 안 나간다. 그걸 보려고 매번
-            SOLAPI 에 로그인하지 않도록 여기서 바로 보여 준다.
-            ★ 키는 화면에 없다. 이 저장소는 «공개» 라 SOLAPI 키·시크릿을 둘 수 없어
-              엣지 함수(solapi-balance)가 대신 부르고 숫자만 돌려준다.
-            ★ 임계값(«얼마 밑이면 위험») 은 일부러 두지 않았다. 그 기준은 발송량에
-              따라 달라지고 지금은 정해진 값이 없다. 기준이 생기면 그때 ALERT_RULES 에
-              한 줄 더해 알림으로 만든다 — 규칙은 한 곳에 모여 있다. */}
-        <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',marginTop:18}}>
-          <div style={{padding:'12px 20px',background:'#162244',borderBottom:'1px solid var(--border)',fontSize:13,fontWeight:700,color:'#fff'}}>문자·알림톡 잔액 (SOLAPI)</div>
+        {/* ── ③ 문자·알림톡 잔액 ─────────────────────────────────────────────
+            «보는 곳» 이다. 기준을 정하는 것은 아래 ④에 있다 — 같은 값을 두 곳에서
+            고칠 수 있으면 언젠가 서로 다른 말을 하게 된다. 여기는 한 줄로 알려만 준다. */}
+        <div style={card}>
+          <div style={head}>문자·알림톡 잔액 (SOLAPI)</div>
           <div style={{padding:'16px 20px',display:'flex',alignItems:'flex-start',gap:14,flexWrap:'wrap'}}>
             <div style={{flex:1,minWidth:200}}>
               {balLoading?(
                 <div style={{fontSize:13,color:'var(--sub)'}}>확인 중…</div>
               ):bal?(
                 <>
-                  <div style={{fontSize:26,fontWeight:700,color:'var(--text)',lineHeight:1.2}}>
+                  <div style={{fontSize:26,fontWeight:700,
+                    color:(cfg&&bal.balance<cfg.balance)?'#f87171':'var(--text)',lineHeight:1.2}}>
                     {bal.balance.toLocaleString()}
                     <span style={{fontSize:13,fontWeight:400,color:'var(--sub)',marginLeft:4}}>원</span>
                   </div>
                   <div style={{fontSize:10,color:'var(--sub)',marginTop:5,lineHeight:1.7}}>
                     {bal.point>0?'포인트 '+bal.point.toLocaleString()+'원 · ':''}
                     {bal.fetched_at?String(bal.fetched_at).slice(0,16).replace('T',' ')+' 기준 (UTC)':''}
+                    {cfg?<><br/>알림 기준 {cfg.balance.toLocaleString()}원 미만 · 아래 «알림 설정» 에서 바꿉니다</>:null}
                   </div>
                 </>
               ):(
                 // ★ 못 가져왔을 때 «0원» 으로 보이면 안 된다. 설정이 빠진 것과 잔액이
-                //   0인 것은 완전히 다른 말이고, 0 으로 보이면 있지도 않은 사고를 쫓게 된다.
+                //   0인 것은 다른 말이고, 0 으로 보이면 있지도 않은 사고를 쫓게 된다.
                 <div style={{fontSize:12,color:'#f87171',lineHeight:1.7}}>
                   잔액을 가져오지 못했습니다.
                   <div style={{fontSize:10,color:'var(--sub)',marginTop:3,wordBreak:'break-all'}}>{balErr}</div>
@@ -16986,9 +17082,8 @@ function AccountPage({session,role,alerts,onGo}){
                   borderRadius:8,color:'var(--text)',fontSize:12,fontWeight:600,
                   cursor:balLoading?'default':'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
                 {balLoading?'확인 중…':'다시 확인'}</button>
-              {/* ★ 충전 페이지가 아니라 SOLAPI 콘솔 «첫 화면» 으로 보낸다.
-                  깊은 주소는 서비스 쪽 개편으로 조용히 죽는데, 그러면 급할 때
-                  404 를 만나게 된다. 첫 화면은 바뀌지 않고 충전은 거기서 한 번이다. */}
+              {/* ★ 충전 «페이지» 가 아니라 SOLAPI 콘솔 첫 화면으로 보낸다. 깊은 주소는
+                  서비스 개편으로 조용히 죽는데, 그러면 급할 때 404 를 만난다. */}
               <a href="https://console.solapi.com/" target="_blank" rel="noreferrer"
                 title="SOLAPI 콘솔이 새 탭으로 열립니다"
                 style={{padding:'8px 14px',background:'rgba(246,173,9,.12)',
@@ -16997,98 +17092,103 @@ function AccountPage({session,role,alerts,onGo}){
                   textDecoration:'none',display:'inline-block'}}>충전하러 가기 ↗</a>
             </div>
           </div>
+        </div>
 
-          {/* ── 잔액 알림 기준 ─────────────────────────────────────────────
-              «얼마 미만이면 알릴지» 를 사람이 정한다. 저장하면 로그인 배너와
-              알림 모아보기가 그 값으로 판정한다 — 기준이 한 곳에만 있다.
-              ★ 쓰기는 master 만이다(RLS 로도 막혀 있다). 그 밖의 권한에는
-                지금 기준을 읽기 전용으로 보여 준다 — 자기가 못 바꾸더라도
-                «왜 이 알림이 뜨는지» 는 알아야 한다. */}
-          <div style={{padding:'14px 20px',borderTop:'1px solid var(--border)'}}>
-            <div style={{fontSize:11,color:'var(--sub)',marginBottom:8,lineHeight:1.7}}>
-              잔액이 이 금액보다 적으면 로그인할 때 알림이 뜹니다.
-            </div>
-            {isMaster?(
-              <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
-                <input type="text" inputMode="numeric" value={thr}
-                  onChange={e=>setThr(e.target.value)}
-                  placeholder="30000"
-                  style={{width:130,padding:'8px 10px',background:'var(--card)',
-                    border:'1px solid '+(thrOk?'var(--border)':'#f87171'),borderRadius:6,
-                    color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none',
-                    textAlign:'right',fontVariantNumeric:'tabular-nums'}}/>
-                <span style={{fontSize:12,color:'var(--sub)'}}>원 미만이면 알림</span>
-                <button onClick={saveThr} disabled={thrSaving||!thrOk||thrNum===thrSaved}
-                  style={{padding:'8px 14px',borderRadius:8,fontSize:12,fontWeight:700,
-                    fontFamily:'inherit',whiteSpace:'nowrap',
-                    background:(thrOk&&thrNum!==thrSaved)?'#2A478D':'transparent',
-                    border:'1px solid '+((thrOk&&thrNum!==thrSaved)?'#2A478D':'var(--border)'),
-                    color:(thrOk&&thrNum!==thrSaved)?'#fff':'var(--sub)',
-                    cursor:(thrSaving||!thrOk||thrNum===thrSaved)?'default':'pointer'}}>
-                  {thrSaving?'저장 중…':thrNum===thrSaved?'저장됨':'저장'}</button>
-                {bal&&thrSaved!=null&&(
-                  <span style={{fontSize:11,color:bal.balance<thrSaved?'#f87171':'var(--sub)'}}>
-                    {bal.balance<thrSaved?'· 지금 기준 아래입니다':'· 지금은 기준 위입니다'}
-                  </span>
-                )}
+        {/* ── ④ 알림 설정 ────────────────────────────────────────────────────
+            «받는 사람» 과 «알리는 기준» 을 한 곳에 모았다(2026-08-31 제니 요청).
+            그전에는 연락처가 계정 카드 안에, 기준이 잔액 카드 안에 있어서
+            같은 주제를 찾아 세 번 스크롤해야 했다. */}
+        <div style={card}>
+          <div style={head}>알림 설정</div>
+          <div style={{padding:'16px 20px'}}>
+
+            {/* 받는 사람 */}
+            <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>받는 사람</div>
+            {!isMaster?(
+              <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7}}>
+                운영 실패 알림은 현재 master 계정만 받습니다.
+              </div>
+            ):loading?(
+              <div style={{fontSize:12,color:'var(--sub)'}}>불러오는 중…</div>
+            ):(
+              <>
+                <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,marginBottom:10}}>
+                  상품 동기화 같은 정기 작업이 실패하면 이 번호로 문자가 갑니다.
+                  <br/>비워 두거나 체크를 끄면 문자를 받지 않습니다. 화면 알림(🔔)은 그대로 뜹니다.
+                </div>
+                <input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="010-0000-0000 (선택)"
+                  style={{width:'100%',padding:'10px 12px',background:'var(--bg)',border:'1px solid '+(phoneOk?'var(--border)':'rgba(248,113,113,.7)'),borderRadius:8,color:'var(--text)',fontSize:14,fontFamily:'inherit',outline:'none',boxSizing:'border-box'}}/>
+                {!phoneOk&&<div style={{fontSize:10,color:'#f87171',marginTop:5}}>010으로 시작하는 10~11자리 숫자로 넣어주세요.</div>}
+                <div style={{display:'flex',alignItems:'center',gap:12,marginTop:12}}>
+                  <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',fontSize:12,color:'var(--text)'}}>
+                    <input type="checkbox" checked={enabled} onChange={e=>setEnabled(e.target.checked)}
+                      style={{width:15,height:15,accentColor:'#F6AD09',cursor:'pointer'}}/>
+                    이 번호로 문자 받기
+                  </label>
+                  <span style={{flex:1}}></span>
+                  <button onClick={save} disabled={saving||loading}
+                    style={saveBtn(!saving&&!loading)}>{saving?'저장 중…':'저장'}</button>
+                </div>
+              </>
+            )}
+
+            {/* 알리는 기준 */}
+            <div style={{fontSize:12,fontWeight:700,color:'var(--text)',margin:'20px 0 8px',
+              paddingTop:16,borderTop:'1px solid var(--border)'}}>알리는 기준</div>
+            {!cfg?(
+              <div style={{fontSize:12,color:'var(--sub)'}}>불러오는 중…</div>
+            ):!isMaster?(
+              // ★ 못 바꾸더라도 «왜 이 알림이 뜨는지» 는 알아야 한다.
+              <div style={{fontSize:12,color:'var(--text)',lineHeight:2}}>
+                문자·알림톡 잔액 <b>{cfg.balance.toLocaleString()}원</b> 미만<br/>
+                채널 미설정 공급사 <b>{cfg.channel}</b>곳 이상<br/>
+                배송비 미설정 공급사 <b>{cfg.shipping}</b>곳 이상
+                <div style={{fontSize:11,color:'var(--sub)',marginTop:6}}>master 만 바꿀 수 있습니다.</div>
               </div>
             ):(
-              <div style={{fontSize:12,color:'var(--text)'}}>
-                현재 기준: <b>{thrSaved!=null?thrSaved.toLocaleString():'—'}원</b>
-                <span style={{fontSize:11,color:'var(--sub)',marginLeft:6}}>(master 만 바꿀 수 있습니다)</span>
-              </div>
+              <>
+                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:10}}>
+                  <span style={{fontSize:12,color:'var(--text)',minWidth:150}}>문자·알림톡 잔액</span>
+                  <input type="text" inputMode="numeric" style={numInput}
+                    value={draft?draft.balance:''} onChange={e=>setDraft(d=>({...d,balance:e.target.value}))}/>
+                  <span style={{fontSize:12,color:'var(--sub)'}}>원 미만</span>
+                  <button onClick={()=>saveCfg('balance')}
+                    disabled={cfgSaving==='balance'||!okNum(draft&&draft.balance)||!dirty('balance')}
+                    style={saveBtn(okNum(draft&&draft.balance)&&dirty('balance'))}>
+                    {cfgSaving==='balance'?'저장 중…':dirty('balance')?'저장':'저장됨'}</button>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',marginBottom:10}}>
+                  <span style={{fontSize:12,color:'var(--text)',minWidth:150}}>채널 미설정 공급사</span>
+                  <input type="text" inputMode="numeric" style={numInput}
+                    value={draft?draft.channel:''} onChange={e=>setDraft(d=>({...d,channel:e.target.value}))}/>
+                  <span style={{fontSize:12,color:'var(--sub)'}}>곳 이상</span>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                  <span style={{fontSize:12,color:'var(--text)',minWidth:150}}>배송비 미설정 공급사</span>
+                  <input type="text" inputMode="numeric" style={numInput}
+                    value={draft?draft.shipping:''} onChange={e=>setDraft(d=>({...d,shipping:e.target.value}))}/>
+                  <span style={{fontSize:12,color:'var(--sub)'}}>곳 이상</span>
+                  {/* ★ 공급사 기준 둘은 한 설정값(supplier_unset_alert)에 함께 들어간다.
+                      그래서 저장 버튼도 하나다 — 버튼을 둘로 두면 «하나만 저장된» 상태가 생긴다. */}
+                  <button onClick={()=>saveCfg('supplier')}
+                    disabled={cfgSaving==='supplier'||!okNum(draft&&draft.channel)||!okNum(draft&&draft.shipping)||(!dirty('channel')&&!dirty('shipping'))}
+                    style={saveBtn(okNum(draft&&draft.channel)&&okNum(draft&&draft.shipping)&&(dirty('channel')||dirty('shipping')))}>
+                    {cfgSaving==='supplier'?'저장 중…':(dirty('channel')||dirty('shipping'))?'저장':'저장됨'}</button>
+                </div>
+                <div style={{fontSize:10,color:'var(--sub)',marginTop:12,lineHeight:1.7}}>
+                  ※ 바꾼 기준은 다음 로그인부터 판정에 쓰입니다. 이 기준은 모든 계정에 함께 적용됩니다.
+                </div>
+              </>
             )}
           </div>
         </div>
 
-        {/* ── 알림 모아보기 (2026-08-31 제니 요청) ────────────────────────────
-              로그인할 때 뜨는 배너는 «지나가는 것» 이라 닫으면 그만이다. 여기는
-              «지금 걸려 있는 것 전부» 를 언제든 다시 볼 수 있는 자리다.
-              ★ 배너와 «같은 목록» 을 본다(ALERT_RULES) — 두 곳에서 따로 세지 않는다.
-              ★ 어느 메뉴의 일인지(where)와 바로가기를 함께 둔다. 알림만 있고 갈 곳이
-                없으면 «그래서 어디로 가라는 거지» 가 남는다. */}
-          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',marginTop:18}}>
-            <div style={{padding:'12px 20px',background:'#162244',borderBottom:'1px solid var(--border)',
-              fontSize:13,fontWeight:700,color:'#fff',display:'flex',alignItems:'center',gap:8}}>
-              <span>알림 모아보기</span>
-              {alerts&&alerts.length>0&&(
-                <span style={{display:'inline-flex',alignItems:'center',lineHeight:1,padding:'3px 7px',
-                  borderRadius:99,background:'rgba(246,173,9,.16)',color:'#F6AD09',fontSize:10,fontWeight:700}}>
-                  {alerts.length}
-                </span>
-              )}
-            </div>
-            <div style={{padding:'16px 20px'}}>
-              {!alerts||alerts.length===0?(
-                <div style={{fontSize:12,color:'var(--sub)'}}>지금 확인이 필요한 알림이 없습니다.</div>
-              ):alerts.map(a=>(
-                <div key={a.key} style={{display:'flex',gap:12,alignItems:'flex-start',
-                  padding:'11px 0',borderBottom:'1px solid var(--border)'}}>
-                  <span style={{fontSize:15,lineHeight:1.2}}>⚠</span>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,color:'var(--text)',fontWeight:600,lineHeight:1.6}}>{a.text}</div>
-                    <div style={{fontSize:10,color:'var(--sub)',marginTop:3}}>{a.where}</div>
-                  </div>
-                  <button onClick={()=>onGo&&onGo(a.page)}
-                    style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',
-                      borderRadius:6,color:'var(--text)',fontSize:11,fontWeight:600,cursor:'pointer',
-                      fontFamily:'inherit',whiteSpace:'nowrap'}}>바로가기</button>
-                </div>
-              ))}
-              <div style={{fontSize:10,color:'var(--sub)',marginTop:12,lineHeight:1.7}}>
-                ※ 지금 조건에 걸린 것만 보여 줍니다 — 처리하면 사라집니다.
-              </div>
-            </div>
-          </div>
-
-        {/* ── 메뉴별 설정 ────────────────────────────────────────────────────
-            메뉴 화면에 두면 «매일 쓰는 자리» 에 위험한 버튼이 섞인다. 되돌릴 수
-            없는 것은 일부러 찾아와야 하는 곳에 둔다(제니 지시 2026-08-26).
-            ★ master 전용이다. 위의 «알림 모아보기» 는 그 밖에 두었다 —
-              공급사 미설정을 손보는 것은 manager 도 하는 일이다. */}
+        {/* ── ⑤ 메뉴별 설정 ──────────────────────────────────────────────────
+            되돌릴 수 없는 것은 «일부러 찾아와야 하는 곳» 에 둔다(제니 지시 2026-08-26).
+            그래서 맨 아래이고 master 전용이다. */}
         {isMaster&&(
-          <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,overflow:'hidden',marginTop:18}}>
-            <div style={{padding:'12px 20px',background:'#162244',borderBottom:'1px solid var(--border)',fontSize:13,fontWeight:700,color:'#fff'}}>메뉴별 설정</div>
+          <div style={card}>
+            <div style={head}>메뉴별 설정</div>
             <div style={{padding:'16px 20px'}}>
               <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:10}}>상품 관리 · 상품 정보</div>
               <div style={{display:'flex',gap:12,alignItems:'flex-start',flexWrap:'wrap'}}>
