@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260826q_account_page -->
+<!-- v20260831a_cafe24_deleted -->
+<!-- (2026-08-31) 카페24에서 «사라진» 상품을 화면에서 구분해 준다(제니 결정). 배경: 카페24에서 상품을 지워도 콘솔 동기화는 «신규 생성»과 «수정 반영»만 해서 그 상품이 콘솔에 계속 남는데, 화면에서는 파는 상품과 똑같아 보인다. 2026-08-26 에 그런 상품 312건을 손으로 지웠다. 처음에는 「카페24 삭제 후 100일이면 콘솔에서도 삭제」를 검토했으나 ★카페24가 «언제 지웠는지»를 주지 않는다 — 그냥 목록에서 빠질 뿐이다. 100일의 기준점이 «우리가 알아챈 날»밖에 안 되는 위에 되돌릴 수 없는 삭제를 얹을 수 없어서, 제니가 «지우지 않고 보관하되 표시한다»로 정했다. ①상품 목록: 상품 코드 밑에 「카페24 삭제」 뱃지를 «맨 앞»에 단다. 판매중지·미진열은 이 상품이 카페24에 «있다»는 전제 위의 말인데 사라진 상품에는 그 전제가 없다 — 순서가 곧 무게다. ★색은 빨강이 아니라 회색(#1D2939/#EAECF0/#98A2B3)이다. 빨강은 판매중지가 이미 쓰고 있고 둘이 같이 붙는 일이 흔한데, 같은 색이면 어느 쪽이 더 큰 말인지 구분되지 않는다. 사라진 것을 회색(묘비)으로 두면 빨강 옆에서도 뜻이 안 섞인다. ②상세·수정 창 띠에도 같은 순서로 한 줄을 넣고, 「콘솔에서는 지우지 않고 보관합니다」까지 말해 준다 — 안 그러면 «곧 없어지나?»를 묻게 된다. ③검색줄 «카페24 상태» 필터에서 「카페24와 맞춘 것」·「아직 안 맞춘 것」 두 항목을 빼고 「삭제된 상품」을 넣었다(제니 지시). 그 둘은 08-26 에 수정 동기화를 300건씩 손으로 돌리던 때 «이번 배치가 무엇인지»를 보려고 넣은 임시 도구였는데, 이제 매일 자동으로 돌아 전부 맞춘 상태라 늘 «전체 = 맞춘 것»이고 뜻이 없다. ★판정은 여전히 cafe24Status 한 곳에서만 한다 — 목록·상세·수정 창이 같은 값을 본다. ★선행 조건: sql/product_missing_column.sql (products.cafe24_missing_since + products_search 뷰 재생성). dev·운영 둘 다 적용 완료(2026-08-31). 그 칸을 채우는 것은 주 1회 도는 orphan-products-audit 의 record 모드이고, 카페24에 다시 나타나면 표시를 지운다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- (2026-08-26) 계정 정보를 «창» 에서 «화면» 으로 바꾸고 상품 관리 우측을 정리했다(제니 지시). ①좌측 하단 계정 정보를 누르면 모달이 아니라 화면(page=account)이 열린다. 상단이 «계정»(이메일·권한·운영 실패 알림), 하단이 «메뉴별 설정» 이다. 창 크기로는 메뉴별 설정이 계속 붙을 자리를 감당할 수 없다. 사이드바의 그 자리도 지금 보고 있는 화면이면 active 로 보이게 했다. ②«상품 정보 전체 삭제» 를 상품 관리 우측에서 이 «메뉴별 설정» 으로 옮겼다. ★ 되돌릴 수 없는 것은 매일 쓰는 자리에 두지 않는다 — 상품 목록을 보다가 잘못 누를 수 있는 자리에 있었다. 확인을 두 번 받는 것(confirm + 「전체삭제」 타이핑)은 옮기기 전 그대로다. 무엇이 사라지는지도 버튼 옆에 적었다 — CS 정보·메모·이미지가 함께 사라지고, 카페24 동기화가 상품을 다시 만들어도 사람이 쌓은 값은 돌아오지 않는다. ③«Zendesk CS 가져오기»·«이미지 Storage 이전» 버튼을 비노출했다(더 이상 쓰지 않는다). 기능 자체는 남아 있고 여는 길만 없앴다 — 되살리려면 버튼만 되돌리면 된다. ④우측 상단은 KPI 카드 셋만 남고 크기를 10% 키웠다(숫자 18→20px · 이름 10→11px · 부연 9→10px · 여백 8/16→9/18px). 총 상품 카드의 «경고 상태» 는 테두리가 2px 로 굵어지는 만큼 여백을 1px 줄여 크기를 유지하는 규칙을 그대로 지켰다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- v20260826p_tab_rename -->
 <!-- (2026-08-26) 업로드 탭 이름을 제니가 정한 말로 바꿨다 — CS 정보·메모 → 「일괄 등록(덮어쓰기)」, FAQ 답변 → 「추가 등록」, 문항 마스터 → 「FAQ 문항 코드」. 이름에 «덮어쓰기»·«추가» 가 들어가니 무엇을 하는 양식인지 고르기 전에 알 수 있다. ★ 이름을 부르는 곳이 탭 버튼 말고도 여럿이라 열세 자리를 함께 고쳤다 — 양식이 어긋났을 때의 안내(「위의 [추가 등록] 을 눌러 그쪽에서 올리세요」), 상자 설명, 양식 다운로드의 작성안내 시트, 확인 창 제목 넷. 한 곳만 고치면 「[FAQ 답변] 을 누르세요」 라고 하는데 그런 탭이 없는 상태가 된다. ★ 파일 위쪽 변경이력 주석의 옛 이름은 그날의 기록이라 그대로 둔다. 겸해서 덮어쓰기 경고 문구를 제니가 준 문장으로 바꿨다 — 「업로드 파일로 전체 변경이 됩니다. FAQ를 추가하고 싶은 경우는 「추가 등록」 양식으로 업로드 하세요.」 그전 문구는 색인 초기화까지 설명하느라 길었는데, 사람이 확정 버튼 앞에서 읽어야 할 것은 «전체 변경» 과 «추가하려면 저쪽» 둘이다. 동작은 한 줄도 바뀌지 않았다. -->
@@ -2458,7 +2459,12 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const [search,setSearch]=useState('');
   const [searchField,setSearchField]=useState('all');
   // 카페24 상태로 좁혀 보기. 서버에서 거른다(8,700건을 브라우저로 받아 거르지 않는다).
-  // all | stopped(판매중지) | hidden(미진열) | synced(맞춘 것) | unsynced(아직 안 맞춘 것)
+  // all | stopped(판매중지) | hidden(미진열) | missing(카페24에서 사라진 것)
+  // ★ 2026-08-31 에 synced/unsynced 를 뺐다(제니 지시). 그 둘은 08-26 에 수정 동기화를
+  //   300건씩 손으로 돌리던 때 «이번 배치가 무엇인지» 를 보려고 넣은 임시 도구였다.
+  //   이제 매일 자동으로 돌아 전부 맞춘 상태라 늘 «전체 = 맞춘 것» 이고 뜻이 없다.
+  //   대신 그 자리에 «삭제된 상품» 이 들어간다 — 지우지 않고 보관하기로 했으므로
+  //   목록에서 그것만 모아 보는 길이 필요해졌다.
   const [cafeFilter,setCafeFilter]=useState('all');
   const [detailProd,setDetailProd]=useState(null);
   const [detailMode,setDetailMode]=useState('basic');
@@ -2549,6 +2555,11 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       known,
       stopped: p.cafe24_selling===false,
       hidden:  p.cafe24_display===false,
+      // ★ 카페24 상품 목록에서 사라진 상품. 지우지 않고 «보관» 하기로 했으므로
+      //   (2026-08-31 제니 결정) 화면에서 구분해 주지 않으면 파는 상품과 똑같아 보인다.
+      //   주 1회 조사(orphan-products-audit)가 이 칸을 채우고, 다시 나타나면 지운다.
+      missing:      !!p.cafe24_missing_since,
+      missingSince: p.cafe24_missing_since||null,
       // 사용여부 F 이거나 거래상태 P(거래중지) 면 그 공급사 상품은 팔 수 없다.
       supOff:  !!sup&&(sup.use===false||sup.status==='P'),
       supName: p.supplier_name||'',
@@ -2558,7 +2569,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   // 목록에서 상품 코드 밑에 다는 작은 표시. 이상이 없으면 아무것도 그리지 않는다.
   const Cafe24Tags=({p})=>{
     const s=cafe24Status(p);
-    if(!s||(!s.stopped&&!s.hidden&&!s.supOff)) return null;
+    if(!s||(!s.stopped&&!s.hidden&&!s.supOff&&!s.missing)) return null;
     // ★ 이 표는 «흰 배경» 이다. 사이드바(어두운 배경)의 뱃지 색을 그대로 가져오면
     //   연한 글자 + 연한 배경이 되어 글자가 뭉개진다(2026-08-26 제니 제보 — 실제로 그랬다).
     //   흰 배경에서는 «진한 글자 + 연한 바탕 + 같은 계열 테두리» 라야 또렷하다.
@@ -2572,6 +2583,15 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     );
     return (
       <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:4,fontFamily:"'Pretendard','Inter',sans-serif"}}>
+        {/* ★ 「카페24 삭제」 를 맨 앞에 둔다 — 셋 중 가장 큰 사실이다.
+            판매중지·미진열은 «지금 못 판다» 이고, 이것은 «상품 자체가 카페24에 없다» 다.
+            ★ 색은 빨강이 아니라 «회색» 이다. 빨강은 판매중지가 이미 쓰고 있고, 둘이
+            같이 붙는 일이 흔한데 같은 색이면 어느 것이 더 큰 말인지 구분되지 않는다.
+            사라진 것을 회색(묘비)으로 두면 빨강 옆에서도 뜻이 안 섞인다. */}
+        {s.missing&&tag('카페24 삭제','#1D2939','#EAECF0','#98A2B3',
+          '카페24 상품 목록에 이 상품이 없습니다'
+          +(s.missingSince?' (확인: '+String(s.missingSince).slice(0,10)+')':'')
+          +' · 콘솔에서는 지우지 않고 보관합니다')}
         {s.stopped&&tag('판매중지','#B42318','#FEE4E2','#FDA29B','카페24에서 이 상품을 «판매함» 으로 두지 않았습니다')}
         {s.hidden&&tag('미진열','#3A5580','#E4ECF9','#B4CCF0','카페24에서 이 상품을 «진열함» 으로 두지 않았습니다')}
         {s.supOff&&tag('공급사 미사용','#93500A','#FDEBD0','#F0BE72','공급사 '+s.supName+' 가 카페24에서 미사용·거래중지 상태입니다')}
@@ -2584,9 +2604,10 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   //   아무 데나 맥박을 달면 정작 사고가 났을 때 그 뜻이 닳는다.
   const Cafe24Notice=({p})=>{
     const s=cafe24Status(p);
-    if(!s||(!s.stopped&&!s.hidden&&!s.supOff)) return null;
+    if(!s||(!s.stopped&&!s.hidden&&!s.supOff&&!s.missing)) return null;
     // 판매중지·공급사 미사용은 «못 판다», 미진열만이면 «안 보인다» — 무게가 다르므로 색을 가른다.
-    const red=s.stopped||s.supOff;
+    // ★ 카페24에서 «사라진» 것은 그중 가장 큰 사실이라 빨강으로 끌어올린다.
+    const red=s.stopped||s.supOff||s.missing;
     const c=red?'#F87171':'#F6AD09';
     const what=s.stopped&&s.hidden?"'판매중지·미진열'":(s.stopped?"'판매중지'":"'미진열'");
     return (
@@ -2594,8 +2615,17 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
         border:'2px solid '+c,borderRadius:10,display:'flex',alignItems:'flex-start',gap:11}}>
         <span style={{fontSize:18,lineHeight:1.1}}>⚠</span>
         <div style={{flex:1,minWidth:0}}>
+          {/* ★ «사라짐» 을 맨 위에 둔다. 판매중지·미진열은 이 상품이 카페24에 «있다» 는
+              전제 위의 말인데, 사라진 상품에는 그 전제가 없다. 순서가 곧 무게다.
+              ★ 지우지 않는다는 것까지 말해 준다 — 안 그러면 «곧 없어지나?» 를 묻게 된다. */}
+          {s.missing&&(
+            <div style={{fontSize:14,fontWeight:700,color:c}}>
+              이 상품은 카페24 상품 목록에 없습니다
+              {s.missingSince?' (확인: '+String(s.missingSince).slice(0,10)+')':''}
+            </div>
+          )}
           {(s.stopped||s.hidden)&&(
-            <div style={{fontSize:14,fontWeight:700,color:c}}>이 상품은 카페24에서 {what} 상태입니다</div>
+            <div style={{fontSize:14,fontWeight:700,color:c,marginTop:s.missing?4:0}}>이 상품은 카페24에서 {what} 상태입니다</div>
           )}
           {/* ★ 공급사 층은 «다른 말» 이므로 문장을 따로 둔다. 상품은 판매중인데
               공급사가 미사용이면 그래도 못 판다 — 이유가 다르면 문구도 달라야 한다. */}
@@ -2605,6 +2635,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
             </div>
           )}
           <div style={{fontSize:12,color:'var(--sub)',marginTop:4}}>
+            {s.missing&&'콘솔에서는 지우지 않고 보관합니다. '}
             {s.syncedAt?'카페24와 맞춘 때: '+s.syncedAt.slice(0,16).replace('T',' '):'카페24와 맞춘 기록이 없습니다'}
           </div>
         </div>
@@ -2908,8 +2939,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const applyCafeFilter=(query,f)=>{
     if(f==='stopped')  return query.eq('cafe24_selling',false);
     if(f==='hidden')   return query.eq('cafe24_display',false);
-    if(f==='synced')   return query.not('cafe24_synced_at','is',null);
-    if(f==='unsynced') return query.is('cafe24_synced_at',null);
+    if(f==='missing')  return query.not('cafe24_missing_since','is',null);
     return query;
   };
   const load=async(pg=1,q='',field='all',cf='all')=>{
@@ -3759,8 +3789,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               <option value="all">카페24 상태: 전체</option>
               <option value="stopped">판매중지</option>
               <option value="hidden">미진열</option>
-              <option value="synced">카페24와 맞춘 것</option>
-              <option value="unsynced">아직 안 맞춘 것</option>
+              <option value="missing">삭제된 상품</option>
             </select>
             <button className="btn-filter" onClick={()=>{setForm({...EMPTY_PRODUCT});setEditId(null);setTab('add');}}>+ 상품 등록</button>
           </div>
