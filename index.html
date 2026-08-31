@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260831c_purge_missing -->
+<!-- v20260831d_supplier_updated -->
+<!-- (2026-08-31) 공급사 관리 표에 «마지막 수정» 열을 더했다(제니 요청). 배경: 공급사 배송 기본값(배송비·조건·무료기준·배송방법·결제방식·메모)을 카페24에서 자동으로 가져올 수 없다는 것이 이날 실측으로 확정됐다 — 창구 다섯 갈래를 다 막아 봤다. ①/shipping/suppliers 목록은 404 'No API found' ②/shipping/suppliers/{키}는 공급사 20곳×대소문자 40회 전부 'supplier account cannot be found'(우리 쇼핑몰은 공급사 로그인 계정을 안 만들었다) ③/shipping?supplier_code= 는 200을 내지만 함정이다 — 공급사 12곳이 «전부 같은 값»을 돌려줬다(쿼리를 무시하고 쇼핑몰 기본값을 준다) ④/suppliers 응답 32개 필드에 배송 관련 0개 ⑤「기본 설정」 상품 상세에도 배송 구간 0건(배송 권한을 얻은 뒤 다시 재도 동일). ★ 그래서 이 값은 «사람이 관리하는 값»으로 확정됐고, 자동으로 못 맞추니 «언제 맞춘 것인지»라도 보여야 낡은 것을 알아챌 수 있다. suppliers.updated_at 을 그대로 쓴다 — 이미 있는 값이라 새 칸을 만들지 않았다. ★ 이 날짜는 «사람이 콘솔에서 손댄 때»다: 공급사 자동 동기화(이름·거래상태·사용여부)는 updated_at 을 밀지 않는다(그 워크플로의 SQL 이 cafe24_synced_at 만 쓴다). 채널 변경도 사람이 한 것이라 함께 잡히며, 그래서 열 이름을 «배송 기본값 갱신»이 아니라 «마지막 수정»으로 정직하게 붙였다. 툴팁에 그 뜻을 적었다. ★ 한 번도 안 고친 곳은 «—»다. 가짜 날짜를 만들지 않는다. ★★ 이 표는 grid 열 정의가 «세 곳»(그룹헤더·컬럼헤더·행)에 똑같이 적혀 있고 칸 수가 어긋나면 그 줄만 통째로 밀린다 — 셋을 함께 고치고 그룹헤더에 «🕐 기록» 칸을 채웠으며 minWidth 도 1301→1387로 넓혔다(열 78 + gap 8). 08-26 에 「미사용」 뱃지를 열 대신 이름 뒤에 붙였던 것이 이 비용 때문이었다. ★ 필터는 일부러 안 만들었다(제니 판단) — 값이 비어 있는 곳은 이미 상단 «배송비 미설정»으로 걸러 볼 수 있고, 실무는 «변경을 발견하면 그 공급사만 건건이 수정»하는 방식이다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- (2026-08-31) 상품 정보 상단에 «카페24 삭제 상품 정리» 버튼을 달았다(제니 지시, master 전용). 카페24에서 사라진 상품을 지우지 않고 보관하기로 하면서, 「그래도 정리하고 싶을 때」를 사람이 직접 정하는 길이 필요해졌다. ★ 08-26 에 «상품 정보 전체 삭제»를 이 자리에서 계정 설정 화면으로 치웠는데 모순이 아니다 — 저쪽은 8,400건을 통째로 날리는 초기화라 잘못 누르면 끝이지만, 이쪽은 대상이 «카페24에 더 이상 없는 상품»으로 좁혀져 있고 화면에서 이미 뱃지로 보고 있는 것들이며, 실제로 주기적으로 하게 될 일이다. 대신 그때 만든 안전장치를 그대로 얹었다: ①대상 건수를 버튼에 적는다(무엇을 지우는지 누르기 전에 보인다) ②0건이면 비활성이라 누를 수도 없다 ③확인 두 번(confirm + 「삭제」 타이핑) ④무엇이 함께 사라지는지 말해 준다 — CS 정보·메모·CS 이미지·FAQ 색인은 카페24가 돌려주지 않는다. ★ 지우는 조건은 뱃지·필터와 «같은 것»이다(cafe24_missing_since is not null). 화면에서 본 것과 지우는 것이 어긋나면 그 순간 이 버튼은 못 믿을 것이 된다. 그래서 개수도 같은 조건으로 센다. ★ 확인 문구에 «표시는 주 1회 갱신»이라는 사실을 적었다 — 그 사이 카페24에서 되살린 상품이 있으면 표시가 낡았을 수 있고, 그때는 조사를 먼저 돌리는 편이 안전하다. ★ 색은 빨강이되 «채움»이 아니라 «윤곽»이다. 채운 빨강은 저장·확인 같은 주 동작의 모양이라 되돌릴 수 없는 것에 쓰면 손이 먼저 간다. ★ master 전용은 화면 기준이다 — DB 쪽 products 쓰기 권한은 master·manager 이고, manager 는 원래 목록의 행별 [삭제] 를 쓸 수 있다. 이 버튼이 새로 여는 구멍은 없다. ★ 확인 문구의 줄바꿈은 템플릿 문자열로 준다 — 이 파일은 패치 스크립트로 고치는 일이 잦은데 백슬래시 이스케이프가 그 과정에서 먹혀 진짜 줄바꿈이 되어 버린다(이번에 실제로 겪었다). 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- (2026-08-31) 카페24에서 «사라진» 상품을 화면에서 구분해 준다(제니 결정). 배경: 카페24에서 상품을 지워도 콘솔 동기화는 «신규 생성»과 «수정 반영»만 해서 그 상품이 콘솔에 계속 남는데, 화면에서는 파는 상품과 똑같아 보인다. 2026-08-26 에 그런 상품 312건을 손으로 지웠다. 처음에는 「카페24 삭제 후 100일이면 콘솔에서도 삭제」를 검토했으나 ★카페24가 «언제 지웠는지»를 주지 않는다 — 그냥 목록에서 빠질 뿐이다. 100일의 기준점이 «우리가 알아챈 날»밖에 안 되는 위에 되돌릴 수 없는 삭제를 얹을 수 없어서, 제니가 «지우지 않고 보관하되 표시한다»로 정했다. ①상품 목록: 상품 코드 밑에 「카페24 삭제」 뱃지를 «맨 앞»에 단다. 판매중지·미진열은 이 상품이 카페24에 «있다»는 전제 위의 말인데 사라진 상품에는 그 전제가 없다 — 순서가 곧 무게다. ★색은 빨강이 아니라 회색(#1D2939/#EAECF0/#98A2B3)이다. 빨강은 판매중지가 이미 쓰고 있고 둘이 같이 붙는 일이 흔한데, 같은 색이면 어느 쪽이 더 큰 말인지 구분되지 않는다. 사라진 것을 회색(묘비)으로 두면 빨강 옆에서도 뜻이 안 섞인다. ②상세·수정 창 띠에도 같은 순서로 한 줄을 넣고, 「콘솔에서는 지우지 않고 보관합니다」까지 말해 준다 — 안 그러면 «곧 없어지나?»를 묻게 된다. ③검색줄 «카페24 상태» 필터에서 「카페24와 맞춘 것」·「아직 안 맞춘 것」 두 항목을 빼고 「삭제된 상품」을 넣었다(제니 지시). 그 둘은 08-26 에 수정 동기화를 300건씩 손으로 돌리던 때 «이번 배치가 무엇인지»를 보려고 넣은 임시 도구였는데, 이제 매일 자동으로 돌아 전부 맞춘 상태라 늘 «전체 = 맞춘 것»이고 뜻이 없다. ★판정은 여전히 cafe24Status 한 곳에서만 한다 — 목록·상세·수정 창이 같은 값을 본다. ★선행 조건: sql/product_missing_column.sql (products.cafe24_missing_since + products_search 뷰 재생성). dev·운영 둘 다 적용 완료(2026-08-31). 그 칸을 채우는 것은 주 1회 도는 orphan-products-audit 의 record 모드이고, 카페24에 다시 나타나면 표시를 지운다. ④목록 날짜 칸의 「맞춤 MM-DD」 줄도 함께 뺐다(제니 지시). 같은 이유다 — 300건씩 손으로 돌리던 때는 «이번에 무엇을 건드렸나»를 알 유일한 자리였지만, 이제 매일 자동으로 돌아 8,400줄 전부가 어제 날짜다. 같은 날짜가 줄줄이 뜨면 정보가 아니라 소음이고, 정작 봐야 할 뱃지의 자리를 뺏는다. 값(cafe24_synced_at)은 그대로 있고 상세·수정 창의 카페24 띠에서 여전히 볼 수 있다. 조회·저장·권한 판정은 건드리지 않았다. -->
 <!-- (2026-08-26) 계정 정보를 «창» 에서 «화면» 으로 바꾸고 상품 관리 우측을 정리했다(제니 지시). ①좌측 하단 계정 정보를 누르면 모달이 아니라 화면(page=account)이 열린다. 상단이 «계정»(이메일·권한·운영 실패 알림), 하단이 «메뉴별 설정» 이다. 창 크기로는 메뉴별 설정이 계속 붙을 자리를 감당할 수 없다. 사이드바의 그 자리도 지금 보고 있는 화면이면 active 로 보이게 했다. ②«상품 정보 전체 삭제» 를 상품 관리 우측에서 이 «메뉴별 설정» 으로 옮겼다. ★ 되돌릴 수 없는 것은 매일 쓰는 자리에 두지 않는다 — 상품 목록을 보다가 잘못 누를 수 있는 자리에 있었다. 확인을 두 번 받는 것(confirm + 「전체삭제」 타이핑)은 옮기기 전 그대로다. 무엇이 사라지는지도 버튼 옆에 적었다 — CS 정보·메모·이미지가 함께 사라지고, 카페24 동기화가 상품을 다시 만들어도 사람이 쌓은 값은 돌아오지 않는다. ③«Zendesk CS 가져오기»·«이미지 Storage 이전» 버튼을 비노출했다(더 이상 쓰지 않는다). 기능 자체는 남아 있고 여는 길만 없앴다 — 되살리려면 버튼만 되돌리면 된다. ④우측 상단은 KPI 카드 셋만 남고 크기를 10% 키웠다(숫자 18→20px · 이름 10→11px · 부연 9→10px · 여백 8/16→9/18px). 총 상품 카드의 «경고 상태» 는 테두리가 2px 로 굵어지는 만큼 여백을 1px 줄여 크기를 유지하는 규칙을 그대로 지켰다. 조회·저장·권한 판정은 건드리지 않았다. -->
@@ -5829,9 +5830,9 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
             조건에 해당하는 공급사가 없습니다
           </div>
       ):(
-        <div style={{background:'#FFFFFF',border:'1px solid #DCE8FF',borderRadius:8,overflow:'hidden',width:'100%',minWidth:1301}}>
+        <div style={{background:'#FFFFFF',border:'1px solid #DCE8FF',borderRadius:8,overflow:'hidden',width:'100%',minWidth:1387}}>
           {/* 그룹 헤더 (5 영역) — 컬럼 헤더와 동일한 grid + 동일한 셀 1대1 배치 */}
-          <div style={{display:'grid',gridTemplateColumns:'minmax(140px,1.4fr) 1px minmax(56px,0.6fr) 2px minmax(240px,2.4fr) 2px minmax(96px,1fr) minmax(96px,1fr) 2px minmax(110px,1.1fr) minmax(84px,0.9fr) minmax(90px,1fr) minmax(180px,2.6fr) 2px minmax(60px,0.7fr)',gap:8,padding:'8px 14px',background:'#1d2e54',color:'#a8defb',fontSize:9,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',borderBottom:'1px solid #DCE8FF',alignItems:'center'}}>
+          <div style={{display:'grid',gridTemplateColumns:'minmax(140px,1.4fr) 1px minmax(56px,0.6fr) 2px minmax(240px,2.4fr) 2px minmax(96px,1fr) minmax(96px,1fr) 2px minmax(110px,1.1fr) minmax(84px,0.9fr) minmax(90px,1fr) minmax(180px,2.6fr) 2px minmax(78px,0.8fr) minmax(60px,0.7fr)',gap:8,padding:'8px 14px',background:'#1d2e54',color:'#a8defb',fontSize:9,fontWeight:700,letterSpacing:'.06em',textTransform:'uppercase',borderBottom:'1px solid #DCE8FF',alignItems:'center'}}>
             {/* 영역 1: 기본 정보 */}
             <span>📋 기본 정보</span>
             <span></span>
@@ -5852,11 +5853,14 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
             <span></span><span></span><span></span>
             {/* 영역 사이 강한 구분선 */}
             <span style={{borderLeft:'2px solid rgba(168,222,251,.5)',height:14}}></span>
-            {/* 영역 5: 저장 */}
+            {/* 영역 5: 기록 + 저장 (2026-08-31 «마지막 수정» 열이 늘면서 칸이 하나 더 생겼다.
+                ★ 이 그룹 헤더는 아래 두 줄과 «같은» grid 를 쓴다 — 칸 수가 어긋나면
+                  이 줄만 통째로 옆으로 밀린다. 열을 더할 때 셋을 함께 고칠 것. */}
+            <span>🕐 기록</span>
             <span></span>
           </div>
           {/* 컬럼 헤더 */}
-          <div style={{display:'grid',gridTemplateColumns:'minmax(140px,1.4fr) 1px minmax(56px,0.6fr) 2px minmax(240px,2.4fr) 2px minmax(96px,1fr) minmax(96px,1fr) 2px minmax(110px,1.1fr) minmax(84px,0.9fr) minmax(90px,1fr) minmax(180px,2.6fr) 2px minmax(60px,0.7fr)',gap:8,padding:'10px 14px',background:'#F1F5FB',color:'#5F7195',fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.04em',borderBottom:'1px solid #DCE8FF'}}>
+          <div style={{display:'grid',gridTemplateColumns:'minmax(140px,1.4fr) 1px minmax(56px,0.6fr) 2px minmax(240px,2.4fr) 2px minmax(96px,1fr) minmax(96px,1fr) 2px minmax(110px,1.1fr) minmax(84px,0.9fr) minmax(90px,1fr) minmax(180px,2.6fr) 2px minmax(78px,0.8fr) minmax(60px,0.7fr)',gap:8,padding:'10px 14px',background:'#F1F5FB',color:'#5F7195',fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'.04em',borderBottom:'1px solid #DCE8FF'}}>
             <span>공급사명</span>
             <span></span>
             <span style={{textAlign:'right'}}>상품수</span>
@@ -5871,6 +5875,13 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
             <span>금액 조건(원)</span>
             <span>메모</span>
             <span style={{borderLeft:'2px solid #B4CCF0'}}></span>
+            {/* ★ «사람이 콘솔에서 마지막으로 손댄 때» 다(제니 요청 2026-08-31).
+                카페24가 공급사 배송 기본값을 API 로 주지 않는다는 것이 실측으로 확정돼
+                (창구 다섯 갈래 전부 막힘) 이 값은 사람이 관리한다. 자동으로 못 맞추니
+                «언제 맞춘 것인지» 라도 보여야 낡은 것을 알아챌 수 있다.
+                ★ 공급사 자동 동기화(이름·거래상태)는 이 값을 밀지 않는다 — 그래서
+                  여기 찍히는 날짜는 언제나 «사람» 의 손길이다. */}
+            <span style={{textAlign:'center'}}>마지막 수정</span>
             <span style={{textAlign:'center'}}>저장</span>
           </div>
           {/* 행 */}
@@ -5898,7 +5909,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
             const inputBorder='1px solid #DCE8FF';
             const inputColor='#1A2240';
             return (
-              <div key={s.name} style={{display:'grid',gridTemplateColumns:'minmax(140px,1.4fr) 1px minmax(56px,0.6fr) 2px minmax(240px,2.4fr) 2px minmax(96px,1fr) minmax(96px,1fr) 2px minmax(110px,1.1fr) minmax(84px,0.9fr) minmax(90px,1fr) minmax(180px,2.6fr) 2px minmax(60px,0.7fr)',gap:8,padding:'8px 14px',borderBottom:'1px solid #ECF1F8',alignItems:'center',fontSize:12,
+              <div key={s.name} style={{display:'grid',gridTemplateColumns:'minmax(140px,1.4fr) 1px minmax(56px,0.6fr) 2px minmax(240px,2.4fr) 2px minmax(96px,1fr) minmax(96px,1fr) 2px minmax(110px,1.1fr) minmax(84px,0.9fr) minmax(90px,1fr) minmax(180px,2.6fr) 2px minmax(78px,0.8fr) minmax(60px,0.7fr)',gap:8,padding:'8px 14px',borderBottom:'1px solid #ECF1F8',alignItems:'center',fontSize:12,
                 background:isDirty?'rgba(246,173,9,.18)':'#FFFFFF',
                 // 좌측 막대는 boxShadow inset로 처리 — width/padding 영향 없음
                 boxShadow:isDirty?'inset 3px 0 0 #F6AD09':'none'}}>
@@ -5994,6 +6005,17 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                   style={{padding:'5px 8px',background:(!memoEnabled||!canManage)?inputBgDisabled:inputBg,border:inputBorder,borderRadius:4,color:inputColor,fontSize:11,fontFamily:'inherit',outline:'none',width:'100%'}}/>
                 {/* 영역 사이 강한 구분선 (영역4↔5) */}
                 <span style={{borderLeft:'2px solid #B4CCF0',height:28}}></span>
+                {/* 마지막 수정 — 사람이 이 공급사 정보를 콘솔에서 마지막으로 고친 때.
+                    ★ 한 번도 안 고쳤으면 «—» 다. 0000-00-00 같은 가짜 날짜를 만들지 않는다.
+                    ★ 배송비가 «미설정» 인 곳은 이 칸이 비어 있는 것이 정상이다 —
+                      그런 곳은 상단 «배송비 미설정» 으로 걸러 카페24에서 확인해 넣는다. */}
+                <span style={{textAlign:'center',fontSize:10,color:'#8895B0',whiteSpace:'nowrap'}}
+                  title={s.updated_at
+                    ? '콘솔에서 마지막으로 고친 때: '+String(s.updated_at).slice(0,16).replace('T',' ')
+                      +' (카페24 자동 동기화는 이 값을 밀지 않습니다)'
+                    : '콘솔에서 고친 기록이 없습니다'}>
+                  {s.updated_at?String(s.updated_at).slice(0,10):'—'}
+                </span>
                 {/* 저장. 권한이 없어 회색인 경우가 있는데 표가 길어 헤더의 '읽기 전용' 안내가
                     화면 밖으로 나가 있을 수 있다 — 버튼 자리에서도 이유를 알 수 있게 한다. */}
                 <button disabled={!canManage||!isDirty||isSaving}
