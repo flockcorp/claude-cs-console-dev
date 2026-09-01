@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901m_cs_history_clarity -->
+<!-- (2026-09-01) 상세 화면 다섯을 고쳤다(제니 제보). ①★★ 이력에서 «사람이 적은 말» 과 «값 변경» 이 구분이 안 됐다. 한 목록에 두 가지가 섞여 있는데 같은 모양으로 그리면 나중에 「그때 고객이 뭐라고 했지」를 찾을 때 값 변경 문구가 섞여 읽힌다. → 값 변경은 «점선 테두리의 ‹값 변경› 표 · 회색 · 고정폭 글씨» 로 한 발 물러나게 하고, 항목마다 한 줄로 끊어 그린다. 사람이 적은 말이 앞으로 나온다. ②★ 「고객·우리·공급사」 옆 드롭박스가 무엇인지 알 수 없다는 지적 — 라벨을 안 붙인 내 잘못이다. 「누가」·「무슨 일」 을 붙였다. 둘 다 이력에 저장되는 값이고, ★ 「무슨 일」(action)이 통계의 근거다 — 공급사별 평균 회신 일수는 action='회신' 을 세어 구한다. 그래서 메모 한 줄로 뭉뚱그리지 않고 칸으로 둔다. ③[되돌리기] → [취소] 로 바꾸고 «저장하지 않고 목록으로» 나가게 했다(제니). 고치던 것을 물리는 이유는 대개 «이 티켓이 아니었다» 이지 «이 값만 물리자» 가 아니다 — 그때 필요한 것은 나가는 길이다. 안 쓰게 된 resetEdit 를 함께 걷어냈다. ④머리말 표기를 「20260901-0005148-01 / 무아스 / 접수 : 09-01 / 담당자 : jenny」 로 바꾸고, 1단 맨 아래 있던 «담당자» 줄을 뺐다 — 같은 값을 두 곳에 두면 한쪽만 고쳐질 자리가 생긴다. ★ 머리말의 담당자는 created_by 가 아니라 assignee 다(만든 사람과 맡은 사람은 다를 수 있다). ⑤2·3단이 «따라 내려온다»(position:sticky) — 생성 화면과 같게. 1단이 훨씬 길어서 아래를 보는 동안 이력과 상품 정보가 화면 밖으로 사라진다. 스스로 스크롤되게 해 뒀다(붙어 있기만 하고 안이 넘치면 아래쪽 저장 버튼에 손이 안 닿는다). ★ dev 전용. -->
 <!-- v20260901l_cs_multi_item -->
 <!-- (2026-09-01) 넷을 고쳤다(제니). ①★★ 품목을 «여럿» 고를 수 있다. 같은 주문에서 같은 공급사 품목 둘을 함께 접수하는 일이 실제로 있는데(20260901-0005133), 하나씩 조회해 따로 만들면 같은 말을 두 번 적게 된다. → **접수 행위는 한 번, 티켓은 품목마다 하나.** 이것이 설계의 «메인·서브 묶음» 이다(같은 주문번호 + 같은 공급사면 메인 1 + 서브 N). ★ 공급사가 다르면 함께 못 고른다 — 접수가 «공급사 단위» 로 나가기 때문이다. 누르면 이유를 툴팁으로 알린다. ★ 메인 판정은 ①「본품」이 든 옵션명 ②없으면 품목번호가 가장 낮은 것 — 실측 주문에서 본품이 -02 였던 적이 있어 번호만으로는 못 고른다. ★★ 이력은 «메인에만» 쌓는다. 양쪽에 복사하면 같은 사건이 두 번 찍힌다(환불 이력에서 겪은 함정). ★ 옵션명·주문수량·CS수량은 품목마다 따로 넣는다 — 3개 중 1개만 불량인 경우가 있다. 나머지(경로·유형·방향·주소·리체크·정산·이력)는 공통이다. ②★ 2·3단이 «따라 내려온다»(position:sticky). 1단이 훨씬 길어서 아래를 쓰는 동안 이력과 상품 정보가 화면 밖으로 사라졌다 — 통화하면서 보라고 만든 칸인데 정작 필요한 순간에 안 보이면 없는 것과 같다. 스스로 스크롤되게 해 뒀다(maxHeight) — 붙어 있기만 하고 안이 넘치면 아래쪽 버튼에 손이 안 닿는다. ③★★ 상세 화면의 저장 지점을 «하나» 로 합쳤다. 1단 [저장]과 2단 [남기기]가 따로 있으면 «어느 것을 눌러야 저장되나» 를 매번 따지게 되고, 하나만 누르고 나가면 나머지가 조용히 사라진다. ★ 다만 이력은 «두 사건» 으로 나눠 남긴다 — 사람이 적은 말(무슨 일이 있었나)과 우리가 고친 값(무엇을 바꿨나)은 다른 것이라, 한 줄에 섞으면 나중에 「그때 고객이 뭐라고 했지」를 찾을 때 값 변경 문구가 섞여 읽힌다. ④변경 요약을 «항목 : 옛값 -> 새값» 한 줄씩으로 바꿨다 — 가운뎃점으로 이으면 항목 구분이 안 된다. 저장 버튼 «바로 위» 에 둔다: 거기가 «누르면 무슨 일이 일어나나» 를 읽는 자리다. 이력에 남길 때도 줄바꿈으로 모은다(이력 화면이 pre-wrap 이라 그대로 보인다). ⑤접수 경로에 «카페24» 를 더했다 — 고객이 카페24에서 직접 신청한 건이다. 우리가 받은 것도 우리가 찾아간 것도 아니라 경로가 따로다. ★ DB check 제약도 함께 넓혔고, **이미 만들어진 표에 닿도록 alter 구문을 넣었다** — create table if not exists 는 있는 표의 제약을 안 고친다(값 목록을 바꿀 때마다 고칠 자리가 두 곳이다). ★ dev 전용. -->
 <!-- v20260901k_cs_save_button -->
@@ -17679,7 +17681,6 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     settle_fee: r.settle_fee==null ? '' : String(r.settle_fee),
     settle_shipping_fee: r.settle_shipping_fee==null ? '' : String(r.settle_shipping_fee),
   });
-  const resetEdit = ()=> setEdit(toEdit(t));
 
   const isMaster = role==='master';
 
@@ -17791,6 +17792,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const lbl = {fontSize:10,color:'var(--sub)',marginBottom:3,display:'block'};
   const panel = {background:'var(--card)',border:'1px solid var(--border)',
     borderRadius:10,padding:'14px 16px'};
+  // ★ ②③ 은 따라 내려온다(제니 2026-09-01) — 생성 화면과 같은 이유다. ①이 훨씬 길어서
+  //   아래를 보는 동안 이력과 상품 정보가 화면 밖으로 사라진다. 스스로 스크롤되게 해 둔다
+  //   (붙어 있기만 하고 안이 넘치면 아래쪽 저장 버튼에 손이 안 닿는다).
+  const sticky = {...panel, position:'sticky', top:16,
+    maxHeight:'calc(100vh - 32px)', overflowY:'auto'};
   const ptitle = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
     textTransform:'uppercase',marginBottom:11};
   const sec = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
@@ -17820,7 +17826,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           티켓 <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{t.id}</span></h1>
         <CsStagePill stage={t.stage} held={!!t.held_at}/>
         <span style={{fontSize:12,color:'var(--sub)'}}>
-          {t.order_item_code} · {t.supplier_name||'—'} · 접수 {csDate(t.created_at)} {csShortUser(t.created_by)}
+          {t.order_item_code} / {t.supplier_name||'—'} / 접수 : {csDate(t.created_at)} / 담당자 : {csShortUser(t.assignee)}
         </span>
         <div style={{flex:1}}></div>
         <button onClick={onBack} style={{padding:'7px 14px',background:'transparent',
@@ -17935,12 +17941,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               {ro('정산 배송료', t.settle_shipping_fee!=null ? t.settle_shipping_fee.toLocaleString()+'원' : null)}
             </>
           )}
-          {ro('담당자', csShortUser(t.assignee))}
 
         </div>
 
         {/* ── ② 이력 ──────────────────────────────────────────────── */}
-        <div style={panel}>
+        <div style={sticky}>
           <div style={ptitle}>② 이력 — 오래된 것부터</div>
           {events===null ? (
             <div style={{fontSize:11,color:'var(--sub)'}}>불러오는 중…</div>
@@ -17948,27 +17953,55 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8,padding:'10px 0'}}>
               아직 남긴 이력이 없습니다.
             </div>
-          ) : events.map((e,i)=>(
+          ) : events.map((e,i)=>{
+            // ★★ 두 가지가 한 목록에 섞여 있다(제니 제보: 「구분이 잘 안된다」) —
+            //   ①사람이 적은 말(무슨 일이 있었나) ②우리가 고친 값(무엇을 바꿨나).
+            //   같은 모양으로 그리면 통화 내용을 찾을 때 값 변경 문구가 섞여 읽힌다.
+            //   → 값 변경은 «회색 · 점선 · 작은 글씨» 로 한 발 물러나게 하고,
+            //     항목마다 한 줄로 끊어 그린다. 사람이 적은 말이 앞으로 나온다.
+            const isEdit = e.action==='수정';
+            const rail = isEdit ? 'var(--border)'
+              : e.side==='고객' ? 'var(--accent)'
+              : e.side==='공급사' ? '#7FC2EE'
+              : e.side==='시스템' ? '#F6AD09' : 'var(--primary)';
+            return (
             <div key={e.id} style={{display:'flex',gap:9,padding:'9px 0',
               borderBottom: i<events.length-1?'1px solid var(--border)':'none'}}>
               <div style={{width:3,borderRadius:2,flex:'0 0 auto',alignSelf:'stretch',
-                background: e.side==='고객'?'var(--accent)':e.side==='공급사'?'#7FC2EE'
-                          : e.side==='시스템'?'#F6AD09':'var(--primary)'}}></div>
+                background: rail, opacity: isEdit?.6:1}}></div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',gap:7,alignItems:'baseline',flexWrap:'wrap'}}>
-                  <span style={{fontSize:10,fontWeight:700,
-                    color: e.side==='고객'?'var(--accent)':e.side==='공급사'?'#7FC2EE'
-                         : e.side==='시스템'?'#F6AD09':'var(--accent)'}}>{e.side}</span>
-                  <span style={{fontSize:11,fontWeight:600,color:'var(--text)'}}>{e.action}</span>
+                  {isEdit ? (
+                    <span style={{fontSize:10,fontWeight:600,color:'var(--sub)',
+                      border:'1px dashed var(--border)',borderRadius:4,padding:'1px 6px'}}>
+                      값 변경</span>
+                  ) : (
+                    <>
+                      <span style={{fontSize:10,fontWeight:700,
+                        color: e.side==='고객'?'var(--accent)':e.side==='공급사'?'#7FC2EE'
+                             : e.side==='시스템'?'#F6AD09':'var(--accent)'}}>{e.side}</span>
+                      <span style={{fontSize:11,fontWeight:600,color:'var(--text)'}}>{e.action}</span>
+                    </>
+                  )}
                   <div style={{flex:1}}></div>
                   <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>
                     {String(e.created_at).slice(5,16).replace('T',' ')} {csShortUser(e.actor)}</span>
                 </div>
-                {e.note && <div style={{fontSize:12,color:'var(--sub)',lineHeight:1.7,
-                  whiteSpace:'pre-wrap',marginTop:2}}>{e.note}</div>}
+                {e.note && (isEdit ? (
+                  <div style={{marginTop:3}}>
+                    {String(e.note).split('\n').map((line,k)=>(
+                      <div key={k} style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,
+                        fontFamily:'monospace'}}>{line}</div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{fontSize:12,color:'var(--text)',lineHeight:1.7,
+                    whiteSpace:'pre-wrap',marginTop:2}}>{e.note}</div>
+                ))}
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* ★ 이력은 append-only 다 — 고치거나 지울 수 없다(DB 에 update/delete 정책이 없다).
               잘못 적었으면 바로잡는 줄을 새로 남긴다.
@@ -17977,7 +18010,12 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 나가면 나머지가 조용히 사라진다. */}
           <div style={{marginTop:12,border:'1px solid var(--border)',borderRadius:8,
             background:'var(--bg)',padding:'10px 11px'}}>
-            <div style={{display:'flex',gap:5,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+            {/* ★ 라벨을 안 붙여 뒀더니 «이 드롭박스가 뭐냐» 는 질문이 나왔다(제니).
+                두 값 다 이력에 저장되는 값이다 — 「누가」는 side, 「무슨 일」은 action.
+                ★ 「무슨 일」이 통계의 근거다: 공급사별 평균 회신 일수는 action='회신' 을
+                  세어 구한다. 그래서 그냥 메모 한 줄로 뭉뚱그리지 않고 칸으로 둔다. */}
+            <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+              <span style={{fontSize:10,color:'var(--sub)'}}>누가</span>
               {['고객','우리','공급사'].map(s=>(
                 <button key={s} onClick={()=>setSide(s)}
                   style={{padding:'4px 11px',borderRadius:14,fontSize:11,fontFamily:'inherit',
@@ -17985,8 +18023,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                     border:'1px solid '+(side===s?'var(--primary)':'var(--border)'),
                     color: side===s?'#fff':'var(--sub)'}}>{s}</button>
               ))}
-              <span style={{width:8}}></span>
-              <CsPick value={action} options={CS_ACTIONS} onChange={v=>v&&setAction(v)} width={150}/>
+              <span style={{width:6}}></span>
+              <span style={{fontSize:10,color:'var(--sub)'}}>무슨 일</span>
+              <CsPick value={action} options={CS_ACTIONS} onChange={v=>v&&setAction(v)} width={140}/>
             </div>
             <textarea value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
               onKeyDown={e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) saveAll(); }}
@@ -18010,12 +18049,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               <span style={{fontSize:10,color:'var(--sub)'}}>
                 한 번 남긴 이력은 고치거나 지울 수 없습니다</span>
               <div style={{flex:1}}></div>
-              {changes.length>0 && (
-                <button onClick={resetEdit} disabled={busy}
-                  style={{padding:'6px 12px',background:'transparent',border:'1px solid var(--border)',
-                    borderRadius:6,color:'var(--sub)',fontSize:11,cursor:'pointer',
-                    fontFamily:'inherit'}}>되돌리기</button>
-              )}
+              {/* ★ «되돌리기»(화면만 되돌림) 대신 «취소»(저장하지 않고 목록으로) 다(제니).
+                  고치던 것을 물리는 이유는 대개 «이 티켓이 아니었다» 이지 «이 값만 물리자» 가
+                  아니다 — 그때 필요한 것은 목록으로 나가는 길이다. */}
+              <button onClick={onBack} disabled={busy}
+                style={{padding:'6px 14px',background:'transparent',border:'1px solid var(--border)',
+                  borderRadius:6,color:'var(--sub)',fontSize:11,cursor:'pointer',
+                  fontFamily:'inherit'}}>취소</button>
               <button onClick={saveAll} disabled={busy || !dirty}
                 style={{padding:'7px 20px',borderRadius:6,fontSize:12,fontWeight:700,
                   fontFamily:'inherit',border:'none',color:'#fff',
@@ -18027,7 +18067,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         </div>
 
         {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
-        <div style={panel}>
+        <div style={sticky}>
           <div style={ptitle}>③ 이 상품 CS 정보</div>
           {csInfo===null ? (
             <div style={{fontSize:11,color:'var(--sub)'}}>찾는 중…</div>
