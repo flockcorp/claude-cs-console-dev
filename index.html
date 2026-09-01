@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901w_cs_blind -->
+<!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ «CS 완료» 단계를 걷어냈다 — 「재출고 완료」(교환 쪽)와 「환불 대기」(반품 쪽)가 **이미 상담원 처리 끝**이라는 제니 정정. 내가 그 위에 단계를 하나 더 뒀던 것이 군더더기였다: 상담원이 「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다. 그 둘을 «확인 대기» 그룹으로 올렸고, **교환/환불 구분도 여기서 갈린다** — 방향으로 걸러 보는 것이 아니라 단계가 이미 두 갈래다. 기존 cs_done 티켓은 방향을 보고 옮겼다. ②「무슨 일」 드롭박스와 「누가」 라벨을 걷어냈다(제니). 두 번이나 «이게 뭐냐» 는 질문이 나온 칸이고, 값 목록에 «상태를 옮기는 것» 과 «단순 이력» 이 섞여 있어 저장 버튼(=단계)과도 겹쳐 보였다. 이제 이력은 «누가 무슨 말을 했나» 만 남기고 단계는 저장 버튼이 정한다. ★ 잃는 것이 없다 — 「공급사별 평균 회신 일수」는 action='회신' 을 세려던 것이었는데 **«누가»(side='공급사')가 이미 그 일을 한다**: 공급사가 남긴 첫 이력 시각에서 supplier_sent_at 을 빼면 된다. 사람이 남기는 이력은 전부 action='기록' 이고, 화면에는 그 이름을 안 보인다(모든 줄에 같은 말이 붙으면 소음이다). ③★★ **이력 «가리기»(블라인드)** — 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」. 잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고 읽는 사람이 어느 것이 맞는지 헷갈린다. ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다. ★★ 본문은 «실제로» 지운다: 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로 남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다. 되돌릴 수 없으므로 사유를 받는다. ★ 가릴 수 있는 사람은 그 글을 쓴 본인 또는 master 이고, **DB 정책도 같다.** ★★ append-only 는 그대로다 — update 정책을 열되 트리거가 «본문을 지우는 것 말고는 아무것도 못 바꾸게» 막는다(다른 글로 바꿔치기하는 것은 고치는 것이라 막는다. 이미 가려진 줄도 다시 못 건드린다). ★ dev 전용. -->
 <!-- v20260901v_cs_stage_groups -->
 <!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
 <!-- v20260901u_cs_submit_pick -->
@@ -16691,25 +16693,6 @@ const CS_SIDES = ['고객','원룸만들기','공급사'];
 // ★ 이력의 «누가»(CS_SIDES)와 값이 겹치지만 뜻이 다르다 — 저쪽은 «누가 한 말인가»,
 //   이쪽은 «누가 돈을 내나» 다. 상수를 따로 두는 이유가 그것이다.
 const CS_BEARERS = ['공급사','원룸만들기'];
-// 이력의 «무슨 일» → 티켓의 «단계». 하나로 정해지는 것만 적는다.
-// ★★ 제니 질문: 「이걸 선택한다고 티켓 상태가 바뀌는 게 아니네?」 — 그전에는 안 바뀌었다.
-//   이력(무슨 일이 있었나)과 단계(어디까지 왔나)는 다른 축이지만, 둘을 따로 고르게 두면
-//   «이력엔 회신인데 단계는 아직 회신 대기» 처럼 어긋난 채로 남는다. 사람이 두 번 고르는
-//   것도 번거롭다. → 고르면 단계를 «함께 옮겨 준다». 다만 **바로 저장하지 않는다** —
-//   1단에 반영돼 변경 요약(「단계 : … -> …」)에 뜨고, 사람이 저장을 눌러야 확정된다.
-//   원하지 않으면 1단에서 되돌리면 된다.
-// ★ 회신·리체크·입고확인·보류는 여기 없다 — 다음 단계가 상황에 따라 갈려서 하나로 정할
-//   수 없다. 억지로 옮기면 «틀린 단계» 가 조용히 저장된다. 그런 것은 사람이 1단에서 고른다.
-const CS_ACTION_STAGE = {
-  '접수':'received', '공급사접수':'awaiting', '재출고':'reshipped',
-  'CS완료':'cs_done', '환불요청':'refund', '환불완료':'refunded',
-  '정산반영':'settlement', '보류':'held', '종결':'closed', '철회':'withdrawn',
-};
-// 이력에 남길 «무슨 일». ★ DB check 제약과 짝이다(cs_ticket_events.action) —
-//   한쪽만 고치면 저장이 조용히 막힌다.
-const CS_ACTIONS = ['접수','공급사접수','회신','리체크','회수완료','재출고','입고확인',
-                    'CS완료','환불요청','환불완료','정산반영','보류','보류해제',
-                    '철회','종결','수정'];
 
 // 단계 — «그룹 + 하위 상태» 두 층이다(제니 2026-09-01). 젠데스크가 쓰던 방식이고
 // (신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다.
@@ -16736,9 +16719,15 @@ const CS_STAGES = [
   {id:'received',   label:'티켓 등록',   group:'접수',      tone:'accent'},
   {id:'awaiting',   label:'진행중',      group:'처리중',    tone:'sky'},
   {id:'held',       label:'보류',        group:'처리중',    tone:'yellow'},
-  {id:'reshipped',  label:'재출고 완료', group:'처리중',    tone:'sky'},
-  {id:'refund',     label:'환불 대기',   group:'처리중',    tone:'red'},
-  {id:'cs_done',    label:'CS 완료',     group:'확인 대기', tone:'green'},
+  // ★★ «확인 대기» 는 곧 «상담원 처리 끝» 이고, 그것이 두 갈래다(제니 정정 2026-09-01).
+  //   교환 건은 재출고가 나가면, 반품 건은 입고가 확인되면 상담원 일이 끝난다 —
+  //   그 뒤는 정산이거나 환불이고 둘 다 master 의 몫이다.
+  //   ★ 내가 «CS 완료» 라는 단계를 하나 더 뒀던 것이 군더더기였다. 그러면 상담원이
+  //     「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다.
+  //   ★★ 그리고 이것이 「교환의 CS 완료와 환불의 CS 완료를 어떻게 구분하나」의 답이다 —
+  //     구분을 방향으로 «걸러 보는» 것이 아니라, 단계가 이미 두 갈래로 갈려 있다.
+  {id:'reshipped',  label:'재출고 완료', group:'확인 대기', tone:'sky'},
+  {id:'refund',     label:'환불 대기',   group:'확인 대기', tone:'red'},
   {id:'refunded',   label:'환불 완료',   group:'완료',      tone:'red'},
   {id:'settlement', label:'정산 대기',   group:'완료',      tone:'yellow'},
   {id:'closed',     label:'종결',        group:'종결',      tone:'green'},
@@ -17436,7 +17425,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     // ★★ 이력은 «메인에만» 쌓는다. 양쪽에 복사하면 같은 사건이 두 번 찍힌다
     //   (환불 이력에서 이미 겪은 함정이다). 서브 화면은 메인의 이력을 함께 읽는다.
     const evs = (notes.length ? notes : [{side:'고객', text:f.memo||'접수'}]).map(n=>({
-      ticket_id: mrow.id, side:n.side, action:'접수', actor:currentUserEmail,
+      ticket_id: mrow.id, side:n.side, action:'기록', actor:currentUserEmail,
       note:n.text, stage_after:'received', direction_after:f.direction||null,
     }));
     const {error:e2} = await sb.from('cs_ticket_events').insert(evs);
@@ -17869,7 +17858,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const [busy,setBusy]   = useState(false);
   const [draft,setDraft] = useState('');
   const [side,setSide]   = useState('원룸만들기');
-  const [action,setAction] = useState('리체크');
+  // ★ 사람이 남기는 이력은 전부 «기록» 이다 — 무슨 일이었는지는 글로 적히고,
+  //   단계는 저장 버튼이 정한다. 값 변경만 «수정» 으로 따로 남는다.
+  const ACTION_NOTE = '기록';
   const [byPhone,setByPhone] = useState(null);
   const [csInfo,setCsInfo]   = useState(null);
   const [group,setGroup]     = useState([]);   // 같은 묶음의 티켓들(메인+서브)
@@ -17968,6 +17959,27 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   // ★★ 단계를 고르면 «바로» 그 단계로 저장한다(제니 — 젠데스크가 그렇다).
   //   버튼이 곧 «제출» 이므로 목록에서 고르는 것도 제출이다. 그래서 stage 를 인자로 받는다:
   //   setState 는 다음 그림에 반영되므로, 방금 고른 값을 그대로 쓰려면 넘겨야 한다.
+  // ── 이력 가리기(블라인드) ────────────────────────────────────────────
+  // ★★ 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」.
+  //   잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고,
+  //   그러면 읽는 사람이 어느 것이 맞는지 헷갈린다.
+  // ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다.
+  // ★★ 본문은 «실제로» 지운다. 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로
+  //   남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다.
+  //   되돌릴 수 없으므로 사유를 받고 한 번 더 묻는다.
+  const blindEvent = async (e)=>{
+    const why = window.prompt('이 이력의 내용을 가립니다. 줄은 그대로 남고 본문만 지워집니다.\n되돌릴 수 없습니다. 가리는 이유를 적어 주세요.');
+    if(why===null) return;
+    if(!why.trim()){ toast('가리는 이유를 적어 주세요.','warn'); return; }
+    setBusy(true);
+    const {error} = await sb.from('cs_ticket_events')
+      .update({note:null, blinded_by:currentUserEmail, blind_reason:why.trim()})
+      .eq('id', e.id);
+    if(sbFail('이력 가리기', error)){ setBusy(false); return; }
+    setBusy(false);
+    load();
+  };
+
   const saveAll = async (stageOverride)=>{
     const st = stageOverride || edit.stage;
     if(!dirty && st === (t.stage||'')) return;
@@ -17978,7 +17990,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     // ★ 반대로 «값 변경» 은 그 티켓의 일이라 그 티켓에 남긴다(아래).
     const mainId = t.main_ticket_id || t.id;
     if(draft.trim()){
-      evs.push({ticket_id:mainId, side, action, actor:currentUserEmail, note:draft.trim(),
+      evs.push({ticket_id:mainId, side, action:ACTION_NOTE, actor:currentUserEmail, note:draft.trim(),
         stage_after: st, direction_after: edit.direction||null});
     }
     // 고른 단계를 반영한 요약을 다시 만든다 — 화면의 changes 는 아직 옛 stage 로 계산돼 있다.
@@ -18243,7 +18255,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   ) : (
                     <>
                       <CsSideBadge side={e.side}/>
-                      <span style={{fontSize:11,fontWeight:600,color:'var(--text)'}}>{e.action}</span>
+                      {/* ★ «기록» 은 굳이 안 보인다 — 모든 줄에 같은 말이 붙으면 소음이다.
+                          이관해 온 옛 이력처럼 «회신»·«리체크» 가 적힌 것만 보여 준다. */}
+                      {e.action && e.action!=='기록' && (
+                        <span style={{fontSize:11,fontWeight:600,color:'var(--text)'}}>{e.action}</span>
+                      )}
                     </>
                   )}
                   {/* 묶음이면 «어느 티켓의 일인가» 를 붙인다 — 값 변경은 티켓마다
@@ -18256,8 +18272,21 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   <div style={{flex:1}}></div>
                   <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>
                     {String(e.created_at).slice(5,16).replace('T',' ')} {csShortUser(e.actor)}</span>
+                  {/* ★ 가릴 수 있는 사람: 그 글을 쓴 본인, 또는 master. DB 정책도 같다. */}
+                  {!e.blinded_at && e.note && (isMaster || e.actor===currentUserEmail) && (
+                    <button onClick={()=>blindEvent(e)} disabled={busy} title="본문 가리기"
+                      style={{background:'transparent',border:'none',color:'var(--sub)',
+                        fontSize:10,cursor:'pointer',padding:'0 2px',lineHeight:1,
+                        opacity:.65}}>가리기</button>
+                  )}
                 </div>
-                {e.note && (isEdit ? (
+                {e.blinded_at ? (
+                  <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,marginTop:3,
+                    fontStyle:'italic'}}>
+                    내용이 가려졌습니다 · {csShortUser(e.blinded_by)} · {csDate(e.blinded_at)}
+                    {e.blind_reason && <span> · {e.blind_reason}</span>}
+                  </div>
+                ) : e.note && (isEdit ? (
                   <div style={{marginTop:3}}>
                     {String(e.note).split('\n').map((line,k)=>(
                       <div key={k} style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,
@@ -18285,7 +18314,6 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 ★ 「무슨 일」이 통계의 근거다: 공급사별 평균 회신 일수는 action='회신' 을
                   세어 구한다. 그래서 그냥 메모 한 줄로 뭉뚱그리지 않고 칸으로 둔다. */}
             <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
-              <span style={{fontSize:10,color:'var(--sub)'}}>누가</span>
               {/* ★ 고른 칩의 색이 «그 줄에 붙을 뱃지 색» 과 같아야 한다(제니) —
                   고르는 순간 무엇이 될지가 보이면 다시 확인할 일이 없다. */}
               {CS_SIDES.map(s=>{
@@ -18299,18 +18327,6 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                     fontWeight: side===s ? 700 : 400}}>{s}</button>
                 );
               })}
-              <span style={{width:6}}></span>
-              <span style={{fontSize:10,color:'var(--sub)'}}>무슨 일</span>
-              <CsPick value={action} options={CS_ACTIONS} width={140}
-                onChange={v=>{
-                  if(!v) return;
-                  setAction(v);
-                  // ★ 단계가 하나로 정해지는 것만 함께 옮긴다. 그리고 crew·manager 가
-                  //   못 가는 단계(환불·정산 대기·종결)로는 옮기지 않는다 — 화면에서
-                  //   슬쩍 옮겨 놓고 저장할 때 트리거에 막히면 «왜 안 되지» 가 된다.
-                  const st = CS_ACTION_STAGE[v];
-                  if(st && (isMaster || CS_STAGES_MASTER.indexOf(st)<0)) setE('stage', st);
-                }}/>
             </div>
             <textarea value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
               onKeyDown={e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) saveAll(); }}
@@ -18357,8 +18373,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 내 일이 끝나면 <b>«CS 완료»</b> 로 넘기세요.
               </div>
             )}
-            <div style={{fontSize:10,color:'var(--sub)',marginTop:5}}>
-              한 번 남긴 이력은 고치거나 지울 수 없습니다
+            <div style={{fontSize:10,color:'var(--sub)',marginTop:5,lineHeight:1.6}}>
+              한 번 남긴 이력은 고칠 수 없습니다. 잘못 적었다면 그 줄의 <b>[가리기]</b> 로
+              본문만 지웁니다 — 줄과 «누가 언제» 는 남습니다.
             </div>
           </div>
         </div>
