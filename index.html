@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901h_cs_settle -->
+<!-- (2026-09-01) 상세 화면의 «정산» 칸을 master 가 실제로 입력할 수 있게 했다(제니 제보 — master 로 로그인했는데 정산에 입력이 안 된다). 앞 판에서 읽기 전용으로만 그려 두고 마무리를 안 한 자리다. ①누가 부담(공급사/우리) · 정산 상품금액 · 정산 배송료 셋을 master 에게만 입력칸으로 준다. 나머지 권한에는 예전처럼 값만 보인다 — 자기가 못 바꾸더라도 «얼마로 정산되는지» 는 알아야 한다. ②★★ 화면에서 숨기는 것과 «별개로» DB 트리거가 한 번 더 막는다. 버튼을 숨기는 것만으로는 «막았다» 고 할 수 없다. 그 트리거는 칸 목록을 스스로 갖지 않고 console_settings.cs_field_rules 를 읽어 판정하므로, 나중에 설정 화면에서 «정산도 상담원이 입력» 으로 바꾸면 자물쇠도 함께 풀린다 — 화면과 DB 가 갈리지 않는다. ③★★ «누가 부담» 에 기본값을 두지 않았다. 「대부분 공급사」라고 깔아 두면 아무도 안 바꾼 건이 조용히 공급사 정산에 올라간다 — 거래처에 잘못 청구하는 일이고 되돌리려면 사람이 연락해서 빼야 한다. 반대 실수(우리 부담인데 정산에 안 올림)는 우리 손해로 끝난다. **두 실수의 무게가 다르면 기본값은 «아직 안 정함» 이어야 한다.** 고르면 그 뜻을 한 줄로 적어 준다 — 공급사면 정산 대기를 거치고 우리면 바로 종결. ④금액 칸(CsMoney)은 «칸에서 손을 떼거나 Enter» 일 때만 저장한다. 저장이 곧 이력 한 줄이라 글자마다 남기면 이력이 숫자 조각으로 뒤덮인다. 값이 그대로면 아무것도 하지 않는다. ★ 마이너스를 허용한다(젠데스크 정산 금액도 마이너스가 되는 값이었다). ★ 빈 칸은 «아직 안 넣음»(null)이고 0원과 다른 말이다. ⑤티켓 «생성» 화면에는 정산을 일부러 두지 않았다 — 접수 시점에는 금액도 부담 주체도 아직 모른다. 필요하면 넣는다. ★ dev 전용. -->
 <!-- v20260901g_cs_detail -->
 <!-- (2026-09-01) 티켓 «상세» 화면을 만들고 생성 화면의 3단 구성을 그것과 똑같이 맞췄다(제니 지시). ★★ 화면 모양을 맞추려는 것이 아니다 — **실제 업무가 그 순서로 흐른다**: 고객과 통화하면서 ①에 주문을 불러오고 ②에 오간 말을 적고 ③에서 상품 정보를 보며 안내하고 마지막에 티켓을 만든다. 만들 때 보던 자리가 만든 뒤에도 그대로여야 한다. 그래서 두 화면이 «① 티켓 정보 · ② 이력 · ③ 상품 CS 정보 · 주문자 최근 티켓» 으로 같다. ①생성 화면: 1단에 주문 조회를 넣고 카페24가 준 값과 사람이 넣는 값을 한 칸에 모았다. «주소» 를 넣었다(배송 주소지 · 회수 주소지 · [배송 주소지와 동일] 버튼). ★ 회수 주소지는 비우면 «배송지와 같다» 는 뜻이고, 저장할 때 배송지를 복사해 채우지 않는다 — 복사해 두면 배송지가 바뀌어도 회수지가 그날 값으로 굳는다. 버튼을 누르는 것은 «사람이 명시적으로 복사한 것» 이라 값이 실제로 들어간다. 리체크 빠른 버튼을 [+1일]·[+3일]·[+7일] 셋으로 바꿨다. ②생성 화면 2단에서 **이력을 미리 쌓는다** — 티켓이 아직 없어 저장할 수 없으니 응대 중에 적은 줄을 화면에 모아 두었다가 [티켓 만들기] 때 한꺼번에 이벤트로 넣는다. 고객/우리/공급사 «누가» 를 함께 고른다. ③오른쪽 칸이 실제로 채워진다: 이 상품 CS 정보(products.cs_info) · 이 주문자 최근 티켓(**연락처 기준**, 숫자만 남겨 맞춘다) · 같은 품목의 기존 티켓. ★★ 상품 CS 정보는 «코드» 기준이 원칙인데 조회 창구가 상품코드를 안 준다 — 지금은 이름으로 찾되 **딱 한 건일 때만** 쓴다(여럿이면 아무것도 안 보여 준다). 임시임을 화면에도 적었다. ④★★ [티켓 이동](제니 요청) — 「이 품목에 이미 N건 있습니다」 옆에 붙였다. **새로 만들 일이 아니라 그 건에 이력을 더할 일** 인 경우의 길이 없었다. 누르면 그 티켓 상세로 간다. ★ 여기까지 적어 둔 이력은 «그 티켓의 것이 아니므로» 들고 가지 않는다 — 옮겨 붙이면 어느 통화에서 나온 말인지가 흐려진다. 그래서 적은 것이 있으면 먼저 알린다. ⑤상세 화면: 유형·방향·단계·리체크를 그 자리에서 고치고, 고칠 때마다 «수정» 이력이 함께 쌓인다 — 단계가 안 바뀌는 손질도 남아야 «누가 언제 바꿨나» 를 알 수 있다. ★ crew·manager 에게는 단계 목록에서 환불·정산 대기·종결을 아예 빼고 «내 일이 끝나면 CS 완료로 넘기세요» 라고 적었다 — 못 누르게 막는 것보다 «어디까지가 내 일인지» 를 알려 주는 편이 낫다. ★ 이력에 «남기기» 만 있고 «수정» 이 없다 — append-only 라 DB 에 update/delete 정책이 없다. 잘못 적었으면 바로잡는 줄을 새로 남긴다. ⑥목록의 «#번호» 를 누르면 상세로 간다. 따로 [보기] 열을 만들지 않았다 — 열이 하나 늘면 그만큼 정작 봐야 할 내용이 좁아진다. ★ 어느 티켓을 열었는지는 상태로만 갖고 주소창에 안 넣는다: 이 콘솔은 라우터가 없고 page 하나로 화면을 가르는데, 티켓만 예외를 두면 뒤로가기 동작이 갈린다. ★ dev 전용. -->
 <!-- v20260901f_cs_new_screen -->
@@ -17550,6 +17552,38 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel, goTicket}){
   );
 }
 
+// ── 금액 칸 ───────────────────────────────────────────────────────────────
+// ★ 글자를 칠 때마다 저장하지 않는다. 저장이 곧 «이력 한 줄» 이라, 한 글자마다
+//   남기면 이력이 숫자 조각으로 뒤덮인다. **칸에서 손을 떼거나 Enter 를 칠 때** 저장하고,
+//   값이 그대로면 아무것도 하지 않는다.
+// ★ 마이너스를 허용한다 — 젠데스크의 정산 금액도 마이너스가 되는 값이었다.
+// ★ 빈 칸은 «아직 안 넣음»(null)이다. 0 원과 다른 말이다.
+function CsMoney({label, value, onSave}){
+  const [v,setV] = useState(value==null ? '' : String(value));
+  useEffect(()=>{ setV(value==null ? '' : String(value)); },[value]);
+  const commit = ()=>{
+    const s = v.replace(/[^0-9-]/g,'');
+    const n = s==='' ? null : parseInt(s,10);
+    if(s!=='' && isNaN(n)) return;
+    if(n===value) return;          // 안 바뀌었으면 이력도 남기지 않는다
+    onSave(n);
+  };
+  return (
+    <div style={{marginBottom:9}}>
+      <label style={{fontSize:10,color:'var(--sub)',marginBottom:3,display:'block'}}>{label}</label>
+      <div style={{display:'flex',alignItems:'center',gap:6}}>
+        <input value={v} onChange={e=>setV(e.target.value)} onBlur={commit}
+          onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } }}
+          placeholder="비우면 아직 안 넣음"
+          style={{width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
+            border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+            fontFamily:'monospace',boxSizing:'border-box',textAlign:'right'}}/>
+        <span style={{fontSize:11,color:'var(--sub)'}}>원</span>
+      </div>
+    </div>
+  );
+}
+
 // ── 티켓 상세 ─────────────────────────────────────────────────────────────
 // ★★ 생성 화면과 «같은 3단» 이다 — ① 티켓 정보 · ② 이력 · ③ 안내에 쓰는 것.
 //   만들 때 보던 자리가 만든 뒤에도 그대로여야 한다(제니 2026-09-01).
@@ -17736,10 +17770,44 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             </div>
           </div>
 
+          {/* ── 정산 ────────────────────────────────────────────────────
+              ★★ master 만 고친다. 화면에서 숨기는 것과 «별개로» DB 트리거가 한 번 더
+                막는다 — 버튼을 숨기는 것만으로는 «막았다» 고 할 수 없다.
+                그 트리거는 목록을 스스로 갖지 않고 console_settings.cs_field_rules 를
+                읽어 판정한다(설정 화면에서 바꾸면 자물쇠도 함께 풀린다).
+              ★★ «누가 부담» 에 기본값을 두지 않는다. 「대부분 공급사」라고 깔아 두면
+                아무도 안 바꾼 건이 조용히 공급사 정산에 올라간다 — 거래처에 잘못
+                청구하는 일이라 되돌리기가 나쁘다. 반대 실수는 우리 손해로 끝난다. */}
           <div style={sec}>정산 {!isMaster && <span style={{opacity:.7}}>· master 만</span>}</div>
-          {ro('누가 부담', t.cost_bearer)}
-          {ro('정산 상품금액', t.settle_fee!=null ? t.settle_fee.toLocaleString()+'원' : null)}
-          {ro('정산 배송료', t.settle_shipping_fee!=null ? t.settle_shipping_fee.toLocaleString()+'원' : null)}
+          {isMaster ? (
+            <>
+              <div style={{marginBottom:9}}>
+                <label style={lbl}>누가 부담</label>
+                <CsPick value={t.cost_bearer||''} options={['공급사','우리']}
+                  placeholder="아직 안 정함"
+                  onChange={v=>patch({cost_bearer:v||null},
+                    v? '비용 부담을 «'+v+'» 로 정함' : '비용 부담을 «아직 안 정함» 으로 되돌림')}/>
+                <div style={{fontSize:10,color:'var(--sub)',marginTop:4,lineHeight:1.6}}>
+                  공급사면 <b>정산 대기</b>를 거치고, 우리면 정산을 건너뛰고 <b>바로 종결</b>합니다.
+                </div>
+              </div>
+              <CsMoney label="정산 상품금액" value={t.settle_fee}
+                onSave={v=>patch({settle_fee:v},
+                  v==null?'정산 상품금액을 비움':'정산 상품금액을 '+v.toLocaleString()+'원으로 넣음')}/>
+              <CsMoney label="정산 배송료" value={t.settle_shipping_fee}
+                onSave={v=>patch({settle_shipping_fee:v},
+                  v==null?'정산 배송료를 비움':'정산 배송료를 '+v.toLocaleString()+'원으로 넣음')}/>
+              <div style={{fontSize:10,color:'var(--sub)',marginTop:2,marginBottom:9,lineHeight:1.6}}>
+                ★ 마이너스도 넣을 수 있습니다(젠데스크와 같습니다). 비우면 «아직 안 넣음» 입니다.
+              </div>
+            </>
+          ) : (
+            <>
+              {ro('누가 부담', t.cost_bearer)}
+              {ro('정산 상품금액', t.settle_fee!=null ? t.settle_fee.toLocaleString()+'원' : null)}
+              {ro('정산 배송료', t.settle_shipping_fee!=null ? t.settle_shipping_fee.toLocaleString()+'원' : null)}
+            </>
+          )}
           {ro('담당자', csShortUser(t.assignee))}
         </div>
 
