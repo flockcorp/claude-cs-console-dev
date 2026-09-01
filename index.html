@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20260901aq_cs_settings_menu -->
+<!-- v20260901ar_cs_macro_settings -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ «CS 완료» 단계를 걷어냈다 — 「재출고 완료」(교환 쪽)와 「환불 대기」(반품 쪽)가 **이미 상담원 처리 끝**이라는 제니 정정. 내가 그 위에 단계를 하나 더 뒀던 것이 군더더기였다: 상담원이 「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다. 그 둘을 «확인 대기» 그룹으로 올렸고, **교환/환불 구분도 여기서 갈린다** — 방향으로 걸러 보는 것이 아니라 단계가 이미 두 갈래다. 기존 cs_done 티켓은 방향을 보고 옮겼다. ②「무슨 일」 드롭박스와 「누가」 라벨을 걷어냈다(제니). 두 번이나 «이게 뭐냐» 는 질문이 나온 칸이고, 값 목록에 «상태를 옮기는 것» 과 «단순 이력» 이 섞여 있어 저장 버튼(=단계)과도 겹쳐 보였다. 이제 이력은 «누가 무슨 말을 했나» 만 남기고 단계는 저장 버튼이 정한다. ★ 잃는 것이 없다 — 「공급사별 평균 회신 일수」는 action='회신' 을 세려던 것이었는데 **«누가»(side='공급사')가 이미 그 일을 한다**: 공급사가 남긴 첫 이력 시각에서 supplier_sent_at 을 빼면 된다. 사람이 남기는 이력은 전부 action='기록' 이고, 화면에는 그 이름을 안 보인다(모든 줄에 같은 말이 붙으면 소음이다). ③★★ **이력 «가리기»(블라인드)** — 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」. 잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고 읽는 사람이 어느 것이 맞는지 헷갈린다. ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다. ★★ 본문은 «실제로» 지운다: 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로 남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다. 되돌릴 수 없으므로 사유를 받는다. ★ 가릴 수 있는 사람은 그 글을 쓴 본인 또는 master 이고, **DB 정책도 같다.** ★★ append-only 는 그대로다 — update 정책을 열되 트리거가 «본문을 지우는 것 말고는 아무것도 못 바꾸게» 막는다(다른 글로 바꿔치기하는 것은 고치는 것이라 막는다. 이미 가려진 줄도 다시 못 건드린다). ★ dev 전용. -->
 <!-- v20260901v_cs_stage_groups -->
 <!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
@@ -17415,7 +17415,7 @@ function editCount(e){
 function CsSettingsPage({currentUserEmail, role}){
   const isMaster = role==='master';
   const TABS = [
-    {id:'macro', label:'문구'},
+    {id:'macro', label:'매크로'},
     {id:'chip',  label:'칩 권한',   soon:true},
     {id:'field', label:'칸 · 권한', soon:true},
     {id:'cafe24',label:'카페24 연동', soon:true},
@@ -17465,18 +17465,67 @@ function CsSettingsPage({currentUserEmail, role}){
 // ★★ 지우기보다 «끄기» 를 앞세운다 — 지나간 티켓 이력에 그 문구로 남긴 글이 있는데
 //   목록에서 사라지면 무슨 문구를 쓴 건지 근거가 흐려진다. 지우기는 한 번 더 묻는다.
 function CsMacroSettings({currentUserEmail}){
-  const CATS = ['접수','환불','리체크','철회'];
+  // ★★ 분류 목록은 코드가 아니라 «설정» 이 갖는다(제니 2026-09-01).
+  //   매뉴얼의 네 묶음을 그대로 박아 뒀는데, 쓰다 보면 묶음이 늘거나 이름이 달라진다 —
+  //   그때마다 나를 불러야 하면 설정 화면이 있으나 마나다.
+  //   ★ DB 의 check 제약도 함께 풀었다(sql/cs_macro_categories.sql). 대신 화면이
+  //     «고르는 것» 으로 막는다 — 아무 데나 칠 수 있으면 오타 분류가 조용히 쌓인다.
+  const CATS_FALLBACK = ['접수','환불','리체크','철회'];
+  const [cats,setCats] = useState(CATS_FALLBACK);
   const [rows,setRows]   = useState(null);
   const [busy,setBusy]   = useState(false);
   const [editId,setEditId] = useState(null);   // 지금 펼쳐 고치는 문구
   const [draft,setDraft] = useState(null);
   const [cat,setCat]     = useState('전체');
+  // ★★ 고른 것은 «지금 보이는 목록» 안의 일이다. 분류를 바꾸면 고른 것을 푼다 —
+  //   안 보이는 줄이 골라진 채로 남아 있으면 [끄기] 가 «본 적 없는 것» 까지 끈다.
+  const [sel,setSel]     = useState({});
+  const pickCat = (c)=>{ setCat(c); setSel({}); };
 
   const load = async ()=>{
     const {data,error} = await sb.from('cs_macros').select('*')
       .order('sort_order',{ascending:true}).order('id',{ascending:true});
-    if(sbFail('문구 조회', error)){ setRows([]); return; }
+    if(sbFail('매크로 조회', error)){ setRows([]); return; }
     setRows(data||[]);
+    // ★ 설정을 못 읽어도 기본 네 가지로 돈다 — 설정 한 번 못 읽었다고 분류가
+    //   통째로 비면 매크로를 아예 못 만든다(알림 기준에서 정한 원칙과 같다).
+    const {data:st} = await sb.from('console_settings').select('value')
+      .eq('key','cs_macro_categories').maybeSingle();
+    const list = st && Array.isArray(st.value) ? st.value.filter(Boolean) : null;
+    setCats(list && list.length ? list : CATS_FALLBACK);
+  };
+
+  // 분류 목록을 저장한다. ★ 한 곳(console_settings)에만 담는다 — 매크로 행에서
+  //   distinct 로 뽑으면 «아직 매크로가 없는 새 분류» 가 사라진다.
+  const saveCats = async (next)=>{
+    setBusy(true);
+    const {error} = await sb.from('console_settings')
+      .upsert({key:'cs_macro_categories', value:next, updated_by:currentUserEmail},
+              {onConflict:'key'});
+    setBusy(false);
+    if(sbFail('분류 저장', error)) return false;
+    setCats(next);
+    return true;
+  };
+
+  const addCat = async (name)=>{
+    const v = String(name||'').trim();
+    if(!v) return;
+    if(cats.indexOf(v)>=0){ setD('category', v); return; }
+    if(await saveCats(cats.concat([v]))) setD('category', v);
+  };
+
+  const removeCat = async (name)=>{
+    // ★★ 쓰고 있는 분류는 못 지운다. 지우면 그 매크로들이 «없는 묶음» 에 남아
+    //   목록 어디에도 안 나온다 — 사라진 것처럼 보이는 것이 가장 나쁜 실패다.
+    const used = (rows||[]).filter(r=>r.category===name).length;
+    if(used){
+      toast('«'+name+'» 을(를) 쓰는 매크로가 '+used+'개 있습니다. 옮기거나 지운 뒤에 없앨 수 있습니다.','warn');
+      return;
+    }
+    if(!window.confirm('분류 «'+name+'» 을(를) 목록에서 없앱니다.')) return;
+    const next = cats.filter(c=>c!==name);
+    if(await saveCats(next) && cat===name) setCat('전체');
   };
   useEffect(()=>{ load(); },[]);
 
@@ -17508,8 +17557,10 @@ function CsMacroSettings({currentUserEmail}){
       sort_order:Number(d.sort_order)||100, is_active:!!d.is_active,
       updated_at:new Date().toISOString(), updated_by:currentUserEmail,
     };
+    // ★ 만든 사람은 «만들 때만» 적는다. 고칠 때 함께 덮으면 고친 사람이
+    //   만든 사람이 되어 버린다 — 그러면 그 칸이 아무것도 안 말해 준다.
     const q = editId==='new'
-      ? sb.from('cs_macros').insert(row)
+      ? sb.from('cs_macros').insert({...row, created_by:currentUserEmail})
       : sb.from('cs_macros').update(row).eq('id', editId);
     const {error} = await q;
     setBusy(false);
@@ -17543,6 +17594,23 @@ function CsMacroSettings({currentUserEmail}){
     load();
   };
 
+  // 골라 둔 것을 한꺼번에 켜고 끈다.
+  // ★ 한 번의 update 로 끝낸다(.in) — 줄마다 부르면 도중에 끊겼을 때 «절반만 꺼진»
+  //   상태가 남고, 그게 화면과 DB 가 어긋나는 자리다.
+  const bulkActive = async (on)=>{
+    const ids = Object.keys(sel).filter(k=>sel[k]).map(Number);
+    if(!ids.length) return;
+    setBusy(true);
+    const {error} = await sb.from('cs_macros')
+      .update({is_active:on, updated_at:new Date().toISOString(),
+        updated_by:currentUserEmail}).in('id', ids);
+    setBusy(false);
+    if(sbFail('매크로 '+(on?'켜기':'끄기'), error)) return;
+    setSel({});
+    toast(ids.length+'개를 '+(on?'켰습니다':'껐습니다')+'.','ok');
+    load();
+  };
+
   const move = async (r, dir)=>{
     const list = (rows||[]).filter(x=>x.category===r.category);
     const i = list.findIndex(x=>x.id===r.id);
@@ -17562,13 +17630,24 @@ function CsMacroSettings({currentUserEmail}){
   const lbl = {fontSize:11,color:'var(--sub)',display:'block',marginBottom:4};
 
   const shown = (rows||[]).filter(r=>cat==='전체' || r.category===cat);
+  const pickedCount = shown.filter(r=>sel[r.id]).length;
+  const allPicked   = shown.length>0 && pickedCount===shown.length;
+  const somePicked  = pickedCount>0;
+  // ★ 전체 선택은 «보이는 것» 만 고른다 — 분류를 좁혀 놓고 누르면 그 분류만.
+  const toggleAll = ()=>{
+    if(allPicked){ setSel({}); return; }
+    const next = {};
+    shown.forEach(r=>{ next[r.id] = true; });
+    setSel(next);
+  };
+  const togglePick = (id)=> setSel(p=>({...p, [id]: !p[id]}));
   const empty = (rows||[]).filter(r=>!r.body || !r.body.trim()).length;
 
   return (
-    <div>
+    <div style={{width:'100%', maxWidth:'max(680px, 68%)'}}>
       <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',marginBottom:12}}>
-        {['전체'].concat(CATS).map(c=>(
-          <div key={c} onClick={()=>setCat(c)}
+        {['전체'].concat(cats).map(c=>(
+          <div key={c} onClick={()=>pickCat(c)}
             style={{padding:'4px 11px',borderRadius:14,fontSize:11.5,cursor:'pointer',
               userSelect:'none',
               border:'1px solid '+(cat===c?'var(--primary)':'var(--border)'),
@@ -17582,7 +17661,39 @@ function CsMacroSettings({currentUserEmail}){
         <button onClick={openNew} disabled={busy}
           style={{padding:'6px 14px',background:'var(--primary)',border:'none',borderRadius:8,
             color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
-          + 문구 추가</button>
+          + 매크로 추가</button>
+      </div>
+
+      {/* ── 고르기 줄 ────────────────────────────────────────────────────
+          ★★ 고른 것이 없을 때도 이 줄은 «그대로 있는다». 골라야 나타나게 하면
+            무엇을 할 수 있는지 모르는 채로 체크박스만 보게 된다.
+            대신 [켜기]·[끄기] 는 고른 것이 없으면 안 눌린다. */}
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',
+        marginBottom:10,padding:'7px 11px',background:'var(--card)',
+        border:'1px solid var(--border)',borderRadius:8}}>
+        <label style={{display:'flex',alignItems:'center',gap:7,fontSize:11.5,
+          color:'var(--sub)',cursor:'pointer',userSelect:'none'}}>
+          <input type="checkbox" checked={allPicked}
+            /* ★ 일부만 고른 상태를 «반쯤 찬 네모» 로 보여 준다 — 안 그러면
+                 「전체 선택이 꺼져 있으니 아무것도 안 골랐구나」로 읽힌다. */
+            ref={el=>{ if(el) el.indeterminate = somePicked && !allPicked; }}
+            onChange={()=>toggleAll()}/>
+          전체 선택
+        </label>
+        <span style={{fontSize:11.5,color: pickedCount?'var(--accent)':'var(--sub)',
+          fontFamily:'monospace'}}>{pickedCount}개 선택</span>
+        <div style={{width:1,height:16,background:'var(--border)'}}></div>
+        <button onClick={()=>bulkActive(true)} disabled={busy||!pickedCount}
+          style={{...miniBtn, color: pickedCount?'var(--green)':'var(--sub)',
+            opacity: pickedCount?1:.45,
+            cursor: pickedCount?'pointer':'not-allowed'}}>켜기</button>
+        <button onClick={()=>bulkActive(false)} disabled={busy||!pickedCount}
+          style={{...miniBtn, opacity: pickedCount?1:.45,
+            cursor: pickedCount?'pointer':'not-allowed'}}>끄기</button>
+        {pickedCount>0 && (
+          <button onClick={()=>setSel({})} disabled={busy}
+            style={{...miniBtn, border:'none'}}>선택 해제</button>
+        )}
       </div>
 
       {/* ★ 본문이 빈 문구를 세어 알려 준다 — 씨앗 13종은 이름만 넣어 두고 본문을
@@ -17597,7 +17708,8 @@ function CsMacroSettings({currentUserEmail}){
       )}
 
       {editId==='new' && (
-        <CsMacroForm draft={draft} setD={setD} inp={inp} lbl={lbl} CATS={CATS}
+        <CsMacroForm draft={draft} setD={setD} inp={inp} lbl={lbl} cats={cats}
+          onAddCat={addCat} onRemoveCat={removeCat}
           busy={busy} onSave={save} onCancel={()=>{setEditId(null); setDraft(null);}} isNew/>
       )}
 
@@ -17613,6 +17725,8 @@ function CsMacroSettings({currentUserEmail}){
           borderRadius:9,padding:'10px 13px',marginBottom:7,
           opacity: r.is_active ? 1 : .55}}>
           <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+            <input type="checkbox" checked={!!sel[r.id]} onChange={()=>togglePick(r.id)}
+              style={{cursor:'pointer',flex:'0 0 auto'}}/>
             <span style={{fontSize:10,fontWeight:700,color:'var(--sub)',
               border:'1px solid var(--border)',borderRadius:4,padding:'1px 6px'}}>
               {r.category}</span>
@@ -17636,7 +17750,7 @@ function CsMacroSettings({currentUserEmail}){
               style={miniBtn}>{r.is_active?'끄기':'켜기'}</button>
             <button onClick={()=> editId===r.id ? setEditId(null) : open(r)} disabled={busy}
               style={{...miniBtn, color:'var(--accent)'}}>
-              {editId===r.id?'닫기':'고치기'}</button>
+              {editId===r.id?'닫기':'수정'}</button>
             <button onClick={()=>remove(r)} disabled={busy}
               style={{...miniBtn, color:'var(--red)'}}>지우기</button>
           </div>
@@ -17644,9 +17758,23 @@ function CsMacroSettings({currentUserEmail}){
             <div style={{fontSize:11.5,color:'var(--sub)',marginTop:6,lineHeight:1.7,
               whiteSpace:'pre-wrap',maxHeight:66,overflow:'hidden'}}>{r.body}</div>
           )}
+          {/* ★ 한 시간 안쪽은 「17분 전」, 넘으면 정확한 시각(csAgo) — 목록에서 쓰는
+                규칙 그대로다. 두 화면이 시각을 다르게 적으면 그때부터 사람이 센다.
+              ★ 만든 시각이 없는 옛 행은 그 자리를 «비운다». 「—」 도 안 적는다 —
+                모르는 것을 굳이 자리 차지하며 알릴 이유가 없다. */}
+          {editId!==r.id && (r.created_at || r.updated_at) && (
+            <div style={{fontSize:10,color:'var(--sub)',marginTop:6,opacity:.8,
+              display:'flex',gap:10,flexWrap:'wrap',fontVariantNumeric:'tabular-nums'}}>
+              {r.created_at && <span>등록 {csAgo(r.created_at)}
+                {r.created_by && <span style={{opacity:.75}}> · {csShortUser(r.created_by)}</span>}</span>}
+              {r.updated_at && <span>수정 {csAgo(r.updated_at)}
+                {r.updated_by && <span style={{opacity:.75}}> · {csShortUser(r.updated_by)}</span>}</span>}
+            </div>
+          )}
           {editId===r.id && (
             <div style={{marginTop:10}}>
-              <CsMacroForm draft={draft} setD={setD} inp={inp} lbl={lbl} CATS={CATS}
+              <CsMacroForm draft={draft} setD={setD} inp={inp} lbl={lbl} cats={cats}
+                onAddCat={addCat} onRemoveCat={removeCat}
                 busy={busy} onSave={save} onCancel={()=>{setEditId(null); setDraft(null);}}/>
             </div>
           )}
@@ -17661,7 +17789,105 @@ const miniBtn = {background:'transparent',border:'1px solid var(--border)',borde
 
 // 문구 한 건을 고치는 칸. 새로 만들 때와 고칠 때가 «같은 칸» 이다 —
 // ★ 두 벌로 두면 칸을 하나 더할 때 한쪽만 고쳐진다(환불 창에서 겪은 그대로다).
-function CsMacroForm({draft, setD, inp, lbl, CATS, busy, onSave, onCancel, isNew}){
+// ── 분류 고르기 · 새로 만들기 · 없애기 ────────────────────────────────────
+// ★★ «고르는 칸» 과 «치는 칸» 을 하나로 뒀다. 분류는 대개 있는 것을 고르고 가끔만
+//   새로 만든다 — 그런데 [+ 분류 추가] 버튼을 따로 두면 그 가끔을 위해 늘 버튼이
+//   자리를 차지하고, 사람은 «어디서 만드나» 를 찾게 된다.
+//   → 목록에 없는 이름을 치면 그 자리에 «+ «불만» 새 분류로 추가» 가 나온다.
+// ★ 지우기는 목록 안 ✕ 다. 쓰고 있는 분류는 부모(onRemove)가 막는다 —
+//   여기서 막지 않는 이유: «몇 개가 쓰고 있나» 는 매크로 목록을 든 쪽만 안다.
+function CsCatPick({value, cats, inp, onPick, onAdd, onRemove}){
+  const [open,setOpen] = useState(false);
+  const [q,setQ] = useState('');
+  const boxRef = useRef(null);
+  const [pos,setPos] = useState(null);
+
+  useEffect(()=>{
+    if(!open){ setPos(null); setQ(''); return; }
+    const el = boxRef.current; if(!el) return;
+    const r = el.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom;
+    setPos(below < 200 && r.top > below
+      ? {left:r.left, width:r.width, bottom:(window.innerHeight - r.top + 2)}
+      : {left:r.left, width:r.width, top:(r.bottom + 2)});
+  },[open, q]);
+
+  useEffect(()=>{
+    if(!open) return;
+    const away = (e)=>{ if(boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
+    const esc  = (e)=>{ if(e.key==='Escape') setOpen(false); };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', esc);
+    return ()=>{ document.removeEventListener('mousedown', away);
+                 document.removeEventListener('keydown', esc); };
+  },[open]);
+
+  const typed = q.trim();
+  const shown = cats.filter(c=>!typed || c.toLowerCase().includes(typed.toLowerCase()));
+  const canAdd = typed && cats.indexOf(typed)<0;
+
+  const pick = (c)=>{ onPick(c); setOpen(false); };
+  const add  = ()=>{ onAdd(typed); setOpen(false); };
+
+  return (
+    <div ref={boxRef} style={{position:'relative'}}>
+      <div onClick={()=>setOpen(o=>!o)}
+        style={{...inp, cursor:'pointer', display:'flex', alignItems:'center', gap:6,
+          color: value?'var(--text)':'var(--sub)'}}>
+        <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',
+          whiteSpace:'nowrap'}}>{value || '고르세요'}</span>
+        <span style={{opacity:.6,fontSize:10}}>▾</span>
+      </div>
+      {open && pos && (
+        <div style={{position:'fixed',left:pos.left,top:pos.top,bottom:pos.bottom,
+          width:pos.width, minWidth:180, zIndex:2500, background:'var(--surface)',
+          border:'1px solid var(--border)',borderRadius:8,
+          boxShadow:'0 12px 32px rgba(0,0,0,.45)',padding:6,
+          maxHeight:270,display:'flex',flexDirection:'column'}}>
+          <input value={q} onChange={e=>setQ(e.target.value)} autoFocus
+            onKeyDown={e=>{ if(e.key==='Enter'){
+              if(canAdd) add();
+              else if(shown.length) pick(shown[0]);
+            }}}
+            placeholder="찾거나 새로 치세요"
+            style={{width:'100%',fontSize:12,padding:'5px 8px',marginBottom:5,
+              background:'var(--bg)',border:'1px solid var(--border)',
+              color:'var(--text)',borderRadius:6,fontFamily:'inherit',boxSizing:'border-box'}}/>
+          <div style={{overflowY:'auto',flex:1,minHeight:0}}>
+            {shown.map(c=>(
+              <div key={c}
+                style={{display:'flex',alignItems:'center',gap:6,padding:'5px 7px',
+                  borderRadius:6,fontSize:12,
+                  color: c===value?'var(--accent)':'var(--sub)',
+                  background: c===value?'rgba(120,170,255,.10)':'transparent'}}>
+                <span onClick={()=>pick(c)}
+                  style={{flex:1,cursor:'pointer',overflow:'hidden',
+                    textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c}</span>
+                <span onClick={()=>onRemove(c)} title="이 분류를 없앱니다"
+                  style={{cursor:'pointer',color:'var(--sub)',opacity:.6,
+                    fontSize:12,padding:'0 2px'}}>✕</span>
+              </div>
+            ))}
+            {shown.length===0 && !canAdd && (
+              <div style={{fontSize:11,color:'var(--sub)',padding:'8px 6px'}}>없습니다</div>
+            )}
+          </div>
+          {canAdd && (
+            <div onClick={add}
+              style={{marginTop:5,padding:'6px 8px',borderRadius:6,cursor:'pointer',
+                fontSize:12,color:'var(--accent)',
+                background:'rgba(120,170,255,.10)',
+                border:'1px solid var(--primary)'}}>
+              + «{typed}» 새 분류로 추가
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CsMacroForm({draft, setD, inp, lbl, cats, onAddCat, onRemoveCat, busy, onSave, onCancel, isNew}){
   if(!draft) return null;
   return (
     <div style={{background: isNew?'var(--card)':'transparent',
@@ -17672,11 +17898,9 @@ function CsMacroForm({draft, setD, inp, lbl, CATS, busy, onSave, onCancel, isNew
       <div style={{display:'grid',gridTemplateColumns:'120px 1fr 150px 80px',gap:9,
         marginBottom:9}}>
         <div>
-          <label style={lbl}>분류</label>
-          <select value={draft.category} onChange={e=>setD('category',e.target.value)}
-            style={{...inp, colorScheme:'dark'}}>
-            {CATS.map(c=><option key={c} value={c}>{c}</option>)}
-          </select>
+          <label style={lbl}>분류 <span style={{opacity:.7}}>· 새로 치면 추가됩니다</span></label>
+          <CsCatPick value={draft.category} cats={cats} inp={inp}
+            onPick={v=>setD('category',v)} onAdd={onAddCat} onRemove={onRemoveCat}/>
         </div>
         <div>
           <label style={lbl}>이름</label>
@@ -17695,23 +17919,24 @@ function CsMacroForm({draft, setD, inp, lbl, CATS, busy, onSave, onCancel, isNew
             style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
         </div>
       </div>
-      <div style={{marginBottom:9}}>
-        {/* ★ 제목이 곧 메일 제목이다 — 공급사 접수는 메일로 나간다. */}
-        <label style={lbl}>제목 <span style={{opacity:.7}}>· 메일 제목이 됩니다. 없어도 됩니다</span></label>
-        <input value={draft.title_body} onChange={e=>setD('title_body',e.target.value)}
-          style={inp}/>
-      </div>
       <div style={{marginBottom:10}}>
-        <label style={lbl}>본문</label>
+        {/* ★★ «제목» 칸을 뺐다(제니 2026-09-01) — 젠데스크에서 그대로 따온 칸이었다.
+             젠데스크는 티켓 제목이 곧 고객에게 나가는 메일 제목이었는데, 우리 콘솔에는
+             티켓 제목이 없고 콘솔이 메일을 보내지도 않는다. 안 쓰는 칸을 남겨 두면
+             「무엇을 넣는 자리지」로 계속 걸린다.
+             ★ DB 칸(title_body)은 남겨 둔다 — 지우는 것은 되돌릴 수 없고 안 쓰면 그만이다. */}
+        <label style={lbl}>내용 <span style={{opacity:.7}}>· 티켓에서 이력에 입력되는 내용입니다</span></label>
         <textarea value={draft.body} onChange={e=>setD('body',e.target.value)} rows={7}
           style={{...inp, lineHeight:1.7, resize:'vertical'}}/>
       </div>
       <div style={{display:'flex',gap:8,alignItems:'center'}}>
         <label style={{display:'flex',alignItems:'center',gap:6,fontSize:11.5,
           color:'var(--sub)',cursor:'pointer'}}>
+          {/* ★ 위 [켜기]·[끄기] 버튼과 «같은 값»(is_active)이다. 한 가지를 두 이름으로
+               부르면 「둘 다 해야 하나」로 읽힌다 — 이름을 하나로 맞춘다(제니 제보). */}
           <input type="checkbox" checked={!!draft.is_active}
             onChange={e=>setD('is_active',e.target.checked)}/>
-          목록에 보이기
+          켜 둠 <span style={{opacity:.7}}>· 끄면 티켓에서 부를 수 없습니다</span>
         </label>
         <div style={{flex:1}}></div>
         <button onClick={onCancel} disabled={busy}
