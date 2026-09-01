@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901k_cs_save_button -->
+<!-- (2026-09-01) 상세 1단의 값을 «바로» 저장하던 것을 [저장] 버튼으로 바꿨다(제니 지적: 「바로바로 남으면 휴먼 에러도 모두 이력에 남아서 오히려 혼란스럽다」). 맞는 지적이다 — 유형을 잘못 골랐다가 되돌리면 이력에 «불량→파손»·«파손→불량» 두 줄이 남고, 정작 봐야 할 흐름이 그런 줄에 묻힌다. ①화면에서만 고쳐 두었다가(edit 상태) [저장] 을 누를 때 **한 번에** 쓴다. ②★★ 이력도 **한 줄**이다. 바뀐 것을 모아 «유형 불량 → 파손 · 리체크 09-04 → 09-07» 처럼 적는다 — 여러 줄로 쪼개면 같은 한 번의 손질이 여러 사건처럼 보인다. ③저장 버튼 위에 «무엇이 무엇으로 바뀌는지» 를 먼저 보여 준다. 바꾼 것이 없으면 버튼 자체가 안 뜬다 — 누를 수 있는데 아무 일도 안 일어나는 버튼은 «고장» 으로 읽힌다. [되돌리기] 로 고치던 것을 통째로 버릴 수 있다. ④금액을 문자열로 다룬다 — 빈 칸(«아직 안 넣음»)과 0원을 갈라야 하고, 숫자로 다루면 그 둘이 같아진다. ⑤CsMoney 컴포넌트를 걷어냈다. «칸에서 손을 떼면 저장» 이 존재 이유였는데 이제 저장 시점이 하나뿐이라 쓸 곳이 없다. ⑥「마이너스도 넣을 수 있습니다…」 안내 문구를 두 화면에서 다 지웠다(제니). 조회·권한 판정·트리거는 건드리지 않았다. -->
 <!-- v20260901j_cs_wording -->
 <!-- (2026-09-01) 생성 화면 문구 셋을 제니가 준 말로 바꿨다. ①「② 이력 — 오간 말을 그대로」→「② 이력」, 빈 상태 안내를 「고객의 CS 신청 내용과 상담원의 안내, 처리 내용을 입력해주세요. «고객» 선택 후 기재한 내용은 그대로 공급사 접수 내용이 됩니다.」로. ★ 앞 문구는 «무엇을 적는지» 보다 «언제 저장되는지» 를 먼저 말했다 — 쓰는 사람이 궁금한 것은 그게 아니다. 그리고 «고객» 을 고른 줄만 공급사 접수 내용이 된다는 것이 새 문구에서 분명해졌다(앞 문구는 적기만 하면 다 나가는 것처럼 읽혔다). ②「담당자는 jenny 로 들어갑니다.」→「담당자 : jenny」. ③「메모 — 티켓에 남는 한 줄 요약」→「메모 - 특이사항을 간단하게 메모해주세요.」, 자리표시 문구는 지웠다(라벨이 이미 같은 말을 한다). 동작·저장 로직은 한 줄도 안 건드렸다. -->
 <!-- v20260901i_cs_new_settle -->
@@ -17410,9 +17412,6 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
                 </div>
               </div>
-              <div style={{fontSize:10,color:'var(--sub)',marginTop:-2,marginBottom:9,lineHeight:1.6}}>
-                마이너스도 넣을 수 있습니다. 비우면 «아직 안 넣음» 입니다.
-              </div>
             </>
           )}
 
@@ -17596,38 +17595,6 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   );
 }
 
-// ── 금액 칸 ───────────────────────────────────────────────────────────────
-// ★ 글자를 칠 때마다 저장하지 않는다. 저장이 곧 «이력 한 줄» 이라, 한 글자마다
-//   남기면 이력이 숫자 조각으로 뒤덮인다. **칸에서 손을 떼거나 Enter 를 칠 때** 저장하고,
-//   값이 그대로면 아무것도 하지 않는다.
-// ★ 마이너스를 허용한다 — 젠데스크의 정산 금액도 마이너스가 되는 값이었다.
-// ★ 빈 칸은 «아직 안 넣음»(null)이다. 0 원과 다른 말이다.
-function CsMoney({label, value, onSave}){
-  const [v,setV] = useState(value==null ? '' : String(value));
-  useEffect(()=>{ setV(value==null ? '' : String(value)); },[value]);
-  const commit = ()=>{
-    const s = v.replace(/[^0-9-]/g,'');
-    const n = s==='' ? null : parseInt(s,10);
-    if(s!=='' && isNaN(n)) return;
-    if(n===value) return;          // 안 바뀌었으면 이력도 남기지 않는다
-    onSave(n);
-  };
-  return (
-    <div style={{marginBottom:9}}>
-      <label style={{fontSize:10,color:'var(--sub)',marginBottom:3,display:'block'}}>{label}</label>
-      <div style={{display:'flex',alignItems:'center',gap:6}}>
-        <input value={v} onChange={e=>setV(e.target.value)} onBlur={commit}
-          onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); } }}
-          placeholder="비우면 아직 안 넣음"
-          style={{width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
-            border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
-            fontFamily:'monospace',boxSizing:'border-box',textAlign:'right'}}/>
-        <span style={{fontSize:11,color:'var(--sub)'}}>원</span>
-      </div>
-    </div>
-  );
-}
-
 // ── 티켓 상세 ─────────────────────────────────────────────────────────────
 // ★★ 생성 화면과 «같은 3단» 이다 — ① 티켓 정보 · ② 이력 · ③ 안내에 쓰는 것.
 //   만들 때 보던 자리가 만든 뒤에도 그대로여야 한다(제니 2026-09-01).
@@ -17644,6 +17611,21 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const [action,setAction] = useState('리체크');
   const [byPhone,setByPhone] = useState(null);
   const [csInfo,setCsInfo]   = useState(null);
+
+  // ★★ 1단의 값은 «바로» 저장하지 않는다(제니 2026-09-01). 고칠 때마다 저장하면
+  //   손이 미끄러진 것·잘못 고른 것까지 전부 이력에 남아 정작 봐야 할 흐름이 묻힌다.
+  //   화면에서만 고쳐 두었다가 [저장] 을 누를 때 한 번에 쓰고 이력도 «한 줄» 만 남긴다.
+  const [edit,setEdit] = useState(null);
+  const setE = (k,v)=> setEdit(p=>({...p,[k]:v}));
+  // 표의 값 → 화면에서 고칠 값. 금액은 문자열로 다룬다(빈 칸과 0 을 갈라야 한다).
+  const toEdit = (r)=>({
+    cs_type: r.cs_type||'', direction: r.direction||'', stage: r.stage||'',
+    recheck_at: r.recheck_at||'', cost_bearer: r.cost_bearer||'',
+    settle_fee: r.settle_fee==null ? '' : String(r.settle_fee),
+    settle_shipping_fee: r.settle_shipping_fee==null ? '' : String(r.settle_shipping_fee),
+  });
+  const resetEdit = ()=> setEdit(toEdit(t));
+
   const isMaster = role==='master';
 
   const digits = (v)=> String(v||'').replace(/[^0-9]/g,'');
@@ -17653,6 +17635,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     const {data,error} = await sb.from('cs_tickets').select('*').eq('id',ticketId).single();
     if(sbFail('티켓 조회', error)) return;
     setT(data);
+    setEdit(toEdit(data));
     const {data:ev} = await sb.from('cs_ticket_events').select('*')
       .eq('ticket_id', ticketId).order('created_at',{ascending:true});
     setEvents(ev||[]);
@@ -17678,20 +17661,51 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   };
   useEffect(()=>{ setT(null); setEvents(null); load(); },[ticketId]);
 
-  // 칸 하나를 고쳐 저장한다. ★ 이력에도 «수정» 한 줄을 남긴다 — 단계가 안 바뀌는
-  //   손질도 남아야 나중에 «누가 언제 바꿨나» 를 알 수 있다.
-  const patch = async (obj, note)=>{
+  // 빈 칸은 «아직 안 넣음»(null)이다 — 0원과 다른 말이다. 마이너스는 그대로 둔다.
+  const money = (v)=>{ const x=String(v||'').replace(/[^0-9-]/g,''); return x===''?null:(parseInt(x,10)||0); };
+  const money0 = (v)=> v==null ? '—' : v.toLocaleString()+'원';
+
+  // 무엇이 무엇으로 바뀌는지 — 저장 버튼 위에 먼저 보여 주고, 이력에도 이 한 줄이 간다.
+  const changes = [];
+  if(edit && t){
+    if(edit.cs_type !== (t.cs_type||''))
+      changes.push('유형 '+(t.cs_type||'—')+' → '+(edit.cs_type||'—'));
+    if(edit.direction !== (t.direction||''))
+      changes.push('방향 '+(t.direction||'미정')+' → '+(edit.direction||'미정'));
+    if(edit.stage !== (t.stage||''))
+      changes.push('단계 '+((CS_STAGE_LABEL[t.stage]||{}).label||t.stage)
+        +' → '+((CS_STAGE_LABEL[edit.stage]||{}).label||edit.stage));
+    if(edit.recheck_at !== (t.recheck_at||''))
+      changes.push('리체크 '+(t.recheck_at||'—')+' → '+(edit.recheck_at||'—'));
+    if(edit.cost_bearer !== (t.cost_bearer||''))
+      changes.push('부담 '+(t.cost_bearer||'아직 안 정함')+' → '+(edit.cost_bearer||'아직 안 정함'));
+    if(money(edit.settle_fee) !== t.settle_fee)
+      changes.push('정산 상품금액 '+money0(t.settle_fee)+' → '+money0(money(edit.settle_fee)));
+    if(money(edit.settle_shipping_fee) !== t.settle_shipping_fee)
+      changes.push('정산 배송료 '+money0(t.settle_shipping_fee)+' → '+money0(money(edit.settle_shipping_fee)));
+  }
+
+  const saveEdit = async ()=>{
+    if(!changes.length) return;
     setBusy(true);
-    const {error} = await sb.from('cs_tickets')
-      .update({...obj, updated_by: currentUserEmail}).eq('id', ticketId);
+    const row = {
+      cs_type: edit.cs_type || null, direction: edit.direction || null,
+      stage: edit.stage, recheck_at: edit.recheck_at || null,
+      cost_bearer: edit.cost_bearer || null,
+      settle_fee: money(edit.settle_fee),
+      settle_shipping_fee: money(edit.settle_shipping_fee),
+      updated_by: currentUserEmail,
+    };
+    const {error} = await sb.from('cs_tickets').update(row).eq('id', ticketId);
     if(sbFail('티켓 수정', error)){ setBusy(false); return; }
-    if(note){
-      const {error:e2} = await sb.from('cs_ticket_events').insert({
-        ticket_id:ticketId, side:'우리', action:'수정', actor:currentUserEmail,
-        note, stage_after: obj.stage || (t && t.stage), direction_after: obj.direction ?? (t && t.direction),
-      });
-      if(e2) console.error('[티켓 이력] 실패:', e2);
-    }
+    // ★ 이력은 «한 줄» 이다. 바뀐 것을 모아 적는다 — 여러 줄로 쪼개면 같은 한 번의
+    //   손질이 여러 사건처럼 보인다.
+    // ★ 이력 기록이 실패해도 저장을 되돌리지 않는다(환불 이력에서 정한 원칙 그대로).
+    const {error:e2} = await sb.from('cs_ticket_events').insert({
+      ticket_id:ticketId, side:'우리', action:'수정', actor:currentUserEmail,
+      note: changes.join(' · '), stage_after: edit.stage, direction_after: edit.direction||null,
+    });
+    if(e2) console.error('[티켓 이력] 실패:', e2);
     setBusy(false);
     load();
   };
@@ -17728,7 +17742,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     </div>
   );
 
-  if(t===null) return (
+  if(t===null || edit===null) return (
     <div className="section" style={{padding:'60px 32px',color:'var(--sub)',fontSize:12}}>불러오는 중…</div>
   );
 
@@ -17755,7 +17769,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
 
       <div style={{display:'grid',gridTemplateColumns:'330px 1fr 250px',gap:14,alignItems:'start'}}>
 
-        {/* ── ① 티켓 정보 ─────────────────────────────────────────── */}
+        {/* ── ① 티켓 정보 ───────────────────────────────────────────
+            ★★ 값을 고쳐도 «바로» 저장하지 않는다(제니 2026-09-01). 고칠 때마다 저장하면
+              손이 미끄러진 것·잘못 고른 것까지 전부 이력에 남아 정작 봐야 할 흐름이 묻힌다.
+              화면에서만 고쳐 두었다가 [저장] 을 누를 때 **한 번에** 쓰고, **이력도 한 줄**만
+              남긴다(무엇이 무엇으로 바뀌었는지를 그 한 줄에 모아 적는다). */}
         <div style={panel}>
           <div style={ptitle}>① 티켓 정보</div>
           {ro('접수 경로', t.intake_path)}
@@ -17776,22 +17794,23 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           <div style={sec}>분류</div>
           <div style={{marginBottom:9}}>
             <label style={lbl}>유형</label>
-            <CsPick value={t.cs_type||''} options={CS_TYPES}
-              onChange={v=>v && patch({cs_type:v}, '유형을 «'+v+'» 로 바꿈')}/>
+            <CsPick value={edit.cs_type} options={CS_TYPES} onChange={v=>setE('cs_type',v)}/>
           </div>
           <div style={{marginBottom:9}}>
             <label style={lbl}>방향</label>
-            <CsPick value={t.direction||''} options={CS_DIRECTIONS}
-              onChange={v=>patch({direction:v||null}, v?'방향을 «'+v+'» 로 정함':'방향을 미정으로 되돌림')}/>
+            <CsPick value={edit.direction} options={CS_DIRECTIONS}
+              onChange={v=>setE('direction',v)} placeholder="미정 — 협의하며 정합니다"/>
           </div>
           <div style={{marginBottom:9}}>
             <label style={lbl}>단계</label>
-            <CsPick value={(CS_STAGE_LABEL[t.stage]||{}).label||''}
+            {/* ★ crew·manager 에게는 환불·정산 대기·종결을 목록에서 «아예 뺀다».
+                못 누르게 막는 것보다 «어디까지가 내 일인지» 를 알려 주는 편이 낫다. */}
+            <CsPick value={(CS_STAGE_LABEL[edit.stage]||{}).label||''}
               options={CS_STAGES.filter(s=>isMaster || ['refund','settlement','closed'].indexOf(s.id)<0)
                                 .map(s=>s.label)}
               onChange={v=>{
                 const s = CS_STAGES.find(x=>x.label===v);
-                if(s) patch({stage:s.id}, '단계를 «'+v+'» 로 옮김');
+                if(s) setE('stage', s.id);
               }}/>
             {!isMaster && (
               <div style={{fontSize:10,color:'var(--sub)',marginTop:4,lineHeight:1.6}}>
@@ -17802,14 +17821,15 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           </div>
           <div style={{marginBottom:9}}>
             <label style={lbl}>리체크 날짜</label>
-            <input type="date" value={t.recheck_at||''} style={{...inp,colorScheme:'dark',marginBottom:5}}
-              onChange={e=>patch({recheck_at:e.target.value}, '리체크를 '+e.target.value+' 로 바꿈')}/>
+            <input type="date" value={edit.recheck_at||''} onChange={e=>setE('recheck_at',e.target.value)}
+              style={{...inp,colorScheme:'dark',marginBottom:5}}/>
             <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
               {[1,3,7].map(n=>(
-                <button key={n} onClick={()=>patch({recheck_at:plusDays(n)}, '리체크를 '+plusDays(n)+' 로 바꿈')}
+                <button key={n} onClick={()=>setE('recheck_at',plusDays(n))}
                   style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-                    cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
-                    color:'var(--sub)'}}>+{n}일</button>
+                    cursor:'pointer',background:'transparent',
+                    border:'1px solid '+(edit.recheck_at===plusDays(n)?'var(--primary)':'var(--border)'),
+                    color: edit.recheck_at===plusDays(n)?'var(--accent)':'var(--sub)'}}>+{n}일</button>
               ))}
             </div>
           </div>
@@ -17827,22 +17847,24 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <>
               <div style={{marginBottom:9}}>
                 <label style={lbl}>누가 부담</label>
-                <CsPick value={t.cost_bearer||''} options={['공급사','우리']}
-                  placeholder="아직 안 정함"
-                  onChange={v=>patch({cost_bearer:v||null},
-                    v? '비용 부담을 «'+v+'» 로 정함' : '비용 부담을 «아직 안 정함» 으로 되돌림')}/>
+                <CsPick value={edit.cost_bearer} options={['공급사','우리']}
+                  placeholder="아직 안 정함" onChange={v=>setE('cost_bearer',v)}/>
                 <div style={{fontSize:10,color:'var(--sub)',marginTop:4,lineHeight:1.6}}>
                   공급사면 <b>정산 대기</b>를 거치고, 우리면 정산을 건너뛰고 <b>바로 종결</b>합니다.
                 </div>
               </div>
-              <CsMoney label="정산 상품금액" value={t.settle_fee}
-                onSave={v=>patch({settle_fee:v},
-                  v==null?'정산 상품금액을 비움':'정산 상품금액을 '+v.toLocaleString()+'원으로 넣음')}/>
-              <CsMoney label="정산 배송료" value={t.settle_shipping_fee}
-                onSave={v=>patch({settle_shipping_fee:v},
-                  v==null?'정산 배송료를 비움':'정산 배송료를 '+v.toLocaleString()+'원으로 넣음')}/>
-              <div style={{fontSize:10,color:'var(--sub)',marginTop:2,marginBottom:9,lineHeight:1.6}}>
-                ★ 마이너스도 넣을 수 있습니다(젠데스크와 같습니다). 비우면 «아직 안 넣음» 입니다.
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
+                <div style={{marginBottom:9}}>
+                  <label style={lbl}>정산 상품금액</label>
+                  <input value={edit.settle_fee} onChange={e=>setE('settle_fee',e.target.value)}
+                    style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
+                </div>
+                <div style={{marginBottom:9}}>
+                  <label style={lbl}>정산 배송료</label>
+                  <input value={edit.settle_shipping_fee}
+                    onChange={e=>setE('settle_shipping_fee',e.target.value)}
+                    style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
+                </div>
               </div>
             </>
           ) : (
@@ -17853,6 +17875,30 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             </>
           )}
           {ro('담당자', csShortUser(t.assignee))}
+
+          {/* 저장 — 바뀐 것이 없으면 아무것도 안 뜬다. 있으면 «무엇이 바뀌는지» 를 먼저 보인다. */}
+          <div style={{marginTop:12,paddingTop:11,borderTop:'1px solid var(--border)'}}>
+            {changes.length===0 ? (
+              <div style={{fontSize:10.5,color:'var(--sub)'}}>바꾼 것이 없습니다.</div>
+            ) : (
+              <>
+                <div style={{fontSize:10.5,color:'#F6AD09',lineHeight:1.7,marginBottom:8}}>
+                  {changes.join(' · ')}
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={saveEdit} disabled={busy}
+                    style={{padding:'7px 18px',border:'none',borderRadius:6,color:'#fff',
+                      fontSize:12,fontWeight:700,fontFamily:'inherit',
+                      background: busy?'var(--border)':'var(--primary)',
+                      cursor: busy?'default':'pointer'}}>{busy?'저장 중…':'저장'}</button>
+                  <button onClick={resetEdit} disabled={busy}
+                    style={{padding:'7px 14px',background:'transparent',border:'1px solid var(--border)',
+                      borderRadius:6,color:'var(--sub)',fontSize:12,cursor:'pointer',
+                      fontFamily:'inherit'}}>되돌리기</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         {/* ── ② 이력 ──────────────────────────────────────────────── */}
