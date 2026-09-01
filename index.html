@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901e_cs_new_ticket -->
+<!-- (2026-09-01) 티켓을 «만드는» 길을 냈다 — 목록 오른쪽 위 [+ 티켓 추가](제니 제보: 「티켓 추가 또는 생성 버튼이 따로 없네」). ★★ 티켓은 사람이 필요해서 만든다(제니) — 카페24 신청을 보고 자동으로 만들지 않는다. 그래서 이 버튼이 유일한 입구이고, 만든 사람이 곧 담당자다. 겸해 「미배정」 칩을 지웠다: 젠데스크에 «신규 수신 · 미배정» 이 있었던 건 티켓이 자동 생성돼 담당자가 비어 있었기 때문인데, 우리는 그 자리가 아예 생기지 않는다. ①품목별 주문번호를 넣고 [불러오기] 하면 카페24에서 상품명·공급사·주문자·연락처를 끌어온다 — 환불 화면이 쓰는 그 엣지 함수(refund-fetch-order)를 그대로 쓴다. 창구를 새로 만들지 않았다. ★ 그 함수는 옵션명·수량·클레임 사유를 «안» 내려준다. 카페24가 그 값들을 준다는 것은 2026-09-01 실측으로 확인했지만(claim_reason 에 고객이 쓴 반품 사유 원문이 온다) 함수를 넓히는 것은 따로 배포할 일이라, 그때까지는 사람이 넣는다 — 안내 문구에도 그렇게 적었다. 없는 값을 있는 척하지 않는다. ②★★ 매뉴얼의 규칙을 화면이 대신한다: 「반드시 티켓 생성 전에 검색을 하고 내역이 없으면 새로 생성(중복 생성 방지)」. 사람이 외워서 지키던 것을, 주문번호를 넣는 순간 같은 품목의 기존 티켓을 찾아 «#번호 · 단계 · 유형 · 날짜 · 담당» 으로 보여 준다. ★ 막지는 않는다 — 같은 품목에 사건이 또 생기면 티켓이 하나 더 생기는 것이 «정상» 이기 때문이다(설계상 order_item_code 에 unique 를 안 걸었다). 판단은 사람이 한다. ③필수는 «만들 때 필수» 만 본다 — 경로·유형·공급사·주문자·CS 접수 수량. 방향은 협의하며 정해지므로 «미정» 으로 둘 수 있다. ★ 필수를 접수 시점에 걸면 사람이 «-» 를 채워 넣는다(젠데스크 매뉴얼이 「입력할 수 없는 경우 - 를 입력한다」고 안내한 탓에 그런 값이 실제로 쌓였다). 못 채운 것은 버튼을 막는 대신 «아직 필요합니다 — 유형 · 공급사» 로 이름을 적어 준다. ④리체크는 기본 +3일이고 KST 로 잰다(UTC 로 재면 새벽에 하루 어긋난다). ⑤저장하면 이력에 «접수» 한 줄이 함께 쌓인다. ★ 이력 기록이 실패해도 티켓 만들기를 막지 않는다 — 이미 끝난 일이 실패한 것처럼 보이는 쪽이 더 나쁘다(환불 이력에서 정한 원칙 그대로). ⑥칩 이름을 「내 담당」 → 「내 티켓」 으로 바꿨다(제니). ★ 함께 고친 것: 설정(console_settings)의 칩 키를 한글 표시 이름으로 넣어 두는 바람에 화면이 못 찾아 설정이 통째로 무시되고 있었다 — 그러면 «모두에게 보임» 으로 조용히 흘러가서 「정산 대기」·「환불」 칩이 crew 에게도 보인다. 키를 화면이 쓰는 id 로 맞췄다(백업 저장소 sql/cs_tickets.sql). 표시 이름은 화면이 갖는다 — 설정에 두면 이름을 바꿀 때마다 설정이 깨진다. ★ dev 전용이다. 운영 승격은 티켓 기능이 완성된 뒤에 한다(제니 지시). -->
 <!-- v20260901d_cs_tickets_list -->
 <!-- (2026-09-01) CS 관리(티켓) 첫 화면을 만들었다 — 사이드바 «CS 관리» > «티켓 목록». ★★ dev 전용이다. 제니 지시로 티켓 기능은 «완성 전까지 운영에 승격하지 않는다». 표(cs_tickets·cs_ticket_events·cs_macros)도 dev 에만 적용돼 있다(claude-cs-backup 의 sql/cs_tickets.sql). ①KPI 넷 — 오늘 리체크·공급사 미접수·회신 대기·정산 대기. 부연에 «기한 지남 N건»·«4일째 이상 N건»·«비용 미입력 N건» 을 함께 적는다. 숫자만 있으면 «그래서 급한가»가 안 보인다. ②칩 열 개로 목록을 좁힌다. 젠데스크는 상담원용 9개·관리자용 5개 보기 탭을 «따로» 뒀는데, 두 벌로 두면 같은 목록을 두 곳에서 관리하게 된다 — 한 줄로 합치고 권한에 따라 보이는 칩만 다르게 했다. ★ 칩 권한은 코드에 박지 않고 console_settings.cs_chip_roles 에서 읽는다. 못 읽으면 기본값으로 돈다 — 설정을 못 읽었다고 목록이 통째로 비면 그게 더 큰 사고다(알림 기준에서 정한 원칙과 같다). ★★ 칩을 꺼도 «티켓이 숨겨지는» 것이 아니다. 진짜 차단은 RLS 가 한다 — 칩은 지름길이지 보안 장치가 아니다. ③열 구성도 «칩마다» 다르다(console_settings.cs_list_columns). 「공급사 미접수」는 공급사·채널을 봐야 하고 「정산 대기」는 금액을 봐야 한다 — 한 벌로 두면 어느 칩에서든 절반이 헛열이다. 모르는 열 이름은 조용히 건너뛴다(설정이 코드보다 앞서 나갈 수 있다). ④KPI 와 칩 개수가 «같은 셈»(match 함수 하나)을 쓴다. 두 곳에서 따로 세면 「숫자는 3인데 목록은 5줄」이 되고 그 순간 둘 다 못 믿는다 — 공급사 KPI·필터에서 이미 정한 원칙이다. ⑤단계는 영문 코드이고 표시 이름·색·차례를 CS_STAGES 한 곳에 둔다. 유형(11)·방향(9)·경로(4)는 한글 값 그대로다 — 정산 파일 R열이 「변심 반품」 문자열을 요구해 매핑이 한 겹 줄고, 덤프를 사람이 읽을 수 있다. ★ 이 목록들은 DB check 제약과 «짝» 이라 한쪽만 고치면 저장이 조용히 막힌다. ⑥보류(⏸)는 단계가 아니라 «겹쳐 걸리는 표시» 라 단계 알약 옆에 따로 붙인다. ⑦리체크가 지났으면 빨갛게 «며칠» 까지 적되, 종결된 티켓에는 안 붙인다 — 할 일이 없는데 빨간 것은 소음이다. 날짜는 KST 로 잰다(UTC 로 재면 새벽에 하루 어긋난다). ⑧아이콘을 새로 만들었다 — 환불 아이콘을 돌려쓰면 두 메뉴가 나란히 서 있어 그림으로 구분이 안 된다. ★ 아직 없는 것: 상세 화면 · 설정 화면 · [보기 설정] · 열 끌어 옮기기. 「설정」 메뉴도 일부러 아직 안 뒀다 — 없는 화면으로 가는 메뉴를 먼저 두면 «고장 난 것» 으로 읽힌다. ★ dev 에 티켓이 0건이라 지금은 빈 상태 안내가 뜬다. 과거 티켓 212건 이관은 «운영 적용 때» 한다 — 실제 고객 이름·연락처라 dev 에 먼저 넣지 않는다. 기존 화면·라우팅·권한 판정은 건드리지 않았다. -->
 <!-- v20260901c_bell_pulse_10s -->
@@ -16668,9 +16670,11 @@ CS_STAGES.forEach(s=>{ CS_STAGE_LABEL[s.id] = s; });
 // ★★ 칩을 꺼도 «티켓이 숨겨지는» 것이 아니다. 진짜 차단은 권한(RLS)이 한다.
 //   그래서 여기 where 는 보안 장치가 아니라 편의다.
 const CS_CHIPS = [
-  {id:'mine',      label:'내 담당'},
+  {id:'mine',      label:'내 티켓'},
   {id:'recheck',   label:'오늘의 리체크'},
-  {id:'unassigned',label:'미배정'},
+  // ★ 「미배정」 칩은 두지 않는다(제니 2026-09-01). 젠데스크에는 «신규 수신» 이 있었지만
+  //   그건 카페24 신청을 보고 티켓이 «자동으로» 생겨서 담당자가 비어 있었기 때문이다.
+  //   콘솔은 **사람이 필요해서 만든다** — 만드는 사람이 곧 담당자다. 빌 자리가 없다.
   {id:'tosupplier',label:'공급사 미접수'},
   {id:'awaiting',  label:'회신 대기'},
   {id:'held',      label:'보류'},
@@ -16751,6 +16755,7 @@ function CsTicketsPage({currentUserEmail, role}){
   const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
   const [chip,setChip]     = useState('mine');
   const [q,setQ]           = useState('');
+  const [newOpen,setNewOpen] = useState(false);
   const [settings,setSettings] = useState(null);
   const isMaster = role==='master';
 
@@ -16781,7 +16786,6 @@ function CsTicketsPage({currentUserEmail, role}){
     if(id==='all')        return true;
     if(id==='mine')       return t.assignee===currentUserEmail && t.stage!=='closed';
     if(id==='recheck')    return t.stage!=='closed' && t.recheck_at && t.recheck_at<=today;
-    if(id==='unassigned') return !t.assignee && t.stage!=='closed';
     if(id==='tosupplier') return !t.supplier_sent_at && t.stage!=='closed' && !t.held_at;
     if(id==='awaiting')   return t.stage==='awaiting';
     if(id==='held')       return !!t.held_at;
@@ -16817,7 +16821,7 @@ function CsTicketsPage({currentUserEmail, role}){
   // 열 구성은 «칩마다» 다르다 — 칩마다 보는 목적이 다르기 때문이다.
   const colKeys = useMemo(()=>{
     const conf = (settings && settings.cs_list_columns) || {};
-    const keys = conf[chip] || conf['_기본'] || CS_COLS_FALLBACK;
+    const keys = conf[chip] || conf['_default'] || CS_COLS_FALLBACK;
     return keys.filter(k=>CS_COLS[k]);   // 모르는 열 이름은 조용히 건너뛴다
   },[settings,chip]);
 
@@ -16840,7 +16844,20 @@ function CsTicketsPage({currentUserEmail, role}){
       <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>🎫 CS 관리</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>고객 접수부터 정산 반영까지 한 건을 끝까지 추적합니다</span>
+        <div style={{flex:1}}></div>
+        {/* ★ 티켓은 사람이 만든다 — 이 버튼이 유일한 입구다. */}
+        <button onClick={()=>setNewOpen(true)}
+          style={{padding:'8px 16px',background:'var(--primary)',border:'none',borderRadius:8,
+            color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+          + 티켓 추가</button>
       </div>
+
+      {newOpen && (
+        <CsNewTicket currentUserEmail={currentUserEmail}
+          onClose={()=>setNewOpen(false)}
+          onSaved={(id)=>{ setNewOpen(false); setChip('mine'); load();
+            toast('티켓 #'+id+' 을 만들었습니다.'); }}/>
+      )}
 
       <div className="kpi-grid" style={{marginBottom:18}}>
         <div className="kpi-card">
@@ -16931,6 +16948,239 @@ function CsTicketsPage({currentUserEmail, role}){
 
       <div style={{marginTop:12,fontSize:11,color:'var(--sub)'}}>
         {rows!==null && <span>{list.length}건 표시 · 전체 {(rows||[]).length}건</span>}
+      </div>
+    </div>
+  );
+}
+
+// ── 새 티켓 만들기 ────────────────────────────────────────────────────────
+// ★★ 티켓은 «사람이 필요해서» 만든다(제니 2026-09-01). 카페24 신청을 보고 자동으로
+//   만들지 않는다 — 그래서 담당자가 빌 자리도 없다(만든 사람이 곧 담당자다).
+//   젠데스크에는 «신규 수신 · 미배정» 이 있었는데 그건 자동 생성 때문이었다.
+//
+// ★★ 매뉴얼의 규칙 하나를 화면이 대신한다 —
+//   「반드시 티켓 생성 전에 검색을 하고 내역이 없으면 티켓을 새로 생성(중복 생성 방지)」.
+//   사람이 외워서 지키던 것을, 품목별 주문번호를 넣는 순간 콘솔이 먼저 찾아 보여 준다.
+function CsNewTicket({currentUserEmail, onClose, onSaved}){
+  const [oid,setOid]         = useState('');
+  const [busy,setBusy]       = useState(false);
+  const [msg,setMsg]         = useState(null);
+  const [dups,setDups]       = useState(null);   // 같은 품목의 기존 티켓
+  const [f,setF]             = useState({
+    product_name:'', option_name:'', supplier_name:'',
+    orderer_name:'', orderer_phone:'', receiver_name:'', receiver_phone:'',
+    order_qty:'', cs_qty:'1', intake_path:'', cs_type:'', direction:'', memo:'',
+  });
+  const set = (k,v)=> setF(p=>({...p,[k]:v}));
+
+  // 리체크 기본 +3일. ★ KST 로 잰다 — UTC 로 재면 새벽에 하루 어긋난다.
+  const [recheck,setRecheck] = useState(()=>{
+    const d = new Date(Date.now() + 9*3600*1000 + 3*86400000);
+    return d.toISOString().slice(0,10);
+  });
+
+  // 주문번호에서 주문 단위 번호만 떼어 낸다(20260828-0004112-01 → 20260828-0004112).
+  const baseOrderId = (v)=>{
+    const s = String(v||'').trim();
+    return /-\d{2}$/.test(s) ? s.slice(0,-3) : s;
+  };
+
+  const lookup = async ()=>{
+    const code = oid.trim();
+    if(!code){ setMsg({t:'err',m:'품목별 주문번호를 먼저 넣어 주세요.'}); return; }
+    setBusy(true); setMsg(null); setDups(null);
+    // ① 먼저 «이미 있는 티켓» 을 찾는다. 매뉴얼의 중복 방지 규칙이다.
+    const {data:old} = await sb.from('cs_tickets')
+      .select('id,stage,cs_type,direction,created_at,assignee')
+      .eq('order_item_code', code).order('id',{ascending:false});
+    if(old && old.length) setDups(old);
+    // ② 카페24에서 주문을 끌어온다. 환불 화면이 쓰는 그 창구다.
+    try{
+      const {data,error} = await sb.functions.invoke('refund-fetch-order',{body:{order_id:code}});
+      if(error){ setMsg({t:'err',m:'주문 조회 실패: '+(error.message||String(error))}); setBusy(false); return; }
+      if(!data || !data.found){
+        setMsg({t:'err',m:(data && data.reason) || '주문을 찾지 못했습니다. 직접 넣어 주세요.'});
+        setBusy(false); return;
+      }
+      setF(p=>({...p,
+        product_name:  data.product_name  || p.product_name,
+        supplier_name: data.supplier_name || p.supplier_name,
+        orderer_name:  data.customer_name || p.orderer_name,
+        orderer_phone: data.customer_phone|| p.orderer_phone,
+      }));
+      // ★ 이 창구는 옵션명·수량·클레임 사유를 안 준다. 그 셋은 실측으로 «카페24가 준다» 는
+      //   것을 확인했지만(2026-09-01) 엣지 함수가 아직 안 내려준다 — 함수를 넓히는 것은
+      //   따로 배포할 일이라, 그때까지는 사람이 넣는다. 없는 값을 있는 척하지 않는다.
+      setMsg({t:'ok',m:'주문 정보를 불러왔습니다. 옵션명·수량은 아직 직접 넣어야 합니다.'
+        + (data.note ? ' · '+data.note : '')});
+    }catch(e){ setMsg({t:'err',m:'주문 조회 중 오류: '+(e.message||String(e))}); }
+    setBusy(false);
+  };
+
+  // ★ «만들 때 필수» 만 본다. 방향처럼 협의하며 정해지는 값은 종결할 때 본다 —
+  //   접수 시점에 필수로 걸면 사람이 «-» 를 채워 넣는다(젠데스크에서 실제로 그랬다).
+  const missing = [];
+  if(!oid.trim())        missing.push('품목별 주문번호');
+  if(!f.intake_path)     missing.push('접수 경로');
+  if(!f.cs_type)         missing.push('유형');
+  if(!f.supplier_name)   missing.push('공급사');
+  if(!f.orderer_name)    missing.push('주문자');
+  if(!(parseInt(f.cs_qty,10)>0)) missing.push('CS 접수 수량');
+
+  const save = async ()=>{
+    if(missing.length) return;
+    setBusy(true); setMsg(null);
+    const row = {
+      order_id: baseOrderId(oid), order_item_code: oid.trim(),
+      product_name: f.product_name || null, option_name: f.option_name || null,
+      supplier_name: f.supplier_name || null,
+      orderer_name: f.orderer_name || null, orderer_phone: f.orderer_phone || null,
+      receiver_name: f.receiver_name || null, receiver_phone: f.receiver_phone || null,
+      order_qty: parseInt(f.order_qty,10) || null,
+      cs_qty: parseInt(f.cs_qty,10),
+      intake_path: f.intake_path, cs_type: f.cs_type,
+      direction: f.direction || null,
+      stage: 'received', recheck_at: recheck,
+      assignee: currentUserEmail, created_by: currentUserEmail, updated_by: currentUserEmail,
+      memo: f.memo || null,
+    };
+    const {data,error} = await sb.from('cs_tickets').insert(row).select('id').single();
+    if(sbFail('티켓 만들기', error)){ setBusy(false); return; }
+    // 이력 한 줄. ★ 실패해도 티켓은 이미 만들어졌으므로 막지 않는다 —
+    //   이미 끝난 일이 실패한 것처럼 보이는 쪽이 더 나쁘다(환불 이력에서 정한 원칙).
+    const {error:e2} = await sb.from('cs_ticket_events').insert({
+      ticket_id: data.id, side:'고객', action:'접수', actor: currentUserEmail,
+      note: f.memo || null, stage_after:'received', direction_after: f.direction || null,
+    });
+    if(e2) console.error('[티켓 이력] 실패:', e2);
+    setBusy(false);
+    onSaved(data.id);
+  };
+
+  const inp = {width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
+    border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+    fontFamily:'inherit',boxSizing:'border-box'};
+  const lbl = {fontSize:10,color:'var(--sub)',marginBottom:4,display:'block'};
+  const Field = ({label, req, children})=>(
+    <div style={{marginBottom:10}}>
+      <label style={lbl}>{label}{req && <span style={{color:'#F6AD09'}}> *</span>}</label>
+      {children}
+    </div>
+  );
+
+  return (
+    <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',
+      zIndex:1200,display:'flex',alignItems:'flex-start',justifyContent:'center',
+      padding:'40px 16px',overflowY:'auto'}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:'var(--card)',
+        border:'1px solid var(--border)',borderRadius:12,width:'100%',maxWidth:720,
+        padding:'20px 22px'}}>
+        <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:14}}>
+          <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>새 티켓</div>
+          <div style={{fontSize:11,color:'var(--sub)'}}>품목별 주문번호 1개 = 티켓 1개</div>
+          <div style={{flex:1}}></div>
+          <button onClick={onClose} style={{background:'transparent',border:'none',
+            color:'var(--sub)',fontSize:18,cursor:'pointer',lineHeight:1}}>×</button>
+        </div>
+
+        <Field label="품목별 주문번호" req>
+          <div style={{display:'flex',gap:6}}>
+            <input value={oid} onChange={e=>setOid(e.target.value)}
+              placeholder="20260828-0004112-01" style={{...inp,fontFamily:'monospace'}}/>
+            <button onClick={lookup} disabled={busy}
+              style={{padding:'7px 14px',background:'var(--primary)',border:'none',
+                borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,
+                cursor:busy?'default':'pointer',fontFamily:'inherit',whiteSpace:'nowrap',
+                opacity:busy?.6:1}}>{busy?'조회 중…':'불러오기'}</button>
+          </div>
+        </Field>
+
+        {/* ★ 매뉴얼의 «만들기 전에 검색» 을 콘솔이 대신한다. 막지는 않는다 —
+            같은 품목에 사건이 또 생기면 티켓이 하나 더 생기는 것이 정상이다. */}
+        {dups && dups.length>0 && (
+          <div style={{border:'1px solid rgba(246,173,9,.5)',background:'rgba(246,173,9,.08)',
+            borderRadius:8,padding:'10px 12px',marginBottom:10}}>
+            <div style={{fontSize:11,fontWeight:700,color:'#F6AD09',marginBottom:6}}>
+              이 품목에 이미 티켓이 {dups.length}건 있습니다</div>
+            {dups.map(d=>(
+              <div key={d.id} style={{fontSize:11,color:'var(--sub)',lineHeight:1.9}}>
+                <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{d.id}</span>
+                {' · '}{(CS_STAGE_LABEL[d.stage]||{}).label||d.stage}
+                {' · '}{d.cs_type||'—'}{d.direction?' · '+d.direction:''}
+                {' · '}{csDate(d.created_at)} {csShortUser(d.assignee)}
+              </div>
+            ))}
+            <div style={{fontSize:10,color:'var(--sub)',marginTop:6,opacity:.85}}>
+              같은 품목에 사건이 또 생겼다면 새로 만드는 것이 맞습니다. 같은 건이면 그 티켓을 여세요.
+            </div>
+          </div>
+        )}
+
+        {msg && (
+          <div style={{fontSize:11,marginBottom:10,padding:'8px 10px',borderRadius:6,
+            background: msg.t==='ok'?'rgba(34,211,160,.10)':'rgba(248,113,113,.10)',
+            color: msg.t==='ok'?'var(--green)':'var(--red)'}}>{msg.m}</div>
+        )}
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 14px'}}>
+          <Field label="상품명"><input value={f.product_name} onChange={e=>set('product_name',e.target.value)} style={inp}/></Field>
+          <Field label="옵션명"><input value={f.option_name} onChange={e=>set('option_name',e.target.value)}
+            placeholder="카페24가 주는 그대로 (본품=…)" style={inp}/></Field>
+          <Field label="공급사" req><input value={f.supplier_name} onChange={e=>set('supplier_name',e.target.value)} style={inp}/></Field>
+          <Field label="접수 경로" req>
+            <select value={f.intake_path} onChange={e=>set('intake_path',e.target.value)} style={inp}>
+              <option value="">— 고르세요 —</option>
+              {CS_INTAKE.map(v=><option key={v} value={v}>{v}</option>)}
+            </select>
+          </Field>
+          <Field label="유형" req>
+            <select value={f.cs_type} onChange={e=>set('cs_type',e.target.value)} style={inp}>
+              <option value="">— 고르세요 —</option>
+              {CS_TYPES.map(v=><option key={v} value={v}>{v}</option>)}
+            </select>
+          </Field>
+          <Field label="방향">
+            <select value={f.direction} onChange={e=>set('direction',e.target.value)} style={inp}>
+              <option value="">미정 — 협의하며 정합니다</option>
+              {CS_DIRECTIONS.map(v=><option key={v} value={v}>{v}</option>)}
+            </select>
+          </Field>
+          <Field label="주문자" req><input value={f.orderer_name} onChange={e=>set('orderer_name',e.target.value)} style={inp}/></Field>
+          <Field label="주문자 연락처"><input value={f.orderer_phone} onChange={e=>set('orderer_phone',e.target.value)} style={inp}/></Field>
+          <Field label="수령인"><input value={f.receiver_name} onChange={e=>set('receiver_name',e.target.value)}
+            placeholder="주문자와 같으면 비워 둡니다" style={inp}/></Field>
+          <Field label="수령인 연락처"><input value={f.receiver_phone} onChange={e=>set('receiver_phone',e.target.value)} style={inp}/></Field>
+          <Field label="주문 수량"><input value={f.order_qty} onChange={e=>set('order_qty',e.target.value)}
+            placeholder="주문서 수량" style={inp}/></Field>
+          <Field label="CS 접수 수량" req><input value={f.cs_qty} onChange={e=>set('cs_qty',e.target.value)}
+            placeholder="3개 중 1개만 불량이면 1" style={inp}/></Field>
+          <Field label="리체크 날짜">
+            <input type="date" value={recheck} onChange={e=>setRecheck(e.target.value)} style={inp}/>
+          </Field>
+          <Field label="담당자">
+            <input value={currentUserEmail} disabled style={{...inp,opacity:.6}}/>
+          </Field>
+        </div>
+        <Field label="메모">
+          <textarea value={f.memo} onChange={e=>set('memo',e.target.value)} rows={2}
+            placeholder="고객이 말한 것을 그대로 적어 두면 공급사 접수 내용이 됩니다"
+            style={{...inp,resize:'vertical'}}/>
+        </Field>
+
+        <div style={{display:'flex',alignItems:'center',gap:10,marginTop:14}}>
+          <div style={{flex:1,fontSize:11,color: missing.length?'#F6AD09':'var(--sub)'}}>
+            {missing.length ? '아직 필요합니다 — '+missing.join(' · ') : '리체크는 기본 +3일입니다.'}
+          </div>
+          <button onClick={onClose} style={{padding:'8px 16px',background:'transparent',
+            border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:12,
+            cursor:'pointer',fontFamily:'inherit'}}>취소</button>
+          <button onClick={save} disabled={busy || missing.length>0}
+            style={{padding:'8px 20px',border:'none',borderRadius:6,color:'#fff',fontSize:12,
+              fontWeight:700,fontFamily:'inherit',
+              background: (busy||missing.length) ? 'var(--border)' : 'var(--primary)',
+              cursor: (busy||missing.length) ? 'default' : 'pointer'}}>
+            {busy?'저장 중…':'티켓 만들기'}</button>
+        </div>
       </div>
     </div>
   );
