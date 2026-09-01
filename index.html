@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20260901ac_cs_sort -->
+<!-- v20260901ad_cs_filters -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ «CS 완료» 단계를 걷어냈다 — 「재출고 완료」(교환 쪽)와 「환불 대기」(반품 쪽)가 **이미 상담원 처리 끝**이라는 제니 정정. 내가 그 위에 단계를 하나 더 뒀던 것이 군더더기였다: 상담원이 「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다. 그 둘을 «확인 대기» 그룹으로 올렸고, **교환/환불 구분도 여기서 갈린다** — 방향으로 걸러 보는 것이 아니라 단계가 이미 두 갈래다. 기존 cs_done 티켓은 방향을 보고 옮겼다. ②「무슨 일」 드롭박스와 「누가」 라벨을 걷어냈다(제니). 두 번이나 «이게 뭐냐» 는 질문이 나온 칸이고, 값 목록에 «상태를 옮기는 것» 과 «단순 이력» 이 섞여 있어 저장 버튼(=단계)과도 겹쳐 보였다. 이제 이력은 «누가 무슨 말을 했나» 만 남기고 단계는 저장 버튼이 정한다. ★ 잃는 것이 없다 — 「공급사별 평균 회신 일수」는 action='회신' 을 세려던 것이었는데 **«누가»(side='공급사')가 이미 그 일을 한다**: 공급사가 남긴 첫 이력 시각에서 supplier_sent_at 을 빼면 된다. 사람이 남기는 이력은 전부 action='기록' 이고, 화면에는 그 이름을 안 보인다(모든 줄에 같은 말이 붙으면 소음이다). ③★★ **이력 «가리기»(블라인드)** — 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」. 잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고 읽는 사람이 어느 것이 맞는지 헷갈린다. ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다. ★★ 본문은 «실제로» 지운다: 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로 남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다. 되돌릴 수 없으므로 사유를 받는다. ★ 가릴 수 있는 사람은 그 글을 쓴 본인 또는 master 이고, **DB 정책도 같다.** ★★ append-only 는 그대로다 — update 정책을 열되 트리거가 «본문을 지우는 것 말고는 아무것도 못 바꾸게» 막는다(다른 글로 바꿔치기하는 것은 고치는 것이라 막는다. 이미 가려진 줄도 다시 못 건드린다). ★ dev 전용. -->
 <!-- v20260901v_cs_stage_groups -->
 <!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
@@ -16785,7 +16785,7 @@ const CS_CHIP_ROLES_FALLBACK = {
 // 목록 열 — 키 하나가 «머리글 + 그 칸을 어떻게 그리나» 를 함께 갖는다.
 // ★ 둘을 떨어뜨려 두면 열을 더할 때 한쪽만 고쳐져 머리글과 내용이 어긋난다.
 const CS_COLS = {
-  stage:     {label:'단계',        w:96,  cell:(t)=><CsStagePill stage={t.stage}/>,
+  stage:     {label:'상태',        w:96,  cell:(t)=><CsStagePill stage={t.stage}/>,
               sv:(t)=>CS_STAGE_ORDER[t.stage] ?? 99},
   typedir:   {label:'유형 · 방향',  w:112, cell:(t)=><span>{t.cs_type||'—'}{t.direction?' · '+t.direction:''}</span>,
               sv:(t)=>(t.cs_type||'')+' '+(t.direction||'')},
@@ -16846,6 +16846,14 @@ function csAgo(v){
   if(m < 1)  return '방금';
   if(m < 60) return m+'분 전';
   return csStamp(v);
+}
+// 날짜 입력칸 — 어두운 바탕에서 기본 달력 아이콘이 안 보여 colorScheme 을 준다.
+const csDateInp = {fontSize:11,padding:'4px 7px',background:'var(--bg)',
+  border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+  fontFamily:'inherit',colorScheme:'dark'};
+// 오늘에서 n 일 옮긴 날(KST). 음수면 과거다.
+function csPlusKst(n){
+  return new Date(Date.now()+9*3600*1000+n*86400000).toISOString().slice(0,10);
 }
 // ★ KST 로 «오늘» 을 잰다. UTC 로 재면 새벽에 하루 어긋난다(todayLocal 과 같은 이유).
 function csTodayKst(){
@@ -16916,7 +16924,7 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty}){
           background: on?'var(--primary)':'var(--border)',
           cursor: on?'pointer':'default',whiteSpace:'nowrap'}}>
         {busy ? '저장 중…' : cur.label + csRo(cur.label) + ' 저장'}</button>
-      <button onClick={()=>setOpen(o=>!o)} disabled={busy} title="다른 단계로 저장하기"
+      <button onClick={()=>setOpen(o=>!o)} disabled={busy} title="다른 상태로 저장하기"
         style={{padding:'8px 10px',borderRadius:'0 6px 6px 0',fontSize:11,
           fontFamily:'inherit',border:'none',color:'#fff',
           borderLeft:'1px solid rgba(255,255,255,.22)',
@@ -17049,6 +17057,31 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
 
   // ★★ 정렬은 «머리글을 누르면» 바뀐다(제니). 세 번째로 누르면 원래 차례(번호 역순)로
   //   돌아온다 — 한 번 누른 열을 끄는 길이 없으면 새로고침 말고는 방법이 없다.
+  // ★★ 필터는 칩과 «겹쳐서» 돈다 — 칩으로 크게 나누고 필터로 좁힌다.
+  //   한 칸 안에서 고른 것끼리는 «또는», 칸과 칸 사이는 «그리고» 다.
+  //   ★ 날짜는 «등록일» 기준이다. 수정일로 재면 오래된 티켓이 손댈 때마다 오늘 것으로
+  //     올라와, 「어제 들어온 건」을 볼 수가 없다.
+  const FILTER0 = {assignee:[], supplier:[], stage:[], cs_type:[], direction:[], from:'', to:''};
+  const [flt,setFlt] = useState(FILTER0);
+  const setF2 = (k,v)=> setFlt(p=>({...p,[k]:v}));
+  const fltOn = flt.assignee.length||flt.supplier.length||flt.stage.length||
+                flt.cs_type.length||flt.direction.length||flt.from||flt.to;
+  const hit = (t)=>{
+    const some = (arr, v)=> arr.length===0 || arr.indexOf(v||'')>=0;
+    if(!some(flt.assignee,  t.assignee))    return false;
+    if(!some(flt.supplier,  t.supplier_name)) return false;
+    if(!some(flt.stage,     t.stage))       return false;
+    if(!some(flt.cs_type,   t.cs_type))     return false;
+    if(!some(flt.direction, t.direction))   return false;
+    // ★ 등록일은 UTC 로 저장되므로 KST 로 옮겨 «날짜» 만 본다. 그냥 slice 하면
+    //   아침 9시 전에 만든 티켓이 하루 전날로 잡힌다.
+    const d = t.created_at
+      ? new Date(new Date(t.created_at).getTime()+9*3600*1000).toISOString().slice(0,10) : '';
+    if(flt.from && (!d || d < flt.from)) return false;
+    if(flt.to   && (!d || d > flt.to))   return false;
+    return true;
+  };
+
   const [sort,setSort] = useState(null);   // {key, dir:'asc'|'desc'}
   const clickSort = (k)=> setSort(p=>{
     if(!p || p.key!==k) return {key:k, dir:'asc'};
@@ -17059,7 +17092,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   //   그게 더 성가시다.
 
   const list = useMemo(()=>{
-    let out = (rows||[]).filter(t=>match(t,chip));
+    let out = (rows||[]).filter(t=>match(t,chip) && hit(t));
     const s = q.trim().toLowerCase();
     if(s){
       out = out.filter(t=>['order_id','order_item_code','orderer_name','orderer_phone',
@@ -17083,7 +17116,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
       }
     }
     return out;
-  },[rows,chip,q,sort]);
+  },[rows,chip,q,sort,flt]);
 
   // 열 구성은 «칩마다» 다르다 — 칩마다 보는 목적이 다르기 때문이다.
   const colKeys = useMemo(()=>{
@@ -17092,6 +17125,19 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
     return CS_COLS_FIXED.concat(
       keys.filter(k=>CS_COLS[k] && CS_COLS_FIXED.indexOf(k)<0));  // 모르는 열은 건너뛴다
   },[settings,chip]);
+
+  // ★ 담당자·공급사는 «지금 목록에 있는 값» 에서 뽑는다. 사람이 든 목록을 따로 두면
+  //   그만두거나 새로 온 사람이 생길 때마다 두 곳을 고쳐야 한다.
+  const optAssignee = useMemo(()=>{
+    const set = {};
+    (rows||[]).forEach(t=>{ if(t.assignee) set[t.assignee]=1; });
+    return Object.keys(set).sort().map(v=>({value:v, label:csShortUser(v)}));
+  },[rows]);
+  const optSupplier = useMemo(()=>{
+    const set = {};
+    (rows||[]).forEach(t=>{ if(t.supplier_name) set[t.supplier_name]=1; });
+    return Object.keys(set).sort((a,b)=>a.localeCompare(b,'ko')).map(v=>({value:v}));
+  },[rows]);
 
   const kpi = useMemo(()=>{
     const r = rows||[], today = csTodayKst();
@@ -17176,6 +17222,44 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
         )}
       </div>
 
+      {/* ── 필터 ────────────────────────────────────────────────────────
+          ★★ 칩과 «따로» 한 줄을 쓴다(제니). 같은 줄에 섞으면 「눌러서 하나만 고르는 것」과
+            「겹쳐 거는 것」이 나란히 서서 어느 쪽이 어느 쪽인지 안 보인다. */}
+      <div style={{display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',marginBottom:14}}>
+        <span style={{fontSize:11,color:'var(--sub)',marginRight:2}}>필터</span>
+        <CsMulti label="담당자" value={flt.assignee} onChange={v=>setF2('assignee',v)}
+          options={optAssignee}/>
+        <CsMulti label="상태" value={flt.stage} onChange={v=>setF2('stage',v)}
+          options={CS_STAGES.map(x=>({value:x.id,label:x.label}))}/>
+        <CsMulti label="공급사" value={flt.supplier} onChange={v=>setF2('supplier',v)}
+          options={optSupplier} width={230}/>
+        <CsMulti label="유형" value={flt.cs_type} onChange={v=>setF2('cs_type',v)}
+          options={CS_TYPES.map(x=>({value:x}))}/>
+        <CsMulti label="방향" value={flt.direction} onChange={v=>setF2('direction',v)}
+          options={CS_DIRECTIONS.map(x=>({value:x}))}/>
+        <span style={{width:1,height:18,background:'var(--border)',margin:'0 3px'}}></span>
+        {/* ★ 「등록일」이라고 적어 둔다 — 무슨 날짜인지 안 적으면 사람마다 다르게 읽는다. */}
+        <span style={{fontSize:11,color:'var(--sub)'}}>등록일</span>
+        <input type="date" value={flt.from} onChange={e=>setF2('from',e.target.value)}
+          style={csDateInp}/>
+        <span style={{fontSize:11,color:'var(--sub)'}}>~</span>
+        <input type="date" value={flt.to} onChange={e=>setF2('to',e.target.value)}
+          style={csDateInp}/>
+        {[['오늘',0],['7일',6],['30일',29]].map(([lb,n])=>(
+          <button key={lb} onClick={()=>{ const t=csTodayKst();
+              setFlt(p=>({...p, from:csPlusKst(-n), to:t})); }}
+            style={{padding:'4px 9px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+              cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+              color:'var(--sub)'}}>{lb}</button>
+        ))}
+        {fltOn ? (
+          <button onClick={()=>setFlt(FILTER0)}
+            style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+              cursor:'pointer',background:'transparent',
+              border:'1px solid rgba(248,113,113,.5)',color:'var(--red)'}}>필터 지우기</button>
+        ) : null}
+      </div>
+
       {rows===null ? (
         <div style={{padding:'60px 0',textAlign:'center',color:'var(--sub)',fontSize:12}}>불러오는 중…</div>
       ) : list.length===0 ? (
@@ -17244,6 +17328,100 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
 // ★ 드롭다운을 그대로 두지 않은 이유: 유형이 11개라 눈으로 훑어 찾는 것보다
 //   두 글자 치는 편이 빠르다. 대신 «비어 있을 때는 전부 펼쳐» 보여 준다 —
 //   무엇이 있는지 모르는 사람에게는 목록이 먼저 필요하다.
+// ── 여러 개를 한꺼번에 고르는 필터 단추 ────────────────────────────────
+// ★★ 필터는 «겹쳐서» 건다(제니). 한 칸 안에서 고른 것끼리는 «또는», 칸과 칸 사이는
+//   «그리고» 다 — 「담당 jenny 또는 alice 이면서 공급사가 무아스인 것」이 사람이
+//   기대하는 셈이다. 이 규칙은 한 곳(csFilterHit)에만 적는다.
+// ★ CsPick 과 같은 이유로 목록을 fixed 로 띄운다 — 칸 안에 absolute 로 두면
+//   패널 높이가 늘고 overflow 에 잘린다(제니 제보로 이미 겪었다).
+function CsMulti({label, options, value, onChange, width}){
+  const [open,setOpen] = useState(false);
+  const [q,setQ] = useState('');
+  const boxRef = useRef(null);
+  const [pos,setPos] = useState(null);
+  useEffect(()=>{
+    if(!open){ setPos(null); setQ(''); return; }
+    const el = boxRef.current; if(!el) return;
+    const r = el.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom;
+    setPos(below < 220 && r.top > below
+      ? {left:r.left, bottom:(window.innerHeight - r.top + 2)}
+      : {left:r.left, top:(r.bottom + 2)});
+  },[open]);
+  useEffect(()=>{
+    if(!open) return;
+    const away = (e)=>{ if(boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
+    const esc  = (e)=>{ if(e.key==='Escape') setOpen(false); };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', esc);
+    return ()=>{ document.removeEventListener('mousedown', away);
+                 document.removeEventListener('keydown', esc); };
+  },[open]);
+  const on = (value||[]).length > 0;
+  const toggle = (v)=>{
+    const cur = value||[];
+    onChange(cur.indexOf(v)>=0 ? cur.filter(x=>x!==v) : cur.concat([v]));
+  };
+  const shown = options.filter(o=>!q.trim() ||
+    String(o.label||o.value).toLowerCase().includes(q.trim().toLowerCase()));
+  return (
+    <div ref={boxRef} style={{position:'relative'}}>
+      <button onClick={()=>setOpen(o=>!o)}
+        style={{padding:'5px 10px',borderRadius:7,fontSize:12,fontFamily:'inherit',
+          cursor:'pointer',whiteSpace:'nowrap',
+          border:'1px solid '+(on?'var(--primary)':'var(--border)'),
+          background: on?'rgba(120,170,255,.12)':'transparent',
+          color: on?'var(--accent)':'var(--sub)', fontWeight:on?600:400}}>
+        {label}{on && <span style={{marginLeft:5,fontFamily:'monospace'}}>{value.length}</span>}
+        <span style={{marginLeft:5,opacity:.6,fontSize:10}}>▾</span>
+      </button>
+      {open && pos && (
+        <div style={{position:'fixed',left:pos.left,top:pos.top,bottom:pos.bottom,
+          width: width||208, zIndex:2400, background:'var(--surface)',
+          border:'1px solid var(--border)',borderRadius:8,
+          boxShadow:'0 12px 32px rgba(0,0,0,.45)',padding:6,
+          maxHeight:300,display:'flex',flexDirection:'column'}}>
+          {options.length > 8 && (
+            <input value={q} onChange={e=>setQ(e.target.value)} autoFocus placeholder="찾기"
+              style={{width:'100%',fontSize:12,padding:'5px 8px',marginBottom:5,
+                background:'var(--bg)',border:'1px solid var(--border)',
+                color:'var(--text)',borderRadius:6,fontFamily:'inherit',boxSizing:'border-box'}}/>
+          )}
+          <div style={{overflowY:'auto',flex:1,minHeight:0}}>
+            {shown.length===0 && (
+              <div style={{fontSize:11,color:'var(--sub)',padding:'8px 6px'}}>없습니다</div>
+            )}
+            {shown.map(o=>{
+              const picked = (value||[]).indexOf(o.value)>=0;
+              return (
+                <div key={o.value} onClick={()=>toggle(o.value)}
+                  style={{display:'flex',alignItems:'center',gap:7,padding:'5px 7px',
+                    borderRadius:6,cursor:'pointer',fontSize:12,
+                    color: picked?'var(--text)':'var(--sub)',
+                    background: picked?'rgba(120,170,255,.10)':'transparent'}}>
+                  <span style={{width:13,height:13,borderRadius:3,flex:'0 0 auto',
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    fontSize:10,color:'#fff',
+                    border:'1px solid '+(picked?'var(--primary)':'var(--border)'),
+                    background: picked?'var(--primary)':'transparent'}}>{picked?'✓':''}</span>
+                  <span style={{overflow:'hidden',textOverflow:'ellipsis',
+                    whiteSpace:'nowrap'}}>{o.label||o.value}</span>
+                </div>
+              );
+            })}
+          </div>
+          {on && (
+            <button onClick={()=>onChange([])}
+              style={{marginTop:5,padding:'5px 0',background:'transparent',
+                border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',
+                fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>이 칸 비우기</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CsPick({value, options, onChange, placeholder, width}){
   const [q,setQ]       = useState('');
   const [open,setOpen] = useState(false);
@@ -18082,7 +18260,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     if(edit.direction !== (t.direction||''))
       changes.push('방향 : '+(t.direction||'미정')+' -> '+(edit.direction||'미정'));
     if(edit.stage !== (t.stage||''))
-      changes.push('단계 : '+((CS_STAGE_LABEL[t.stage]||{}).label||t.stage)
+      changes.push('상태 : '+((CS_STAGE_LABEL[t.stage]||{}).label||t.stage)
         +' -> '+((CS_STAGE_LABEL[edit.stage]||{}).label||edit.stage));
     if(edit.recheck_at !== (t.recheck_at||''))
       changes.push('리체크 : '+(t.recheck_at||'—')+' -> '+(edit.recheck_at||'—'));
@@ -18185,9 +18363,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         stage_after: st, direction_after: edit.direction||null});
     }
     // 고른 단계를 반영한 요약을 다시 만든다 — 화면의 changes 는 아직 옛 stage 로 계산돼 있다.
-    const chg = changes.filter(c=>c.indexOf('단계 : ')!==0);
+    const chg = changes.filter(c=>c.indexOf('상태 : ')!==0);
     if(st !== (t.stage||'')){
-      chg.push('단계 : '+((CS_STAGE_LABEL[t.stage]||{}).label||t.stage)
+      chg.push('상태 : '+((CS_STAGE_LABEL[t.stage]||{}).label||t.stage)
         +' -> '+((CS_STAGE_LABEL[st]||{}).label||st));
     }
     if(chg.length){
