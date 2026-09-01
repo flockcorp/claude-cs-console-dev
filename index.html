@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901u_cs_submit_pick -->
+<!-- (2026-09-01) 셋을 고쳤다(제니). ①②의 세로 길이 — 그전에는 화면 높이(100vh)로 잘라 두어 ①이 아직 더 긴데도 ②에 먼저 스크롤이 생겼다. 격자에 alignItems 를 주지 않아(기본 stretch) 세 칸의 키를 맞추고, ②는 그보다 길어질 때만 «안에서» 구른다. ★ 늘어난 격자 칸 안에서 스크롤이 돌게 하려면 minHeight:0 이 있어야 한다 — 격자 칸의 기본 최소 높이가 «내용 전체» 라서 없으면 칸이 그냥 커지고 스크롤이 안 생긴다. ★ ②는 이제 ①과 키가 같으므로 «따라 내려올» 것이 없어 sticky 를 뗐다. ③은 짧으니 그대로 따라 내려온다(alignSelf 로 그 칸만 위에 붙인다). ②★★ 단계 목록에서 고르면 **바로 그 단계로 저장**한다(제니 — 젠데스크가 그렇다). 버튼이 곧 «제출» 이므로 목록에서 고르는 것도 제출이다. ★ 방금 고른 값을 그대로 쓰려면 인자로 넘겨야 한다 — setState 는 다음 그림에 반영되므로 그 자리에서 edit.stage 를 읽으면 «옛 단계» 가 저장된다. 이력에 남길 요약도 넘겨받은 단계로 다시 만든다(화면의 요약은 아직 옛 값이다). ★ 목록을 여는 ∧ 는 바뀐 것이 없어도 눌린다 — 고르는 것 자체가 저장이기 때문이다. ③«접수됨» → «티켓 등록»(제니). 공급사에 접수하기 «전», 콘솔에만 등록해 둔 상태다 — «접수» 라는 말이 «공급사 접수» 와 헷갈렸다. ★ 표시 이름만 바뀐다(코드값 received 는 그대로라 DB 는 안 건드린다). ★ dev 전용. -->
 <!-- v20260901t_cs_submit_button -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ 저장 버튼을 «단계로 제출» 버튼으로 바꿨다 — 젠데스크의 「해결(정산대기)(으)로 제출」 그대로다(제니가 이미지로 보여 줬다). 그전에는 «저장 후 단계» 드롭박스를 따로 두고 [저장] 을 눌렀는데, 그러면 단계 목록과 「무슨 일」 목록이 나란히 서서 «둘이 같은 것 아닌가» 로 읽힌다(제니 지적 — 실제로 낱말도 겹친다: 공급사접수/공급사 접수, 재출고/재출고). 버튼 자체가 «어느 단계로 보내는지» 를 말하면 화면에 드롭박스가 하나만 남고, 무엇을 누르는지도 글자로 남는다. ★ 목록은 위로 편다(버튼이 칸 맨 아래라 아래로 열면 화면 밖이다). 좌표를 재서 fixed 로 띄운다 — 이 패널은 overflow 가 걸린 자리라 안에 열면 잘린다. 바깥을 덮는 투명 층을 깔아 다른 곳을 누르면 닫히게 했다. ★ 「접수됨으로」·「회신 대기로」 — 받침을 보고 조사를 고른다(csRo). 버튼 글자는 매번 읽는 자리라 조사가 틀리면 눈에 걸린다. ②공급사 뱃지를 하늘색 → «밝은 청회색» 으로 바꿨다(제니 — 원룸만들기와 구분이 안 된다). 회색이 어두운 배경에서 묻히는 것은 «어두운 회색» 일 때다. 밝은 청회색에 테두리를 또렷이 주면 충분히 보이고, 파랑 둘이 나란히 서던 문제가 사라진다. ★ 뜻과도 맞는다 — 공급사는 우리가 «보내는» 바깥이라 중립색이 어울린다. ③정산 «대상» 기본값을 «공급사» 로 뒀다(제니 결정). ⚠ 내가 처음엔 기본값 없이 두자고 했다(「안 바꾼 건이 조용히 공급사 정산에 올라간다」) — 제니가 실무 기준으로 정했으니 그대로 가고, 위험은 **정산 파일을 만들 때 대상을 한 번 더 보여 주는 것**으로 받는다. ★★ 함께 트리거를 손봤다: PostgreSQL 은 BEFORE INSERT 트리거가 보기 «전에» 기본값을 채우므로, 그대로 두면 «정산 칸은 master 만» 규칙에 걸려 **상담원이 티켓을 아예 못 만든다.** 만들 때의 cost_bearer 는 막지 않고 UPDATE 에서만 본다 — 실제로 «바꾸는» 것이 master 의 권한이다. ★ dev 전용. -->
 <!-- v20260901s_cs_side_color -->
@@ -16710,7 +16712,9 @@ const CS_ACTIONS = ['접수','공급사접수','회신','리체크','회수완�
 // 단계 — 코드 · 표시 이름 · 색. 차례가 곧 흐름이다.
 // ★ cs_done(CS 완료)이 «상담원의 끝» 이다. 그 아래는 master 의 영역이다.
 const CS_STAGES = [
-  {id:'received',      label:'접수됨',      tone:'accent'},
+  // ★ «접수됨» → «티켓 등록»(제니 2026-09-01). 공급사에 접수하기 «전», 콘솔에만
+  //   등록해 둔 상태다. «접수» 라는 말이 «공급사 접수» 와 헷갈렸다.
+  {id:'received',      label:'티켓 등록',   tone:'accent'},
   {id:'supplier_sent', label:'공급사 접수', tone:'sky'},
   {id:'awaiting',      label:'회신 대기',   tone:'sky'},
   {id:'collecting',    label:'회수',        tone:'sky'},
@@ -16841,11 +16845,11 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty}){
           background: on?'var(--primary)':'var(--border)',
           cursor: on?'pointer':'default',whiteSpace:'nowrap'}}>
         {busy ? '저장 중…' : cur.label + csRo(cur.label) + ' 저장'}</button>
-      <button onClick={()=>setOpen(o=>!o)} disabled={busy} title="단계 고르기"
+      <button onClick={()=>setOpen(o=>!o)} disabled={busy} title="다른 단계로 저장하기"
         style={{padding:'8px 10px',borderRadius:'0 6px 6px 0',fontSize:11,
           fontFamily:'inherit',border:'none',color:'#fff',
           borderLeft:'1px solid rgba(255,255,255,.22)',
-          background: on?'var(--primary)':'var(--border)',
+          background:'var(--primary)',
           cursor: busy?'default':'pointer'}}>{open?'∨':'∧'}</button>
       {open && pos && (
         <>
@@ -17939,8 +17943,12 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //   「그때 고객이 뭐라고 했지」 를 찾을 때 값 변경 문구가 섞여 읽힌다.
   const dirty = changes.length>0 || draft.trim().length>0;
 
-  const saveAll = async ()=>{
-    if(!dirty) return;
+  // ★★ 단계를 고르면 «바로» 그 단계로 저장한다(제니 — 젠데스크가 그렇다).
+  //   버튼이 곧 «제출» 이므로 목록에서 고르는 것도 제출이다. 그래서 stage 를 인자로 받는다:
+  //   setState 는 다음 그림에 반영되므로, 방금 고른 값을 그대로 쓰려면 넘겨야 한다.
+  const saveAll = async (stageOverride)=>{
+    const st = stageOverride || edit.stage;
+    if(!dirty && st === (t.stage||'')) return;
     setBusy(true);
     const evs = [];
     // ★★ 사람이 적은 말은 «메인에» 쌓는다 — 묶음이 같은 사건을 겪기 때문이다
@@ -17949,12 +17957,18 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     const mainId = t.main_ticket_id || t.id;
     if(draft.trim()){
       evs.push({ticket_id:mainId, side, action, actor:currentUserEmail, note:draft.trim(),
-        stage_after: edit.stage, direction_after: edit.direction||null});
+        stage_after: st, direction_after: edit.direction||null});
     }
-    if(changes.length){
+    // 고른 단계를 반영한 요약을 다시 만든다 — 화면의 changes 는 아직 옛 stage 로 계산돼 있다.
+    const chg = changes.filter(c=>c.indexOf('단계 : ')!==0);
+    if(st !== (t.stage||'')){
+      chg.push('단계 : '+((CS_STAGE_LABEL[t.stage]||{}).label||t.stage)
+        +' -> '+((CS_STAGE_LABEL[st]||{}).label||st));
+    }
+    if(chg.length){
       const row = {
         cs_type: edit.cs_type || null, direction: edit.direction || null,
-        stage: edit.stage, recheck_at: edit.recheck_at || null,
+        stage: st, recheck_at: edit.recheck_at || null,
         cost_bearer: edit.cost_bearer || null,
         settle_fee: money(edit.settle_fee),
         settle_shipping_fee: money(edit.settle_shipping_fee),
@@ -17969,7 +17983,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
       //   (한 품목은 불량, 다른 품목은 누락 / 정산 금액도 품목별로 다르다).
       const sibs = group.filter(g=>g.id!==t.id).map(g=>g.id);
       const grpRow = {};
-      if(edit.stage !== (t.stage||''))           grpRow.stage = edit.stage;
+      if(st !== (t.stage||''))                   grpRow.stage = st;
       if(edit.recheck_at !== (t.recheck_at||'')) grpRow.recheck_at = edit.recheck_at || null;
       if(sibs.length && Object.keys(grpRow).length){
         grpRow.updated_by = currentUserEmail;
@@ -17981,7 +17995,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
       const grpHint = (group.length>1 && Object.keys(grpRow).length)
         ? '\n(단계·리체크는 묶음 '+group.length+'건에 함께 적용)' : '';
       evs.push({ticket_id:ticketId, side:'원룸만들기', action:'수정', actor:currentUserEmail,
-        note: changes.join('\n')+grpHint, stage_after: edit.stage, direction_after: edit.direction||null});
+        note: chg.join('\n')+grpHint, stage_after: st, direction_after: edit.direction||null});
     } else {
       // 값이 안 바뀌었어도 «마지막 갱신» 은 움직여야 목록 정렬이 맞는다.
       await sb.from('cs_tickets').update({updated_by:currentUserEmail}).eq('id',ticketId);
@@ -18007,7 +18021,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //   (붙어 있기만 하고 안이 넘치면 아래쪽 저장 버튼에 손이 안 닿는다).
   // ★ 머리말이 위에 붙어 있으므로 그 높이(약 62px)만큼 내려 붙는다 — 16 으로 두면
   //   패널 윗머리가 머리말 뒤로 숨는다.
-  const sticky = {...panel, position:'sticky', top:74,
+  // ②용 — 격자 칸이 ①만큼 늘어나고, 그보다 길어지면 «안에서» 구른다.
+  const grow   = {...panel, minHeight:0, overflowY:'auto'};
+  // ③용 — 짧은 칸이라 따라 내려온다. 머리말이 위에 붙어 있으므로 그 높이만큼 내려 붙는다.
+  const sticky = {...panel, position:'sticky', top:74, alignSelf:'start',
     maxHeight:'calc(100vh - 90px)', overflowY:'auto'};
   // ★ 패널 제목은 «이 칸이 무엇인가» 를 말하는 자리라 한 단계 크고 굵다(제니).
   //   콘솔의 다른 화면 제목(.entry-section-title)이 쓰는 색을 그대로 쓴다.
@@ -18078,7 +18095,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'330px 1fr 250px',gap:14,alignItems:'start'}}>
+      {/* ★ alignItems 를 주지 않는다(기본 stretch) — 세 칸이 같은 키가 된다.
+          그래야 ②가 ①만큼 늘어나고, 그보다 길어질 때만 ② 안에서 구른다. */}
+      <div style={{display:'grid',gridTemplateColumns:'330px 1fr 250px',gap:14}}>
 
         {/* ── ① 티켓 정보 ───────────────────────────────────────────
             ★★ 값을 고쳐도 «바로» 저장하지 않는다(제니 2026-09-01). 고칠 때마다 저장하면
@@ -18168,7 +18187,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         </div>
 
         {/* ── ② 이력 ──────────────────────────────────────────────── */}
-        <div style={sticky}>
+        <div style={grow}>
           <div style={ptitle}>② 이력 — 오래된 것부터</div>
           {events===null ? (
             <div style={{fontSize:11,color:'var(--sub)'}}>불러오는 중…</div>
@@ -18305,8 +18324,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   fontFamily:'inherit'}}>취소</button>
               {/* ★★ 저장 버튼이 곧 «어느 단계로 보내는가» 다(제니 · 젠데스크 방식).
                   단계를 고르는 목록이 버튼 안에 들어와서 화면에 드롭박스가 하나만 남는다. */}
-              <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty} onSave={saveAll}
-                onPick={id=>setE('stage', id)}
+              <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
+                onSave={()=>saveAll()}
+                onPick={id=>{ setE('stage', id); saveAll(id); }}
                 options={CS_STAGES.filter(x=>isMaster || ['refund','settlement','closed'].indexOf(x.id)<0)}/>
             </div>
             {!isMaster && (
