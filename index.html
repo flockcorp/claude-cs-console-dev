@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901q_cs_side_badge -->
+<!-- (2026-09-01) 쌓인 이력의 «누가»(고객·원룸만들기·공급사)를 뱃지로 바꿨다(제니). 색만 다른 글자로는 «고객» 과 «원룸만들기» 가 한눈에 안 갈린다 — 알약으로 감싸면 줄을 훑을 때 «누가 한 말인가» 가 먼저 읽히고, 이력을 읽는 목적이 대개 그것이다. ★ 원룸만들기만 «채운» 알약이고 고객·공급사는 테두리만 있다: 셋 중 우리가 한 말이 기준점이라 가장 또렷해야 하고, 둘은 «바깥» 이라 그 관계가 모양에 그대로 드러난다. 시스템은 점선이다 — 사람이 한 말이 아니다. ★ 왼쪽 색 띠는 그대로 뒀다. 뱃지와 띠가 같은 것을 두 번 말하는 셈이지만, 띠는 «줄이 어디서 시작하나» 를 눈으로 잡아 주는 다른 일을 한다. ★ 생성 화면의 «아직 저장 전» 이력에도 같은 뱃지를 쓴다 — 만들 때 보던 모양이 만든 뒤에도 같아야 한다. ★ dev 전용. -->
 <!-- v20260901p_cs_pick_overlay -->
 <!-- (2026-09-01) 둘을 고쳤다(제니 제보). ①★★ 「무슨 일」 드롭박스를 열면 2단 박스에 스크롤이 생기던 것 — 아래에 여백이 넉넉한데 스크롤이 나오니 «고장» 으로 보인다. 원인은 목록을 칸 «안» 에 absolute 로 띄운 것이다: 그만큼 패널 높이가 늘고, 패널에 overflow 가 걸려 있어 목록이 잘리며 대신 스크롤이 생긴다. → **알림 말풍선에서 쓴 방법 그대로** 좌표를 재서 fixed 로 화면 위에 띄운다. fixed 는 조상의 overflow 를 벗어나고 자리를 차지하지 않으니 높이도 안 는다. ★ 좌표를 박지 않고 «열 때마다 잰다» — 이 화면은 스크롤되는 자리라 박아 두면 어긋난다(말풍선에서 이미 겪은 함정). ★ 아래 자리가 모자라면 위로 편다 — 화면 밖으로 나가면 고를 수가 없다. ②상세 [목록으로] 버튼이 눈에 안 띄던 것 — 어두운 화면에서 «투명 배경 + 회색 글자» 는 눌러도 되는 것으로 안 읽힌다. 밝은 바탕에 어두운 글자로 바꿨다. ★ 파란 주 버튼 색은 쓰지 않았다: 이 화면의 주 동작은 «저장» 이고, 나가는 길이 그보다 세게 보이면 안 된다. ★ dev 전용. -->
 <!-- v20260901o_cs_group_history -->
@@ -16770,6 +16772,25 @@ function csTodayKst(){
   return d.toISOString().slice(0,10);
 }
 
+// 이력의 «누가» — 쌓인 줄에서는 뱃지로 보인다(제니 2026-09-01).
+// ★ 색만 다른 글자로는 «고객» 과 «원룸만들기» 가 한눈에 안 갈린다. 알약으로 감싸면
+//   줄을 훑을 때 «누가 한 말인가» 가 먼저 읽힌다 — 이력을 읽는 목적이 대개 그것이다.
+// ★ 원룸만들기만 «채운» 알약이다. 셋 중 우리가 한 말이 기준점이라 가장 또렷해야 하고,
+//   고객·공급사는 «바깥» 이라 테두리만 있는 편이 관계가 그대로 보인다.
+const CS_SIDE_STYLE = {
+  '고객':      {background:'rgba(210,229,255,.14)', color:'#D2E5FF', border:'1px solid rgba(210,229,255,.38)'},
+  '원룸만들기':{background:'var(--primary)',        color:'#fff',    border:'1px solid var(--primary)'},
+  '공급사':    {background:'rgba(92,159,214,.14)',  color:'#7FC2EE', border:'1px solid rgba(127,194,238,.42)'},
+  '시스템':    {background:'rgba(143,168,208,.12)', color:'var(--sub)', border:'1px dashed var(--border)'},
+};
+function CsSideBadge({side}){
+  const st = CS_SIDE_STYLE[side] || CS_SIDE_STYLE['시스템'];
+  return (
+    <span style={{...st, display:'inline-block', padding:'2px 8px', borderRadius:10,
+      fontSize:10, fontWeight:700, lineHeight:1.5, whiteSpace:'nowrap'}}>{side}</span>
+  );
+}
+
 function CsStagePill({stage, held, big}){
   const s = CS_STAGE_LABEL[stage] || {label:stage||'—', tone:'accent'};
   const bg = {accent:'rgba(210,229,255,.16)', sky:'rgba(92,159,214,.18)',
@@ -17544,8 +17565,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                 background: n.side==='고객'?'var(--accent)':n.side==='공급사'?'#7FC2EE':'var(--primary)'}}></div>
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',gap:7,alignItems:'baseline'}}>
-                  <span style={{fontSize:10,fontWeight:700,
-                    color: n.side==='공급사'?'#7FC2EE':'var(--accent)'}}>{n.side}</span>
+                  <CsSideBadge side={n.side}/>
                   <div style={{flex:1}}></div>
                   <button onClick={()=>setNotes(v=>v.filter((_,k)=>k!==i))}
                     style={{background:'transparent',border:'none',color:'var(--sub)',
@@ -18070,9 +18090,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                       값 변경</span>
                   ) : (
                     <>
-                      <span style={{fontSize:10,fontWeight:700,
-                        color: e.side==='고객'?'var(--accent)':e.side==='공급사'?'#7FC2EE'
-                             : e.side==='시스템'?'#F6AD09':'var(--accent)'}}>{e.side}</span>
+                      <CsSideBadge side={e.side}/>
                       <span style={{fontSize:11,fontWeight:600,color:'var(--text)'}}>{e.action}</span>
                     </>
                   )}
