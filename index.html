@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901j_cs_wording -->
+<!-- (2026-09-01) 생성 화면 문구 셋을 제니가 준 말로 바꿨다. ①「② 이력 — 오간 말을 그대로」→「② 이력」, 빈 상태 안내를 「고객의 CS 신청 내용과 상담원의 안내, 처리 내용을 입력해주세요. «고객» 선택 후 기재한 내용은 그대로 공급사 접수 내용이 됩니다.」로. ★ 앞 문구는 «무엇을 적는지» 보다 «언제 저장되는지» 를 먼저 말했다 — 쓰는 사람이 궁금한 것은 그게 아니다. 그리고 «고객» 을 고른 줄만 공급사 접수 내용이 된다는 것이 새 문구에서 분명해졌다(앞 문구는 적기만 하면 다 나가는 것처럼 읽혔다). ②「담당자는 jenny 로 들어갑니다.」→「담당자 : jenny」. ③「메모 — 티켓에 남는 한 줄 요약」→「메모 - 특이사항을 간단하게 메모해주세요.」, 자리표시 문구는 지웠다(라벨이 이미 같은 말을 한다). 동작·저장 로직은 한 줄도 안 건드렸다. -->
 <!-- v20260901i_cs_new_settle -->
 <!-- (2026-09-01) 티켓 «생성» 화면에도 정산 칸을 넣었다(제니). 앞 판에서는 «접수 시점에는 금액도 부담 주체도 모른다» 는 이유로 일부러 뺐는데, **정산 반영만을 목적으로 티켓을 만드는 경우가 실제로 있다** — 방향 목록의 «정산반영만» 이 그것이고 이관 시트 225건에도 그런 건이 있었다. 내 전제가 좁았다. ★ 비워 두는 것이 기본이고, 필요할 때만 넣는다는 뜻으로 «· 필요할 때만» 을 제목에 붙였다. ★ master 에게만 보인다 — 화면에서 숨기는 것과 별개로 DB 트리거가 한 번 더 막는다(만들면서 곧장 정산에 손대는 것도 같은 잠금이다). ★ 빈 칸은 «아직 안 넣음»(null)이고 0원과 다른 말이다. 마이너스도 넣을 수 있다. 겸해 상단 안내 문구(「응대하면서 ①…②…③…」)를 지웠다(제니) — 화면이 이미 그 순서로 서 있어 글로 다시 설명할 필요가 없다. ★ dev 전용. -->
 <!-- v20260901h_cs_settle -->
@@ -17423,11 +17425,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 
         {/* ── ② 이력 ──────────────────────────────────────────────── */}
         <div style={panel}>
-          <div style={ptitle}>② 이력 — 오간 말을 그대로</div>
+          <div style={ptitle}>② 이력</div>
           {notes.length===0 ? (
             <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8,padding:'10px 0'}}>
-              통화하면서 적어 두세요. <b>티켓을 만들 때 함께 저장됩니다.</b><br/>
-              고객이 말한 것을 그대로 적어 두면 공급사 접수 내용이 됩니다.
+              고객의 CS 신청 내용과 상담원의 안내, 처리 내용을 입력해주세요.<br/>
+              <b>고객</b> 선택 후 기재한 내용은 그대로 공급사 접수 내용이 됩니다.
             </div>
           ) : notes.map((n,i)=>(
             <div key={i} style={{display:'flex',gap:8,padding:'8px 0',
@@ -17476,15 +17478,14 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           </div>
 
           <div style={{marginTop:12}}>
-            <label style={lbl}>메모 — 티켓에 남는 한 줄 요약</label>
-            <input value={f.memo} onChange={e=>set('memo',e.target.value)}
-              placeholder="목록에서 보이는 짧은 메모" style={inp}/>
+            <label style={lbl}>메모 - 특이사항을 간단하게 메모해주세요.</label>
+            <input value={f.memo} onChange={e=>set('memo',e.target.value)} style={inp}/>
           </div>
 
           <div style={{display:'flex',alignItems:'center',gap:10,marginTop:16,flexWrap:'wrap'}}>
             <div style={{flex:1,fontSize:11,color: missing.length?'#F6AD09':'var(--sub)'}}>
               {missing.length ? '아직 필요합니다 — '+missing.join(' · ')
-                              : '담당자는 '+csShortUser(currentUserEmail)+' 로 들어갑니다.'}
+                              : '담당자 : '+csShortUser(currentUserEmail)}
             </div>
             <button onClick={onCancel} style={{padding:'8px 16px',background:'transparent',
               border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:12,
