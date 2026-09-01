@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901d_cs_tickets_list -->
+<!-- (2026-09-01) CS 관리(티켓) 첫 화면을 만들었다 — 사이드바 «CS 관리» > «티켓 목록». ★★ dev 전용이다. 제니 지시로 티켓 기능은 «완성 전까지 운영에 승격하지 않는다». 표(cs_tickets·cs_ticket_events·cs_macros)도 dev 에만 적용돼 있다(claude-cs-backup 의 sql/cs_tickets.sql). ①KPI 넷 — 오늘 리체크·공급사 미접수·회신 대기·정산 대기. 부연에 «기한 지남 N건»·«4일째 이상 N건»·«비용 미입력 N건» 을 함께 적는다. 숫자만 있으면 «그래서 급한가»가 안 보인다. ②칩 열 개로 목록을 좁힌다. 젠데스크는 상담원용 9개·관리자용 5개 보기 탭을 «따로» 뒀는데, 두 벌로 두면 같은 목록을 두 곳에서 관리하게 된다 — 한 줄로 합치고 권한에 따라 보이는 칩만 다르게 했다. ★ 칩 권한은 코드에 박지 않고 console_settings.cs_chip_roles 에서 읽는다. 못 읽으면 기본값으로 돈다 — 설정을 못 읽었다고 목록이 통째로 비면 그게 더 큰 사고다(알림 기준에서 정한 원칙과 같다). ★★ 칩을 꺼도 «티켓이 숨겨지는» 것이 아니다. 진짜 차단은 RLS 가 한다 — 칩은 지름길이지 보안 장치가 아니다. ③열 구성도 «칩마다» 다르다(console_settings.cs_list_columns). 「공급사 미접수」는 공급사·채널을 봐야 하고 「정산 대기」는 금액을 봐야 한다 — 한 벌로 두면 어느 칩에서든 절반이 헛열이다. 모르는 열 이름은 조용히 건너뛴다(설정이 코드보다 앞서 나갈 수 있다). ④KPI 와 칩 개수가 «같은 셈»(match 함수 하나)을 쓴다. 두 곳에서 따로 세면 「숫자는 3인데 목록은 5줄」이 되고 그 순간 둘 다 못 믿는다 — 공급사 KPI·필터에서 이미 정한 원칙이다. ⑤단계는 영문 코드이고 표시 이름·색·차례를 CS_STAGES 한 곳에 둔다. 유형(11)·방향(9)·경로(4)는 한글 값 그대로다 — 정산 파일 R열이 「변심 반품」 문자열을 요구해 매핑이 한 겹 줄고, 덤프를 사람이 읽을 수 있다. ★ 이 목록들은 DB check 제약과 «짝» 이라 한쪽만 고치면 저장이 조용히 막힌다. ⑥보류(⏸)는 단계가 아니라 «겹쳐 걸리는 표시» 라 단계 알약 옆에 따로 붙인다. ⑦리체크가 지났으면 빨갛게 «며칠» 까지 적되, 종결된 티켓에는 안 붙인다 — 할 일이 없는데 빨간 것은 소음이다. 날짜는 KST 로 잰다(UTC 로 재면 새벽에 하루 어긋난다). ⑧아이콘을 새로 만들었다 — 환불 아이콘을 돌려쓰면 두 메뉴가 나란히 서 있어 그림으로 구분이 안 된다. ★ 아직 없는 것: 상세 화면 · 설정 화면 · [보기 설정] · 열 끌어 옮기기. 「설정」 메뉴도 일부러 아직 안 뒀다 — 없는 화면으로 가는 메뉴를 먼저 두면 «고장 난 것» 으로 읽힌다. ★ dev 에 티켓이 0건이라 지금은 빈 상태 안내가 뜬다. 과거 티켓 212건 이관은 «운영 적용 때» 한다 — 실제 고객 이름·연락처라 dev 에 먼저 넣지 않는다. 기존 화면·라우팅·권한 판정은 건드리지 않았다. -->
 <!-- v20260901c_bell_pulse_10s -->
 <!-- (2026-09-01) 말풍선 맥박을 4.5초에서 «10초»로 늘렸다(제니 지시). ★★ 10초를 «한 판 도는 시간 × 횟수»로 딱 떨어지게 잡았다 — 1.25초 × 8 = 10초다. 그전 주기(1.5초)를 그대로 두고 횟수만 6.67 로 주는 방법도 있지만 그러면 마지막 판이 «중간»에서 끊긴다. 맥박은 0%와 100%에서 빛이 0이고 50%에서 가장 밝은데, 6.67 판은 두 번째 판의 중간쯤에서 멈추므로 빛이 «켜진 채로» 툭 사라진다. 애니메이션이 고장 난 것처럼 보이는 자리다. 주기를 고쳐 정수 횟수로 맞추는 편이 언제나 깔끔하다. ★ 1.25초는 1.5초보다 조금 빠르지만 «번지는 빛»이라 급해 보이지 않는다. 10초 동안 여덟 번 숨쉬는 정도다. ★ 그 밖은 그대로다 — 열 때마다 다시 뛰고, prefers-reduced-motion 에서는 맥박 없이 빛만 남는다. -->
 <!-- v20260901b_bell_pulse -->
@@ -700,6 +702,9 @@ const Icon = {
   autoDelivery: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
   refunds: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
   costs: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><rect x="8" y="10" width="8" height="8"/></svg>,
+  // CS 관리 — «표(티켓)» 모양. ★ 환불 아이콘을 돌려쓰지 않는다. 두 메뉴가 나란히
+  //   서 있어서 같은 그림이면 어느 쪽인지 그림으로는 구분이 안 된다.
+  csTickets: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><line x1="13" y1="5" x2="13" y2="19" strokeDasharray="2 3"/></svg>,
 };
 
 function ChartComp({ type, data, options }) {
@@ -16626,6 +16631,316 @@ const CSS = `
 }
 `;
 
+// ══════════════════════════════════════════════════════════════════════════
+// CS 관리 — 티켓 목록 (2026-09-01)
+// ══════════════════════════════════════════════════════════════════════════
+// 젠데스크로 하던 CS 티켓 관리를 콘솔로 옮긴다. 설계는 두 아티팩트에 있고
+// 표는 sql/cs_tickets.sql (claude-cs-backup) 이다. 지금은 dev 에만 있다.
+//
+// ★ 표시 이름과 차례를 «한 곳에» 둔다. 유형·방향은 DB 에 한글 그대로 들어가고
+//   (정산 파일 R열이 「변심 반품」 문자열을 요구한다), 단계만 영문 코드다 —
+//   흐름이라 순서로 비교·정렬해야 하는데 한글은 정렬이 엉킨다.
+// ★★ 이 목록은 DB 의 check 제약과 «짝» 이다. 한쪽만 고치면 저장이 조용히 막힌다.
+const CS_TYPES = ['불량','파손','오염','누락','오배송','지연','배송불가지역',
+                  '품절','변심','불만족','기타'];
+const CS_DIRECTIONS = ['교환','반품','부분보상','재출고','환불','정산반영만',
+                       '안내종결','취소','A/S'];
+const CS_INTAKE = ['전화','채팅','게시판','후기'];
+
+// 단계 — 코드 · 표시 이름 · 색. 차례가 곧 흐름이다.
+// ★ cs_done(CS 완료)이 «상담원의 끝» 이다. 그 아래는 master 의 영역이다.
+const CS_STAGES = [
+  {id:'received',      label:'접수됨',      tone:'accent'},
+  {id:'supplier_sent', label:'공급사 접수', tone:'sky'},
+  {id:'awaiting',      label:'회신 대기',   tone:'sky'},
+  {id:'collecting',    label:'회수',        tone:'sky'},
+  {id:'inbound',       label:'입고 확인',   tone:'sky'},
+  {id:'reshipped',     label:'재출고',      tone:'sky'},
+  {id:'cs_done',       label:'CS 완료',     tone:'green'},
+  {id:'refund',        label:'환불',        tone:'red'},
+  {id:'settlement',    label:'정산 대기',   tone:'yellow'},
+  {id:'closed',        label:'종결',        tone:'green'},
+];
+const CS_STAGE_LABEL = {};
+CS_STAGES.forEach(s=>{ CS_STAGE_LABEL[s.id] = s; });
+
+// 칩 — 목록을 좁히는 지름길이다.
+// ★★ 칩을 꺼도 «티켓이 숨겨지는» 것이 아니다. 진짜 차단은 권한(RLS)이 한다.
+//   그래서 여기 where 는 보안 장치가 아니라 편의다.
+const CS_CHIPS = [
+  {id:'mine',      label:'내 담당'},
+  {id:'recheck',   label:'오늘의 리체크'},
+  {id:'unassigned',label:'미배정'},
+  {id:'tosupplier',label:'공급사 미접수'},
+  {id:'awaiting',  label:'회신 대기'},
+  {id:'held',      label:'보류'},
+  {id:'csdone',    label:'CS 완료 · 확인 대기'},
+  {id:'settle',    label:'정산 대기'},
+  {id:'refund',    label:'환불'},
+  {id:'all',       label:'전체'},
+];
+// 설정(console_settings.cs_chip_roles)을 못 읽었을 때 쓰는 기본값.
+// ★ 못 읽었다고 목록이 통째로 비면 그게 더 큰 사고다 — 알림 기준에서 정한 원칙과 같다.
+const CS_CHIP_ROLES_FALLBACK = {
+  csdone:['master','manager'], settle:['master','manager'], refund:['master'],
+};
+
+// 목록 열 — 키 하나가 «머리글 + 그 칸을 어떻게 그리나» 를 함께 갖는다.
+// ★ 둘을 떨어뜨려 두면 열을 더할 때 한쪽만 고쳐져 머리글과 내용이 어긋난다.
+const CS_COLS = {
+  stage:     {label:'단계',        w:96,  cell:(t)=><CsStagePill stage={t.stage} held={!!t.held_at}/>},
+  typedir:   {label:'유형 · 방향',  w:112, cell:(t)=><span>{t.cs_type||'—'}{t.direction?' · '+t.direction:''}</span>},
+  product:   {label:'상품 · 옵션',  w:240, cell:(t)=>(
+                <span>{t.product_name||'—'}
+                  {t.option_name && <span style={{color:'var(--sub)'}}> ／ {t.option_name}</span>}
+                </span>)},
+  supplier:  {label:'공급사',      w:110, cell:(t)=><span style={{color:'var(--sub)'}}>{t.supplier_name||'—'}</span>},
+  orderer:   {label:'주문자',      w:130, cell:(t)=>(
+                <span>{t.orderer_name||'—'}
+                  {t.receiver_name && t.receiver_name!==t.orderer_name &&
+                    <span style={{color:'var(--sub)'}}> ({t.receiver_name})</span>}
+                </span>)},
+  intake:    {label:'경로',        w:60,  cell:(t)=><span style={{color:'var(--sub)'}}>{t.intake_path||'—'}</span>},
+  assignee:  {label:'담당',        w:130, cell:(t)=><span style={{color:'var(--sub)'}}>{csShortUser(t.assignee)}</span>},
+  recheck:   {label:'리체크',      w:100, cell:(t)=><CsRecheck at={t.recheck_at} stage={t.stage}/>},
+  updated:   {label:'갱신',        w:88,  cell:(t)=><span style={{color:'var(--sub)'}}>{csDate(t.updated_at)}</span>},
+};
+const CS_COLS_FALLBACK = ['stage','typedir','product','supplier','orderer','assignee','recheck'];
+
+// 이메일에서 앞부분만 — 목록에서 전체 주소는 자리만 먹는다.
+function csShortUser(v){ return v ? String(v).split('@')[0] : '—'; }
+function csDate(v){ return v ? String(v).slice(5,10) : '—'; }
+// ★ KST 로 «오늘» 을 잰다. UTC 로 재면 새벽에 하루 어긋난다(todayLocal 과 같은 이유).
+function csTodayKst(){
+  const d = new Date(Date.now() + 9*3600*1000);
+  return d.toISOString().slice(0,10);
+}
+
+function CsStagePill({stage, held}){
+  const s = CS_STAGE_LABEL[stage] || {label:stage||'—', tone:'accent'};
+  const bg = {accent:'rgba(210,229,255,.16)', sky:'rgba(92,159,214,.18)',
+              green:'rgba(34,211,160,.16)', red:'rgba(248,113,113,.16)',
+              yellow:'rgba(246,173,9,.16)'}[s.tone];
+  const fg = {accent:'var(--accent)', sky:'#7FC2EE', green:'var(--green)',
+              red:'var(--red)', yellow:'#F6AD09'}[s.tone];
+  return (
+    <span style={{display:'inline-flex',alignItems:'center',gap:4}}>
+      <span style={{background:bg,color:fg,padding:'2px 8px',borderRadius:10,
+        fontSize:10,fontWeight:600,lineHeight:1.6,whiteSpace:'nowrap'}}>{s.label}</span>
+      {/* 보류는 단계가 아니라 «겹쳐 걸리는 표시» 다 — 그래서 단계 옆에 따로 붙인다. */}
+      {held && <span title="보류 중" style={{fontSize:10}}>⏸</span>}
+    </span>
+  );
+}
+
+// 리체크 날짜 — 지났으면 빨갛게, 며칠 지났는지까지 보여 준다.
+// ★ 종결된 티켓에는 «지남» 을 붙이지 않는다. 할 일이 없는데 빨간 것은 소음이다.
+function CsRecheck({at, stage}){
+  if(!at) return <span style={{color:'var(--sub)'}}>—</span>;
+  const today = csTodayKst();
+  const over = stage!=='closed' && at < today;
+  const days = over ? Math.round((new Date(today) - new Date(at))/86400000) : 0;
+  return (
+    <span style={{color:over?'var(--red)':'var(--text)',fontWeight:over?600:400,whiteSpace:'nowrap'}}>
+      {String(at).slice(5)}{over && <span> · {days}일</span>}
+    </span>
+  );
+}
+
+function CsTicketsPage({currentUserEmail, role}){
+  const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
+  const [chip,setChip]     = useState('mine');
+  const [q,setQ]           = useState('');
+  const [settings,setSettings] = useState(null);
+  const isMaster = role==='master';
+
+  // 설정(칩 권한·열 구성)을 한 번 읽는다. 못 읽으면 기본값으로 돈다.
+  useEffect(()=>{ (async()=>{
+    const {data,error} = await sb.from('console_settings').select('key,value')
+      .in('key',['cs_chip_roles','cs_list_columns']);
+    if(error){ console.warn('[CS 설정] 기본값으로 돕니다:', error.message); setSettings({}); return; }
+    const m = {};
+    (data||[]).forEach(r=>{ m[r.key] = r.value; });
+    setSettings(m);
+  })(); },[]);
+
+  // 티켓을 읽는다. dev 는 아직 건수가 적어 통째로 받아 화면에서 거른다 —
+  // ★ 건수가 늘면 서버 쪽 필터로 옮긴다. 지금 나누면 확인할 것만 늘어난다.
+  const load = async()=>{
+    const {data,error} = await sb.from('cs_tickets').select('*')
+      .order('updated_at',{ascending:false}).limit(500);
+    if(sbFail('CS 티켓 조회', error)) { setRows([]); return; }
+    setRows(data||[]);
+  };
+  useEffect(()=>{ load(); },[]);
+
+  // 칩마다 «무엇을 보여 주나». 한 곳에 모아 둔다 — 칩과 KPI 가 같은 셈을 써야
+  // 「숫자는 3인데 목록은 5줄」 같은 어긋남이 안 생긴다.
+  const match = (t, id)=>{
+    const today = csTodayKst();
+    if(id==='all')        return true;
+    if(id==='mine')       return t.assignee===currentUserEmail && t.stage!=='closed';
+    if(id==='recheck')    return t.stage!=='closed' && t.recheck_at && t.recheck_at<=today;
+    if(id==='unassigned') return !t.assignee && t.stage!=='closed';
+    if(id==='tosupplier') return !t.supplier_sent_at && t.stage!=='closed' && !t.held_at;
+    if(id==='awaiting')   return t.stage==='awaiting';
+    if(id==='held')       return !!t.held_at;
+    if(id==='csdone')     return t.stage==='cs_done';
+    if(id==='settle')     return t.stage==='settlement';
+    if(id==='refund')     return t.stage==='refund';
+    return true;
+  };
+
+  const chipRoles = (settings && settings.cs_chip_roles) || CS_CHIP_ROLES_FALLBACK;
+  const visibleChips = CS_CHIPS.filter(c=>{
+    const allowed = chipRoles[c.id];
+    return !allowed || (Array.isArray(allowed) && allowed.indexOf(role)>=0);
+  });
+
+  const counts = useMemo(()=>{
+    const m = {};
+    visibleChips.forEach(c=>{ m[c.id] = (rows||[]).filter(t=>match(t,c.id)).length; });
+    return m;
+  },[rows,settings,role]);
+
+  const list = useMemo(()=>{
+    let out = (rows||[]).filter(t=>match(t,chip));
+    const s = q.trim().toLowerCase();
+    if(s){
+      out = out.filter(t=>['order_id','order_item_code','orderer_name','orderer_phone',
+        'receiver_name','receiver_phone','product_name','supplier_name','zendesk_id']
+        .some(k=>String(t[k]||'').toLowerCase().includes(s)));
+    }
+    return out;
+  },[rows,chip,q]);
+
+  // 열 구성은 «칩마다» 다르다 — 칩마다 보는 목적이 다르기 때문이다.
+  const colKeys = useMemo(()=>{
+    const conf = (settings && settings.cs_list_columns) || {};
+    const keys = conf[chip] || conf['_기본'] || CS_COLS_FALLBACK;
+    return keys.filter(k=>CS_COLS[k]);   // 모르는 열 이름은 조용히 건너뛴다
+  },[settings,chip]);
+
+  const kpi = useMemo(()=>{
+    const r = rows||[], today = csTodayKst();
+    return {
+      recheck: r.filter(t=>match(t,'recheck')).length,
+      over:    r.filter(t=>t.stage!=='closed' && t.recheck_at && t.recheck_at<today).length,
+      tosup:   r.filter(t=>match(t,'tosupplier')).length,
+      await4:  r.filter(t=>t.stage==='awaiting' && t.supplier_sent_at &&
+                 (Date.now()-new Date(t.supplier_sent_at))/86400000 >= 4).length,
+      awaiting:r.filter(t=>t.stage==='awaiting').length,
+      settle:  r.filter(t=>t.stage==='settlement').length,
+      nocost:  r.filter(t=>t.stage==='settlement' && t.settle_fee==null).length,
+    };
+  },[rows]);
+
+  return (
+    <div className="section" style={{contain:'inline-size'}}>
+      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>🎫 CS 관리</h1>
+        <span style={{fontSize:12,color:'var(--sub)'}}>고객 접수부터 정산 반영까지 한 건을 끝까지 추적합니다</span>
+      </div>
+
+      <div className="kpi-grid" style={{marginBottom:18}}>
+        <div className="kpi-card">
+          <div className="kpi-label">오늘 리체크</div>
+          <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'#F6AD09'}}>{kpi.recheck}</div>
+          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>
+            {kpi.over? '기한 지남 '+kpi.over+'건' : '기한 지난 건 없음'}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">공급사 미접수</div>
+          <div className="kpi-value blue">{kpi.tosup}</div>
+          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>아직 공급사에 안 보낸 건</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">회신 대기</div>
+          <div className="kpi-value red">{kpi.awaiting}</div>
+          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>
+            {kpi.await4? '4일째 이상 '+kpi.await4+'건' : '오래 기다린 건 없음'}</div>
+        </div>
+        <div className="kpi-card">
+          <div className="kpi-label">정산 대기</div>
+          <div className="kpi-value green">{kpi.settle}</div>
+          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>
+            {kpi.nocost? '비용 미입력 '+kpi.nocost+'건' : '비용 입력 완료'}</div>
+        </div>
+      </div>
+
+      <div style={{display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',marginBottom:14}}>
+        {visibleChips.map(c=>(
+          <div key={c.id} onClick={()=>setChip(c.id)}
+            style={{padding:'5px 12px',borderRadius:16,cursor:'pointer',fontSize:12,
+              border:'1px solid '+(chip===c.id?'var(--primary)':'var(--border)'),
+              background: chip===c.id?'var(--primary)':'transparent',
+              color: chip===c.id?'#fff':'var(--sub)',
+              fontWeight: chip===c.id?600:400, whiteSpace:'nowrap', userSelect:'none'}}>
+            {c.label}
+            {c.id!=='all' && <span style={{fontFamily:'monospace',opacity:.75,marginLeft:5}}>{counts[c.id]||0}</span>}
+          </div>
+        ))}
+        <div style={{flex:1}}></div>
+        <input value={q} onChange={e=>setQ(e.target.value)}
+          placeholder="주문번호 · 고객명 · 연락처 · 공급사 · 옛 티켓번호"
+          style={{width:260,fontSize:12,padding:'6px 10px',background:'var(--bg)',
+            border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit'}}/>
+        {isMaster && (
+          <span title="아직 만드는 중입니다"
+            style={{padding:'5px 12px',borderRadius:16,fontSize:12,
+              border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',opacity:.55,
+              whiteSpace:'nowrap',userSelect:'none'}}>⚙ 보기 설정</span>
+        )}
+      </div>
+
+      {rows===null ? (
+        <div style={{padding:'60px 0',textAlign:'center',color:'var(--sub)',fontSize:12}}>불러오는 중…</div>
+      ) : list.length===0 ? (
+        <div style={{textAlign:'center',padding:'70px 24px',background:'var(--card)',
+          border:'1px dashed var(--border)',borderRadius:12,color:'var(--sub)'}}>
+          <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:6}}>
+            {(rows||[]).length===0 ? '아직 티켓이 없습니다' : '이 조건에 맞는 티켓이 없습니다'}</div>
+          <div style={{fontSize:12,lineHeight:1.7}}>
+            {(rows||[]).length===0
+              ? '표는 만들어져 있고 화면을 이어서 만드는 중입니다. 과거 티켓 이관은 운영 적용 때 합니다.'
+              : '다른 칩을 눌러 보거나 검색어를 지워 보세요.'}
+          </div>
+        </div>
+      ) : (
+        <div style={{overflowX:'auto',background:'var(--card)',border:'1px solid var(--border)',borderRadius:12}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:820}}>
+            <thead>
+              <tr>
+                <th style={csTh(56)}>번호</th>
+                {colKeys.map(k=><th key={k} style={csTh(CS_COLS[k].w)}>{CS_COLS[k].label}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {list.map(t=>(
+                <tr key={t.id} style={{borderTop:'1px solid var(--border)'}}>
+                  <td style={csTd}>
+                    <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{t.id}</span>
+                  </td>
+                  {colKeys.map(k=><td key={k} style={csTd}>{CS_COLS[k].cell(t)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div style={{marginTop:12,fontSize:11,color:'var(--sub)'}}>
+        {rows!==null && <span>{list.length}건 표시 · 전체 {(rows||[]).length}건</span>}
+      </div>
+    </div>
+  );
+}
+
+const csTh = (w)=>({textAlign:'left',fontSize:10,fontWeight:600,color:'var(--sub)',
+  letterSpacing:'.06em',textTransform:'uppercase',padding:'10px 12px',
+  borderBottom:'1px solid var(--border)',whiteSpace:'nowrap',width:w});
+const csTd = {padding:'10px 12px',color:'var(--text)',verticalAlign:'middle'};
+
 function NoAccessPage(){
   return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',padding:'40px 20px',textAlign:'center'}}>
@@ -16669,6 +16984,7 @@ const PAGE_LABELS = {
   dashboard:'대시보드', entry:'상담 입력', agentAnalysis:'상담원 분석',
   products:'상품 관리', delays:'배송지연', suppliers:'공급사',
   autoDelivery:'자동발송', refunds:'환불 관리', costs:'비용 비교 도구', agents:'인력 관리',
+  csTickets:'CS 관리',
 };
 
 // ── 화면별 에러 경계 ──────────────────────────────────────────────────
@@ -17263,6 +17579,7 @@ function App() {
     dashboard:'dashboard', entry:'dashboard', agentAnalysis:'dashboard',
     products:'productMgmt', delays:'productMgmt', suppliers:'productMgmt',
     autoDelivery:'productMgmt',
+    csTickets:'csMgmt',
   };
   // 현재 펼친 부모들 (다중 펼침 가능: 사용자 수동 조작 존중)
   // 비용 비교 도구와 사이드바를 잇는 두 칸. 목록은 도구가 올려 주고, 클릭은 nav 로 내려보낸다.
@@ -17456,6 +17773,22 @@ function App() {
             </>
           )}
 
+          {/* 부모: CS 관리 (2026-09-01 신설 · 자체 화면 없음 → 클릭 시 토글만)
+              ★ 흐름이 티켓 → 환불 → 정산이라 «환불 관리» 앞에 선다.
+              ★ 「설정」은 만드는 중이라 아직 자식으로 두지 않았다 — 없는 화면으로
+                가는 메뉴를 먼저 두면 «고장 난 것» 으로 읽힌다. */}
+          <div className="nav-parent" onClick={()=>toggleGroup('csMgmt')}>
+            {Icon.csTickets}<span>CS 관리</span>
+            <span className={`chevron ${openGroups.csMgmt?'expanded':''}`}>{openGroups.csMgmt?'▼':'▶'}</span>
+          </div>
+          {openGroups.csMgmt && (
+            <>
+              <div className={`nav-child ${page==='csTickets'?'active':''}`} onClick={()=>navigateTo('csTickets')}>
+                티켓 목록
+              </div>
+            </>
+          )}
+
           {/* 1뎁스: 환불 관리 (자식 없음 → 단순 이동) - master 전용 */}
           {isMaster && (
             <div
@@ -17640,6 +17973,7 @@ function App() {
         {page==='suppliers'&&<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
         {page==='delays'&&(isMaster||isManager)&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
         {page==='autoDelivery'&&(isMaster||isManager)&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
+        {page==='csTickets'&&<CsTicketsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='refunds'&&(isMaster?<RefundManagementPage currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='costs'&&(isMaster?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&isMaster&&<AgentAnalysisPage/>}
