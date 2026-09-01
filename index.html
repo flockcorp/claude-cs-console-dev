@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901o_cs_group_history -->
+<!-- (2026-09-01) 다섯을 고쳤다(제니 제보). ①★★ **묶음 티켓의 이력이 서브에서 안 보이던 버그.** 설계는 「이력을 메인에 쌓고 서브는 메인 것을 함께 읽는다」인데 상세 화면이 그 «함께 읽기» 를 안 해서, #11 에 남긴 것이 #12 를 열면 통째로 비어 보였다. → 같은 묶음(메인+서브)의 이력을 함께 읽는다. ★ 서브에 «복사» 하지 않는다 — 복사하면 같은 사건이 두 번 찍히고 나중에 한쪽만 고쳐지는 자리가 생긴다. 읽을 때 합치는 편이 맞다. ★ 새로 적는 말은 «메인에» 쌓는다(공급사에 한 번 접수하고 회신도 한 번 온다). 반대로 «값 변경» 은 그 티켓의 일이라 그 티켓에 남기고, 묶음일 때는 이력 줄마다 «#번호» 를 붙여 어느 티켓의 일인지 보인다. ★ 머리말에 «메인/서브» 와 형제 티켓 번호를 두어 눌러 오갈 수 있게 했다 — 지금 보는 것이 어느 쪽인지 모르면 «왜 여기 안 남지» 가 된다. ②★★ 「무슨 일」을 고르면 **단계도 함께 옮겨 준다**(제니 질문: 「이걸 선택한다고 티켓 상태가 바뀌는 게 아니네?」). 그전에는 이력에만 붙는 이름이었다 — 둘을 따로 고르게 두면 «이력엔 회신인데 단계는 아직 회신 대기» 처럼 어긋난 채로 남고, 사람이 두 번 고르는 것도 번거롭다. ★ 다만 **바로 저장하지 않는다** — 1단에 반영돼 변경 요약에 뜨고 사람이 저장을 눌러야 확정된다. 원하지 않으면 1단에서 되돌린다. ★ 회신·리체크·입고확인·보류는 매핑에 없다: 다음 단계가 상황에 따라 갈려 하나로 정할 수 없고, 억지로 옮기면 «틀린 단계» 가 조용히 저장된다. ★ crew·manager 가 못 가는 단계로는 옮기지 않는다 — 화면에서 슬쩍 옮겨 놓고 저장할 때 트리거에 막히면 «왜 안 되지» 가 된다. ③상세 머리말이 위에 붙는다(sticky) — 아래로 내려가 이력을 읽는 동안에도 «어느 티켓의 무슨 단계» 인지가 보여야 한다. 배경을 페이지 바탕색으로 깔아 본문이 그 아래로 지나가게 했다(투명하면 글자가 겹쳐 읽힌다). 2·3단은 그 높이만큼 내려 붙는다. ④「티켓 #숫자」를 20→17px 로 줄이고 상태 알약을 10→12.5px 로 키웠다(제니). ★ 목록의 알약은 그대로다 — 거기서는 줄이 촘촘해 지금 크기가 맞다. ⑤정산 «누가 부담» → «대상», 값의 «우리» → «원룸만들기». 안내 문구(「공급사면 정산 대기를…」)는 지웠다(제니). ★ dev 전용. -->
 <!-- v20260901n_cs_side_rename -->
 <!-- (2026-09-01) 이력의 작성자 «우리» 를 «원룸만들기» 로 바꿨다(제니). 공급사와 나란히 놓이는 자리라 «우리» 는 읽는 사람에 따라 가리키는 것이 달라진다 — 상호를 그대로 쓰는 편이 분명하다. ★★ 화면 이름만 바꾸지 않았다. 그러면 DB 에는 «우리», 화면에는 «원룸만들기» 로 두 벌이 생긴다 — 이 프로젝트는 유형·방향·경로를 «한글 값 그대로» 저장하기로 정했고 (표시 이름과 저장 값이 같아야 덤프를 사람이 읽는다), 여기서 예외를 만들면 그 원칙이 깨진다. 저장되는 값 자체를 바꾸고 **기존 이력도 함께 옮겼다**. ★★ SQL 순서가 중요하다 — «제약을 먼저 풀고 → 옮기고 → 다시 건다». 순서를 바꾸면 옛 제약이 새 값을 막아 update 가 통째로 실패한다. 다시 돌려도 안전하게 썼다(옮길 행이 없으면 0행을 고칠 뿐이다). ★ 칩 배열을 CS_SIDES 상수로 모았다 — 두 화면에 같은 목록이 흩어져 있으면 한쪽만 고쳐진다. ★ 「누가 부담 : 공급사 / 우리」 는 그대로 뒀다. 그건 «이력의 작성자» 가 아니라 «비용을 누가 내나» 라 다른 값이다 — 함께 바꿀지는 따로 정할 일이다. ★ dev 전용. -->
 <!-- v20260901m_cs_history_clarity -->
@@ -16671,6 +16673,24 @@ const CS_INTAKE = ['전화','채팅','게시판','후기','카페24'];
 // ★ «우리» 를 «원룸만들기» 로 바꿨다(제니 2026-09-01). 공급사와 나란히 놓이는 자리라
 //   «우리» 는 읽는 사람에 따라 가리키는 것이 달라진다 — 상호를 그대로 쓰는 편이 분명하다.
 const CS_SIDES = ['고객','원룸만들기','공급사'];
+// 정산 «대상» — 이 건의 비용을 누가 내나. DB check 제약과 짝이다(cs_tickets.cost_bearer).
+// ★ 이력의 «누가»(CS_SIDES)와 값이 겹치지만 뜻이 다르다 — 저쪽은 «누가 한 말인가»,
+//   이쪽은 «누가 돈을 내나» 다. 상수를 따로 두는 이유가 그것이다.
+const CS_BEARERS = ['공급사','원룸만들기'];
+// 이력의 «무슨 일» → 티켓의 «단계». 하나로 정해지는 것만 적는다.
+// ★★ 제니 질문: 「이걸 선택한다고 티켓 상태가 바뀌는 게 아니네?」 — 그전에는 안 바뀌었다.
+//   이력(무슨 일이 있었나)과 단계(어디까지 왔나)는 다른 축이지만, 둘을 따로 고르게 두면
+//   «이력엔 회신인데 단계는 아직 회신 대기» 처럼 어긋난 채로 남는다. 사람이 두 번 고르는
+//   것도 번거롭다. → 고르면 단계를 «함께 옮겨 준다». 다만 **바로 저장하지 않는다** —
+//   1단에 반영돼 변경 요약(「단계 : … -> …」)에 뜨고, 사람이 저장을 눌러야 확정된다.
+//   원하지 않으면 1단에서 되돌리면 된다.
+// ★ 회신·리체크·입고확인·보류는 여기 없다 — 다음 단계가 상황에 따라 갈려서 하나로 정할
+//   수 없다. 억지로 옮기면 «틀린 단계» 가 조용히 저장된다. 그런 것은 사람이 1단에서 고른다.
+const CS_ACTION_STAGE = {
+  '접수':'received', '공급사접수':'supplier_sent', '재출고':'reshipped',
+  'CS완료':'cs_done', '환불요청':'refund', '정산반영':'settlement',
+  '종결':'closed', '철회':'closed',
+};
 // 이력에 남길 «무슨 일». ★ DB check 제약과 짝이다(cs_ticket_events.action) —
 //   한쪽만 고치면 저장이 조용히 막힌다.
 const CS_ACTIONS = ['접수','공급사접수','회신','리체크','회수완료','재출고','입고확인',
@@ -16748,7 +16768,7 @@ function csTodayKst(){
   return d.toISOString().slice(0,10);
 }
 
-function CsStagePill({stage, held}){
+function CsStagePill({stage, held, big}){
   const s = CS_STAGE_LABEL[stage] || {label:stage||'—', tone:'accent'};
   const bg = {accent:'rgba(210,229,255,.16)', sky:'rgba(92,159,214,.18)',
               green:'rgba(34,211,160,.16)', red:'rgba(248,113,113,.16)',
@@ -16757,10 +16777,11 @@ function CsStagePill({stage, held}){
               red:'var(--red)', yellow:'#F6AD09'}[s.tone];
   return (
     <span style={{display:'inline-flex',alignItems:'center',gap:4}}>
-      <span style={{background:bg,color:fg,padding:'2px 8px',borderRadius:10,
-        fontSize:10,fontWeight:600,lineHeight:1.6,whiteSpace:'nowrap'}}>{s.label}</span>
+      <span style={{background:bg,color:fg,padding:big?'4px 12px':'2px 8px',
+        borderRadius:big?12:10, fontSize:big?12.5:10, fontWeight:600,
+        lineHeight:1.6, whiteSpace:'nowrap'}}>{s.label}</span>
       {/* 보류는 단계가 아니라 «겹쳐 걸리는 표시» 다 — 그래서 단계 옆에 따로 붙인다. */}
-      {held && <span title="보류 중" style={{fontSize:10}}>⏸</span>}
+      {held && <span title="보류 중" style={{fontSize:big?12.5:10}}>⏸</span>}
     </span>
   );
 }
@@ -17460,8 +17481,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             <>
               <div style={sec}>정산 <span style={{opacity:.7}}>· 필요할 때만</span></div>
               <div style={{marginBottom:9}}>
-                <label style={lbl}>누가 부담</label>
-                <CsPick value={f.cost_bearer} options={['공급사','우리']}
+                <label style={lbl}>대상</label>
+                <CsPick value={f.cost_bearer} options={CS_BEARERS}
                   onChange={v=>set('cost_bearer',v)} placeholder="아직 안 정함"/>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
@@ -17674,6 +17695,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const [action,setAction] = useState('리체크');
   const [byPhone,setByPhone] = useState(null);
   const [csInfo,setCsInfo]   = useState(null);
+  const [group,setGroup]     = useState([]);   // 같은 묶음의 티켓들(메인+서브)
 
   // ★★ 1단의 값은 «바로» 저장하지 않는다(제니 2026-09-01). 고칠 때마다 저장하면
   //   손이 미끄러진 것·잘못 고른 것까지 전부 이력에 남아 정작 봐야 할 흐름이 묻힌다.
@@ -17698,8 +17720,19 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     if(sbFail('티켓 조회', error)) return;
     setT(data);
     setEdit(toEdit(data));
+    // ★★ 묶음(메인·서브)의 이력을 «함께» 읽는다. 설계는 「이력을 메인에 쌓고 서브는
+    //   메인 것을 함께 읽는다」인데 이 화면이 그 «함께 읽기» 를 안 해서, 서브 티켓을
+    //   열면 이력이 통째로 비어 보였다(제니 제보 — #11 에 남긴 것이 #12 에 안 보인다).
+    // ★ 이력을 서브에도 «복사» 하지 않는다. 복사하면 같은 사건이 두 번 찍히고,
+    //   나중에 한쪽만 고쳐지는 자리가 생긴다 — 읽을 때 합치는 편이 맞다.
+    const mainId = data.main_ticket_id || data.id;
+    const {data:sib} = await sb.from('cs_tickets')
+      .select('id,order_item_code,product_name,main_ticket_id,stage')
+      .or('id.eq.'+mainId+',main_ticket_id.eq.'+mainId).order('id',{ascending:true});
+    setGroup(sib||[]);
+    const ids = (sib||[]).map(x=>x.id);
     const {data:ev} = await sb.from('cs_ticket_events').select('*')
-      .eq('ticket_id', ticketId).order('created_at',{ascending:true});
+      .in('ticket_id', ids.length?ids:[ticketId]).order('created_at',{ascending:true});
     setEvents(ev||[]);
     // ③ — 이 주문자의 최근 티켓(연락처 기준) · 이 상품의 CS 정보
     const dg = digits(data.orderer_phone);
@@ -17740,7 +17773,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     if(edit.recheck_at !== (t.recheck_at||''))
       changes.push('리체크 : '+(t.recheck_at||'—')+' -> '+(edit.recheck_at||'—'));
     if(edit.cost_bearer !== (t.cost_bearer||''))
-      changes.push('부담 : '+(t.cost_bearer||'아직 안 정함')+' -> '+(edit.cost_bearer||'아직 안 정함'));
+      changes.push('대상 : '+(t.cost_bearer||'아직 안 정함')+' -> '+(edit.cost_bearer||'아직 안 정함'));
     if(money(edit.settle_fee) !== t.settle_fee)
       changes.push('정산 상품금액 : '+money0(t.settle_fee)+' -> '+money0(money(edit.settle_fee)));
     if(money(edit.settle_shipping_fee) !== t.settle_shipping_fee)
@@ -17759,8 +17792,12 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     if(!dirty) return;
     setBusy(true);
     const evs = [];
+    // ★★ 사람이 적은 말은 «메인에» 쌓는다 — 묶음이 같은 사건을 겪기 때문이다
+    //   (공급사에 한 번 접수하고 회신도 한 번 온다). 서브에도 쓰면 두 번 찍힌다.
+    // ★ 반대로 «값 변경» 은 그 티켓의 일이라 그 티켓에 남긴다(아래).
+    const mainId = t.main_ticket_id || t.id;
     if(draft.trim()){
-      evs.push({ticket_id:ticketId, side, action, actor:currentUserEmail, note:draft.trim(),
+      evs.push({ticket_id:mainId, side, action, actor:currentUserEmail, note:draft.trim(),
         stage_after: edit.stage, direction_after: edit.direction||null});
     }
     if(changes.length){
@@ -17801,8 +17838,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   // ★ ②③ 은 따라 내려온다(제니 2026-09-01) — 생성 화면과 같은 이유다. ①이 훨씬 길어서
   //   아래를 보는 동안 이력과 상품 정보가 화면 밖으로 사라진다. 스스로 스크롤되게 해 둔다
   //   (붙어 있기만 하고 안이 넘치면 아래쪽 저장 버튼에 손이 안 닿는다).
-  const sticky = {...panel, position:'sticky', top:16,
-    maxHeight:'calc(100vh - 32px)', overflowY:'auto'};
+  // ★ 머리말이 위에 붙어 있으므로 그 높이(약 62px)만큼 내려 붙는다 — 16 으로 두면
+  //   패널 윗머리가 머리말 뒤로 숨는다.
+  const sticky = {...panel, position:'sticky', top:74,
+    maxHeight:'calc(100vh - 90px)', overflowY:'auto'};
   const ptitle = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
     textTransform:'uppercase',marginBottom:11};
   const sec = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
@@ -17827,10 +17866,35 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
-      <div style={{marginBottom:16,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-        <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>
+      {/* ★ 머리말이 위에 붙는다(제니) — 아래로 내려가 이력을 읽는 동안에도
+          «어느 티켓의 무슨 단계» 인지가 보여야 한다. 배경을 페이지 바탕색으로 깔아
+          본문이 그 아래로 지나가게 한다(투명하면 글자가 겹쳐 읽힌다).
+          ★ .section 의 좌우 여백(32px)을 음수 여백으로 벌려 띠가 화면을 가로지르게 하고,
+            같은 만큼 안쪽 여백을 줘 글자 위치는 그대로 둔다. */}
+      <div style={{position:'sticky',top:0,zIndex:20,background:'var(--bg)',
+        margin:'-24px -32px 8px',padding:'18px 32px 12px',
+        borderBottom:'1px solid var(--border)',
+        display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:17,fontWeight:700,margin:0,color:'var(--text)'}}>
           티켓 <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{t.id}</span></h1>
-        <CsStagePill stage={t.stage} held={!!t.held_at}/>
+        <CsStagePill stage={t.stage} held={!!t.held_at} big/>
+        {/* 묶음이면 «메인인가 서브인가» 와 형제 티켓을 함께 보인다 — 이력이 메인에
+            쌓이므로, 지금 보는 것이 어느 쪽인지 모르면 «왜 여기 안 남지» 가 된다. */}
+        {group.length>1 && (
+          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11}}>
+            <span style={{padding:'2px 8px',borderRadius:10,fontSize:10,fontWeight:600,
+              background: t.main_ticket_id?'rgba(143,168,208,.18)':'rgba(42,71,141,.35)',
+              color: t.main_ticket_id?'var(--sub)':'var(--accent)'}}>
+              {t.main_ticket_id ? '서브' : '메인'}</span>
+            <span style={{color:'var(--sub)'}}>묶음</span>
+            {group.filter(g=>g.id!==t.id).map(g=>(
+              <button key={g.id} onClick={()=>goTicket(g.id)}
+                style={{padding:'2px 8px',borderRadius:5,fontSize:10,fontFamily:'monospace',
+                  cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                  color:'var(--sub)'}}>#{g.id}</button>
+            ))}
+          </span>
+        )}
         <span style={{fontSize:12,color:'var(--sub)'}}>
           {t.order_item_code} / {t.supplier_name||'—'} / 접수 : {csDate(t.created_at)} / 담당자 : {csShortUser(t.assignee)}
         </span>
@@ -17912,19 +17976,16 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 막는다 — 버튼을 숨기는 것만으로는 «막았다» 고 할 수 없다.
                 그 트리거는 목록을 스스로 갖지 않고 console_settings.cs_field_rules 를
                 읽어 판정한다(설정 화면에서 바꾸면 자물쇠도 함께 풀린다).
-              ★★ «누가 부담» 에 기본값을 두지 않는다. 「대부분 공급사」라고 깔아 두면
+              ★★ «대상»(비용을 누가 내나)에 기본값을 두지 않는다. 「대부분 공급사」라고 깔아 두면
                 아무도 안 바꾼 건이 조용히 공급사 정산에 올라간다 — 거래처에 잘못
                 청구하는 일이라 되돌리기가 나쁘다. 반대 실수는 우리 손해로 끝난다. */}
           <div style={sec}>정산 {!isMaster && <span style={{opacity:.7}}>· master 만</span>}</div>
           {isMaster ? (
             <>
               <div style={{marginBottom:9}}>
-                <label style={lbl}>누가 부담</label>
-                <CsPick value={edit.cost_bearer} options={['공급사','우리']}
+                <label style={lbl}>대상</label>
+                <CsPick value={edit.cost_bearer} options={CS_BEARERS}
                   placeholder="아직 안 정함" onChange={v=>setE('cost_bearer',v)}/>
-                <div style={{fontSize:10,color:'var(--sub)',marginTop:4,lineHeight:1.6}}>
-                  공급사면 <b>정산 대기</b>를 거치고, 우리면 정산을 건너뛰고 <b>바로 종결</b>합니다.
-                </div>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
                 <div style={{marginBottom:9}}>
@@ -17942,7 +18003,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             </>
           ) : (
             <>
-              {ro('누가 부담', t.cost_bearer)}
+              {ro('대상', t.cost_bearer)}
               {ro('정산 상품금액', t.settle_fee!=null ? t.settle_fee.toLocaleString()+'원' : null)}
               {ro('정산 배송료', t.settle_shipping_fee!=null ? t.settle_shipping_fee.toLocaleString()+'원' : null)}
             </>
@@ -17989,6 +18050,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                       <span style={{fontSize:11,fontWeight:600,color:'var(--text)'}}>{e.action}</span>
                     </>
                   )}
+                  {/* 묶음이면 «어느 티켓의 일인가» 를 붙인다 — 값 변경은 티켓마다
+                      따로 남으므로 표시가 없으면 뒤섞여 읽힌다. */}
+                  {group.length>1 && (
+                    <span style={{fontSize:9.5,fontFamily:'monospace',
+                      color: e.ticket_id===t.id ? 'var(--accent)' : 'var(--sub)',
+                      opacity: e.ticket_id===t.id ? 1 : .7}}>#{e.ticket_id}</span>
+                  )}
                   <div style={{flex:1}}></div>
                   <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>
                     {String(e.created_at).slice(5,16).replace('T',' ')} {csShortUser(e.actor)}</span>
@@ -18031,7 +18099,16 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               ))}
               <span style={{width:6}}></span>
               <span style={{fontSize:10,color:'var(--sub)'}}>무슨 일</span>
-              <CsPick value={action} options={CS_ACTIONS} onChange={v=>v&&setAction(v)} width={140}/>
+              <CsPick value={action} options={CS_ACTIONS} width={140}
+                onChange={v=>{
+                  if(!v) return;
+                  setAction(v);
+                  // ★ 단계가 하나로 정해지는 것만 함께 옮긴다. 그리고 crew·manager 가
+                  //   못 가는 단계(환불·정산 대기·종결)로는 옮기지 않는다 — 화면에서
+                  //   슬쩍 옮겨 놓고 저장할 때 트리거에 막히면 «왜 안 되지» 가 된다.
+                  const st = CS_ACTION_STAGE[v];
+                  if(st && (isMaster || ['refund','settlement','closed'].indexOf(st)<0)) setE('stage', st);
+                }}/>
             </div>
             <textarea value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
               onKeyDown={e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) saveAll(); }}
@@ -18053,7 +18130,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
 
             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:9,flexWrap:'wrap'}}>
               <span style={{fontSize:10,color:'var(--sub)'}}>
-                한 번 남긴 이력은 고치거나 지울 수 없습니다</span>
+                한 번 남긴 이력은 고치거나 지울 수 없습니다
+                {CS_ACTION_STAGE[action] && <span> · 「{action}」을 남기면 단계도 함께 옮겨집니다</span>}
+              </span>
               <div style={{flex:1}}></div>
               {/* ★ «되돌리기»(화면만 되돌림) 대신 «취소»(저장하지 않고 목록으로) 다(제니).
                   고치던 것을 물리는 이유는 대개 «이 티켓이 아니었다» 이지 «이 값만 물리자» 가
