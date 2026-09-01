@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20260901af_cs_searchall -->
+<!-- v20260901ag_cs_refund_handoff -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ «CS 완료» 단계를 걷어냈다 — 「재출고 완료」(교환 쪽)와 「환불 대기」(반품 쪽)가 **이미 상담원 처리 끝**이라는 제니 정정. 내가 그 위에 단계를 하나 더 뒀던 것이 군더더기였다: 상담원이 「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다. 그 둘을 «확인 대기» 그룹으로 올렸고, **교환/환불 구분도 여기서 갈린다** — 방향으로 걸러 보는 것이 아니라 단계가 이미 두 갈래다. 기존 cs_done 티켓은 방향을 보고 옮겼다. ②「무슨 일」 드롭박스와 「누가」 라벨을 걷어냈다(제니). 두 번이나 «이게 뭐냐» 는 질문이 나온 칸이고, 값 목록에 «상태를 옮기는 것» 과 «단순 이력» 이 섞여 있어 저장 버튼(=단계)과도 겹쳐 보였다. 이제 이력은 «누가 무슨 말을 했나» 만 남기고 단계는 저장 버튼이 정한다. ★ 잃는 것이 없다 — 「공급사별 평균 회신 일수」는 action='회신' 을 세려던 것이었는데 **«누가»(side='공급사')가 이미 그 일을 한다**: 공급사가 남긴 첫 이력 시각에서 supplier_sent_at 을 빼면 된다. 사람이 남기는 이력은 전부 action='기록' 이고, 화면에는 그 이름을 안 보인다(모든 줄에 같은 말이 붙으면 소음이다). ③★★ **이력 «가리기»(블라인드)** — 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」. 잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고 읽는 사람이 어느 것이 맞는지 헷갈린다. ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다. ★★ 본문은 «실제로» 지운다: 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로 남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다. 되돌릴 수 없으므로 사유를 받는다. ★ 가릴 수 있는 사람은 그 글을 쓴 본인 또는 master 이고, **DB 정책도 같다.** ★★ append-only 는 그대로다 — update 정책을 열되 트리거가 «본문을 지우는 것 말고는 아무것도 못 바꾸게» 막는다(다른 글로 바꿔치기하는 것은 고치는 것이라 막는다. 이미 가려진 줄도 다시 못 건드린다). ★ dev 전용. -->
 <!-- v20260901v_cs_stage_groups -->
 <!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
@@ -17350,6 +17350,146 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
 //   기대하는 셈이다. 이 규칙은 한 곳(csFilterHit)에만 적는다.
 // ★ CsPick 과 같은 이유로 목록을 fixed 로 띄운다 — 칸 안에 absolute 로 두면
 //   패널 높이가 늘고 overflow 에 잘린다(제니 제보로 이미 겪었다).
+// ── 티켓 → 환불 관리로 넘기기 ─────────────────────────────────────────
+// ★★ 제니 승인(2026-09-01). 「환불 대기」로 올라온 건을 제니가 확인하고 이 버튼 하나로
+//   환불 관리에 «환불 요청» 을 만든다.
+// ★★★ 티켓이 이미 갖고 있는 값(금액·계좌·주문번호·고객·상품)은 «그대로» 넘긴다.
+//   여기서 고치게 두면 티켓과 환불 건의 금액이 갈라지고, 그때부터 어느 쪽이 맞는지
+//   아무도 모른다. 고쳐야 하면 창을 닫고 티켓에서 고친 뒤 다시 넘긴다.
+// ★ 사람이 정할 것은 «환불 사유» 하나다 — 환불 사유는 refund_reasons 의 별도 체계라
+//   티켓의 유형(불량·파손…)에서 짐작하면 환불 통계가 조용히 틀어진다.
+// ★★ 두 번 만들어지지 않게 하는 것은 «화면» 이 아니라 티켓의 refund_id 다 —
+//   버튼을 숨기는 것만으로는 막았다고 할 수 없다.
+function CsRefundHandoff({t, currentUserEmail, onClose, onDone}){
+  const [reasons,setReasons] = useState(null);
+  const [reasonId,setReasonId] = useState('');
+  const [note,setNote] = useState('');
+  const [busy,setBusy] = useState(false);
+  const [err,setErr]   = useState('');
+
+  useEffect(()=>{ (async()=>{
+    const {data} = await sb.from('refund_reasons').select('id,name,is_active')
+      .eq('is_active',true).order('sort_order',{ascending:true});
+    setReasons(data||[]);
+  })(); },[]);
+
+  const miss = [
+    [t.refund_amount!=null, '환불 금액'], [t.refund_bank, '은행'],
+    [t.refund_holder, '예금주'], [t.refund_account, '계좌번호'],
+  ].filter(x=>!x[0]).map(x=>x[1]);
+
+  const go = async ()=>{
+    if(!reasonId){ setErr('환불 사유를 골라 주세요.'); return; }
+    if(miss.length){ setErr('티켓에 '+miss.join(' · ')+' 이(가) 비어 있습니다.'); return; }
+    setBusy(true); setErr('');
+    // ★ 넘기기 직전에 «이미 넘어갔는지» 를 DB 에서 다시 본다. 화면을 열어 둔 채
+    //   다른 자리에서 넘겼을 수 있다 — 그러면 환불 건이 두 개 생긴다.
+    const {data:fresh} = await sb.from('cs_tickets').select('refund_id').eq('id',t.id).single();
+    if(fresh && fresh.refund_id){
+      setBusy(false);
+      setErr('이미 환불 #'+fresh.refund_id+' 로 넘어간 티켓입니다.');
+      return;
+    }
+    const {data:ins, error} = await sb.from('refunds').insert({
+      created_by:     currentUserEmail || 'unknown',
+      reason_id:      parseInt(reasonId,10),
+      refund_amount:  t.refund_amount,
+      order_id:       t.order_id,
+      bank_name:      t.refund_bank,
+      account_number: String(t.refund_account||'').trim(),
+      account_holder: String(t.refund_holder||'').trim(),
+      pg_info:        t.refund_method || null,
+      customer_name:  t.orderer_name  || null,
+      customer_phone: t.orderer_phone || null,
+      product_name:   t.product_name  || null,
+      supplier_name:  t.supplier_name || null,
+      notes:          (note.trim() ? note.trim()+' / ' : '')+'CS 티켓 #'+t.id+' 에서 넘어옴',
+    }).select('id').single();
+    if(error){ setBusy(false); setErr('환불 요청 만들기 실패: '+error.message); return; }
+    const rid = ins && ins.id;
+    await logRefund(rid, 'create', currentUserEmail, 'CS 티켓 #'+t.id+' 에서 넘어옴');
+    // ★ 티켓에 «어느 환불 건인가» 를 적는다. 이것이 두 번 만들기를 막는 자물쇠다.
+    await sb.from('cs_tickets').update({
+      refund_id: rid, refund_requested_at: new Date().toISOString(),
+      refund_requested_by: currentUserEmail, updated_by: currentUserEmail,
+    }).eq('id', t.id);
+    await sb.from('cs_ticket_events').insert({
+      ticket_id: t.main_ticket_id || t.id, side:'원룸만들기', action:'환불요청',
+      actor: currentUserEmail,
+      note: '환불 관리로 넘겼습니다 — 환불 #'+rid+' · '+Number(t.refund_amount).toLocaleString()+'원',
+    });
+    setBusy(false);
+    onDone(rid);
+  };
+
+  const row = (k,v)=>(
+    <div style={{display:'flex',gap:8,fontSize:12,padding:'4px 0'}}>
+      <span style={{color:'var(--sub)',width:74,flex:'0 0 auto'}}>{k}</span>
+      <span style={{color:'var(--text)',wordBreak:'break-all'}}>{v||'—'}</span>
+    </div>
+  );
+  return (
+    <div onMouseDown={e=>{if(e.target===e.currentTarget && !busy) onClose();}}
+      style={{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,.55)',
+        zIndex:2600,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{background:'var(--surface)',borderRadius:10,width:'100%',maxWidth:460,
+        border:'1px solid var(--border)',padding:'18px 20px'}}>
+        <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:4}}>
+          환불 관리로 넘기기</div>
+        <div style={{fontSize:11,color:'var(--sub)',marginBottom:14,lineHeight:1.6}}>
+          아래 값 그대로 «환불 요청» 한 건이 만들어집니다. 고쳐야 하면 창을 닫고
+          티켓에서 고친 뒤 다시 넘기세요.
+        </div>
+        <div style={{background:'var(--bg)',border:'1px solid var(--border)',
+          borderRadius:8,padding:'10px 12px',marginBottom:14}}>
+          {row('주문번호', t.order_id)}
+          {row('환불 금액', t.refund_amount!=null
+            ? Number(t.refund_amount).toLocaleString()+'원' : null)}
+          {row('결제수단', t.refund_method)}
+          {row('입금 계좌', [t.refund_bank, t.refund_account, t.refund_holder]
+            .filter(Boolean).join(' · '))}
+          {row('상품', t.product_name)}
+        </div>
+        <div style={{marginBottom:12}}>
+          <label style={{fontSize:11,color:'var(--sub)',display:'block',marginBottom:5}}>
+            환불 사유 <span style={{color:'var(--red)'}}>*</span></label>
+          <select value={reasonId} onChange={e=>setReasonId(e.target.value)}
+            style={{width:'100%',fontSize:13,padding:'8px 10px',background:'var(--bg)',
+              border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+              fontFamily:'inherit',colorScheme:'dark'}}>
+            <option value="">{reasons===null?'불러오는 중…':'고르세요'}</option>
+            {(reasons||[]).map(r=><option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+        </div>
+        <div style={{marginBottom:14}}>
+          <label style={{fontSize:11,color:'var(--sub)',display:'block',marginBottom:5}}>
+            메모 <span style={{opacity:.7}}>· 없어도 됩니다</span></label>
+          <input value={note} onChange={e=>setNote(e.target.value)}
+            style={{width:'100%',fontSize:13,padding:'8px 10px',background:'var(--bg)',
+              border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+              fontFamily:'inherit',boxSizing:'border-box'}}/>
+        </div>
+        {(err || miss.length>0) && (
+          <div style={{fontSize:11,color:'var(--red)',marginBottom:10,lineHeight:1.6}}>
+            {err || ('티켓에 '+miss.join(' · ')+' 이(가) 비어 있습니다.')}</div>
+        )}
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button onClick={onClose} disabled={busy}
+            style={{padding:'8px 14px',background:'transparent',border:'1px solid var(--border)',
+              borderRadius:7,color:'var(--sub)',fontSize:12,cursor:'pointer',
+              fontFamily:'inherit'}}>닫기</button>
+          <button onClick={go} disabled={busy || miss.length>0}
+            style={{padding:'8px 16px',background:'var(--primary)',border:'none',
+              borderRadius:7,color:'#fff',fontSize:12,fontWeight:600,
+              cursor: busy||miss.length ? 'not-allowed':'pointer',
+              opacity: busy||miss.length ? .55:1, fontFamily:'inherit'}}>
+            {busy?'만드는 중…':'환불 요청 만들기'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CsMulti({label, options, value, onChange, width}){
   const [open,setOpen] = useState(false);
   const [q,setQ] = useState('');
@@ -18316,6 +18456,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //   글자 수까지 사라지는 것보다 정직하다. DB 규칙도 그 길이로 지킨다.
   // ★★ 확인 창을 두지 않는다(제니) — 드래그해서 고르는 것 자체가 «무엇을 지울지» 를
   //   눈으로 정하는 일이라, 그 위에 «정말요?» 를 얹으면 같은 것을 두 번 묻는 셈이다.
+  const [handoff,setHandoff] = useState(false);   // 환불 관리로 넘기는 창
   const [redactId,setRedactId] = useState(null);   // 지금 «지우기» 를 켠 이력
   const noteRef = useRef(null);
 
@@ -18477,6 +18618,12 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
+      {handoff && (
+        <CsRefundHandoff t={t} currentUserEmail={currentUserEmail}
+          onClose={()=>setHandoff(false)}
+          onDone={(rid)=>{ setHandoff(false);
+            toast('환불 #'+rid+' 로 넘겼습니다.','ok'); load(); }}/>
+      )}
       {/* ★ 머리말이 위에 붙는다(제니) — 아래로 내려가 이력을 읽는 동안에도
           «어느 티켓의 무슨 단계» 인지가 보여야 한다. 배경을 페이지 바탕색으로 깔아
           본문이 그 아래로 지나가게 한다(투명하면 글자가 겹쳐 읽힌다).
@@ -18612,6 +18759,27 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <input value={edit.refund_account} onChange={e=>setE('refund_account',e.target.value)}
               style={{...inp,fontFamily:'monospace'}}/>
           </div>
+
+          {/* ── 환불 관리로 넘기기 ──────────────────────────────────────
+              ★★ 이미 넘긴 티켓에는 버튼 대신 «어디로 넘어갔나» 를 보여 준다.
+                버튼을 그대로 두고 «누르면 안 됩니다» 라고 적는 것보다,
+                누를 것이 아예 없는 편이 실수를 덜 만든다.
+                (진짜 자물쇠는 refund_id 를 다시 확인하는 쪽이다 — 창 안에 있다.) */}
+          {t.refund_id ? (
+            <div style={{fontSize:11,color:'var(--sub)',padding:'8px 10px',marginBottom:9,
+              background:'rgba(34,211,160,.08)',border:'1px solid rgba(34,211,160,.35)',
+              borderRadius:7,lineHeight:1.6}}>
+              환불 관리로 넘어갔습니다 — <b style={{color:'var(--green)'}}>환불 #{t.refund_id}</b>
+              {t.refund_requested_at && <span> · {csStamp(t.refund_requested_at)}</span>}
+              {t.refund_requested_by && <span> · {csShortUser(t.refund_requested_by)}</span>}
+            </div>
+          ) : isMaster && t.stage==='refund' ? (
+            <button onClick={()=>setHandoff(true)} disabled={busy}
+              style={{width:'100%',padding:'8px 0',marginBottom:9,background:'var(--primary)',
+                border:'none',borderRadius:7,color:'#fff',fontSize:12,fontWeight:600,
+                cursor:'pointer',fontFamily:'inherit'}}>
+              환불 관리로 넘기기</button>
+          ) : null}
 
           <div style={sec}>정산 {!isMaster && <span style={{opacity:.7}}>· master 만</span>}</div>
           {isMaster ? (
