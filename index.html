@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901v_cs_stage_groups -->
+<!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
 <!-- v20260901u_cs_submit_pick -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①②의 세로 길이 — 그전에는 화면 높이(100vh)로 잘라 두어 ①이 아직 더 긴데도 ②에 먼저 스크롤이 생겼다. 격자에 alignItems 를 주지 않아(기본 stretch) 세 칸의 키를 맞추고, ②는 그보다 길어질 때만 «안에서» 구른다. ★ 늘어난 격자 칸 안에서 스크롤이 돌게 하려면 minHeight:0 이 있어야 한다 — 격자 칸의 기본 최소 높이가 «내용 전체» 라서 없으면 칸이 그냥 커지고 스크롤이 안 생긴다. ★ ②는 이제 ①과 키가 같으므로 «따라 내려올» 것이 없어 sticky 를 뗐다. ③은 짧으니 그대로 따라 내려온다(alignSelf 로 그 칸만 위에 붙인다). ②★★ 단계 목록에서 고르면 **바로 그 단계로 저장**한다(제니 — 젠데스크가 그렇다). 버튼이 곧 «제출» 이므로 목록에서 고르는 것도 제출이다. ★ 방금 고른 값을 그대로 쓰려면 인자로 넘겨야 한다 — setState 는 다음 그림에 반영되므로 그 자리에서 edit.stage 를 읽으면 «옛 단계» 가 저장된다. 이력에 남길 요약도 넘겨받은 단계로 다시 만든다(화면의 요약은 아직 옛 값이다). ★ 목록을 여는 ∧ 는 바뀐 것이 없어도 눌린다 — 고르는 것 자체가 저장이기 때문이다. ③«접수됨» → «티켓 등록»(제니). 공급사에 접수하기 «전», 콘솔에만 등록해 둔 상태다 — «접수» 라는 말이 «공급사 접수» 와 헷갈렸다. ★ 표시 이름만 바뀐다(코드값 received 는 그대로라 DB 는 안 건드린다). ★ dev 전용. -->
 <!-- v20260901t_cs_submit_button -->
@@ -16699,9 +16701,9 @@ const CS_BEARERS = ['공급사','원룸만들기'];
 // ★ 회신·리체크·입고확인·보류는 여기 없다 — 다음 단계가 상황에 따라 갈려서 하나로 정할
 //   수 없다. 억지로 옮기면 «틀린 단계» 가 조용히 저장된다. 그런 것은 사람이 1단에서 고른다.
 const CS_ACTION_STAGE = {
-  '접수':'received', '공급사접수':'supplier_sent', '재출고':'reshipped',
-  'CS완료':'cs_done', '환불요청':'refund', '정산반영':'settlement',
-  '종결':'closed', '철회':'closed',
+  '접수':'received', '공급사접수':'awaiting', '재출고':'reshipped',
+  'CS완료':'cs_done', '환불요청':'refund', '환불완료':'refunded',
+  '정산반영':'settlement', '보류':'held', '종결':'closed', '철회':'withdrawn',
 };
 // 이력에 남길 «무슨 일». ★ DB check 제약과 짝이다(cs_ticket_events.action) —
 //   한쪽만 고치면 저장이 조용히 막힌다.
@@ -16709,24 +16711,47 @@ const CS_ACTIONS = ['접수','공급사접수','회신','리체크','회수완�
                     'CS완료','환불요청','환불완료','정산반영','보류','보류해제',
                     '철회','종결','수정'];
 
-// 단계 — 코드 · 표시 이름 · 색. 차례가 곧 흐름이다.
-// ★ cs_done(CS 완료)이 «상담원의 끝» 이다. 그 아래는 master 의 영역이다.
+// 단계 — «그룹 + 하위 상태» 두 층이다(제니 2026-09-01). 젠데스크가 쓰던 방식이고
+// (신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다.
+//
+// ★★ 그룹을 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐
+//   환불도 정산도 아직 안 됐다. «완료» 에 넣으면 목록에서 「완료 12건」인데 그중 일곱이
+//   제니가 손대야 하는 것이 되고, 접어 두면 안 보인다. 바통을 넘기는 자리라
+//   그룹 이름에 드러나야 한다.
+//
+// ★★ 없앤 단계 셋 — «공급사 접수»·«회수»·«입고 확인»(제니). 공급사에 보내면 곧바로
+//   회신 대기이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다.
+//   단계는 «지금 무엇을 기다리나» 만 말해야 한다.
+//
+// ★★ «보류» 와 «철회» 를 단계로 올렸다(제니). 그전에는 겹쳐 걸리는 표시(held_at)와
+//   종결 사유(close_reason)였는데, 실무에서 보류는 «사진·입금 대기» 라 진행중과 동시에
+//   있을 수 없고, 철회도 종결의 한 종류로 목록에 보여야 한다.
+//   ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에
+//     「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다.
+//   ★ 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다. 그건 단계가 아니라 부가 정보다.
+//
+// ★ 코드값은 영문이다 — 흐름이라 «순서» 로 비교·정렬해야 하는데 한글은 정렬이 엉킨다.
+//   ★★ 이 배열의 차례가 곧 흐름이다. DB check 제약과 짝이라 한쪽만 고치면 저장이 막힌다.
 const CS_STAGES = [
-  // ★ «접수됨» → «티켓 등록»(제니 2026-09-01). 공급사에 접수하기 «전», 콘솔에만
-  //   등록해 둔 상태다. «접수» 라는 말이 «공급사 접수» 와 헷갈렸다.
-  {id:'received',      label:'티켓 등록',   tone:'accent'},
-  {id:'supplier_sent', label:'공급사 접수', tone:'sky'},
-  {id:'awaiting',      label:'회신 대기',   tone:'sky'},
-  {id:'collecting',    label:'회수',        tone:'sky'},
-  {id:'inbound',       label:'입고 확인',   tone:'sky'},
-  {id:'reshipped',     label:'재출고',      tone:'sky'},
-  {id:'cs_done',       label:'CS 완료',     tone:'green'},
-  {id:'refund',        label:'환불',        tone:'red'},
-  {id:'settlement',    label:'정산 대기',   tone:'yellow'},
-  {id:'closed',        label:'종결',        tone:'green'},
+  {id:'received',   label:'티켓 등록',   group:'접수',      tone:'accent'},
+  {id:'awaiting',   label:'진행중',      group:'처리중',    tone:'sky'},
+  {id:'held',       label:'보류',        group:'처리중',    tone:'yellow'},
+  {id:'reshipped',  label:'재출고 완료', group:'처리중',    tone:'sky'},
+  {id:'refund',     label:'환불 대기',   group:'처리중',    tone:'red'},
+  {id:'cs_done',    label:'CS 완료',     group:'확인 대기', tone:'green'},
+  {id:'refunded',   label:'환불 완료',   group:'완료',      tone:'red'},
+  {id:'settlement', label:'정산 대기',   group:'완료',      tone:'yellow'},
+  {id:'closed',     label:'종결',        group:'종결',      tone:'green'},
+  {id:'withdrawn',  label:'철회',        group:'종결',      tone:'gray'},
 ];
+const CS_STAGE_GROUPS = ['접수','처리중','확인 대기','완료','종결'];
+// ★ master 만 갈 수 있는 단계. 상담원의 끝은 «CS 완료» 이고 그 뒤는 제니 영역이다.
+//   ★ 이건 «화면» 의 잠금이다. DB 가 진짜로 막는 것은 «환불 요청(refunds 행 생성)» 과
+//     «정산 반영(settled_at)» 이다 — 되돌릴 수 없는 것은 그 둘이고, 단계는 이름표다.
+const CS_STAGES_MASTER = ['refunded','settlement','closed','withdrawn'];
 const CS_STAGE_LABEL = {};
 CS_STAGES.forEach(s=>{ CS_STAGE_LABEL[s.id] = s; });
+const csGroupOf = (id)=> (CS_STAGE_LABEL[id]||{}).group || '';
 
 // 칩 — 목록을 좁히는 지름길이다.
 // ★★ 칩을 꺼도 «티켓이 숨겨지는» 것이 아니다. 진짜 차단은 권한(RLS)이 한다.
@@ -16734,27 +16759,27 @@ CS_STAGES.forEach(s=>{ CS_STAGE_LABEL[s.id] = s; });
 const CS_CHIPS = [
   {id:'mine',      label:'내 티켓'},
   {id:'recheck',   label:'오늘의 리체크'},
-  // ★ 「미배정」 칩은 두지 않는다(제니 2026-09-01). 젠데스크에는 «신규 수신» 이 있었지만
-  //   그건 카페24 신청을 보고 티켓이 «자동으로» 생겨서 담당자가 비어 있었기 때문이다.
-  //   콘솔은 **사람이 필요해서 만든다** — 만드는 사람이 곧 담당자다. 빌 자리가 없다.
   {id:'tosupplier',label:'공급사 미접수'},
-  {id:'awaiting',  label:'회신 대기'},
-  {id:'held',      label:'보류'},
-  {id:'csdone',    label:'CS 완료 · 확인 대기'},
-  {id:'settle',    label:'정산 대기'},
-  {id:'refund',    label:'환불'},
+  // ★★ 하위 상태가 아니라 «그룹» 으로 좁힌다(제니). 단계가 열 개인데 칩도 열 개면
+  //   목록 위가 단계 목록이 된다 — 칩은 «크게 나누는» 자리이고, 정확한 단계는 표의
+  //   단계 열에 뱃지로 보인다.
+  {id:'g:접수',     label:'접수'},
+  {id:'g:처리중',   label:'처리중'},
+  {id:'g:확인 대기',label:'확인 대기'},
+  {id:'g:완료',     label:'완료'},
+  {id:'g:종결',     label:'종결'},
   {id:'all',       label:'전체'},
 ];
 // 설정(console_settings.cs_chip_roles)을 못 읽었을 때 쓰는 기본값.
 // ★ 못 읽었다고 목록이 통째로 비면 그게 더 큰 사고다 — 알림 기준에서 정한 원칙과 같다.
 const CS_CHIP_ROLES_FALLBACK = {
-  csdone:['master','manager'], settle:['master','manager'], refund:['master'],
+  'g:확인 대기':['master','manager'], 'g:완료':['master','manager'],
 };
 
 // 목록 열 — 키 하나가 «머리글 + 그 칸을 어떻게 그리나» 를 함께 갖는다.
 // ★ 둘을 떨어뜨려 두면 열을 더할 때 한쪽만 고쳐져 머리글과 내용이 어긋난다.
 const CS_COLS = {
-  stage:     {label:'단계',        w:96,  cell:(t)=><CsStagePill stage={t.stage} held={!!t.held_at}/>},
+  stage:     {label:'단계',        w:96,  cell:(t)=><CsStagePill stage={t.stage}/>},
   typedir:   {label:'유형 · 방향',  w:112, cell:(t)=><span>{t.cs_type||'—'}{t.direction?' · '+t.direction:''}</span>},
   product:   {label:'상품 · 옵션',  w:240, cell:(t)=>(
                 <span>{t.product_name||'—'}
@@ -16835,7 +16860,7 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty}){
   },[open]);
   const cur = CS_STAGE_LABEL[stage] || {label:'—', tone:'accent'};
   const dot = (tone)=>({accent:'var(--accent)', sky:'#7FC2EE', green:'var(--green)',
-                        red:'var(--red)', yellow:'#F6AD09'}[tone] || 'var(--sub)');
+                        red:'var(--red)', yellow:'#F6AD09', gray:'#B8C4DA'}[tone] || 'var(--sub)');
   const on = !busy && dirty;
   return (
     <div ref={ref} style={{position:'relative',display:'flex'}}>
@@ -16895,9 +16920,9 @@ function CsStagePill({stage, held, big}){
   const s = CS_STAGE_LABEL[stage] || {label:stage||'—', tone:'accent'};
   const bg = {accent:'rgba(210,229,255,.16)', sky:'rgba(92,159,214,.18)',
               green:'rgba(34,211,160,.16)', red:'rgba(248,113,113,.16)',
-              yellow:'rgba(246,173,9,.16)'}[s.tone];
+              yellow:'rgba(246,173,9,.16)', gray:'rgba(184,196,218,.14)'}[s.tone];
   const fg = {accent:'var(--accent)', sky:'#7FC2EE', green:'var(--green)',
-              red:'var(--red)', yellow:'#F6AD09'}[s.tone];
+              red:'var(--red)', yellow:'#F6AD09', gray:'#B8C4DA'}[s.tone];
   return (
     <span style={{display:'inline-flex',alignItems:'center',gap:4}}>
       <span style={{background:bg,color:fg,padding:big?'4px 12px':'2px 8px',
@@ -16914,7 +16939,7 @@ function CsStagePill({stage, held, big}){
 function CsRecheck({at, stage}){
   if(!at) return <span style={{color:'var(--sub)'}}>—</span>;
   const today = csTodayKst();
-  const over = stage!=='closed' && at < today;
+  const over = csGroupOf(stage)!=='종결' && at < today;
   const days = over ? Math.round((new Date(today) - new Date(at))/86400000) : 0;
   return (
     <span style={{color:over?'var(--red)':'var(--text)',fontWeight:over?600:400,whiteSpace:'nowrap'}}>
@@ -16955,14 +16980,11 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   const match = (t, id)=>{
     const today = csTodayKst();
     if(id==='all')        return true;
-    if(id==='mine')       return t.assignee===currentUserEmail && t.stage!=='closed';
-    if(id==='recheck')    return t.stage!=='closed' && t.recheck_at && t.recheck_at<=today;
-    if(id==='tosupplier') return !t.supplier_sent_at && t.stage!=='closed' && !t.held_at;
-    if(id==='awaiting')   return t.stage==='awaiting';
-    if(id==='held')       return !!t.held_at;
-    if(id==='csdone')     return t.stage==='cs_done';
-    if(id==='settle')     return t.stage==='settlement';
-    if(id==='refund')     return t.stage==='refund';
+    if(id==='mine')       return t.assignee===currentUserEmail && csGroupOf(t.stage)!=='종결';
+    if(id==='recheck')    return csGroupOf(t.stage)!=='종결' && t.recheck_at && t.recheck_at<=today;
+    if(id==='tosupplier') return !t.supplier_sent_at && csGroupOf(t.stage)!=='종결' && t.stage!=='held';
+    // 그룹 칩 — «g:처리중» 처럼 앞에 붙인다. 단계 하나하나를 칩으로 두지 않는다.
+    if(id.indexOf('g:')===0) return csGroupOf(t.stage) === id.slice(2);
     return true;
   };
 
@@ -17000,7 +17022,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
     const r = rows||[], today = csTodayKst();
     return {
       recheck: r.filter(t=>match(t,'recheck')).length,
-      over:    r.filter(t=>t.stage!=='closed' && t.recheck_at && t.recheck_at<today).length,
+      over:    r.filter(t=>csGroupOf(t.stage)!=='종결' && t.recheck_at && t.recheck_at<today).length,
       tosup:   r.filter(t=>match(t,'tosupplier')).length,
       await4:  r.filter(t=>t.stage==='awaiting' && t.supplier_sent_at &&
                  (Date.now()-new Date(t.supplier_sent_at))/86400000 >= 4).length,
@@ -18064,7 +18086,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
         <h1 style={{fontSize:17,fontWeight:700,margin:0,color:'var(--text)'}}>
           티켓 <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{t.id}</span></h1>
-        <CsStagePill stage={t.stage} held={!!t.held_at} big/>
+        <CsStagePill stage={t.stage} big/>
         {/* 묶음이면 «메인인가 서브인가» 와 형제 티켓을 함께 보인다 — 이력이 메인에
             쌓이므로, 지금 보는 것이 어느 쪽인지 모르면 «왜 여기 안 남지» 가 된다. */}
         {group.length>1 && (
@@ -18287,7 +18309,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   //   못 가는 단계(환불·정산 대기·종결)로는 옮기지 않는다 — 화면에서
                   //   슬쩍 옮겨 놓고 저장할 때 트리거에 막히면 «왜 안 되지» 가 된다.
                   const st = CS_ACTION_STAGE[v];
-                  if(st && (isMaster || ['refund','settlement','closed'].indexOf(st)<0)) setE('stage', st);
+                  if(st && (isMaster || CS_STAGES_MASTER.indexOf(st)<0)) setE('stage', st);
                 }}/>
             </div>
             <textarea value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
@@ -18327,7 +18349,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
                 onSave={()=>saveAll()}
                 onPick={id=>{ setE('stage', id); saveAll(id); }}
-                options={CS_STAGES.filter(x=>isMaster || ['refund','settlement','closed'].indexOf(x.id)<0)}/>
+                options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
             </div>
             {!isMaster && (
               <div style={{fontSize:10,color:'var(--sub)',marginTop:7,lineHeight:1.6}}>
