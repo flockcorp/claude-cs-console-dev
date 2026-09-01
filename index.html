@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20260901z_cs_chips_refund -->
+<!-- v20260901aa_cs_hold_chip -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ «CS 완료» 단계를 걷어냈다 — 「재출고 완료」(교환 쪽)와 「환불 대기」(반품 쪽)가 **이미 상담원 처리 끝**이라는 제니 정정. 내가 그 위에 단계를 하나 더 뒀던 것이 군더더기였다: 상담원이 「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다. 그 둘을 «확인 대기» 그룹으로 올렸고, **교환/환불 구분도 여기서 갈린다** — 방향으로 걸러 보는 것이 아니라 단계가 이미 두 갈래다. 기존 cs_done 티켓은 방향을 보고 옮겼다. ②「무슨 일」 드롭박스와 「누가」 라벨을 걷어냈다(제니). 두 번이나 «이게 뭐냐» 는 질문이 나온 칸이고, 값 목록에 «상태를 옮기는 것» 과 «단순 이력» 이 섞여 있어 저장 버튼(=단계)과도 겹쳐 보였다. 이제 이력은 «누가 무슨 말을 했나» 만 남기고 단계는 저장 버튼이 정한다. ★ 잃는 것이 없다 — 「공급사별 평균 회신 일수」는 action='회신' 을 세려던 것이었는데 **«누가»(side='공급사')가 이미 그 일을 한다**: 공급사가 남긴 첫 이력 시각에서 supplier_sent_at 을 빼면 된다. 사람이 남기는 이력은 전부 action='기록' 이고, 화면에는 그 이름을 안 보인다(모든 줄에 같은 말이 붙으면 소음이다). ③★★ **이력 «가리기»(블라인드)** — 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」. 잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고 읽는 사람이 어느 것이 맞는지 헷갈린다. ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다. ★★ 본문은 «실제로» 지운다: 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로 남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다. 되돌릴 수 없으므로 사유를 받는다. ★ 가릴 수 있는 사람은 그 글을 쓴 본인 또는 master 이고, **DB 정책도 같다.** ★★ append-only 는 그대로다 — update 정책을 열되 트리거가 «본문을 지우는 것 말고는 아무것도 못 바꾸게» 막는다(다른 글로 바꿔치기하는 것은 고치는 것이라 막는다. 이미 가려진 줄도 다시 못 건드린다). ★ dev 전용. -->
 <!-- v20260901v_cs_stage_groups -->
 <!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
@@ -16765,6 +16765,9 @@ const CS_CHIPS = [
   {id:'recheck',   label:'오늘의 리체크'},
   {id:'st:received',   label:'공급사 미접수'},
   {id:'st:awaiting',   label:'진행중'},
+  // ★ 보류는 «진행중» 에 섞지 않는다(제니). 남이 답을 줘야 움직이는 건이라
+  //   진행중과 섞이면 「오늘 내가 할 일」이 부풀어 보인다.
+  {id:'st:held',       label:'보류'},
   {id:'g:확인 대기',   label:'CS 완료 · 확인 대기'},
   {id:'st:settlement', label:'정산 대기'},
   {id:'g:종결',        label:'종결'},
@@ -17325,6 +17328,12 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   const fetchOne = async (code)=>{
     const {data,error} = await sb.functions.invoke('refund-fetch-order',{body:{order_id:code}});
     if(error || !data || !data.found) return null;
+    // ★★ 결제수단은 카페24가 주인이다 — 사람이 옮겨 적을 값이 아니다(제니는 이미 그렇게
+    //   되는 줄 알고 있었고, 그 편이 맞다). ref_payment_label 은 «계좌이체 (토스페이먼츠)»
+    //   처럼 PG사까지 담은 한 줄이고, 엣지 함수가 옛 버전이면 없으므로 물러선다.
+    //   ★ 금액은 «안» 채운다 — 결제액과 환불액은 다를 수 있다(환불 창에서 정한 규칙).
+    const pay = (data.ref_payment_label || data.ref_payment_method || '').trim();
+    if(pay) setF(p=> p.refund_method ? p : {...p, refund_method: pay});
     return {code, ...data};
   };
 
@@ -18103,9 +18112,22 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     //   이 단계의 뜻이 「이 건은 얼마를 돌려주면 된다, 확인만 해 달라」인데
     //   금액이 비어 있으면 받는 쪽이 다시 물어봐야 한다 — 그 왕복이 하루씩 먹는다.
     //   ★ 막는 것은 금액 하나뿐이다. 계좌는 카드 취소 건에는 아예 안 쓴다.
-    if(st==='refund' && money(edit.refund_amount)==null){
-      toast('환불 대기로 넘기려면 환불 금액을 넣어 주세요.','warn');
-      return;
+    // ★★ 「환불 대기」는 «계좌로 돌려주는 건» 만 온다(제니 2026-09-01).
+    //   카드 결제 건은 공급사 입고 회신이 오면 상담원이 그 자리에서 카드 취소를 하고
+    //   곧장 «환불 완료» 로 제출한다 — 내가 확인할 것이 없기 때문이다.
+    //   그래서 이 단계에는 계좌 셋이 반드시 있어야 한다. 하나라도 비면 받는 쪽이
+    //   다시 물어봐야 하고, 그 왕복이 하루씩 먹는다.
+    //   ★ 결제수단은 안 막는다 — 카페24 주문 조회가 채워 주는 값이다.
+    if(st==='refund'){
+      const miss = [];
+      if(money(edit.refund_amount)==null) miss.push('환불 금액');
+      if(!String(edit.refund_bank||'').trim())    miss.push('은행');
+      if(!String(edit.refund_holder||'').trim())  miss.push('예금주');
+      if(!String(edit.refund_account||'').trim()) miss.push('계좌번호');
+      if(miss.length){
+        toast('환불 대기로 넘기려면 '+miss.join(' · ')+' 을(를) 넣어 주세요.','warn');
+        return;
+      }
     }
     setBusy(true);
     const evs = [];
@@ -18452,7 +18474,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   <div style={{marginTop:3}}>
                     {String(e.note).split('\n').map((line,k)=>(
                       <div key={k} style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,
-                        fontFamily:'monospace'}}>{line}</div>
+                        fontFamily:'monospace',overflowWrap:'anywhere'}}>{line}</div>
                     ))}
                   </div>
                 ) : redactId===e.id ? (
@@ -18473,12 +18495,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   <div ref={noteRef} onMouseUp={()=>redactPick(e)}
                     style={{fontSize:12,color:'var(--text)',lineHeight:1.7,
                       whiteSpace:'pre-wrap',marginTop:2,padding:'6px 8px',borderRadius:6,
-                      background:'rgba(248,113,113,.10)',
+                      background:'rgba(248,113,113,.10)',overflowWrap:'anywhere',minWidth:0,
                       border:'1px dashed rgba(248,113,113,.5)',cursor:'text'}}>{e.note}</div>
                   </div>
                 ) : (
                   <div style={{fontSize:12,color:'var(--text)',lineHeight:1.7,
-                    whiteSpace:'pre-wrap',marginTop:2}}>{e.note}</div>
+                    whiteSpace:'pre-wrap',marginTop:2,
+                    overflowWrap:'anywhere',minWidth:0}}>{e.note}</div>
                 ))}
                 {e.blinded_at && redactId!==e.id && (
                   <div style={{fontSize:10,color:'var(--sub)',marginTop:3}}>
