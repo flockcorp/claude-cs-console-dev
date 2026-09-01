@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20260901ai_cs_reason_auto -->
+<!-- v20260901al_edit_fold -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ «CS 완료» 단계를 걷어냈다 — 「재출고 완료」(교환 쪽)와 「환불 대기」(반품 쪽)가 **이미 상담원 처리 끝**이라는 제니 정정. 내가 그 위에 단계를 하나 더 뒀던 것이 군더더기였다: 상담원이 「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다. 그 둘을 «확인 대기» 그룹으로 올렸고, **교환/환불 구분도 여기서 갈린다** — 방향으로 걸러 보는 것이 아니라 단계가 이미 두 갈래다. 기존 cs_done 티켓은 방향을 보고 옮겼다. ②「무슨 일」 드롭박스와 「누가」 라벨을 걷어냈다(제니). 두 번이나 «이게 뭐냐» 는 질문이 나온 칸이고, 값 목록에 «상태를 옮기는 것» 과 «단순 이력» 이 섞여 있어 저장 버튼(=단계)과도 겹쳐 보였다. 이제 이력은 «누가 무슨 말을 했나» 만 남기고 단계는 저장 버튼이 정한다. ★ 잃는 것이 없다 — 「공급사별 평균 회신 일수」는 action='회신' 을 세려던 것이었는데 **«누가»(side='공급사')가 이미 그 일을 한다**: 공급사가 남긴 첫 이력 시각에서 supplier_sent_at 을 빼면 된다. 사람이 남기는 이력은 전부 action='기록' 이고, 화면에는 그 이름을 안 보인다(모든 줄에 같은 말이 붙으면 소음이다). ③★★ **이력 «가리기»(블라인드)** — 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」. 잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고 읽는 사람이 어느 것이 맞는지 헷갈린다. ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다. ★★ 본문은 «실제로» 지운다: 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로 남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다. 되돌릴 수 없으므로 사유를 받는다. ★ 가릴 수 있는 사람은 그 글을 쓴 본인 또는 master 이고, **DB 정책도 같다.** ★★ append-only 는 그대로다 — update 정책을 열되 트리거가 «본문을 지우는 것 말고는 아무것도 못 바꾸게» 막는다(다른 글로 바꿔치기하는 것은 고치는 것이라 막는다. 이미 가려진 줄도 다시 못 건드린다). ★ dev 전용. -->
 <!-- v20260901v_cs_stage_groups -->
 <!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
@@ -6425,6 +6425,17 @@ function buildRefundTimeline(row, history){
 }
 
 // createdAt 을 주면 그 시각으로 남긴다 — 지나간 처리를 뒤늦게 이력으로 옮길 때 쓴다(원복 직전 보존).
+// 이 환불 건의 «사유» 를 읽는다.
+// ★★ 차례가 중요하다 — ①건에 박힌 이름 ②마스터 ③없음.
+//   마스터를 먼저 보면, 사유 이름이 나중에 바뀌었을 때 과거 건의 사유까지 함께 바뀐다.
+//   그 건이 접수될 «당시» 무슨 사유였는지가 자료이지, 지금 이름이 아니다.
+function refundReasonOf(r, reasonById){
+  if(r && r.reason_name) return {name:r.reason_name, color:r.reason_color||'gray'};
+  const m = reasonById && r ? reasonById[r.reason_id] : null;
+  if(m) return {name:m.name, color:m.color};
+  return null;
+}
+
 async function logRefund(refundId, action, actor, note, createdAt){
   if(!refundId) return;
   const { error } = await sb.from('refund_history').insert({
@@ -7973,16 +7984,22 @@ function RefundReportTab({ reasons }){
   const dateAmounts = dateLabels.map(d=>byDate[d].amount);
 
   // ② 사유별 분포
+  // ★★ 사유는 «이름» 으로 묶는다(id 가 아니라). 마스터에서 지운 옛 사유가
+  //   전부 'none' 한 덩어리로 뭉치는 것을 막는다 — 건마다 이름이 박혀 있으므로
+  //   지워진 사유도 제 이름으로 남는다.
   const byReason = {};
+  const reasonColor = {};
   rows.forEach(r=>{
-    const key = r.reason_id || 'none';
+    const info = refundReasonOf(r, reasonById);
+    const key = info ? info.name : '(사유 없음)';
+    if(info) reasonColor[key] = info.color;
     if(!byReason[key]) byReason[key]=[];
     byReason[key].push(r);
   });
   const reasonEntries = Object.entries(byReason)
-    .map(([rid,arr])=>{
-      const reason = reasonById[rid];
-      return { rid, name: reason?reason.name:'(삭제된 사유)', color: reason?reason.color:'gray', value: valOf(arr), count:arr.length };
+    .map(([nm,arr])=>{
+      return { rid: nm, name: nm, color: reasonColor[nm]||'gray',
+               value: valOf(arr), count:arr.length };
     })
     .sort((a,b)=>b.value-a.value);
 
@@ -8716,7 +8733,7 @@ function RefundManagementPage({ currentUserEmail }) {
                   {refunds.length===0 ? '등록된 환불 요청이 없습니다. 우측 상단 [+ 환불 요청 추가] 버튼으로 첫 요청을 등록해보세요.' : '검색 결과가 없습니다.'}
                 </td></tr>
               ) : displayed.map((r,idx)=>{
-                const reason = reasonById[r.reason_id];
+                const reason = refundReasonOf(r, reasonById);
                 const st = refundStatusOf(r);
                 const gKey = groupKeyOf(r);
                 const isInGroup = gKey && groupCounts[gKey]>=2;
@@ -17360,6 +17377,14 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
 //   티켓의 유형(불량·파손…)에서 짐작하면 환불 통계가 조용히 틀어진다.
 // ★★ 두 번 만들어지지 않게 하는 것은 «화면» 이 아니라 티켓의 refund_id 다 —
 //   버튼을 숨기는 것만으로는 막았다고 할 수 없다.
+// «값 변경» 이력이 몇 가지를 담고 있나 — 한 줄에 한 항목이다.
+// ★ 묶음 안내(괄호로 시작하는 줄)는 항목이 아니므로 안 센다.
+function editCount(e){
+  if(!e || !e.note) return 0;
+  return String(e.note).split('\n')
+    .filter(l=>l.trim() && l.trim().indexOf('(')!==0).length;
+}
+
 function CsRefundHandoff({t, currentUserEmail, onClose, onDone}){
   const [reasons,setReasons] = useState(null);
   const [reasonId,setReasonId] = useState('');
@@ -17468,7 +17493,7 @@ function CsRefundHandoff({t, currentUserEmail, onClose, onDone}){
           <label style={{fontSize:11,color:'var(--sub)',display:'block',marginBottom:5}}>
             환불 사유 <span style={{color:'var(--red)'}}>*</span>
             {autoPicked && <span style={{marginLeft:6,color:'var(--green)',fontWeight:600}}>
-              티켓의 «{t.cs_type} {t.direction}» 로 골랐습니다</span>}</label>
+              티켓의 «{t.cs_type} {t.direction}» 로 매칭 되었습니다.</span>}</label>
           <select value={reasonId} onChange={e=>setReasonId(e.target.value)}
             style={{width:'100%',fontSize:13,padding:'8px 10px',background:'var(--bg)',
               border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
@@ -18472,6 +18497,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //   글자 수까지 사라지는 것보다 정직하다. DB 규칙도 그 길이로 지킨다.
   // ★★ 확인 창을 두지 않는다(제니) — 드래그해서 고르는 것 자체가 «무엇을 지울지» 를
   //   눈으로 정하는 일이라, 그 위에 «정말요?» 를 얹으면 같은 것을 두 번 묻는 셈이다.
+  const [openEdits,setOpenEdits] = useState({});  // 펼쳐 둔 «값 변경» 이력
   const [handoff,setHandoff] = useState(false);   // 환불 관리로 넘기는 창
   const [redactId,setRedactId] = useState(null);   // 지금 «지우기» 를 켠 이력
   const noteRef = useRef(null);
@@ -18604,7 +18630,18 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   // ★ 머리말이 위에 붙어 있으므로 그 높이(약 62px)만큼 내려 붙는다 — 16 으로 두면
   //   패널 윗머리가 머리말 뒤로 숨는다.
   // ②용 — 격자 칸이 ①만큼 늘어나고, 그보다 길어지면 «안에서» 구른다.
-  const grow   = {...panel, minHeight:0, overflowY:'auto'};
+  // ★★★ ②의 «키» 규칙(제니 2026-09-01, 두 번 어긋난 끝에 정리)
+  //   ①은 넣은 내용만큼만 길다 — 그것이 기준이다.
+  //   ②는 «①보다 길어지지 않는다». 짧으면 짧은 대로 두고(빈 칸을 늘리지 않는다),
+  //     길어지면 제 안에서 세로로 구른다.
+  //   ②가 ①을 밀어 늘리는 일도 없어야 한다.
+  //   → 격자 칸을 «자리만» 잡게 두고(wrap), 그 안에서 ②를 띄운다(absolute).
+  //     띄운 것은 높이 계산에 안 들어가므로 ①을 밀지 못하고,
+  //     maxHeight:100% 가 ①이 정한 높이에서 멈춰 세운다.
+  //     (height:100% 로 두면 짧을 때도 끝까지 늘어나 아래가 텅 빈다 — 그게 앞선 실수다.)
+  const growWrap = {position:'relative', minHeight:0};
+  const grow   = {...panel, position:'absolute', top:0, left:0, right:0,
+    maxHeight:'100%', overflowY:'auto', boxSizing:'border-box'};
   // ③용 — 짧은 칸이라 따라 내려온다. 머리말이 위에 붙어 있으므로 그 높이만큼 내려 붙는다.
   const sticky = {...panel, position:'sticky', top:74, alignSelf:'start',
     maxHeight:'calc(100vh - 90px)', overflowY:'auto'};
@@ -18841,6 +18878,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         </div>
 
         {/* ── ② 이력 ──────────────────────────────────────────────── */}
+        <div style={growWrap}>
         <div style={grow}>
           <div style={ptitle}>② 이력 — 오래된 것부터</div>
           {events===null ? (
@@ -18856,6 +18894,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             //   → 값 변경은 «회색 · 점선 · 작은 글씨» 로 한 발 물러나게 하고,
             //     항목마다 한 줄로 끊어 그린다. 사람이 적은 말이 앞으로 나온다.
             const isEdit = e.action==='수정';
+            // ★ 접힌 줄에 «3» 이 붙으면 열어 볼지 말지가 그 자리에서 정해진다.
+            //   숫자가 없으면 전부 열어 보게 되어 접어 둔 뜻이 없어진다.
             // ★ 띠·바탕도 뱃지와 «같은 색» 이다. 색이 갈리면 어느 것이 맞는지 알 수 없다.
             const c = csSideStyle(e.side);
             const rail = isEdit ? 'var(--border)' : c.fg;
@@ -18869,9 +18909,16 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:'flex',gap:7,alignItems:'baseline',flexWrap:'wrap'}}>
                   {isEdit ? (
-                    <span style={{fontSize:10,fontWeight:600,color:'var(--sub)',
-                      border:'1px dashed var(--border)',borderRadius:4,padding:'1px 6px'}}>
-                      값 변경</span>
+                    /* ★ 뱃지 자체가 여는 손잡이다. 옆에 [펼치기] 를 따로 두면
+                         작은 글씨 옆에 작은 버튼이 하나 더 붙어 둘 다 안 눌린다. */
+                    <span onClick={()=>setOpenEdits(p=>({...p,[e.id]:!p[e.id]}))}
+                      title={openEdits[e.id]?'접기':'무엇이 바뀌었는지 보기'}
+                      style={{fontSize:10,fontWeight:600,color:'var(--sub)',cursor:'pointer',
+                        border:'1px dashed var(--border)',borderRadius:4,padding:'1px 6px',
+                        userSelect:'none'}}>
+                      값 변경 {editCount(e)>1 && <span style={{fontFamily:'monospace',
+                        opacity:.8}}>{editCount(e)}</span>} <span style={{opacity:.7}}>
+                        {openEdits[e.id]?'▴':'▾'}</span></span>
                   ) : (
                     <>
                       <CsSideBadge side={e.side}/>
@@ -18904,14 +18951,14 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                       {redactId===e.id ? '완료' : '지우기'}</button>
                   )}
                 </div>
-                {e.note && (isEdit ? (
+                {e.note && (isEdit ? (openEdits[e.id] && (
                   <div style={{marginTop:3}}>
                     {String(e.note).split('\n').map((line,k)=>(
                       <div key={k} style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,
                         fontFamily:'monospace',overflowWrap:'anywhere'}}>{line}</div>
                     ))}
                   </div>
-                ) : redactId===e.id ? (
+                )) : redactId===e.id ? (
                   // 지우기 모드 — 본문을 «한 덩어리 글» 로 둔다. 안에 태그를 섞으면
                   // 드래그한 자리가 몇 번째 글자인지 셀 수 없다.
                   <div style={{marginTop:4}}>
@@ -19019,6 +19066,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               </div>
             )}
           </div>
+        </div>
         </div>
 
         {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
