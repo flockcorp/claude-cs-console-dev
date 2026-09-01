@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901i_cs_new_settle -->
+<!-- (2026-09-01) 티켓 «생성» 화면에도 정산 칸을 넣었다(제니). 앞 판에서는 «접수 시점에는 금액도 부담 주체도 모른다» 는 이유로 일부러 뺐는데, **정산 반영만을 목적으로 티켓을 만드는 경우가 실제로 있다** — 방향 목록의 «정산반영만» 이 그것이고 이관 시트 225건에도 그런 건이 있었다. 내 전제가 좁았다. ★ 비워 두는 것이 기본이고, 필요할 때만 넣는다는 뜻으로 «· 필요할 때만» 을 제목에 붙였다. ★ master 에게만 보인다 — 화면에서 숨기는 것과 별개로 DB 트리거가 한 번 더 막는다(만들면서 곧장 정산에 손대는 것도 같은 잠금이다). ★ 빈 칸은 «아직 안 넣음»(null)이고 0원과 다른 말이다. 마이너스도 넣을 수 있다. 겸해 상단 안내 문구(「응대하면서 ①…②…③…」)를 지웠다(제니) — 화면이 이미 그 순서로 서 있어 글로 다시 설명할 필요가 없다. ★ dev 전용. -->
 <!-- v20260901h_cs_settle -->
 <!-- (2026-09-01) 상세 화면의 «정산» 칸을 master 가 실제로 입력할 수 있게 했다(제니 제보 — master 로 로그인했는데 정산에 입력이 안 된다). 앞 판에서 읽기 전용으로만 그려 두고 마무리를 안 한 자리다. ①누가 부담(공급사/우리) · 정산 상품금액 · 정산 배송료 셋을 master 에게만 입력칸으로 준다. 나머지 권한에는 예전처럼 값만 보인다 — 자기가 못 바꾸더라도 «얼마로 정산되는지» 는 알아야 한다. ②★★ 화면에서 숨기는 것과 «별개로» DB 트리거가 한 번 더 막는다. 버튼을 숨기는 것만으로는 «막았다» 고 할 수 없다. 그 트리거는 칸 목록을 스스로 갖지 않고 console_settings.cs_field_rules 를 읽어 판정하므로, 나중에 설정 화면에서 «정산도 상담원이 입력» 으로 바꾸면 자물쇠도 함께 풀린다 — 화면과 DB 가 갈리지 않는다. ③★★ «누가 부담» 에 기본값을 두지 않았다. 「대부분 공급사」라고 깔아 두면 아무도 안 바꾼 건이 조용히 공급사 정산에 올라간다 — 거래처에 잘못 청구하는 일이고 되돌리려면 사람이 연락해서 빼야 한다. 반대 실수(우리 부담인데 정산에 안 올림)는 우리 손해로 끝난다. **두 실수의 무게가 다르면 기본값은 «아직 안 정함» 이어야 한다.** 고르면 그 뜻을 한 줄로 적어 준다 — 공급사면 정산 대기를 거치고 우리면 바로 종결. ④금액 칸(CsMoney)은 «칸에서 손을 떼거나 Enter» 일 때만 저장한다. 저장이 곧 이력 한 줄이라 글자마다 남기면 이력이 숫자 조각으로 뒤덮인다. 값이 그대로면 아무것도 하지 않는다. ★ 마이너스를 허용한다(젠데스크 정산 금액도 마이너스가 되는 값이었다). ★ 빈 칸은 «아직 안 넣음»(null)이고 0원과 다른 말이다. ⑤티켓 «생성» 화면에는 정산을 일부러 두지 않았다 — 접수 시점에는 금액도 부담 주체도 아직 모른다. 필요하면 넣는다. ★ dev 전용. -->
 <!-- v20260901g_cs_detail -->
@@ -17045,7 +17047,8 @@ function CsPick({value, options, onChange, placeholder, width}){
 //
 // ★ 이력을 «미리» 쌓아 둔다. 티켓이 아직 없으니 저장할 수 없어서, 응대 중에 적은 줄을
 //   화면에 모아 두었다가 [티켓 만들기] 때 한꺼번에 이벤트로 넣는다.
-function CsNewTicketPage({currentUserEmail, onDone, onCancel, goTicket}){
+function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
+  const isMaster = role==='master';
   const [raw,setRaw]       = useState('');
   const [busy,setBusy]     = useState(false);
   const [msg,setMsg]       = useState(null);
@@ -17064,6 +17067,10 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel, goTicket}){
     receiver_name:'', receiver_phone:'',
     ship_zipcode:'', ship_address1:'', ship_address2:'',
     pickup_zipcode:'', pickup_address1:'', pickup_address2:'',
+    // ★ 정산 값은 «접수 시점에 모르는» 것이 보통이지만, **정산 반영만을 목적으로
+    //   티켓을 만드는 경우가 실제로 있다**(제니 · 방향 목록의 «정산반영만» 이 그것이고
+    //   이관 시트에도 그런 건이 있다). 그래서 만들 때부터 넣을 수 있게 둔다.
+    cost_bearer:'', settle_fee:'', settle_shipping_fee:'',
   });
   const set = (k,v)=> setF(p=>({...p,[k]:v}));
 
@@ -17176,6 +17183,11 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel, goTicket}){
       order_qty: parseInt(f.order_qty,10) || null,
       cs_qty: parseInt(f.cs_qty,10),
       intake_path: f.intake_path, cs_type: f.cs_type, direction: f.direction || null,
+      // ★ 빈 칸은 «아직 안 넣음»(null)이다 — 0원과 다른 말이다.
+      cost_bearer: f.cost_bearer || null,
+      settle_fee: f.settle_fee.trim()==='' ? null : (parseInt(f.settle_fee.replace(/[^0-9-]/g,''),10) || 0),
+      settle_shipping_fee: f.settle_shipping_fee.trim()==='' ? null
+        : (parseInt(f.settle_shipping_fee.replace(/[^0-9-]/g,''),10) || 0),
       stage:'received', recheck_at: recheck,
       assignee: currentUserEmail, created_by: currentUserEmail, updated_by: currentUserEmail,
       memo: f.memo || null,
@@ -17219,9 +17231,6 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel, goTicket}){
     <div className="section" style={{contain:'inline-size'}}>
       <div style={{marginBottom:16,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>새 티켓</h1>
-        <span style={{fontSize:12,color:'var(--sub)'}}>
-          응대하면서 ① 주문을 불러오고 ② 오간 말을 적고 ③ 상품 정보를 보며 안내합니다
-        </span>
         <div style={{flex:1}}></div>
         <button onClick={onCancel} style={{padding:'7px 14px',background:'transparent',
           border:'1px solid var(--border)',borderRadius:7,color:'var(--sub)',fontSize:12,
@@ -17370,6 +17379,40 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel, goTicket}){
               <span style={{fontSize:10,color:'var(--sub)',alignSelf:'center'}}>기본 +3일</span>
             </div>
           </div>
+
+          {/* ── 정산 ────────────────────────────────────────────────────
+              ★★ 접수 시점에는 보통 모르는 값이지만 **정산 반영만을 목적으로 티켓을
+                만드는 경우가 있다**(제니) — 방향 목록의 «정산반영만» 이 그것이다.
+                그래서 만들 때부터 넣을 수 있게 둔다. 비워 두는 것이 기본이다.
+              ★★ master 에게만 보인다. 화면에서 숨기는 것과 «별개로» DB 트리거가 한 번 더
+                막는다 — 만들면서 곧장 정산에 손대는 것도 같은 잠금이다. */}
+          {isMaster && (
+            <>
+              <div style={sec}>정산 <span style={{opacity:.7}}>· 필요할 때만</span></div>
+              <div style={{marginBottom:9}}>
+                <label style={lbl}>누가 부담</label>
+                <CsPick value={f.cost_bearer} options={['공급사','우리']}
+                  onChange={v=>set('cost_bearer',v)} placeholder="아직 안 정함"/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
+                <div style={{marginBottom:9}}>
+                  <label style={lbl}>정산 상품금액</label>
+                  <input value={f.settle_fee} onChange={e=>set('settle_fee',e.target.value)}
+                    placeholder="비우면 안 넣음"
+                    style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
+                </div>
+                <div style={{marginBottom:9}}>
+                  <label style={lbl}>정산 배송료</label>
+                  <input value={f.settle_shipping_fee} onChange={e=>set('settle_shipping_fee',e.target.value)}
+                    placeholder="비우면 안 넣음"
+                    style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
+                </div>
+              </div>
+              <div style={{fontSize:10,color:'var(--sub)',marginTop:-2,marginBottom:9,lineHeight:1.6}}>
+                마이너스도 넣을 수 있습니다. 비우면 «아직 안 넣음» 입니다.
+              </div>
+            </>
+          )}
 
           <div style={{fontSize:10,color:'var(--sub)',marginTop:11,lineHeight:1.7,
             paddingTop:9,borderTop:'1px solid var(--border)'}}>
@@ -18973,7 +19016,7 @@ function App() {
         {page==='autoDelivery'&&(isMaster||isManager)&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='csTickets'&&<CsTicketsPage currentUserEmail={session.user.email} role={role}
           onNew={()=>navigateTo('csNew')} goTicket={openTicket}/>}
-        {page==='csNew'&&<CsNewTicketPage currentUserEmail={session.user.email}
+        {page==='csNew'&&<CsNewTicketPage currentUserEmail={session.user.email} role={role}
           onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
           goTicket={openTicket}/>}
         {page==='csTicket'&&<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
