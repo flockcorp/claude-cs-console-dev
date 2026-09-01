@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260901g_cs_detail -->
+<!-- (2026-09-01) 티켓 «상세» 화면을 만들고 생성 화면의 3단 구성을 그것과 똑같이 맞췄다(제니 지시). ★★ 화면 모양을 맞추려는 것이 아니다 — **실제 업무가 그 순서로 흐른다**: 고객과 통화하면서 ①에 주문을 불러오고 ②에 오간 말을 적고 ③에서 상품 정보를 보며 안내하고 마지막에 티켓을 만든다. 만들 때 보던 자리가 만든 뒤에도 그대로여야 한다. 그래서 두 화면이 «① 티켓 정보 · ② 이력 · ③ 상품 CS 정보 · 주문자 최근 티켓» 으로 같다. ①생성 화면: 1단에 주문 조회를 넣고 카페24가 준 값과 사람이 넣는 값을 한 칸에 모았다. «주소» 를 넣었다(배송 주소지 · 회수 주소지 · [배송 주소지와 동일] 버튼). ★ 회수 주소지는 비우면 «배송지와 같다» 는 뜻이고, 저장할 때 배송지를 복사해 채우지 않는다 — 복사해 두면 배송지가 바뀌어도 회수지가 그날 값으로 굳는다. 버튼을 누르는 것은 «사람이 명시적으로 복사한 것» 이라 값이 실제로 들어간다. 리체크 빠른 버튼을 [+1일]·[+3일]·[+7일] 셋으로 바꿨다. ②생성 화면 2단에서 **이력을 미리 쌓는다** — 티켓이 아직 없어 저장할 수 없으니 응대 중에 적은 줄을 화면에 모아 두었다가 [티켓 만들기] 때 한꺼번에 이벤트로 넣는다. 고객/우리/공급사 «누가» 를 함께 고른다. ③오른쪽 칸이 실제로 채워진다: 이 상품 CS 정보(products.cs_info) · 이 주문자 최근 티켓(**연락처 기준**, 숫자만 남겨 맞춘다) · 같은 품목의 기존 티켓. ★★ 상품 CS 정보는 «코드» 기준이 원칙인데 조회 창구가 상품코드를 안 준다 — 지금은 이름으로 찾되 **딱 한 건일 때만** 쓴다(여럿이면 아무것도 안 보여 준다). 임시임을 화면에도 적었다. ④★★ [티켓 이동](제니 요청) — 「이 품목에 이미 N건 있습니다」 옆에 붙였다. **새로 만들 일이 아니라 그 건에 이력을 더할 일** 인 경우의 길이 없었다. 누르면 그 티켓 상세로 간다. ★ 여기까지 적어 둔 이력은 «그 티켓의 것이 아니므로» 들고 가지 않는다 — 옮겨 붙이면 어느 통화에서 나온 말인지가 흐려진다. 그래서 적은 것이 있으면 먼저 알린다. ⑤상세 화면: 유형·방향·단계·리체크를 그 자리에서 고치고, 고칠 때마다 «수정» 이력이 함께 쌓인다 — 단계가 안 바뀌는 손질도 남아야 «누가 언제 바꿨나» 를 알 수 있다. ★ crew·manager 에게는 단계 목록에서 환불·정산 대기·종결을 아예 빼고 «내 일이 끝나면 CS 완료로 넘기세요» 라고 적었다 — 못 누르게 막는 것보다 «어디까지가 내 일인지» 를 알려 주는 편이 낫다. ★ 이력에 «남기기» 만 있고 «수정» 이 없다 — append-only 라 DB 에 update/delete 정책이 없다. 잘못 적었으면 바로잡는 줄을 새로 남긴다. ⑥목록의 «#번호» 를 누르면 상세로 간다. 따로 [보기] 열을 만들지 않았다 — 열이 하나 늘면 그만큼 정작 봐야 할 내용이 좁아진다. ★ 어느 티켓을 열었는지는 상태로만 갖고 주소창에 안 넣는다: 이 콘솔은 라우터가 없고 page 하나로 화면을 가르는데, 티켓만 예외를 두면 뒤로가기 동작이 갈린다. ★ dev 전용. -->
 <!-- v20260901f_cs_new_screen -->
 <!-- (2026-09-01) 티켓 만들기를 «모달» 에서 «화면» 으로 바꾸고 넷을 고쳤다(제니 제보). ①모달 → 3단 화면(page=csNew). 모달 폭으로는 주문 정보·수기 입력·확인거리를 나란히 못 놓는다. 상세 화면과 같은 3단이라 만들 때 보던 자리에서 그대로 이어 보게 된다 — 왼쪽=카페24가 준 것(읽기 전용) · 가운데=사람이 넣는 것 · 오른쪽=만들기 전에 봐야 할 것(같은 품목의 기존 티켓). ★ 왼쪽을 «읽기 전용» 으로 못 박은 이유: 그 값들은 카페24가 주인이고 사람이 고치면 어느 쪽이 진짜인지 알 수 없게 된다. ②주문 조회를 두 갈래로 열었다 — 품목별 주문번호를 바로 넣거나, 주문번호만 넣으면 품목을 찾아 고르게 한다. ★★ 지금 엣지 함수(refund-fetch-order)는 «품목 목록» 을 안 준다. 품목별 주문번호를 주면 그 품목만 돌려줄 뿐이다. 그래서 -01 부터 이어 붙여 물어보며 훑는다. ★ 번호가 중간에 빠진 주문이 있다(취소된 품목) — 첫 실패에서 멈추면 뒤를 놓치므로 «연속 세 번» 실패할 때까지는 계속 본다. 열 개까지만 본다: 한 주문에서 그보다 많은 품목을 CS 접수하는 경우는 실무에 없다. ★ 함수를 넓히면 이 훑기는 통째로 사라진다 — 임시 방편임을 코드에도 적어 뒀다. ③경로·유형·방향을 «검색 > 선택» 으로 바꿨다(CsPick). 환불 창의 은행 고르기와 같은 방식이되 **직접 입력은 뺐다**(제니) — 목록에 없는 값은 DB check 제약이 어차피 막고, 오타로 만든 새 유형이 통계를 조용히 망가뜨린다. Enter 로도 목록 밖 값은 안 들어간다. ★ 드롭다운을 그대로 두지 않은 이유: 유형이 11개라 눈으로 훑는 것보다 두 글자 치는 편이 빠르다. 대신 비어 있을 때는 전부 펼쳐 보여 준다 — 무엇이 있는지 모르는 사람에게는 목록이 먼저 필요하다. ④리체크 날짜가 «고정처럼 보인다» 는 제보를 고쳤다. 값은 처음부터 바꿀 수 있었지만 어두운 바탕에서 date 입력이 눌러도 되는 것으로 안 읽혔다 — colorScheme:dark 를 주고 [오늘]·[+3일]·[+7일] 빠른 버튼과 「기본은 +3일이고 바꿀 수 있습니다」 한 줄을 붙였다. ★ 날짜는 KST 로 잰다(UTC 로 재면 새벽에 하루 어긋난다). ⑤필수는 «만들 때 필수» 만 본다 — 품목·경로·유형·CS 접수 수량. 방향은 «미정» 으로 둘 수 있다. 못 채운 것은 버튼만 막는 게 아니라 «아직 필요합니다 — 유형 · 접수 경로» 로 이름을 적어 준다. ★ dev 전용. 운영 승격은 티켓 기능 완성 후. -->
 <!-- v20260901e_cs_new_ticket -->
@@ -16650,6 +16652,11 @@ const CS_TYPES = ['불량','파손','오염','누락','오배송','지연','배�
 const CS_DIRECTIONS = ['교환','반품','부분보상','재출고','환불','정산반영만',
                        '안내종결','취소','A/S'];
 const CS_INTAKE = ['전화','채팅','게시판','후기'];
+// 이력에 남길 «무슨 일». ★ DB check 제약과 짝이다(cs_ticket_events.action) —
+//   한쪽만 고치면 저장이 조용히 막힌다.
+const CS_ACTIONS = ['접수','공급사접수','회신','리체크','회수완료','재출고','입고확인',
+                    'CS완료','환불요청','환불완료','정산반영','보류','보류해제',
+                    '철회','종결','수정'];
 
 // 단계 — 코드 · 표시 이름 · 색. 차례가 곧 흐름이다.
 // ★ cs_done(CS 완료)이 «상담원의 끝» 이다. 그 아래는 master 의 영역이다.
@@ -16753,7 +16760,7 @@ function CsRecheck({at, stage}){
   );
 }
 
-function CsTicketsPage({currentUserEmail, role, onNew}){
+function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
   const [chip,setChip]     = useState('mine');
   const [q,setQ]           = useState('');
@@ -16932,7 +16939,13 @@ function CsTicketsPage({currentUserEmail, role, onNew}){
               {list.map(t=>(
                 <tr key={t.id} style={{borderTop:'1px solid var(--border)'}}>
                   <td style={csTd}>
-                    <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{t.id}</span>
+                    {/* ★ 번호가 곧 «열기» 다. 따로 [보기] 열을 만들지 않는다 —
+                        젠데스크도 목록의 줄을 눌러 열었고, 열이 하나 늘면 그만큼
+                        정작 봐야 할 내용이 좁아진다. */}
+                    <span onClick={()=>goTicket(t.id)} title="티켓 열기"
+                      style={{fontFamily:'monospace',color:'var(--accent)',cursor:'pointer',
+                        textDecoration:'underline',textUnderlineOffset:3,
+                        textDecorationColor:'rgba(210,229,255,.35)'}}>#{t.id}</span>
                   </td>
                   {colKeys.map(k=><td key={k} style={csTd}>{CS_COLS[k].cell(t)}</td>)}
                 </tr>
@@ -17021,23 +17034,34 @@ function CsPick({value, options, onChange, placeholder, width}){
 // ── 새 티켓 만들기 (화면) ─────────────────────────────────────────────────
 // ★★ 티켓은 «사람이 필요해서» 만든다(제니). 카페24 신청을 보고 자동으로 만들지 않는다
 //   — 그래서 담당자가 빌 자리가 없다(만든 사람이 곧 담당자다).
-// ★★ 모달이 아니라 «화면» 이다(제니 2026-09-01). 상세 화면과 같은 3단이라
-//   만들 때 보던 자리에서 그대로 이어 보게 된다. 모달은 좁아서 주문 정보·수기 입력·
-//   확인거리를 나란히 못 놓는다.
-//     왼쪽  = 카페24가 준 것 (읽기 전용)
-//     가운데 = 사람이 넣는 것
-//     오른쪽 = 만들기 전에 봐야 할 것 (같은 품목의 기존 티켓)
-function CsNewTicketPage({currentUserEmail, onDone, onCancel}){
-  const [raw,setRaw]     = useState('');      // 사람이 넣은 번호(주문 또는 품목별)
-  const [busy,setBusy]   = useState(false);
-  const [msg,setMsg]     = useState(null);
-  const [items,setItems] = useState(null);    // 주문번호로 훑어 찾은 품목들
-  const [picked,setPicked] = useState(null);  // 고른 품목 {code, ...주문정보}
-  const [dups,setDups]   = useState(null);
-  const [f,setF]         = useState({
+//
+// ★★ 3단 구성을 «상세 화면과 똑같이» 맞춘다(제니 2026-09-01).
+//   ① 티켓 정보 (주문 조회 포함) · ② 이력 · ③ 상품 CS 정보 · 주문자 최근 티켓
+//   이유는 화면 모양을 맞추려는 것이 아니다 — **실제 업무가 그 순서로 흐르기 때문**이다:
+//   고객과 통화하면서 ①에 주문을 불러오고, ②에 오간 말을 적고, ③에서 상품 정보를 보며
+//   안내하고, 마지막에 티켓을 만든다. 만들 때 보던 자리가 만든 뒤에도 그대로여야 한다.
+//
+// ★ 이력을 «미리» 쌓아 둔다. 티켓이 아직 없으니 저장할 수 없어서, 응대 중에 적은 줄을
+//   화면에 모아 두었다가 [티켓 만들기] 때 한꺼번에 이벤트로 넣는다.
+function CsNewTicketPage({currentUserEmail, onDone, onCancel, goTicket}){
+  const [raw,setRaw]       = useState('');
+  const [busy,setBusy]     = useState(false);
+  const [msg,setMsg]       = useState(null);
+  const [items,setItems]   = useState(null);
+  const [picked,setPicked] = useState(null);
+  const [dups,setDups]     = useState(null);    // 같은 품목의 기존 티켓
+  const [byPhone,setByPhone] = useState(null);  // 이 주문자의 최근 티켓
+  const [csInfo,setCsInfo] = useState(null);    // 이 상품의 CS 정보
+  const [notes,setNotes]   = useState([]);      // 아직 저장 전인 이력
+  const [draft,setDraft]   = useState('');
+  const [side,setSide]     = useState('고객');
+
+  const [f,setF] = useState({
     option_name:'', order_qty:'', cs_qty:'1',
     intake_path:'', cs_type:'', direction:'', memo:'',
     receiver_name:'', receiver_phone:'',
+    ship_zipcode:'', ship_address1:'', ship_address2:'',
+    pickup_zipcode:'', pickup_address1:'', pickup_address2:'',
   });
   const set = (k,v)=> setF(p=>({...p,[k]:v}));
 
@@ -17047,6 +17071,9 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel}){
 
   const isItemCode = (v)=> /-\d{2}$/.test(String(v||'').trim());
   const baseOf = (v)=>{ const s=String(v||'').trim(); return isItemCode(s) ? s.slice(0,-3) : s; };
+  // ★ 연락처는 사람이 적는 값이라 표기가 흔들린다(010-1234-5678 / 01012345678).
+  //   숫자만 남겨 맞춰야 «전에도 있었는데 안 뜨는» 일이 안 생긴다.
+  const digits = (v)=> String(v||'').replace(/[^0-9]/g,'');
 
   const fetchOne = async (code)=>{
     const {data,error} = await sb.functions.invoke('refund-fetch-order',{body:{order_id:code}});
@@ -17054,46 +17081,71 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel}){
     return {code, ...data};
   };
 
-  const loadDups = async (code)=>{
-    const {data} = await sb.from('cs_tickets')
+  // 품목을 고르면 ③ 오른쪽 칸을 채운다 — 응대하면서 봐야 할 것들이다.
+  const loadSide = async (it)=>{
+    setDups(null); setByPhone(null); setCsInfo(null);
+    // 같은 품목의 기존 티켓 (매뉴얼의 «만들기 전에 검색»)
+    const {data:d1} = await sb.from('cs_tickets')
       .select('id,stage,cs_type,direction,created_at,assignee')
-      .eq('order_item_code', code).order('id',{ascending:false});
-    setDups(data||[]);
+      .eq('order_item_code', it.code).order('id',{ascending:false});
+    setDups(d1||[]);
+    // 이 «주문자» 의 최근 티켓 — 연락처 기준이다(공급사가 아니다).
+    // ★ 숫자만 남겨 맞춘다. 건수가 늘면 서버 쪽에서 거르도록 옮긴다.
+    const dg = digits(it.customer_phone);
+    if(dg){
+      const {data:d2} = await sb.from('cs_tickets')
+        .select('id,stage,cs_type,direction,created_at,orderer_phone')
+        .order('id',{ascending:false}).limit(300);
+      setByPhone((d2||[]).filter(t=>digits(t.orderer_phone)===dg).slice(0,6));
+    } else setByPhone([]);
+    // 이 상품의 CS 정보.
+    // ★★ 상품 연결은 «코드» 기준이 원칙인데 조회 창구가 상품코드를 안 준다.
+    //   그래서 지금은 이름으로 찾되, **딱 한 건일 때만** 쓴다 — 여럿이면 어느 상품인지
+    //   알 수 없으므로 아무것도 안 보여 준다. 이름으로 이으면 언젠가 조용히 틀리기 때문에
+    //   «임시» 임을 화면에도 적는다. 엣지 함수가 코드를 주면 이 자리가 정확해진다.
+    if(it.product_name){
+      const {data:d3} = await sb.from('products')
+        .select('product_code,product_name,cs_info,memo').eq('product_name', it.product_name).limit(3);
+      setCsInfo((d3||[]).length===1 ? d3[0] : {ambiguous:(d3||[]).length});
+    } else setCsInfo({ambiguous:0});
   };
 
-  // ★★ 주문번호만 넣으면 품목을 «훑어» 목록을 만든다.
-  //   지금 엣지 함수(refund-fetch-order)는 품목 목록을 안 준다 — 품목별 주문번호를
-  //   주면 그 품목을 돌려줄 뿐이다. 그래서 -01 부터 이어 붙여 물어본다.
-  //   ★ 번호가 중간에 빠진 주문이 있다(취소된 품목). 첫 실패에서 멈추면 뒤를 놓치므로
-  //     «연속 세 번» 실패할 때까지는 계속 본다. 열 개까지만 본다 — 그보다 많은 품목을
-  //     한 주문에서 CS 접수하는 경우는 실무에 없다.
+  // ★★ 주문번호만 넣으면 품목을 «훑어» 목록을 만든다. 지금 엣지 함수는 품목 목록을
+  //   안 준다 — 품목별 주문번호를 주면 그 품목만 돌려줄 뿐이다. 그래서 -01 부터 물어본다.
+  //   ★ 번호가 중간에 빠진 주문이 있다(취소된 품목) → 연속 세 번 실패까지는 계속 본다.
   //   ★ 함수를 넓히면 이 훑기는 통째로 사라진다. 임시 방편임을 여기 적어 둔다.
   const lookup = async ()=>{
     const v = raw.trim();
     if(!v){ setMsg({t:'err',m:'주문번호를 먼저 넣어 주세요.'}); return; }
-    setBusy(true); setMsg(null); setItems(null); setPicked(null); setDups(null);
+    setBusy(true); setMsg(null); setItems(null); setPicked(null);
+    setDups(null); setByPhone(null); setCsInfo(null);
     if(isItemCode(v)){
       const one = await fetchOne(v);
       if(!one){ setMsg({t:'err',m:'그 품목을 찾지 못했습니다. 번호를 확인해 주세요.'}); setBusy(false); return; }
-      setPicked(one); await loadDups(v);
+      setPicked(one); await loadSide(one);
       setMsg({t:'ok',m:'주문 정보를 불러왔습니다.'});
     } else {
-      const base = baseOf(v), found = [];
-      let miss = 0;
+      const base = baseOf(v), found = []; let miss = 0;
       for(let i=1;i<=10 && miss<3;i++){
-        const code = base+'-'+String(i).padStart(2,'0');
-        const one = await fetchOne(code);
+        const one = await fetchOne(base+'-'+String(i).padStart(2,'0'));
         if(one){ found.push(one); miss=0; } else { miss++; }
       }
       if(!found.length){ setMsg({t:'err',m:'그 주문에서 품목을 찾지 못했습니다.'}); setBusy(false); return; }
       setItems(found);
-      if(found.length===1){ setPicked(found[0]); await loadDups(found[0].code); }
+      if(found.length===1){ setPicked(found[0]); await loadSide(found[0]); }
       setMsg({t:'ok',m:found.length+'개 품목을 찾았습니다.'+(found.length>1?' 접수할 품목을 고르세요.':'')});
     }
     setBusy(false);
   };
 
-  const choose = async (it)=>{ setPicked(it); await loadDups(it.code); };
+  const choose = async (it)=>{ setPicked(it); await loadSide(it); };
+
+  const addNote = ()=>{
+    const t = draft.trim();
+    if(!t) return;
+    setNotes(n=>[...n,{side, text:t, at:new Date()}]);
+    setDraft('');
+  };
 
   // «만들 때 필수» 만 본다. 방향처럼 협의하며 정해지는 값은 종결할 때 본다 —
   // 접수 시점에 필수로 걸면 사람이 «-» 를 채워 넣는다(젠데스크에서 실제로 그랬다).
@@ -17109,25 +17161,33 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel}){
     const row = {
       order_id: baseOf(picked.code), order_item_code: picked.code,
       product_name: picked.product_name || null, option_name: f.option_name || null,
+      product_code: (csInfo && csInfo.product_code) || null,
       supplier_name: picked.supplier_name || null,
       orderer_name: picked.customer_name || null, orderer_phone: picked.customer_phone || null,
       receiver_name: f.receiver_name || null, receiver_phone: f.receiver_phone || null,
+      ship_zipcode: f.ship_zipcode || null,
+      ship_address1: f.ship_address1 || null, ship_address2: f.ship_address2 || null,
+      // ★ 회수 주소지는 «비어 있으면 배송지와 같다» 는 뜻이다. 저장할 때 배송지를
+      //   복사해 채우지 않는다 — 복사해 두면 배송지가 바뀌어도 회수지가 그날 값으로 굳는다.
+      pickup_zipcode: f.pickup_zipcode || null,
+      pickup_address1: f.pickup_address1 || null, pickup_address2: f.pickup_address2 || null,
       order_qty: parseInt(f.order_qty,10) || null,
       cs_qty: parseInt(f.cs_qty,10),
-      intake_path: f.intake_path, cs_type: f.cs_type,
-      direction: f.direction || null,
+      intake_path: f.intake_path, cs_type: f.cs_type, direction: f.direction || null,
       stage:'received', recheck_at: recheck,
       assignee: currentUserEmail, created_by: currentUserEmail, updated_by: currentUserEmail,
       memo: f.memo || null,
     };
     const {data,error} = await sb.from('cs_tickets').insert(row).select('id').single();
     if(sbFail('티켓 만들기', error)){ setBusy(false); return; }
-    // 이력 한 줄. ★ 실패해도 티켓 만들기를 막지 않는다 — 이미 끝난 일이 실패한 것처럼
+    // 응대하면서 쌓아 둔 이력을 한꺼번에 넣는다. 없으면 «접수» 한 줄이라도 남긴다.
+    // ★ 이력이 실패해도 티켓 만들기를 막지 않는다 — 이미 끝난 일이 실패한 것처럼
     //   보이는 쪽이 더 나쁘다(환불 이력에서 정한 원칙 그대로).
-    const {error:e2} = await sb.from('cs_ticket_events').insert({
-      ticket_id:data.id, side:'고객', action:'접수', actor:currentUserEmail,
-      note:f.memo||null, stage_after:'received', direction_after:f.direction||null,
-    });
+    const evs = (notes.length ? notes : [{side:'고객', text:f.memo||'접수'}]).map(n=>({
+      ticket_id:data.id, side:n.side, action:'접수', actor:currentUserEmail,
+      note:n.text, stage_after:'received', direction_after:f.direction||null,
+    }));
+    const {error:e2} = await sb.from('cs_ticket_events').insert(evs);
     if(e2) console.error('[티켓 이력] 실패:', e2);
     setBusy(false);
     toast('티켓 #'+data.id+' 을 만들었습니다.');
@@ -17137,157 +17197,243 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel}){
   const inp = {width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
     border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
     fontFamily:'inherit',boxSizing:'border-box'};
-  const lbl = {fontSize:10,color:'var(--sub)',marginBottom:4,display:'block'};
+  const lbl = {fontSize:10,color:'var(--sub)',marginBottom:3,display:'block'};
   const panel = {background:'var(--card)',border:'1px solid var(--border)',
     borderRadius:10,padding:'14px 16px'};
   const ptitle = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
-    textTransform:'uppercase',marginBottom:12};
+    textTransform:'uppercase',marginBottom:11};
+  const sec = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
+    textTransform:'uppercase',margin:'14px 0 9px',paddingTop:11,
+    borderTop:'1px solid var(--border)'};
   const ro = (k,v)=>(
-    <div style={{marginBottom:9}}>
+    <div style={{marginBottom:8}}>
       <div style={{fontSize:10,color:'var(--sub)',marginBottom:2}}>{k}</div>
       <div style={{fontSize:12,color:v?'var(--text)':'var(--sub)',wordBreak:'break-all'}}>{v||'—'}</div>
     </div>
   );
+  const req = <span style={{color:'#F6AD09'}}> *</span>;
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
-      <div style={{marginBottom:18,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+      <div style={{marginBottom:16,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>새 티켓</h1>
-        <span style={{fontSize:12,color:'var(--sub)'}}>품목별 주문번호 1개 = 티켓 1개</span>
+        <span style={{fontSize:12,color:'var(--sub)'}}>
+          응대하면서 ① 주문을 불러오고 ② 오간 말을 적고 ③ 상품 정보를 보며 안내합니다
+        </span>
         <div style={{flex:1}}></div>
         <button onClick={onCancel} style={{padding:'7px 14px',background:'transparent',
           border:'1px solid var(--border)',borderRadius:7,color:'var(--sub)',fontSize:12,
           cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
 
-      {/* 주문 조회 — 품목별 주문번호를 바로 넣거나, 주문번호를 넣고 품목을 고른다 */}
-      <div style={{...panel,marginBottom:14}}>
-        <div style={ptitle}>① 주문 불러오기</div>
-        <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
-          <input value={raw} onChange={e=>setRaw(e.target.value)}
-            onKeyDown={e=>{ if(e.key==='Enter') lookup(); }}
-            placeholder="20260828-0004112  또는  20260828-0004112-01"
-            style={{...inp,fontFamily:'monospace',maxWidth:340}}/>
-          <button onClick={lookup} disabled={busy}
-            style={{padding:'7px 16px',background:'var(--primary)',border:'none',borderRadius:6,
-              color:'#fff',fontSize:12,fontWeight:600,fontFamily:'inherit',
-              cursor:busy?'default':'pointer',opacity:busy?.6:1,whiteSpace:'nowrap'}}>
-            {busy?'조회 중…':'불러오기'}</button>
-          <span style={{fontSize:11,color:'var(--sub)'}}>
-            주문번호만 넣으면 품목을 찾아 고르게 합니다
-          </span>
-        </div>
-        {msg && (
-          <div style={{fontSize:11,marginTop:10,padding:'7px 10px',borderRadius:6,
-            background: msg.t==='ok'?'rgba(34,211,160,.10)':'rgba(248,113,113,.10)',
-            color: msg.t==='ok'?'var(--green)':'var(--red)'}}>{msg.m}</div>
-        )}
-        {items && items.length>1 && (
-          <div style={{marginTop:10,display:'flex',flexDirection:'column',gap:5}}>
-            {items.map(it=>(
-              <div key={it.code} onClick={()=>choose(it)}
-                style={{padding:'8px 11px',borderRadius:7,cursor:'pointer',fontSize:12,
-                  border:'1px solid '+(picked&&picked.code===it.code?'var(--primary)':'var(--border)'),
-                  background: picked&&picked.code===it.code?'rgba(42,71,141,.22)':'transparent'}}>
-                <span style={{fontFamily:'monospace',color:'var(--accent)'}}>{it.code}</span>
-                <span style={{marginLeft:8}}>{it.product_name||'—'}</span>
-                <span style={{marginLeft:8,color:'var(--sub)'}}>{it.supplier_name||''}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <div style={{display:'grid',gridTemplateColumns:'330px 1fr 250px',gap:14,alignItems:'start'}}>
 
-      {/* 3단 — 왼쪽 카페24 · 가운데 사람 · 오른쪽 확인 */}
-      <div style={{display:'grid',gridTemplateColumns:'220px 1fr 230px',gap:14,alignItems:'start'}}>
+        {/* ── ① 티켓 정보 ─────────────────────────────────────────── */}
         <div style={panel}>
-          <div style={ptitle}>카페24에서 온 것</div>
-          {!picked ? (
-            <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8}}>
-              주문을 먼저 불러오세요.<br/>여기 값은 <b>사람이 고치지 않습니다.</b>
+          <div style={ptitle}>① 티켓 정보</div>
+
+          <div style={{marginBottom:10}}>
+            <label style={lbl}>주문번호 또는 품목별 주문번호{req}</label>
+            <div style={{display:'flex',gap:5}}>
+              <input value={raw} onChange={e=>setRaw(e.target.value)}
+                onKeyDown={e=>{ if(e.key==='Enter') lookup(); }}
+                placeholder="20260828-0004112" style={{...inp,fontFamily:'monospace'}}/>
+              <button onClick={lookup} disabled={busy}
+                style={{padding:'7px 12px',background:'var(--primary)',border:'none',borderRadius:6,
+                  color:'#fff',fontSize:11,fontWeight:600,fontFamily:'inherit',whiteSpace:'nowrap',
+                  cursor:busy?'default':'pointer',opacity:busy?.6:1}}>
+                {busy?'조회…':'불러오기'}</button>
             </div>
-          ) : (
+            {msg && (
+              <div style={{fontSize:10.5,marginTop:6,padding:'6px 8px',borderRadius:5,
+                background: msg.t==='ok'?'rgba(34,211,160,.10)':'rgba(248,113,113,.10)',
+                color: msg.t==='ok'?'var(--green)':'var(--red)'}}>{msg.m}</div>
+            )}
+          </div>
+
+          {items && items.length>1 && (
+            <div style={{display:'flex',flexDirection:'column',gap:4,marginBottom:11}}>
+              {items.map(it=>(
+                <div key={it.code} onClick={()=>choose(it)}
+                  style={{padding:'6px 9px',borderRadius:6,cursor:'pointer',fontSize:11,
+                    border:'1px solid '+(picked&&picked.code===it.code?'var(--primary)':'var(--border)'),
+                    background: picked&&picked.code===it.code?'rgba(42,71,141,.22)':'transparent'}}>
+                  <span style={{fontFamily:'monospace',color:'var(--accent)'}}>…{it.code.slice(-3)}</span>
+                  <span style={{marginLeft:7}}>{it.product_name||'—'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 카페24가 준 것 — 사람이 고치지 않는다 */}
+          {picked && (
             <>
               {ro('품목별 주문번호', picked.code)}
               {ro('상품명', picked.product_name)}
               {ro('공급사', picked.supplier_name)}
-              {ro('주문자', picked.customer_name)}
-              {ro('주문자 연락처', picked.customer_phone)}
-              <div style={{fontSize:10,color:'var(--sub)',marginTop:10,lineHeight:1.7,
-                paddingTop:9,borderTop:'1px solid var(--border)'}}>
-                ★ 옵션명·수량·클레임 사유는 카페24가 주지만 조회 창구가 아직 안 내려줍니다.
-                그동안은 가운데에서 직접 넣습니다.
-              </div>
+              {ro('주문자', (picked.customer_name||'') + (picked.customer_phone?' · '+picked.customer_phone:''))}
             </>
           )}
-        </div>
 
-        <div style={panel}>
-          <div style={ptitle}>② 접수 내용 — 사람이 넣습니다</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 14px'}}>
-            <div style={{marginBottom:11}}>
-              <label style={lbl}>접수 경로 <span style={{color:'#F6AD09'}}>*</span></label>
-              <CsPick value={f.intake_path} options={CS_INTAKE}
-                onChange={v=>set('intake_path',v)} placeholder="전화 · 채팅 · 게시판 · 후기"/>
-            </div>
-            <div style={{marginBottom:11}}>
-              <label style={lbl}>유형 <span style={{color:'#F6AD09'}}>*</span></label>
-              <CsPick value={f.cs_type} options={CS_TYPES}
-                onChange={v=>set('cs_type',v)} placeholder="검색하거나 골라 주세요"/>
-            </div>
-            <div style={{marginBottom:11}}>
-              <label style={lbl}>방향</label>
-              <CsPick value={f.direction} options={CS_DIRECTIONS}
-                onChange={v=>set('direction',v)} placeholder="미정 — 협의하며 정합니다"/>
-            </div>
-            <div style={{marginBottom:11}}>
-              <label style={lbl}>옵션명</label>
-              <input value={f.option_name} onChange={e=>set('option_name',e.target.value)}
-                placeholder="카페24가 주는 그대로 (본품=…)" style={inp}/>
-            </div>
-            <div style={{marginBottom:11}}>
+          <div style={sec}>상품 · 수량</div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>옵션명</label>
+            <input value={f.option_name} onChange={e=>set('option_name',e.target.value)}
+              placeholder="본품=…" style={inp}/>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
+            <div style={{marginBottom:9}}>
               <label style={lbl}>주문 수량</label>
-              <input value={f.order_qty} onChange={e=>set('order_qty',e.target.value)}
-                placeholder="주문서 수량" style={inp}/>
+              <input value={f.order_qty} onChange={e=>set('order_qty',e.target.value)} style={inp}/>
             </div>
-            <div style={{marginBottom:11}}>
-              <label style={lbl}>CS 접수 수량 <span style={{color:'#F6AD09'}}>*</span></label>
-              <input value={f.cs_qty} onChange={e=>set('cs_qty',e.target.value)}
-                placeholder="3개 중 1개만 불량이면 1" style={inp}/>
+            <div style={{marginBottom:9}}>
+              <label style={lbl}>CS 접수 수량{req}</label>
+              <input value={f.cs_qty} onChange={e=>set('cs_qty',e.target.value)} style={inp}/>
             </div>
-            <div style={{marginBottom:11}}>
+          </div>
+
+          <div style={sec}>고객</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
+            <div style={{marginBottom:9}}>
               <label style={lbl}>수령인</label>
               <input value={f.receiver_name} onChange={e=>set('receiver_name',e.target.value)}
-                placeholder="주문자와 같으면 비워 둡니다" style={inp}/>
+                placeholder="같으면 비움" style={inp}/>
             </div>
-            <div style={{marginBottom:11}}>
+            <div style={{marginBottom:9}}>
               <label style={lbl}>수령인 연락처</label>
               <input value={f.receiver_phone} onChange={e=>set('receiver_phone',e.target.value)} style={inp}/>
             </div>
           </div>
 
-          {/* 리체크 — 기본 +3일이되 «바꿀 수 있다» 는 것이 보여야 한다 */}
-          <div style={{marginBottom:11}}>
+          <div style={sec}>주소</div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>배송 주소지</label>
+            <div style={{display:'flex',gap:5,marginBottom:5}}>
+              <input value={f.ship_zipcode} onChange={e=>set('ship_zipcode',e.target.value)}
+                placeholder="우편번호" style={{...inp,width:90}}/>
+              <input value={f.ship_address1} onChange={e=>set('ship_address1',e.target.value)}
+                placeholder="주소" style={inp}/>
+            </div>
+            <input value={f.ship_address2} onChange={e=>set('ship_address2',e.target.value)}
+              placeholder="상세 주소" style={inp}/>
+          </div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>회수 주소지 <span style={{opacity:.75}}>· 비우면 배송지와 같습니다</span></label>
+            <div style={{display:'flex',gap:5,marginBottom:5}}>
+              <input value={f.pickup_zipcode} onChange={e=>set('pickup_zipcode',e.target.value)}
+                placeholder="우편번호" style={{...inp,width:90}}/>
+              <input value={f.pickup_address1} onChange={e=>set('pickup_address1',e.target.value)}
+                placeholder="주소" style={inp}/>
+            </div>
+            <input value={f.pickup_address2} onChange={e=>set('pickup_address2',e.target.value)}
+              placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
+            {/* ★ 버튼을 누르면 «사람이 명시적으로 복사한 것» 이라 값이 실제로 들어간다.
+                비워 두는 것과는 뜻이 다르다 — 빈 칸은 «아직 안 정함» 이다. */}
+            <button onClick={()=>setF(p=>({...p,
+                pickup_zipcode:p.ship_zipcode, pickup_address1:p.ship_address1,
+                pickup_address2:p.ship_address2}))}
+              style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                color:'var(--sub)'}}>배송 주소지와 동일</button>
+          </div>
+
+          <div style={sec}>분류</div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>접수 경로{req}</label>
+            <CsPick value={f.intake_path} options={CS_INTAKE}
+              onChange={v=>set('intake_path',v)} placeholder="전화 · 채팅 · 게시판 · 후기"/>
+          </div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>유형{req}</label>
+            <CsPick value={f.cs_type} options={CS_TYPES}
+              onChange={v=>set('cs_type',v)} placeholder="검색하거나 골라 주세요"/>
+          </div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>방향</label>
+            <CsPick value={f.direction} options={CS_DIRECTIONS}
+              onChange={v=>set('direction',v)} placeholder="미정 — 협의하며 정합니다"/>
+          </div>
+          <div style={{marginBottom:9}}>
             <label style={lbl}>리체크 날짜 — 다시 볼 날</label>
-            <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
-              <input type="date" value={recheck} onChange={e=>setRecheck(e.target.value)}
-                style={{...inp,maxWidth:180,colorScheme:'dark'}}/>
-              {[['오늘',0],['+3일',3],['+7일',7]].map(([t,n])=>(
-                <button key={t} onClick={()=>setRecheck(plusDays(n))}
-                  style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+            <input type="date" value={recheck} onChange={e=>setRecheck(e.target.value)}
+              style={{...inp,colorScheme:'dark',marginBottom:5}}/>
+            <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+              {[1,3,7].map(n=>(
+                <button key={n} onClick={()=>setRecheck(plusDays(n))}
+                  style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
                     cursor:'pointer',background:'transparent',
                     border:'1px solid '+(recheck===plusDays(n)?'var(--primary)':'var(--border)'),
-                    color: recheck===plusDays(n)?'var(--accent)':'var(--sub)'}}>{t}</button>
+                    color: recheck===plusDays(n)?'var(--accent)':'var(--sub)'}}>+{n}일</button>
               ))}
-              <span style={{fontSize:10,color:'var(--sub)'}}>기본은 +3일이고 바꿀 수 있습니다</span>
+              <span style={{fontSize:10,color:'var(--sub)',alignSelf:'center'}}>기본 +3일</span>
             </div>
           </div>
 
-          <div>
-            <label style={lbl}>메모 — 고객이 말한 것</label>
-            <textarea value={f.memo} onChange={e=>set('memo',e.target.value)} rows={3}
-              placeholder="그대로 적어 두면 공급사 접수 내용이 됩니다"
+          <div style={{fontSize:10,color:'var(--sub)',marginTop:11,lineHeight:1.7,
+            paddingTop:9,borderTop:'1px solid var(--border)'}}>
+            ★ 옵션명·수량·주소·클레임 사유는 카페24가 갖고 있지만 조회 창구가 아직
+            안 내려줍니다. 그동안은 직접 넣습니다.
+          </div>
+        </div>
+
+        {/* ── ② 이력 ──────────────────────────────────────────────── */}
+        <div style={panel}>
+          <div style={ptitle}>② 이력 — 오간 말을 그대로</div>
+          {notes.length===0 ? (
+            <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8,padding:'10px 0'}}>
+              통화하면서 적어 두세요. <b>티켓을 만들 때 함께 저장됩니다.</b><br/>
+              고객이 말한 것을 그대로 적어 두면 공급사 접수 내용이 됩니다.
+            </div>
+          ) : notes.map((n,i)=>(
+            <div key={i} style={{display:'flex',gap:8,padding:'8px 0',
+              borderBottom: i<notes.length-1?'1px solid var(--border)':'none'}}>
+              <div style={{width:3,borderRadius:2,flex:'0 0 auto',alignSelf:'stretch',
+                background: n.side==='고객'?'var(--accent)':n.side==='공급사'?'#7FC2EE':'var(--primary)'}}></div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',gap:7,alignItems:'baseline'}}>
+                  <span style={{fontSize:10,fontWeight:700,
+                    color: n.side==='고객'?'var(--accent)':n.side==='공급사'?'#7FC2EE':'var(--accent)'}}>{n.side}</span>
+                  <span style={{fontSize:10,color:'var(--sub)'}}>접수</span>
+                  <div style={{flex:1}}></div>
+                  <button onClick={()=>setNotes(v=>v.filter((_,k)=>k!==i))}
+                    style={{background:'transparent',border:'none',color:'var(--sub)',
+                      fontSize:12,cursor:'pointer',lineHeight:1}}>×</button>
+                </div>
+                <div style={{fontSize:12,color:'var(--text)',lineHeight:1.65,whiteSpace:'pre-wrap'}}>{n.text}</div>
+              </div>
+            </div>
+          ))}
+
+          <div style={{marginTop:12,border:'1px solid var(--border)',borderRadius:8,
+            background:'var(--bg)',padding:'10px 11px'}}>
+            <div style={{display:'flex',gap:5,marginBottom:8,flexWrap:'wrap'}}>
+              {['고객','우리','공급사'].map(s=>(
+                <button key={s} onClick={()=>setSide(s)}
+                  style={{padding:'4px 11px',borderRadius:14,fontSize:11,fontFamily:'inherit',
+                    cursor:'pointer',background: side===s?'var(--primary)':'transparent',
+                    border:'1px solid '+(side===s?'var(--primary)':'var(--border)'),
+                    color: side===s?'#fff':'var(--sub)'}}>{s}</button>
+              ))}
+            </div>
+            <textarea value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
+              onKeyDown={e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) addNote(); }}
+              placeholder="전화 접수. 이불 봉제선이 뜯어져 있음. 3개 중 1개만 교환 요청."
               style={{...inp,resize:'vertical'}}/>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:7}}>
+              <span style={{fontSize:10,color:'var(--sub)'}}>Ctrl+Enter 로도 남길 수 있습니다</span>
+              <div style={{flex:1}}></div>
+              <button onClick={addNote} disabled={!draft.trim()}
+                style={{padding:'6px 14px',borderRadius:6,fontSize:11,fontWeight:600,
+                  fontFamily:'inherit',border:'none',color:'#fff',
+                  background: draft.trim()?'var(--primary)':'var(--border)',
+                  cursor: draft.trim()?'pointer':'default'}}>남기기</button>
+            </div>
+          </div>
+
+          <div style={{marginTop:12}}>
+            <label style={lbl}>메모 — 티켓에 남는 한 줄 요약</label>
+            <input value={f.memo} onChange={e=>set('memo',e.target.value)}
+              placeholder="목록에서 보이는 짧은 메모" style={inp}/>
           </div>
 
           <div style={{display:'flex',alignItems:'center',gap:10,marginTop:16,flexWrap:'wrap'}}>
@@ -17307,39 +17453,407 @@ function CsNewTicketPage({currentUserEmail, onDone, onCancel}){
           </div>
         </div>
 
+        {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
         <div style={panel}>
-          <div style={ptitle}>③ 만들기 전에</div>
-          {/* ★★ 매뉴얼의 규칙을 화면이 대신한다 —
-              「반드시 티켓 생성 전에 검색을 하고 내역이 없으면 새로 생성(중복 방지)」.
-              ★ 막지는 않는다. 같은 품목에 사건이 또 생기면 티켓이 하나 더 생기는 것이
-                «정상» 이라 order_item_code 에 unique 를 안 걸었다. 판단은 사람이 한다. */}
+          <div style={ptitle}>③ 이 상품 CS 정보</div>
           {!picked ? (
             <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8}}>
-              품목을 고르면 <b>같은 품목의 기존 티켓</b>을 여기 보여 줍니다.
+              주문을 불러오면 <b>상품 CS 정보</b>와 <b>이 주문자의 최근 티켓</b>이 여기 뜹니다.
             </div>
-          ) : dups===null ? (
+          ) : csInfo===null ? (
             <div style={{fontSize:11,color:'var(--sub)'}}>찾는 중…</div>
-          ) : dups.length===0 ? (
-            <div style={{fontSize:11,color:'var(--green)',lineHeight:1.8}}>
-              이 품목에 만들어진 티켓이 없습니다.
+          ) : csInfo.ambiguous!==undefined ? (
+            <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.75}}>
+              {csInfo.ambiguous===0 ? '이 상품의 CS 정보가 없습니다.'
+                : '같은 이름의 상품이 '+csInfo.ambiguous+'건이라 어느 것인지 정할 수 없습니다.'}
+              <div style={{marginTop:6,opacity:.85}}>
+                ★ 상품 연결은 <b>코드</b> 기준이 원칙인데 조회 창구가 상품코드를 안 줍니다.
+                지금은 이름으로 찾습니다 — 임시입니다.
+              </div>
             </div>
           ) : (
             <>
-              <div style={{fontSize:11,fontWeight:700,color:'#F6AD09',marginBottom:8}}>
-                이미 {dups.length}건 있습니다</div>
-              {dups.map(d=>(
-                <div key={d.id} style={{fontSize:11,color:'var(--sub)',lineHeight:1.8,marginBottom:6}}>
-                  <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{d.id}</span>
-                  {' · '}{(CS_STAGE_LABEL[d.stage]||{}).label||d.stage}<br/>
-                  {d.cs_type||'—'}{d.direction?' · '+d.direction:''}
-                  {' · '}{csDate(d.created_at)} {csShortUser(d.assignee)}
+              <div style={{fontSize:10,color:'var(--sub)',marginBottom:6,fontFamily:'monospace'}}>
+                {csInfo.product_code}</div>
+              <div style={{fontSize:11,color:'var(--text)',lineHeight:1.75,whiteSpace:'pre-wrap',
+                maxHeight:240,overflowY:'auto'}}>{csInfo.cs_info || '— CS 정보 없음 —'}</div>
+              {csInfo.memo && (
+                <div style={{fontSize:10.5,color:'var(--sub)',marginTop:8,lineHeight:1.7,
+                  paddingTop:8,borderTop:'1px solid var(--border)',whiteSpace:'pre-wrap'}}>{csInfo.memo}</div>
+              )}
+            </>
+          )}
+
+          <div style={{...ptitle,marginTop:16,paddingTop:12,
+            borderTop:'1px solid var(--border)'}}>이 주문자 최근 티켓</div>
+          {!picked ? (
+            <div style={{fontSize:11,color:'var(--sub)'}}>—</div>
+          ) : byPhone===null ? (
+            <div style={{fontSize:11,color:'var(--sub)'}}>찾는 중…</div>
+          ) : byPhone.length===0 ? (
+            <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.75}}>
+              이 연락처로 접수된 티켓이 없습니다.
+            </div>
+          ) : (
+            <>
+              <div style={{fontSize:10,color:'var(--sub)',marginBottom:5}}>
+                {picked.customer_phone} 기준</div>
+              {byPhone.map(t=>(
+                <div key={t.id} style={{fontSize:11,color:'var(--sub)',lineHeight:1.8}}>
+                  <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{t.id}</span>
+                  {' '}{t.cs_type||'—'}{t.direction?' · '+t.direction:''}
+                  {' '}<span style={{opacity:.7}}>{csDate(t.created_at)}</span>
                 </div>
               ))}
-              <div style={{fontSize:10,color:'var(--sub)',marginTop:8,lineHeight:1.7,
-                paddingTop:8,borderTop:'1px solid var(--border)'}}>
-                같은 품목에 사건이 <b>또</b> 생겼다면 새로 만드는 것이 맞습니다.
-                같은 건이면 그 티켓을 여세요.
+            </>
+          )}
+
+          {/* 매뉴얼의 «만들기 전에 검색» — 막지는 않는다. 같은 품목에 사건이 또 생기면
+              티켓이 하나 더 생기는 것이 정상이라 unique 를 안 걸었다. 판단은 사람이 한다. */}
+          {picked && dups && dups.length>0 && (
+            <div style={{marginTop:14,paddingTop:12,borderTop:'1px solid var(--border)'}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#F6AD09',marginBottom:7}}>
+                이 품목에 이미 {dups.length}건 있습니다</div>
+              {/* ★ [티켓 이동] — «새로 만들 일이 아니라 그 건에 이력을 더할 일» 인 경우의
+                  길이다(제니 2026-09-01). 이 자리에서 알아채고 바로 갈 수 있어야 한다.
+                  ★ 여기까지 적은 이력은 «그 티켓의 것이 아니므로» 들고 가지 않는다 —
+                    옮겨 붙이면 어느 통화에서 나온 말인지가 흐려진다. 그래서 적은 것이
+                    있으면 먼저 알린다. */}
+              {dups.map(d=>(
+                <div key={d.id} style={{display:'flex',alignItems:'center',gap:6,
+                  fontSize:11,color:'var(--sub)',lineHeight:1.9}}>
+                  <span style={{flex:1,minWidth:0}}>
+                    <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{d.id}</span>
+                    {' '}{(CS_STAGE_LABEL[d.stage]||{}).label||d.stage}
+                    {' · '}{d.cs_type||'—'}{' '}<span style={{opacity:.7}}>{csDate(d.created_at)}</span>
+                  </span>
+                  <button onClick={()=>{
+                      if(notes.length && !window.confirm(
+                        '여기 적어 둔 이력 '+notes.length+'줄은 함께 옮겨지지 않습니다. 티켓 #'+d.id+' 로 이동할까요?')) return;
+                      goTicket(d.id);
+                    }}
+                    style={{padding:'3px 9px',borderRadius:5,fontSize:10,fontFamily:'inherit',
+                      cursor:'pointer',background:'transparent',
+                      border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',whiteSpace:'nowrap'}}>
+                    티켓 이동</button>
+                </div>
+              ))}
+              <div style={{fontSize:10,color:'var(--sub)',marginTop:7,lineHeight:1.7}}>
+                또 생긴 사건이면 <b>새로 만드는 것</b>이 맞습니다.
+                같은 건에 이력만 더할 일이면 <b>[티켓 이동]</b> 을 누르세요.
               </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── 티켓 상세 ─────────────────────────────────────────────────────────────
+// ★★ 생성 화면과 «같은 3단» 이다 — ① 티켓 정보 · ② 이력 · ③ 안내에 쓰는 것.
+//   만들 때 보던 자리가 만든 뒤에도 그대로여야 한다(제니 2026-09-01).
+// ★ 여기 오는 길이 둘이다: 목록에서 «#번호» 를 누르거나, 새 티켓 화면에서
+//   「이 품목에 이미 N건 있습니다」 옆의 [티켓 이동] 을 누르거나.
+//   두 번째가 이 화면이 급했던 이유다 — **새로 만들 일이 아니라 그 건에 이력을
+//   더할 일** 인 경우의 길이 없었다.
+function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
+  const [t,setT]         = useState(null);
+  const [events,setEvents] = useState(null);
+  const [busy,setBusy]   = useState(false);
+  const [draft,setDraft] = useState('');
+  const [side,setSide]   = useState('우리');
+  const [action,setAction] = useState('리체크');
+  const [byPhone,setByPhone] = useState(null);
+  const [csInfo,setCsInfo]   = useState(null);
+  const isMaster = role==='master';
+
+  const digits = (v)=> String(v||'').replace(/[^0-9]/g,'');
+  const plusDays = (n)=> new Date(Date.now()+9*3600*1000+n*86400000).toISOString().slice(0,10);
+
+  const load = async ()=>{
+    const {data,error} = await sb.from('cs_tickets').select('*').eq('id',ticketId).single();
+    if(sbFail('티켓 조회', error)) return;
+    setT(data);
+    const {data:ev} = await sb.from('cs_ticket_events').select('*')
+      .eq('ticket_id', ticketId).order('created_at',{ascending:true});
+    setEvents(ev||[]);
+    // ③ — 이 주문자의 최근 티켓(연락처 기준) · 이 상품의 CS 정보
+    const dg = digits(data.orderer_phone);
+    if(dg){
+      const {data:d2} = await sb.from('cs_tickets')
+        .select('id,stage,cs_type,direction,created_at,orderer_phone')
+        .order('id',{ascending:false}).limit(300);
+      setByPhone((d2||[]).filter(x=>digits(x.orderer_phone)===dg && x.id!==data.id).slice(0,6));
+    } else setByPhone([]);
+    if(data.product_code){
+      const {data:d3} = await sb.from('products')
+        .select('product_code,cs_info,memo').eq('product_code', data.product_code).maybeSingle();
+      setCsInfo(d3||{none:true});
+    } else if(data.product_name){
+      // ★ 코드가 없는 티켓(이관분·창구가 코드를 안 주던 때 만든 것)은 이름으로 찾되
+      //   딱 한 건일 때만 쓴다. 이름으로 이으면 언젠가 조용히 틀린다.
+      const {data:d4} = await sb.from('products')
+        .select('product_code,cs_info,memo').eq('product_name', data.product_name).limit(3);
+      setCsInfo((d4||[]).length===1 ? d4[0] : {ambiguous:(d4||[]).length});
+    } else setCsInfo({none:true});
+  };
+  useEffect(()=>{ setT(null); setEvents(null); load(); },[ticketId]);
+
+  // 칸 하나를 고쳐 저장한다. ★ 이력에도 «수정» 한 줄을 남긴다 — 단계가 안 바뀌는
+  //   손질도 남아야 나중에 «누가 언제 바꿨나» 를 알 수 있다.
+  const patch = async (obj, note)=>{
+    setBusy(true);
+    const {error} = await sb.from('cs_tickets')
+      .update({...obj, updated_by: currentUserEmail}).eq('id', ticketId);
+    if(sbFail('티켓 수정', error)){ setBusy(false); return; }
+    if(note){
+      const {error:e2} = await sb.from('cs_ticket_events').insert({
+        ticket_id:ticketId, side:'우리', action:'수정', actor:currentUserEmail,
+        note, stage_after: obj.stage || (t && t.stage), direction_after: obj.direction ?? (t && t.direction),
+      });
+      if(e2) console.error('[티켓 이력] 실패:', e2);
+    }
+    setBusy(false);
+    load();
+  };
+
+  const addEvent = async ()=>{
+    const text = draft.trim();
+    if(!text) return;
+    setBusy(true);
+    const {error} = await sb.from('cs_ticket_events').insert({
+      ticket_id:ticketId, side, action, actor:currentUserEmail, note:text,
+      stage_after: t && t.stage, direction_after: t && t.direction,
+    });
+    if(sbFail('이력 남기기', error)){ setBusy(false); return; }
+    // 이력을 남기면 티켓의 «마지막 갱신» 도 따라 움직여야 목록 정렬이 맞는다.
+    await sb.from('cs_tickets').update({updated_by:currentUserEmail}).eq('id',ticketId);
+    setDraft(''); setBusy(false); load();
+  };
+
+  const inp = {width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
+    border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+    fontFamily:'inherit',boxSizing:'border-box'};
+  const lbl = {fontSize:10,color:'var(--sub)',marginBottom:3,display:'block'};
+  const panel = {background:'var(--card)',border:'1px solid var(--border)',
+    borderRadius:10,padding:'14px 16px'};
+  const ptitle = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
+    textTransform:'uppercase',marginBottom:11};
+  const sec = {fontSize:10,fontWeight:600,color:'var(--sub)',letterSpacing:'.08em',
+    textTransform:'uppercase',margin:'14px 0 9px',paddingTop:11,
+    borderTop:'1px solid var(--border)'};
+  const ro = (k,v)=>(
+    <div style={{marginBottom:8}}>
+      <div style={{fontSize:10,color:'var(--sub)',marginBottom:2}}>{k}</div>
+      <div style={{fontSize:12,color:v?'var(--text)':'var(--sub)',wordBreak:'break-all'}}>{v||'—'}</div>
+    </div>
+  );
+
+  if(t===null) return (
+    <div className="section" style={{padding:'60px 32px',color:'var(--sub)',fontSize:12}}>불러오는 중…</div>
+  );
+
+  const addr = (z,a1,a2)=> [z?'['+z+']':'', a1, a2].filter(Boolean).join(' ');
+  // ★ 회수지가 비어 있으면 «배송지와 같다» 는 뜻이다 — 읽을 때 대신 채운다.
+  //   저장할 때 복사해 두지 않는 이유는 배송지가 바뀌어도 회수지가 굳기 때문이다.
+  const pickupShown = t.pickup_address1 ? addr(t.pickup_zipcode,t.pickup_address1,t.pickup_address2)
+                                        : addr(t.ship_zipcode,t.ship_address1,t.ship_address2);
+
+  return (
+    <div className="section" style={{contain:'inline-size'}}>
+      <div style={{marginBottom:16,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>
+          티켓 <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{t.id}</span></h1>
+        <CsStagePill stage={t.stage} held={!!t.held_at}/>
+        <span style={{fontSize:12,color:'var(--sub)'}}>
+          {t.order_item_code} · {t.supplier_name||'—'} · 접수 {csDate(t.created_at)} {csShortUser(t.created_by)}
+        </span>
+        <div style={{flex:1}}></div>
+        <button onClick={onBack} style={{padding:'7px 14px',background:'transparent',
+          border:'1px solid var(--border)',borderRadius:7,color:'var(--sub)',fontSize:12,
+          cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'330px 1fr 250px',gap:14,alignItems:'start'}}>
+
+        {/* ── ① 티켓 정보 ─────────────────────────────────────────── */}
+        <div style={panel}>
+          <div style={ptitle}>① 티켓 정보</div>
+          {ro('접수 경로', t.intake_path)}
+          {ro('품목별 주문번호', t.order_item_code)}
+          {ro('상품 · 옵션', (t.product_name||'—') + (t.option_name?'  ／ '+t.option_name:''))}
+          {ro('주문 수량 / CS 접수', (t.order_qty??'—')+' / '+t.cs_qty)}
+          {ro('공급사', t.supplier_name)}
+
+          <div style={sec}>고객</div>
+          {ro('주문자', (t.orderer_name||'—') + (t.orderer_phone?' · '+t.orderer_phone:''))}
+          {ro('수령인', t.receiver_name ? t.receiver_name+(t.receiver_phone?' · '+t.receiver_phone:'')
+                                        : '주문자와 같음')}
+
+          <div style={sec}>주소</div>
+          {ro('배송 주소지', addr(t.ship_zipcode,t.ship_address1,t.ship_address2))}
+          {ro(t.pickup_address1 ? '회수 주소지' : '회수 주소지 · 배송지와 같음', pickupShown)}
+
+          <div style={sec}>분류</div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>유형</label>
+            <CsPick value={t.cs_type||''} options={CS_TYPES}
+              onChange={v=>v && patch({cs_type:v}, '유형을 «'+v+'» 로 바꿈')}/>
+          </div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>방향</label>
+            <CsPick value={t.direction||''} options={CS_DIRECTIONS}
+              onChange={v=>patch({direction:v||null}, v?'방향을 «'+v+'» 로 정함':'방향을 미정으로 되돌림')}/>
+          </div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>단계</label>
+            <CsPick value={(CS_STAGE_LABEL[t.stage]||{}).label||''}
+              options={CS_STAGES.filter(s=>isMaster || ['refund','settlement','closed'].indexOf(s.id)<0)
+                                .map(s=>s.label)}
+              onChange={v=>{
+                const s = CS_STAGES.find(x=>x.label===v);
+                if(s) patch({stage:s.id}, '단계를 «'+v+'» 로 옮김');
+              }}/>
+            {!isMaster && (
+              <div style={{fontSize:10,color:'var(--sub)',marginTop:4,lineHeight:1.6}}>
+                환불·정산·종결은 master 가 확인해서 처리합니다.
+                내 일이 끝나면 <b>«CS 완료»</b> 로 넘기세요.
+              </div>
+            )}
+          </div>
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>리체크 날짜</label>
+            <input type="date" value={t.recheck_at||''} style={{...inp,colorScheme:'dark',marginBottom:5}}
+              onChange={e=>patch({recheck_at:e.target.value}, '리체크를 '+e.target.value+' 로 바꿈')}/>
+            <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+              {[1,3,7].map(n=>(
+                <button key={n} onClick={()=>patch({recheck_at:plusDays(n)}, '리체크를 '+plusDays(n)+' 로 바꿈')}
+                  style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                    cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                    color:'var(--sub)'}}>+{n}일</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={sec}>정산 {!isMaster && <span style={{opacity:.7}}>· master 만</span>}</div>
+          {ro('누가 부담', t.cost_bearer)}
+          {ro('정산 상품금액', t.settle_fee!=null ? t.settle_fee.toLocaleString()+'원' : null)}
+          {ro('정산 배송료', t.settle_shipping_fee!=null ? t.settle_shipping_fee.toLocaleString()+'원' : null)}
+          {ro('담당자', csShortUser(t.assignee))}
+        </div>
+
+        {/* ── ② 이력 ──────────────────────────────────────────────── */}
+        <div style={panel}>
+          <div style={ptitle}>② 이력 — 오래된 것부터</div>
+          {events===null ? (
+            <div style={{fontSize:11,color:'var(--sub)'}}>불러오는 중…</div>
+          ) : events.length===0 ? (
+            <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8,padding:'10px 0'}}>
+              아직 남긴 이력이 없습니다.
+            </div>
+          ) : events.map((e,i)=>(
+            <div key={e.id} style={{display:'flex',gap:9,padding:'9px 0',
+              borderBottom: i<events.length-1?'1px solid var(--border)':'none'}}>
+              <div style={{width:3,borderRadius:2,flex:'0 0 auto',alignSelf:'stretch',
+                background: e.side==='고객'?'var(--accent)':e.side==='공급사'?'#7FC2EE'
+                          : e.side==='시스템'?'#F6AD09':'var(--primary)'}}></div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',gap:7,alignItems:'baseline',flexWrap:'wrap'}}>
+                  <span style={{fontSize:10,fontWeight:700,
+                    color: e.side==='고객'?'var(--accent)':e.side==='공급사'?'#7FC2EE'
+                         : e.side==='시스템'?'#F6AD09':'var(--accent)'}}>{e.side}</span>
+                  <span style={{fontSize:11,fontWeight:600,color:'var(--text)'}}>{e.action}</span>
+                  <div style={{flex:1}}></div>
+                  <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>
+                    {String(e.created_at).slice(5,16).replace('T',' ')} {csShortUser(e.actor)}</span>
+                </div>
+                {e.note && <div style={{fontSize:12,color:'var(--sub)',lineHeight:1.7,
+                  whiteSpace:'pre-wrap',marginTop:2}}>{e.note}</div>}
+              </div>
+            </div>
+          ))}
+
+          {/* ★ 이력은 append-only 다 — 고치거나 지울 수 없다(DB 에 update/delete 정책이 없다).
+              그래서 «남기기» 만 있고 «수정» 이 없다. 잘못 적었으면 바로잡는 줄을 새로 남긴다. */}
+          <div style={{marginTop:12,border:'1px solid var(--border)',borderRadius:8,
+            background:'var(--bg)',padding:'10px 11px'}}>
+            <div style={{display:'flex',gap:5,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+              {['고객','우리','공급사'].map(s=>(
+                <button key={s} onClick={()=>setSide(s)}
+                  style={{padding:'4px 11px',borderRadius:14,fontSize:11,fontFamily:'inherit',
+                    cursor:'pointer',background: side===s?'var(--primary)':'transparent',
+                    border:'1px solid '+(side===s?'var(--primary)':'var(--border)'),
+                    color: side===s?'#fff':'var(--sub)'}}>{s}</button>
+              ))}
+              <span style={{width:8}}></span>
+              <CsPick value={action} options={CS_ACTIONS} onChange={v=>v&&setAction(v)} width={150}/>
+            </div>
+            <textarea value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
+              onKeyDown={e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) addEvent(); }}
+              placeholder="기존 접수 메일에 답장으로 입고 문의. 리체크 +3일로 변경."
+              style={{...inp,resize:'vertical'}}/>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:7}}>
+              <span style={{fontSize:10,color:'var(--sub)'}}>
+                한 번 남긴 이력은 고치거나 지울 수 없습니다</span>
+              <div style={{flex:1}}></div>
+              <button onClick={addEvent} disabled={busy || !draft.trim()}
+                style={{padding:'6px 16px',borderRadius:6,fontSize:11,fontWeight:600,
+                  fontFamily:'inherit',border:'none',color:'#fff',
+                  background:(!busy&&draft.trim())?'var(--primary)':'var(--border)',
+                  cursor:(!busy&&draft.trim())?'pointer':'default'}}>
+                {busy?'저장 중…':'남기기'}</button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
+        <div style={panel}>
+          <div style={ptitle}>③ 이 상품 CS 정보</div>
+          {csInfo===null ? (
+            <div style={{fontSize:11,color:'var(--sub)'}}>찾는 중…</div>
+          ) : csInfo.ambiguous!==undefined ? (
+            <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.75}}>
+              같은 이름의 상품이 {csInfo.ambiguous}건이라 어느 것인지 정할 수 없습니다.
+              <div style={{marginTop:6,opacity:.85}}>★ 이 티켓에 상품코드가 없습니다.</div>
+            </div>
+          ) : csInfo.none ? (
+            <div style={{fontSize:11,color:'var(--sub)'}}>이 상품의 CS 정보가 없습니다.</div>
+          ) : (
+            <>
+              <div style={{fontSize:10,color:'var(--sub)',marginBottom:6,fontFamily:'monospace'}}>
+                {csInfo.product_code}</div>
+              <div style={{fontSize:11,color:'var(--text)',lineHeight:1.75,whiteSpace:'pre-wrap',
+                maxHeight:260,overflowY:'auto'}}>{csInfo.cs_info || '— CS 정보 없음 —'}</div>
+              {csInfo.memo && (
+                <div style={{fontSize:10.5,color:'var(--sub)',marginTop:8,lineHeight:1.7,
+                  paddingTop:8,borderTop:'1px solid var(--border)',whiteSpace:'pre-wrap'}}>{csInfo.memo}</div>
+              )}
+            </>
+          )}
+
+          <div style={{...ptitle,marginTop:16,paddingTop:12,borderTop:'1px solid var(--border)'}}>
+            이 주문자 최근 티켓</div>
+          {byPhone===null ? (
+            <div style={{fontSize:11,color:'var(--sub)'}}>찾는 중…</div>
+          ) : byPhone.length===0 ? (
+            <div style={{fontSize:11,color:'var(--sub)'}}>이 연락처의 다른 티켓이 없습니다.</div>
+          ) : (
+            <>
+              <div style={{fontSize:10,color:'var(--sub)',marginBottom:5}}>{t.orderer_phone} 기준</div>
+              {byPhone.map(x=>(
+                <div key={x.id} style={{display:'flex',alignItems:'center',gap:6,
+                  fontSize:11,color:'var(--sub)',lineHeight:1.9}}>
+                  <span style={{flex:1,minWidth:0}}>
+                    <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{x.id}</span>
+                    {' '}{x.cs_type||'—'}{' '}<span style={{opacity:.7}}>{csDate(x.created_at)}</span>
+                  </span>
+                  <button onClick={()=>goTicket(x.id)}
+                    style={{padding:'3px 9px',borderRadius:5,fontSize:10,fontFamily:'inherit',
+                      cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                      color:'var(--sub)',whiteSpace:'nowrap'}}>이동</button>
+                </div>
+              ))}
             </>
           )}
         </div>
@@ -17396,7 +17910,7 @@ const PAGE_LABELS = {
   dashboard:'대시보드', entry:'상담 입력', agentAnalysis:'상담원 분석',
   products:'상품 관리', delays:'배송지연', suppliers:'공급사',
   autoDelivery:'자동발송', refunds:'환불 관리', costs:'비용 비교 도구', agents:'인력 관리',
-  csTickets:'CS 관리', csNew:'새 티켓',
+  csTickets:'CS 관리', csNew:'새 티켓', csTicket:'티켓 상세',
 };
 
 // ── 화면별 에러 경계 ──────────────────────────────────────────────────
@@ -17991,7 +18505,7 @@ function App() {
     dashboard:'dashboard', entry:'dashboard', agentAnalysis:'dashboard',
     products:'productMgmt', delays:'productMgmt', suppliers:'productMgmt',
     autoDelivery:'productMgmt',
-    csTickets:'csMgmt', csNew:'csMgmt',
+    csTickets:'csMgmt', csNew:'csMgmt', csTicket:'csMgmt',
   };
   // 현재 펼친 부모들 (다중 펼침 가능: 사용자 수동 조작 존중)
   // 비용 비교 도구와 사이드바를 잇는 두 칸. 목록은 도구가 올려 주고, 클릭은 nav 로 내려보낸다.
@@ -18045,6 +18559,10 @@ function App() {
     setOpenGroups(prev => ({...prev, [groupId]: !prev[groupId]}));
   };
   // 모바일 사이드바 열림/닫힘
+  // 지금 열어 둔 티켓. ★ 주소창에 안 넣는다 — 이 콘솔은 라우터가 없고
+  //   page 하나로 화면을 가른다. 티켓만 예외를 두면 뒤로가기 동작이 갈린다.
+  const [csTicketId,setCsTicketId] = useState(null);
+  const openTicket = (id)=>{ setCsTicketId(id); setPage('csTicket'); setMobileOpen(false); };
   const [mobileOpen,setMobileOpen] = useState(false);
   // 페이지 이동 시 모바일 사이드바 자동 닫기
   const navigateTo = (pageId)=>{
@@ -18385,9 +18903,13 @@ function App() {
         {page==='suppliers'&&<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
         {page==='delays'&&(isMaster||isManager)&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
         {page==='autoDelivery'&&(isMaster||isManager)&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
-        {page==='csTickets'&&<CsTicketsPage currentUserEmail={session.user.email} role={role} onNew={()=>navigateTo('csNew')}/>}
+        {page==='csTickets'&&<CsTicketsPage currentUserEmail={session.user.email} role={role}
+          onNew={()=>navigateTo('csNew')} goTicket={openTicket}/>}
         {page==='csNew'&&<CsNewTicketPage currentUserEmail={session.user.email}
-          onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}/>}
+          onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
+          goTicket={openTicket}/>}
+        {page==='csTicket'&&<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
+          role={role} onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>}
         {page==='refunds'&&(isMaster?<RefundManagementPage currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='costs'&&(isMaster?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&isMaster&&<AgentAnalysisPage/>}
