@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- v20260902p_history_tabs -->
+<!-- v20260902r_plain_us -->
+<!-- (2026-09-02) 이력에서 «원룸만들기» 가 적은 줄의 색 박스를 뺐다(제니). 이력의 대부분이 우리 쪽 기록이라 그 줄마다 박스가 깔리면 화면이 온통 박스가 되고, 정작 «고객» 과 «공급사» 의 말이 안 도드라진다. ★ 왼쪽 색 바는 그대로 둔다 — 박스는 «눈에 띄게 하는» 것이고 바는 «누가 남겼는지 알리는» 것이라 역할이 다르다. 누구의 줄인지는 여전히 알아야 한다. ★ dev 전용. -->
+<!-- (2026-09-02) 제니 검토 6차 — 남은 어긋남 넷. ①★★ ①도 ②③ 과 같은 규칙(sticky)으로 멈춘다. 셋 중 하나만 지나가 버리면 머리말 아래 틈이 칸마다 달라 보인다(제니 제보). ①이 가장 긴 칸이라 제 안에서 구르게 되는데 그게 오히려 낫다 — 그전에는 ①을 읽으려고 내리면 ②③ 은 멈춰 서고 ①만 올라가 화면에 두 칸만 남았다. ②품목 줄(옵션·주문·CS 접수) 이름을 왼쪽 정렬로. 여기만 오른쪽에 붙어 있어 이름의 «시작» 이 위아래로 어긋났다. ③★★ 잠긴 값의 안쪽 여백을 7 → 8px 로. 입력칸은 테두리(1px) + 여백(7px) = 8px 안에서 글자가 시작하는데 글자에만 7px 을 줘서 딱 1px 이 어긋났다 — 숫자가 세로로 나란히 서는 자리(주문 수량 / CS 접수)에서는 그 1px 이 보인다. ④★★ 수령인·배송 주소지를 «주문» 뎁스(공급사·주문자)와 같은 줄 틀(row)로 바꿨다. 여기만 따로 만든 격자를 써서 바로 위 줄들과 이름 자리가 어긋났다 — 같은 칸 안에서 기준선이 둘이면 정렬이 없는 것과 같다. 배송 주소지 값도 이름 «오른쪽» 으로 올렸다(줄바꿈되어 아래로 내려가 있었다). ★ 다만 카페24가 주소를 못 준 경우에는 이름을 위에 두는 «넓은 줄» 로 편다 — 입력칸 셋이 이름 옆 좁은 자리에 들어가면 주소가 다시 잘린다. ★ dev 전용. -->
 <!-- (2026-09-02) ②의 이력을 «처리 이력» 과 «변경 이벤트» 두 탭으로 갈랐다(제니 요청). ★★ 한 목록에 두 가지가 섞여 있었다 — 사람이 적은 말(무슨 일이 있었나)과 우리가 고친 값(무엇을 바꿨나). 앞서 색과 점선으로 한 발 물러나게 해 뒀지만, 통화 내용을 찾을 때 값 변경 줄이 사이사이 끼어 읽히는 것은 그대로였다. ★ 기본은 «처리 이력» 이다 — 열에 아홉은 무슨 일이 있었는지를 보려고 이 칸을 연다. ★ 값 변경 탭은 이름 대신 «🕐» 로 뒀다(제니). 이름을 나란히 쓰면 두 탭의 무게가 같아 보이는데 이쪽은 늘 보는 것이 아니라 필요할 때 들춰 보는 자리다. 무슨 탭인지는 마우스를 올리면 「변경 이벤트」라고 말해 준다. ★ 탭마다 건수를 함께 적는다 — 「값이 바뀐 적이 있나」를 열어 보지 않고 알 수 있어야 한다. 빈 상태 문구도 탭마다 다르게 뒀다(「아직 바뀐 값이 없습니다」 / 「아직 남긴 이력이 없습니다」). ②등록 화면의 배송 주소지를 상세와 «같은 한 줄» 로 맞췄다 — [06151] 서울 … 607호. 우편번호·주소·상세주소는 «한 주소» 이지 세 값이 아니다: 칸을 나눠 두면 읽는 사람이 머릿속에서 다시 이어 붙여야 한다. ★ 카페24가 못 준 경우에만 세 칸으로 편다 — 그때는 사람이 나눠 넣어야 한다. ★ dev 전용. -->
 <!-- (2026-09-02) 제니 검토 5차. ①항목명을 «왼쪽 정렬» 로 바꿨다 — 오른쪽에 붙이면 이름의 끝이 가지런해지는 대신 시작이 들쭉날쭉해진다. 눈은 왼쪽에서 오른쪽으로 읽으니 시작이 맞는 편이 훑기 쉽다. ②주소처럼 «긴 값» 은 이름 칸에 자리를 뺏기면 읽을 수 없다 → 이름을 위에 한 줄 두고 값이 이름의 왼쪽 끝부터 오른쪽 끝까지 다 쓰는 «넓은 줄»(rowWide)을 만들어 회수 주소지에 썼다. 다른 줄과 시작점(x=28)이 같으므로 정렬은 그대로다. ③★★ 잠긴 값(글자)에도 입력칸과 «같은 안쪽 여백»(7px)을 줬다 — 주문 수량 숫자가 CS 접수 입력칸의 숫자와 다른 세로줄에 서 보이던 원인이다. 입력칸은 테두리 안으로 7px 들어가 글자가 시작되는데 글자에는 그 여백이 없었다. ④품목 체크 표시를 «고른 티가 나게» 바꿨다. 어두운 바탕에 짙은 파랑을 채우면 빈 것과 잘 구분되지 않는다 — 밝은 강조색을 채우고 ✓ 를 어두운 글자로 얹었다. 색과 «모양» 이 함께 바뀌어야 흘깃 봐도 안다. ⑤★★ 배송 주소지에서 우편번호 칸을 다섯 자리만큼만 잡고, 상세주소를 «주소와 같은 세로줄» 에 세웠다(제니가 그림으로 알려 줬다). 우편번호는 주소의 일부가 아니라 앞에 붙는 꼬리표라, 상세주소가 그 아래로 들어가면 주소가 두 토막으로 읽힌다. ⑥상세의 「상품 · 옵션」 을 두 줄로 나누고 옵션에 다른 색을 줬다 — 「／」로 이어 붙이면 상품명이 길 때 옵션이 뒤에 묻힌다. 같은 색이면 두 줄이어도 이어 읽힌다. ⑦③의 검색줄에서 [지우기] 가 줄을 바꾸지 않게 못 박았다(칸이 좁아지면 flex 가 버튼부터 접는다). ⑧★★ ③ 검색을 «상세 화면에도» 붙였다. 그러면서 셈(csLinesOf·csHitLines·csMarkText)을 화면 밖으로 옮겼다 — 화면마다 따로 두면 한쪽만 고쳐지고 그 어긋남은 한참 뒤에야 드러난다. ⑨「옵션명·수량·주소·클레임 사유는 조회 창구가 아직 안 내려줍니다」 안내를 걷었다(제니 확인) — 그날 창구를 넓혀 전부 내려받게 됐다. 안내문은 사실이 아니게 되는 순간 지워야 한다: 남아 있으면 그런가 보다 하고 손으로 다시 적는다. ★ dev 전용. -->
 <!-- (2026-09-02) 제니 검토 4차 — «두 화면은 기본 틀이 같아야 한다» 를 실제로 맞췄다. ①★★ ① 칸의 모든 항목이 «같은 행 틀»(row)을 쓴다. 그전에는 읽기 값은 이름을 왼쪽에 세우고, 입력칸은 이름을 «위» 에 얹어 같은 칸 안에서 값의 시작점이 두 가지였다 — 세로로 훑을 기준선이 없으니 «중구난방» 으로 보인 것이다. 이름 칸 78px·오른쪽 정렬, 값은 그 옆. 읽기 전용(ro)도 같은 틀의 «값만 글자» 판으로 바꿨다. ②★★ 뎁스마다 왼쪽 끝을 계단처럼 밀었다(제니) — 선 x=8(패널 여백 16보다 8 바깥, 박스에는 안 닿는다) · 묶음 이름 x=16 · 항목 x=28. 같은 자리에서 시작하면 층이 있어도 없는 것처럼 보인다. ③환불 네 칸을 두 칸씩 나란히 두던 것을 한 줄에 하나씩으로 폈다. 나란히 두면 왼쪽 칸 이름과 오른쪽 칸 이름이 서로 다른 세로줄에 서서 위아래 어느 것과도 안 맞는다. 정산 세 칸·분류 네 칸·회수 주소지도 같은 틀로. ④상세의 「주문 수량 / CS 접수 수량」 한 줄을 등록과 «같은 두 줄» 로 나눴다. 한쪽은 한 줄, 다른 쪽은 두 줄이면 같은 값을 볼 때마다 눈이 자리를 다시 찾는다. 최대 수량도 옆에 적어 준다. ⑤접수 경로를 상세에서도 «분류» 로 옮겼다 — 카페24가 준 값이 아니라 사람이 고르는 값이라 맨 위 스냅샷 사이에 있던 자리가 틀렸다(등록 화면은 이미 분류에 두고 있었다). ⑥★★ ③의 «검색» 을 다시 만들었다(제니 정정). 다른 상품을 찾는 것이 아니라 «지금 보고 있는 상품의 CS 정보 안» 에서 찾는 것이다 — 정보가 길면 오른쪽에 다 떠 있어도 한눈에 안 들어온다. 결과를 따로 띄우지 않고 있던 자리에 그대로 두고 찾은 줄만 도드라지게 한다(왼쪽에 ▸, 배경 옅게, 낱말에 색). 앞뒤 맥락이 함께 보여야 읽을 수 있기 때문이다. ★ 화살표 자리는 찾든 안 찾든 늘 비워 둔다 — 있을 때만 자리를 만들면 글이 좌우로 들썩인다. ★ 0건이면 «없습니다» 라고 말해 준다: 조용히 아무 일도 안 일어나면 사람은 검색이 안 되는 줄 안다. ⑦이력 기호에서 가운뎃점(·)을 빼고 「」 를 넣었다(제니) — 자판에서 바로 나오는 글자는 자리만 먹는다. 「」 는 두 글자를 함께 넣고 커서를 가운데 둔다: 닫는 짝을 따로 치게 하면 열기만 하고 안 닫는 줄이 쌓인다. ★ dev 전용. -->
@@ -19278,8 +19280,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   «없는 주문» 으로 읽는다 — 그래서 채울 수 있게 열어 둔다.
   // 값 «옆» 에 서는 작은 이름 — 줄바꿈되면 값과 어긋나므로 안 접히게 한다.
   const miniKey = {fontSize:10,color:'var(--sub)',whiteSpace:'nowrap'};
-  // 값 왼쪽에 서는 이름 — 오른쪽에 붙여 값과 짝으로 읽히게 한다.
-  const miniKeyR = {...miniKey, textAlign:'right'};
+  // 값 왼쪽에 서는 이름. ★ 왼쪽 정렬이다(제니 2026-09-02) — ① 의 다른 줄들과 같은
+  //   규칙이어야 한다. 여기만 오른쪽에 붙이면 이름의 시작이 위아래로 어긋난다.
+  const miniKeyR = {...miniKey};
 
   // ★★ CS 접수 수량은 주문 수량을 넘을 수 없다(제니 2026-09-02). 3개 산 것을 4개
   //   접수하면 정산이 어긋나고, 그 어긋남은 공급사 청구까지 그대로 따라간다.
@@ -19302,7 +19305,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     //   숫자가 CS 접수 입력칸의 숫자와 다른 세로줄에 섰다). 입력칸은 7px 안으로
     //   들어가 글자가 시작되는데 글자에는 그 여백이 없어 왼쪽으로 밀려 보였다.
     if(v) return <span style={{fontSize:11.5,color:'var(--text)',display:'block',
-      padding:'4px 7px',wordBreak:'break-word',lineHeight:1.5,...(extra||{})}}>{v}</span>;
+      padding:'4px 8px',wordBreak:'break-word',lineHeight:1.5,...(extra||{})}}>{v}</span>;
     return <input value={v} onChange={e=>setIF(code,k,e.target.value)} placeholder={ph}
       style={{...inp,fontSize:11,padding:'5px 7px',...(extra||{})}}/>;
   };
@@ -19655,7 +19658,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         gridTemplateColumns:paneW.l+'px 12px 1fr 12px '+paneW.r+'px'}}>
 
         {/* ── ① 티켓 정보 ─────────────────────────────────────────── */}
-        <div style={panel}>
+        {/* ★ ①도 ②③ 과 같은 규칙(sticky)으로 멈춘다(제니 2026-09-02). 셋 중 하나만
+            지나가 버리면 머리말 아래 틈이 칸마다 달라 보인다. */}
+        <div style={sticky}>
           <div style={ptitle}>① 티켓 정보</div>
 
           <div style={{marginBottom:10}}>
@@ -19782,17 +19787,18 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     확인해서 직접 넣어 주세요.
                   </div>
                 )}
-                {/* ★ 이름·연락처는 한 줄에 나란히 둔다(제니) — 「홍길동 / 010-…」 은
-                    한 사람을 가리키는 한 덩어리라 두 줄로 나누면 오히려 흩어져 보인다. */}
-                <div style={{display:'grid',gridTemplateColumns:'52px 1fr',gap:'4px 7px',
-                  alignItems:'center',marginBottom:7}}>
-                  <span style={miniKeyR}>수령인</span>
+                {/* ★★ «주문» 뎁스(공급사·주문자)와 «같은 줄 틀» 을 쓴다(제니 2026-09-02).
+                    여기만 따로 만든 격자를 쓰고 있어서 바로 위 줄들과 이름 자리가
+                    어긋났다 — 같은 칸 안에서 기준선이 둘이면 정렬이 없는 것과 같다.
+                    ★ 이름·연락처는 한 줄에 나란히 — 「홍길동 / 010-…」 은 한 사람을
+                      가리키는 한 덩어리라 두 줄로 나누면 오히려 흩어져 보인다. */}
+                {row('수령인', (
                   <div style={{display:'flex',gap:6,alignItems:'center',minWidth:0}}>
                     <div style={{minWidth:0}}>{cell(it.code,'receiver_name','이름')}</div>
                     <span style={{fontSize:11,color:'var(--sub)'}}>/</span>
                     <div style={{flex:1,minWidth:0}}>{cell(it.code,'receiver_phone','연락처')}</div>
                   </div>
-                </div>
+                ))}
                 {/* ★ 우편번호와 주소는 «한 주소» 라 한 줄에 둔다(제니). 우편번호는
                     다섯 자리라 좁아도 되고, 남는 폭은 전부 주소가 가져간다. */}
                 {/* ★★ 우편번호 칸을 «다섯 자리만큼» 만 잡는다(제니 제보 — 사이가 너무 멀었다).
@@ -19801,28 +19807,30 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     주소가 두 토막으로 읽힌다.
                       06151 서울 강남구 언주로98길 36 루트원 레지던스
                             607호                                        */}
-                {/* ★★ 카페24가 준 주소는 «한 줄» 로 잇는다(제니 2026-09-02) —
-                    상세 화면이 이미 그렇게 보여 주고 있어 두 화면이 갈렸다.
+                {/* ★★ 카페24가 준 주소는 «한 줄» 로 잇고, 이름 «오른쪽» 에 둔다(제니).
                       [06151] 서울 강남구 언주로98길 36 루트원 레지던스 607호
-                    우편번호·주소·상세주소는 «한 주소» 이지 세 값이 아니다. 칸을 나눠
+                    우편번호·주소·상세주소는 «한 주소» 이지 세 값이 아니다 — 칸을 나눠
                     두면 읽는 사람이 머릿속에서 다시 이어 붙여야 한다.
-                    ★ 못 받았을 때만 세 칸으로 편다 — 그때는 사람이 나눠 넣어야 한다. */}
-                <label style={lbl}>배송 주소지</label>
-                {(g.ship_zipcode || g.ship_address1 || g.ship_address2) ? (
-                  <div style={{fontSize:11.5,color:'var(--text)',padding:'4px 7px',
-                    lineHeight:1.5,wordBreak:'break-word'}}>
-                    {[g.ship_zipcode ? '['+g.ship_zipcode+']' : '',
-                      g.ship_address1, g.ship_address2].filter(Boolean).join(' ')}
-                  </div>
-                ) : (
-                  <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:'4px 5px',
-                    alignItems:'baseline'}}>
-                    <div style={{width:62}}>{cell(it.code,'ship_zipcode','우편')}</div>
-                    <div style={{minWidth:0}}>{cell(it.code,'ship_address1','주소')}</div>
-                    <div></div>
-                    <div style={{minWidth:0}}>{cell(it.code,'ship_address2','상세 주소')}</div>
-                  </div>
-                )}
+                    ★ 못 받았을 때만 세 칸으로 편다(그때는 사람이 나눠 넣어야 한다).
+                      그 경우에만 이름을 위에 두는 «넓은 줄» 이 된다 — 입력칸 셋이
+                      이름 옆 좁은 자리에 들어가면 주소가 다시 잘린다. */}
+                {(g.ship_zipcode || g.ship_address1 || g.ship_address2)
+                  ? row('배송 주소지', (
+                      <div style={{fontSize:11.5,color:'var(--text)',padding:'4px 8px',
+                        lineHeight:1.5,wordBreak:'break-word'}}>
+                        {[g.ship_zipcode ? '['+g.ship_zipcode+']' : '',
+                          g.ship_address1, g.ship_address2].filter(Boolean).join(' ')}
+                      </div>
+                    ), {alignItems:'baseline'})
+                  : rowWide('배송 주소지', (
+                      <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:'4px 5px',
+                        alignItems:'baseline'}}>
+                        <div style={{width:62}}>{cell(it.code,'ship_zipcode','우편')}</div>
+                        <div style={{minWidth:0}}>{cell(it.code,'ship_address1','주소')}</div>
+                        <div></div>
+                        <div style={{minWidth:0}}>{cell(it.code,'ship_address2','상세 주소')}</div>
+                      </div>
+                    ))}
               </div>
             );
           })}
@@ -20567,7 +20575,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               손이 미끄러진 것·잘못 고른 것까지 전부 이력에 남아 정작 봐야 할 흐름이 묻힌다.
               화면에서만 고쳐 두었다가 [저장] 을 누를 때 **한 번에** 쓰고, **이력도 한 줄**만
               남긴다(무엇이 무엇으로 바뀌었는지를 그 한 줄에 모아 적는다). */}
-        <div style={panel}>
+        {/* ★ ①도 ②③ 과 같은 규칙(sticky)으로 멈춘다(제니 2026-09-02). 셋 중 하나만
+            지나가 버리면 머리말 아래 틈이 칸마다 달라 보인다. */}
+        <div style={sticky}>
           <div style={ptitle}>① 티켓 정보</div>
           {ro('품목별 주문번호', t.order_item_code)}
           {/* ★ 상품과 옵션을 «두 줄» 로 나눈다(제니). 「／」로 이어 붙이면 상품명이 길
@@ -20793,11 +20803,17 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             // ★ 띠·바탕도 뱃지와 «같은 색» 이다. 색이 갈리면 어느 것이 맞는지 알 수 없다.
             const c = csSideStyle(e.side);
             const rail = isEdit ? 'var(--border)' : c.fg;
+            // ★★ «원룸만들기» 가 적은 줄은 박스를 씌우지 않는다(제니 2026-09-02).
+            //   이력의 대부분이 우리 쪽 기록이라, 그 줄마다 색 박스가 깔리면 화면이
+            //   온통 박스가 되어 정작 «고객» 과 «공급사» 의 말이 안 도드라진다.
+            //   ★ 왼쪽 색 바는 그대로 둔다 — 누가 남긴 줄인지는 여전히 알아야 한다.
+            //     박스는 «눈에 띄게 하는» 것이고 바는 «누구인지 알리는» 것이라 역할이 다르다.
+            const plain = isEdit || e.side==='원룸만들기';
             return (
             <div key={e.id} style={{display:'flex',gap:9,padding:'9px 10px',
               marginBottom:5, borderRadius:7,
-              background: isEdit ? 'transparent' : c.bg,
-              border: '1px solid '+(isEdit ? 'transparent' : c.bd)}}>
+              background: plain ? 'transparent' : c.bg,
+              border: '1px solid '+(plain ? 'transparent' : c.bd)}}>
               <div style={{width:3,borderRadius:2,flex:'0 0 auto',alignSelf:'stretch',
                 background: rail, opacity: isEdit?.6:1}}></div>
               <div style={{flex:1,minWidth:0}}>
