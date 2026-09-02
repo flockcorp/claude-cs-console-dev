@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- v20260902g_ticket_panel_tidy -->
+<!-- v20260902i_history_sticky -->
+<!-- (2026-09-02) 티켓 상세의 ② 이력 칸도 ③처럼 스크롤을 따라오게 했다(제니 요청 — ③은 따라오는데 ②는 안 따라왔다). 이력을 읽으며 아래로 내려가는 동안 정작 그 이력 칸이 화면 밖으로 나가 버리던 자리다. ★★ 이건 09-01 에 «두 번 어긋난 끝에» 정한 ②의 키 규칙을 바꾸는 일이라 무엇이 그대로이고 무엇이 달라지는지 적어 둔다. 앞 규칙은 «②는 ①보다 길어지지 않는다» 였고, 격자 칸을 자리만 잡게 두고(relative) 그 안에서 ②를 띄워(absolute) maxHeight:100% 로 ①의 높이에 멈춰 세웠다. 그 규칙이 지키려던 두 가지는 지금도 그대로다 — ①«짧으면 짧은 대로»(alignSelf:start 라 칸이 늘어나지 않는다) ②«①을 밀어 늘리지 않는다»(제 안에서 구르므로 밖으로 자라지 않는다). 달라진 것은 «어디서 멈추나» 하나뿐이다: ①의 높이가 아니라 «화면 높이» 다. 따라오게 하려면 그래야 한다 — ①의 높이에 묶여 있으면 ①이 끝나는 자리에서 함께 멈춰, «따라온다» 는 말 자체가 성립하지 않는다. ★ 그래서 ②가 ③과 «같은» 규칙(sticky)을 쓰게 됐다. 규칙이 하나면 나중에 머리말 높이가 바뀌어도 한 곳만 고치면 된다. ★ dev 전용. -->
+<!-- (2026-09-02) 티켓 등록·상세 화면의 ①②③ 칸 너비를 «끌어서» 바꿀 수 있게 했다(제니 요청). 칸 사이에 마우스를 대면 커서가 바뀌고 선이 굵고 파랗게 물든다. ★★ 폭은 console_settings 에 넣지 않았다. 그 표는 «운영 기준» — 누가 로그인하든 같아야 하는 값을 담는 자리다. 화면 넓이는 쓰는 사람의 모니터와 습관에 달린 것이라, 한 사람이 바꾸면 모두가 바뀌어서는 안 된다. 브라우저(localStorage)에 사람마다 따로 남긴다. ★ 못 읽거나 못 써도 화면은 기본 폭으로 그냥 돈다 — 사생활 보호 창에서는 저장 자체가 막히는데, 폭 하나 때문에 화면이 안 뜨면 안 된다. ★ 등록과 상세가 «다른 열쇠» 를 쓴다(cs_new_panes · cs_detail_panes) — 만들 때와 볼 때 보는 것이 달라 원하는 폭도 다르다. ★★ 보이는 선은 1px 인데 «잡히는 자리» 는 9px 로 뒀다. 1px 을 정확히 짚게 하면 손잡이가 있는 줄 알면서도 «안 잡힌다» 고 느낀다. 음수 여백으로 양옆 칸을 파고들게 해서, 자리를 벌지 않고도 넓게 잡힌다(겉보기 간격은 전과 같다). ★ 마우스를 올리면 선이 굵고 파랗게 바뀐다 — 커서 모양은 «대 봐야» 알기 때문에, 대기 전에도 여기가 손잡이라는 것이 보여야 한다. ★★ 끄는 동안 커서와 «글자 선택 막기» 를 몸(body) 전체에 건다. 안 걸면 손잡이를 살짝 벗어났을 때 커서가 화살표로 돌아가 놓친 줄 알게 되고, 끌 때마다 본문이 파랗게 물든다. ★ 저장은 «손을 뗄 때 한 번» 만 한다 — 1px 마다 쓰면 저장이 수백 번 일어난다. ★ 240px 아래로는 안 좁아진다(라벨과 값이 겹친다) · 760px 위로는 안 넓어진다(가운데 이력 칸이 사라진다). ★ dev 전용. -->
 <!-- (2026-09-02) 제니가 화면을 보고 준 것들을 고쳤다 — 「① 티켓 정보 값들이 시각적으로 구분·정리되어 보이게」 와 어긋난 자리 넷. ①★★ 이름과 값을 «두 열» 로 세웠다(생성·상세 공통). 이름이 값 «위» 에 얹혀 있으면 한 항목이 두 줄을 먹고, 값마다 시작점이 달라 눈이 훑을 기준선이 없다. 이름을 왼쪽 70px 에 세우면 값이 한 세로줄로 정렬되고, 그러면 «다른 것» 이 먼저 눈에 들어온다 — 정리돼 보이는 것의 실체가 그것이다. 줄 사이 선은 아주 옅게 뒀다(진하면 표처럼 보여 오히려 시끄럽다). ②「주문」 이름과 숫자가 틀어져 보이던 것 — 입력칸에만 가운데 정렬을 주고 «글자» 에는 안 줘서 생긴 어긋남이다. 값이 잠겨 글자로 바뀌는 순간 정렬이 사라진 것이다. textAlign 은 블록에만 걸리므로 display:block 을 함께 준다. ③옵션이 길어 줄이 바뀌며 옆 수량과 어긋나던 것 — 셋을 한 줄에 나란히 두면 «가장 긴 값이 나머지를 밀어낸다». 옵션에 한 줄을 통째로 주고, 주문·CS 접수는 이름을 값 옆에 붙여 아래 줄에 뒀다. ④주소가 칸에 다 안 보이던 것 — ① 칸이 330px 라 우편번호와 나란히 두면 주소에 200px 밖에 안 남는다. 우편번호는 다섯 자리라 작아도 되고 주소는 길다 → 주소에 한 줄을 통째로 줬다(배송·회수 둘 다, 생성·상세 둘 다). ⑤★★ CS 접수 수량이 «주문 수량» 을 넘지 못하게 했다(제니). 3개 산 것을 4개 접수하면 정산이 어긋나고 그 어긋남이 공급사 청구까지 그대로 따라간다. ★ 막고 알리는 대신 «넘으면 최대값으로 되돌린다» — 못 넘는다고 알리기만 하면 사람이 다시 지우고 다시 쳐야 한다. 숫자 아닌 글자도 함께 걸러 낸다. ★ 화면이 되돌리지만 저장 직전에 한 번 더 본다(생성·상세 둘 다) — 화면만 믿으면 다른 길로 값이 들어왔을 때 조용히 지나간다. ★ 주문 수량을 못 받은 품목은 상한이 없다: 모르는 값으로 막으면 안 된다. ⑥공급사·주문자 위에 「주문」 묶음 제목을 뒀다 — 없으면 품목 목록에 딸린 값처럼 읽힌다. ★ dev 전용. -->
 <!-- (2026-09-02) 티켓 상세에서 «CS 접수 수량» 과 «회수 주소지» 를 고칠 수 있게 열었다(제니 제보 — 둘 다 수정이 안 됐다). ★★ 무엇을 열고 무엇을 잠글지의 기준은 «카페24가 주는 값인가» 하나다. 카페24가 주는 값(상품·공급사·주문자·수령인·배송지)은 접수 시점 값으로 굳고, 카페24가 «알 길이 없는» 값만 사람이 고친다. CS 접수 수량은 몇 개가 문제인지 고객이 말해 주는 값이고(3개 중 1개만 불량이 흔하다), 회수 주소지는 주문서에 아예 없는 값이다. ★★ 그래서 상세에는 주문 «재조회» 를 두지 않는다(제니 결정) — 재조회를 붙이는 순간 「접수 시점 고정」 이라는 말이 무너지고, 회수 기사에게 이미 알려 준 주소가 소리 없이 바뀔 수 있다. ①CS 접수 수량은 주문 수량 옆에 입력칸으로 둔다. 주문 수량은 카페24 값이라 글자 그대로다. DB 가 «0보다 커야 한다» 로 막아 둔 칸이라 저장 전에 화면이 먼저 잡는다 — 안 잡으면 DB 오류 문구가 그대로 튀어나오고, 그건 사람이 읽을 말이 아니다. ②회수 주소지는 우편번호·주소·상세주소 셋과 [배송 주소지와 동일] 버튼. ★ 라벨의 「비우면 배송지와 같습니다」는 남긴다(제니) — 수령인 쪽은 반대로 「주문자와 같음」 을 걷어냈는데, 회수지의 «비어 있음» 은 «아직 안 정했다» 는 뜻까지 담고 있어 값만 보이면 정한 것으로 읽힌다. ★ 저장할 때 배송지를 «복사해» 채우지 않는다. 복사해 두면 배송지가 바뀌어도 회수지가 그날 값으로 굳는다. 버튼을 누르는 것은 사람이 명시적으로 복사한 것이라 값이 실제로 들어간다. ③★★ 이력에 남길 때 주소는 «가린 값» 으로 적는다(csMaskAddr — 앞의 두 마디만 남기고 번지·동호수를 ○ 로). 이력은 append-only 라 한 번 적히면 못 지우는데, 그대로 적으면 같은 주소가 티켓과 이력 두 벌로 남는다. 그렇다고 「바꿨습니다」 만 적으면 무엇이 어떻게 바뀐 건지 알 수 없다 — 계좌·예금주에서 이미 정한 원칙과 같다. 우편번호는 그 자체로 사람을 가리키지 않아 그대로 적는다. ★ dev 전용. -->
 <!-- (2026-09-02) 티켓 접수 화면이 카페24가 «이미 아는» 값을 사람에게 다시 치게 하던 것을 고쳤다(제니 제보 「주문번호 검색시 일부 정보가 안 불러와져 정확한 상태 파악이 안 된다」). ★★ 원인은 두 겹이었다. ①엣지 함수(refund-fetch-order)가 embed 에 receivers 를 안 넣어 수령인·배송지를 «받아 오지도» 않았다. ②받아 온 값조차 화면이 안 썼다 — option_value 는 응답에 있는데 옵션명 칸은 사람이 치는 칸이었다. 카페24 창을 띄워 놓고 옮겨 적는 자리가 곧 오타 나는 자리다. 함수는 «더하기만» 해서 넓혔고(수령인·배송지·수량·상품코드·클레임 값), 이 판은 화면 쪽이다. ①조회하면 품목마다 옵션·주문수량·수령인·연락처·우편번호·주소를 담는다. ★ CS 접수 수량만은 주문 수량으로 안 채운다 — 「3개 중 1개만 불량」이 흔한데 미리 3을 넣으면 아무도 안 고친 채 전량 접수된다. ②★★ 수령인·배송지를 «품목마다» 그린다. 주문 하나에 배송지가 여럿일 수 있고 티켓은 품목 단위다. 함수가 품목의 shipping_code 로 수령인을 이어 주므로 그 결과를 품목별로 들고 있어야 뜻이 산다 — 하나로 뭉개면 «대부분 맞고 가끔 틀린» 주소가 되고, 그게 가장 나쁘다. 품목이 하나면 화면은 전과 똑같아 보인다. ③★★ 규칙을 하나로 뒀다 — «카페24가 준 값은 잠그고, 비어 있으면 사람이 채운다». 수령인만 예외로 열면 다음에 상품명이 안 왔을 때 또 예외를 만들게 된다. 못 이은 품목에는 노란 줄로 「카페24에서 찾지 못했습니다」를 적어 «없는 주문» 과 «모르는 상태» 를 가른다. ④값이 글자로 굳으면서 빈칸 안내가 사라지므로 옵션·주문·CS 접수 머리글을 새로 뒀다 — 「본품 / 2 / 1」 만 늘어놓으면 어느 것이 무엇인지 모른다. ⑤상품코드를 카페24에서 직접 받는다. 그전에는 상품«명» 으로 콘솔 상품 정보를 뒤져 딱 한 건일 때만 썼는데, 이름은 동기화가 매일 바꾸는 값이라 원래 코드 기준이어야 했다. ⑥「배송 주소지와 동일」 버튼은 이제 고른 첫 품목의 배송지를 베낀다. ⑦문구 셋: 방향 「미정 — 협의하며 정합니다」→「처리 방향을 선택합니다」 · 상세의 수령인 「주문자와 같음」→ 실제 값(카페24가 주면 그 값, 없으면 주문자 값) · 카페24 연동 탭 「어떤 값을 끌어올지」→「어떤 값을 보여줄지」(이제 전부 끌어오고 보여줄 것만 고른다). ★ 회수 주소지 라벨의 「비우면 배송지와 같습니다」는 제니 지시로 남긴다 — 그건 «아직 안 정했다» 는 뜻까지 담고 있어 값만 보이면 정한 것으로 읽힌다. ★★ 티켓 상세에는 주문 «재조회» 를 두지 않는다(제니 결정) — 그래야 모든 카페24 값이 접수 시점에 잠정 고정된다. ★ dev 전용. -->
@@ -18137,6 +18139,74 @@ function CsCafe24Settings({currentUserEmail}){
   );
 }
 
+// ── 칸 너비 끌어 바꾸기 (2026-09-02 제니) ─────────────────────────────────
+// ★★ 폭은 «사람 취향» 이다 — console_settings 에 넣지 않는다. 그 표는 «운영 기준»,
+//   즉 누가 로그인하든 같아야 하는 값을 담는 자리다. 화면 넓이는 쓰는 사람의 모니터와
+//   습관에 달린 것이라 한 사람이 바꾸면 모두가 바뀌어서는 안 된다.
+//   → 브라우저(localStorage)에 사람마다 따로 남긴다.
+// ★ 못 읽거나 못 쓰더라도 화면은 그냥 기본 폭으로 돈다. 폭 하나 때문에 화면이
+//   안 뜨는 일은 없어야 한다(사생활 보호 창에서는 저장 자체가 막힌다).
+function useCsPanes(key, def){
+  const [w,setW] = useState(()=>{
+    try{
+      const v = JSON.parse(localStorage.getItem(key)||'null');
+      if(v && v.l>0 && v.r>0) return v;
+    }catch(_e){}
+    return def;
+  });
+  // ★★ 끄는 동안에는 저장하지 않는다 — 1px 마다 쓰면 저장이 수백 번 일어난다.
+  //   손을 뗄 때 한 번만 남긴다.
+  const drag = (which)=>(e)=>{
+    e.preventDefault();
+    const startX = e.clientX;
+    const start  = which==='l' ? w.l : w.r;
+    const move = (ev)=>{
+      const d = ev.clientX - startX;
+      // ★ 오른쪽 칸은 «왼쪽으로 끌수록 넓어진다» — 부호가 반대다.
+      const raw = which==='l' ? start + d : start - d;
+      // ★ 최소 240px — 더 좁아지면 라벨과 값이 겹쳐 아무것도 못 읽는다.
+      //   최대 760px 은 가운데 칸(이력)이 사라지지 않게 하는 선이다.
+      const next = Math.max(240, Math.min(760, raw));
+      setW(p=> which==='l' ? {...p,l:next} : {...p,r:next});
+    };
+    const up = ()=>{
+      window.removeEventListener('mousemove',move);
+      window.removeEventListener('mouseup',up);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setW(p=>{ try{ localStorage.setItem(key, JSON.stringify(p)); }catch(_e){} return p; });
+    };
+    // ★ 끄는 동안 커서를 «몸 전체» 에 걸어 둔다. 손잡이를 살짝 벗어나면 커서가
+    //   화살표로 돌아가 «놓친 줄» 알게 된다. 글자 선택도 막는다 — 안 막으면
+    //   끌 때마다 본문이 파랗게 물든다.
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    window.addEventListener('mousemove',move);
+    window.addEventListener('mouseup',up);
+  };
+  return [w, drag];
+}
+
+// 칸 사이의 손잡이.
+// ★★ 보이는 선은 가늘게, «잡히는 자리» 는 넓게 둔다(9px). 1px 을 정확히 짚게 하면
+//   손잡이가 있는 줄 알면서도 «안 잡힌다» 고 느낀다. 음수 여백으로 양옆 칸을 파고들어
+//   자리를 벌지 않고도 넓게 잡힌다.
+// ★ 마우스를 올리면 선이 굵고 파랗게 바뀐다 — 커서 모양만으로는 «여기가 손잡이»
+//   라는 것을 미리 알 수 없다.
+function CsPaneBar({onMouseDown}){
+  const [hot,setHot] = useState(false);
+  return (
+    <div onMouseDown={onMouseDown}
+      onMouseEnter={()=>setHot(true)} onMouseLeave={()=>setHot(false)}
+      title="끌어서 칸 너비를 바꿉니다"
+      style={{cursor:'col-resize',width:9,margin:'0 -4px',alignSelf:'stretch',
+        display:'flex',justifyContent:'center',zIndex:5}}>
+      <div style={{width:hot?3:1,borderRadius:2,transition:'background .12s, width .12s',
+        background: hot?'var(--primary)':'var(--border)'}}></div>
+    </div>
+  );
+}
+
 // ── CS 관리 > 설정 ────────────────────────────────────────────────────────
 // ★★ master 전용이다(제니). 여기서 바꾸는 것은 «다른 사람이 무엇을 볼 수 있나» 와
 //   «무엇을 반드시 넣어야 하나» 라, 상담원이 스스로 풀 수 있으면 잠금이 아니다.
@@ -19371,6 +19441,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     </div>
   );
   const req = <span style={{color:'#F6AD09'}}> *</span>;
+  // 칸 너비 — 사람마다 따로 남는다. 생성과 상세가 «다른» 열쇠를 쓴다:
+  // 만들 때와 볼 때 보는 것이 달라 원하는 폭도 다르다.
+  const [paneW, dragPane] = useCsPanes('cs_new_panes', {l:360, r:325});
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
@@ -19382,7 +19455,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
 
-      <div style={{display:'grid',gridTemplateColumns:'360px 1fr 325px',gap:14,alignItems:'start'}}>
+      {/* ★ 칸 사이에 손잡이를 끼운다. 손잡이도 격자의 한 칸이라 gap 이 양옆에 붙는데,
+          손잡이의 음수 여백이 그만큼 되돌려 겉보기 간격은 전과 같다. */}
+      <div style={{display:'grid',alignItems:'start',gap:14,
+        gridTemplateColumns:paneW.l+'px 9px 1fr 9px '+paneW.r+'px'}}>
 
         {/* ── ① 티켓 정보 ─────────────────────────────────────────── */}
         <div style={panel}>
@@ -19656,6 +19732,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           </div>
         </div>
 
+        <CsPaneBar onMouseDown={dragPane('l')}/>
         {/* ── ② 이력 ──────────────────────────────────────────────── */}
         <div style={sticky}>
           <div style={ptitle}>② 이력</div>
@@ -19739,6 +19816,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           </div>
         </div>
 
+        <CsPaneBar onMouseDown={dragPane('r')}/>
         {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
         <div style={sticky}>
           <div style={ptitle}>③ 이 상품 CS 정보</div>
@@ -20136,19 +20214,19 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //   (붙어 있기만 하고 안이 넘치면 아래쪽 저장 버튼에 손이 안 닿는다).
   // ★ 머리말이 위에 붙어 있으므로 그 높이(약 62px)만큼 내려 붙는다 — 16 으로 두면
   //   패널 윗머리가 머리말 뒤로 숨는다.
-  // ②용 — 격자 칸이 ①만큼 늘어나고, 그보다 길어지면 «안에서» 구른다.
-  // ★★★ ②의 «키» 규칙(제니 2026-09-01, 두 번 어긋난 끝에 정리)
-  //   ①은 넣은 내용만큼만 길다 — 그것이 기준이다.
-  //   ②는 «①보다 길어지지 않는다». 짧으면 짧은 대로 두고(빈 칸을 늘리지 않는다),
-  //     길어지면 제 안에서 세로로 구른다.
-  //   ②가 ①을 밀어 늘리는 일도 없어야 한다.
-  //   → 격자 칸을 «자리만» 잡게 두고(wrap), 그 안에서 ②를 띄운다(absolute).
-  //     띄운 것은 높이 계산에 안 들어가므로 ①을 밀지 못하고,
-  //     maxHeight:100% 가 ①이 정한 높이에서 멈춰 세운다.
-  //     (height:100% 로 두면 짧을 때도 끝까지 늘어나 아래가 텅 빈다 — 그게 앞선 실수다.)
-  const growWrap = {position:'relative', minHeight:0};
-  const grow   = {...panel, position:'absolute', top:0, left:0, right:0,
-    maxHeight:'100%', overflowY:'auto', boxSizing:'border-box'};
+  // ★★★ ②의 «키» 규칙 — 2026-09-02 에 제니 요청으로 다시 정했다.
+  //   앞 규칙(09-01): ②는 «①보다 길어지지 않는다» — 격자 칸을 자리만 잡게 두고
+  //     그 안에서 absolute 로 띄워 maxHeight:100% 로 ①의 높이에 멈춰 세웠다.
+  //   새 규칙(09-02): ②도 ③처럼 «스크롤을 따라온다»(제니). 이력을 읽으면서 아래로
+  //     내려가는 동안 정작 그 이력 칸이 화면 밖으로 나가 버렸다.
+  //   ★★ 앞 규칙이 요구하던 두 가지는 그대로 지켜진다 —
+  //     ①«짧으면 짧은 대로»: alignSelf:'start' 라 칸이 늘어나지 않는다.
+  //     ②«①을 밀지 않는다»: 제 안에서 구르므로 밖으로 자라지 않는다.
+  //     달라진 것은 «어디서 멈추나» 뿐이다 — ①의 높이가 아니라 «화면 높이» 다.
+  //     따라오게 하려면 그래야 한다: ①의 높이에 묶여 있으면 ①이 끝나는 자리에서
+  //     함께 멈춰 버려 «따라온다» 는 말 자체가 성립하지 않는다.
+  //   ★ 그래서 ②는 이제 ③과 «같은» 규칙을 쓴다(sticky). 규칙이 하나면 나중에
+  //     머리말 높이가 바뀌어도 한 곳만 고치면 된다.
   // ③용 — 짧은 칸이라 따라 내려온다. 머리말이 위에 붙어 있으므로 그 높이만큼 내려 붙는다.
   const sticky = {...panel, position:'sticky', top:74, alignSelf:'start',
     maxHeight:'calc(100vh - 90px)', overflowY:'auto'};
@@ -20172,6 +20250,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         color:v?'var(--text)':'var(--sub)'}}>{v||'—'}</div>
     </div>
   );
+  const [paneW, dragPane] = useCsPanes('cs_detail_panes', {l:330, r:325});
 
   if(t===null || edit===null) return (
     <div className="section" style={{padding:'60px 32px',color:'var(--sub)',fontSize:12}}>불러오는 중…</div>
@@ -20234,7 +20313,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
 
       {/* ★ alignItems 를 주지 않는다(기본 stretch) — 세 칸이 같은 키가 된다.
           그래야 ②가 ①만큼 늘어나고, 그보다 길어질 때만 ② 안에서 구른다. */}
-      <div style={{display:'grid',gridTemplateColumns:'330px 1fr 325px',gap:14}}>
+      <div style={{display:'grid',gap:14,
+        gridTemplateColumns:paneW.l+'px 9px 1fr 9px '+paneW.r+'px'}}>
 
         {/* ── ① 티켓 정보 ───────────────────────────────────────────
             ★★ 값을 고쳐도 «바로» 저장하지 않는다(제니 2026-09-01). 고칠 때마다 저장하면
@@ -20436,9 +20516,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
 
         </div>
 
+        <CsPaneBar onMouseDown={dragPane('l')}/>
         {/* ── ② 이력 ──────────────────────────────────────────────── */}
-        <div style={growWrap}>
-        <div style={grow}>
+        <div style={sticky}>
           <div style={ptitle}>② 이력 — 오래된 것부터</div>
           {events===null ? (
             <div style={{fontSize:11,color:'var(--sub)'}}>불러오는 중…</div>
@@ -20626,8 +20706,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             )}
           </div>
         </div>
-        </div>
 
+        <CsPaneBar onMouseDown={dragPane('r')}/>
         {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
         <div style={sticky}>
           <div style={ptitle}>③ 이 상품 CS 정보</div>
