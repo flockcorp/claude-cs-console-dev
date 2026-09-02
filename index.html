@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260902t_plain_us_new -->
+<!-- v20260902u_qty_align -->
+<!-- (2026-09-02) 제니 검토 7차 — 정렬 세 가지. ①★★ 주문 수량과 CS 접수 수량이 어긋나 보이던 «진짜» 원인을 찾았다. 앞서 1px 여백 문제로 보고 고쳤는데 그게 아니었다 — CS 접수는 입력칸의 «가운데» 에 숫자를 놓고(textAlign:center) 주문 수량은 글자라 왼쪽에서 시작해서, 칸 폭(56·72px)의 절반만큼 밀려 있었던 것이다. 가운데 정렬을 걷으니 둘 다 같은 자리에서 시작한다. ★ 「1px 이 어긋난다」 처럼 보이는 것을 1px 문제로 단정하면 안 된다는 자리다 — 눈으로 재지 말고 «무엇이 자리를 정하는가» 를 봐야 한다. ②품목 줄(옵션·주문·CS 접수)도 ① 의 다른 줄과 «같은 줄 틀»(row)을 쓴다. 여기만 이름 칸 52px 에 18px 들여쓰기라, 바로 위 「주문」 뎁스와 세로가 어긋났다(제니 제보). ③들여쓰기를 12 → 6px 로 줄였다(제니). 들여쓰기는 «층이 있다» 는 것만 알리면 되고, 깊이 들어갈수록 값이 쓸 폭이 줄어 좁은 칸에서는 그 손해가 바로 보인다. 두 화면 같이. ★ dev 전용. -->
 <!-- (2026-09-02) 등록 화면의 이력 미리보기에도 «원룸만들기» 줄 박스 제거를 적용했다(제니 제보 — 상세에만 들어가 있었다). ★ 두 화면이 같은 규칙을 쓰지만 «코드는 따로» 다: 등록은 아직 저장 전이라 화면에 모아 둔 줄(notes)을 그리고, 상세는 DB 에 쌓인 이력(events)을 그린다. 그래서 한쪽만 고쳐지기 쉬운 자리다 — 이력 모양을 손볼 때는 늘 두 곳을 함께 본다. ★ dev 전용. -->
 <!-- (2026-09-02) ① 의 뎁스를 두 화면에서 «주문 · 고객 · 주소» 로 통일했다(제니). 그전에는 상세가 「(이름 없음) · 고객 · 주소」, 등록이 「(이름 없음) · 주문 · 수령인 · 배송지」 라 같은 값이 만들 때와 볼 때 다른 이름 아래 있었다. ①맨 위 묶음에 «주문» 이름을 붙였다(두 화면). 이름이 없으면 맨 위 값들이 «분류 없는 것» 처럼 떠 있고, 그러면 아래 묶음들만 이름을 가진 목록이 되어 층이 하나 모자라 보인다. ★ 첫 묶음 위에는 선을 두지 않는다(secTop) — 패널 제목 바로 아래라 선을 그으면 제목과 첫 묶음 사이에 줄이 둘 그어진 것처럼 보인다. ②등록에서 공급사를 «주문» 으로 옮겼다 — 카페24 주문서가 주는 값이고, 고객이 누구인가와는 다른 이야기다. ③등록의 「수령인 · 배송지」 한 묶음을 «고객»(주문자·수령인) 과 «주소»(배송·회수) 둘로 갈랐다. 수령인과 배송 주소지가 둘 다 «품목마다» 라, 품목 목록을 두 번 돈다 — 한 번에 그리면 두 묶음 사이에 이름을 세울 자리가 없다. ★ dev 전용. -->
 <!-- (2026-09-02) 이력에서 «원룸만들기» 가 적은 줄의 색 박스를 뺐다(제니). 이력의 대부분이 우리 쪽 기록이라 그 줄마다 박스가 깔리면 화면이 온통 박스가 되고, 정작 «고객» 과 «공급사» 의 말이 안 도드라진다. ★ 왼쪽 색 바는 그대로 둔다 — 박스는 «눈에 띄게 하는» 것이고 바는 «누가 남겼는지 알리는» 것이라 역할이 다르다. 누구의 줄인지는 여전히 알아야 한다. ★ dev 전용. -->
@@ -19570,7 +19571,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   「두 화면은 기본 틀이 동일한 것이 전제」). 그전에는 읽기 값은 이름을 왼쪽에
   //   세우고 입력칸은 이름을 «위» 에 얹어, 같은 칸 안에서 값의 시작점이 두 가지였다.
   //   그러면 세로로 훑을 기준선이 없어 «중구난방» 으로 보인다.
-  const rowPad = 12;                      // 묶음명보다 더 들어오는 만큼
+  const rowPad = 6;                       // 묶음명보다 더 들어오는 만큼
+  // ★ 12 → 6 (제니 2026-09-02). 들여쓰기는 «층이 있다» 는 것만 알리면 된다 —
+  //   깊이 들어갈수록 값이 쓸 폭이 줄고, 좁은 칸에서는 그 손해가 바로 보인다.
   const row = (k,node,extra)=>(
     <div style={{display:'grid',gridTemplateColumns:'78px 1fr',gap:7,
       alignItems:'center',padding:'4px 0 4px '+rowPad+'px', ...(extra||{})}}>
@@ -19729,22 +19732,17 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                         ★ 주석은 «조건 안» 이 아니라 밖에 둔다 — {on && ( 바로 뒤는
                           식(expression) 자리라 JSX 주석이 객체로 읽혀 문법이 깨진다. */}
                     {on && (
-                      <div style={{margin:'0 0 9px 18px',display:'grid',
-                        gridTemplateColumns:'52px 1fr',gap:'4px 7px',alignItems:'center'}}>
-                        <span style={miniKeyR}>옵션</span>
-                        <div style={{minWidth:0}}>{cell(it.code,'option_name','옵션명')}</div>
-                        <span style={miniKeyR}>주문</span>
-                        <div style={{minWidth:0}}>{cell(it.code,'order_qty','—')}</div>
+                      <div style={{marginBottom:9}}>
+                        {row('옵션', cell(it.code,'option_name','옵션명'))}
+                        {row('주문', cell(it.code,'order_qty','—'))}
                         {/* CS 접수 수량은 «사람이 정하는 값» 이라 늘 입력칸이다 —
                             카페24는 몇 개가 문제인지 모른다. */}
-                        <span style={miniKeyR}>CS 접수</span>
-                        <div>
+                        {row('CS 접수', (
                           <input value={qtyOf(it.code)}
                             onChange={e=>setCsQty(it.code,e.target.value)}
                             inputMode="numeric"
-                            style={{...inp,width:56,fontSize:11.5,padding:'4px 7px',
-                              textAlign:'center'}}/>
-                        </div>
+                            style={{...inp,width:56,fontSize:11.5,padding:'4px 7px'}}/>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -20498,7 +20496,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //   「두 화면은 기본 틀이 동일한 것이 전제」). 그전에는 읽기 값은 이름을 왼쪽에
   //   세우고 입력칸은 이름을 «위» 에 얹어, 같은 칸 안에서 값의 시작점이 두 가지였다.
   //   그러면 세로로 훑을 기준선이 없어 «중구난방» 으로 보인다.
-  const rowPad = 12;                      // 묶음명보다 더 들어오는 만큼
+  const rowPad = 6;                       // 묶음명보다 더 들어오는 만큼
+  // ★ 12 → 6 (제니 2026-09-02). 들여쓰기는 «층이 있다» 는 것만 알리면 된다 —
+  //   깊이 들어갈수록 값이 쓸 폭이 줄고, 좁은 칸에서는 그 손해가 바로 보인다.
   const row = (k,node,extra)=>(
     <div style={{display:'grid',gridTemplateColumns:'78px 1fr',gap:7,
       alignItems:'center',padding:'4px 0 4px '+rowPad+'px', ...(extra||{})}}>
@@ -20634,7 +20634,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   if(n && max>0 && parseInt(n,10) > max) n = String(max);
                   setE('cs_qty',n);
                 }}
-                inputMode="numeric" style={{...inp,width:72,textAlign:'center'}}/>
+                inputMode="numeric" style={{...inp,width:72}}/>
               {t.order_qty>0 && (
                 <span style={{fontSize:10,color:'var(--sub)'}}>최대 {t.order_qty}</span>
               )}
