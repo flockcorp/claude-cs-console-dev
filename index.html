@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260902m_divider_depth -->
+<!-- v20260902n_same_frame -->
+<!-- (2026-09-02) 제니 검토 4차 — «두 화면은 기본 틀이 같아야 한다» 를 실제로 맞췄다. ①★★ ① 칸의 모든 항목이 «같은 행 틀»(row)을 쓴다. 그전에는 읽기 값은 이름을 왼쪽에 세우고, 입력칸은 이름을 «위» 에 얹어 같은 칸 안에서 값의 시작점이 두 가지였다 — 세로로 훑을 기준선이 없으니 «중구난방» 으로 보인 것이다. 이름 칸 78px·오른쪽 정렬, 값은 그 옆. 읽기 전용(ro)도 같은 틀의 «값만 글자» 판으로 바꿨다. ②★★ 뎁스마다 왼쪽 끝을 계단처럼 밀었다(제니) — 선 x=8(패널 여백 16보다 8 바깥, 박스에는 안 닿는다) · 묶음 이름 x=16 · 항목 x=28. 같은 자리에서 시작하면 층이 있어도 없는 것처럼 보인다. ③환불 네 칸을 두 칸씩 나란히 두던 것을 한 줄에 하나씩으로 폈다. 나란히 두면 왼쪽 칸 이름과 오른쪽 칸 이름이 서로 다른 세로줄에 서서 위아래 어느 것과도 안 맞는다. 정산 세 칸·분류 네 칸·회수 주소지도 같은 틀로. ④상세의 「주문 수량 / CS 접수 수량」 한 줄을 등록과 «같은 두 줄» 로 나눴다. 한쪽은 한 줄, 다른 쪽은 두 줄이면 같은 값을 볼 때마다 눈이 자리를 다시 찾는다. 최대 수량도 옆에 적어 준다. ⑤접수 경로를 상세에서도 «분류» 로 옮겼다 — 카페24가 준 값이 아니라 사람이 고르는 값이라 맨 위 스냅샷 사이에 있던 자리가 틀렸다(등록 화면은 이미 분류에 두고 있었다). ⑥★★ ③의 «검색» 을 다시 만들었다(제니 정정). 다른 상품을 찾는 것이 아니라 «지금 보고 있는 상품의 CS 정보 안» 에서 찾는 것이다 — 정보가 길면 오른쪽에 다 떠 있어도 한눈에 안 들어온다. 결과를 따로 띄우지 않고 있던 자리에 그대로 두고 찾은 줄만 도드라지게 한다(왼쪽에 ▸, 배경 옅게, 낱말에 색). 앞뒤 맥락이 함께 보여야 읽을 수 있기 때문이다. ★ 화살표 자리는 찾든 안 찾든 늘 비워 둔다 — 있을 때만 자리를 만들면 글이 좌우로 들썩인다. ★ 0건이면 «없습니다» 라고 말해 준다: 조용히 아무 일도 안 일어나면 사람은 검색이 안 되는 줄 안다. ⑦이력 기호에서 가운뎃점(·)을 빼고 「」 를 넣었다(제니) — 자판에서 바로 나오는 글자는 자리만 먹는다. 「」 는 두 글자를 함께 넣고 커서를 가운데 둔다: 닫는 짝을 따로 치게 하면 열기만 하고 안 닫는 줄이 쌓인다. ★ dev 전용. -->
 <!-- (2026-09-02) 제니 검토 3차 — 선과 이름 자리. ①★★ 구분선을 «두 층» 으로 갈랐다. 1뎁스(고객·주소·분류·환불·정산)는 진하게(var(--sub)), 그 안에서 한 번 더 나뉘는 자리는 연하게(sec2). 두 층이 같은 굵기면 어느 것이 큰 묶음인지 눈으로 알 수 없어 목록이 평평해진다. 2뎁스는 「주소」 묶음 안에서 배송지와 회수지를 나누는 데 먼저 썼다. ②줄마다 있던 옅은 선을 걷은 것과 함께 보면, 공급사 아래에 선이 둘 겹치던 것도 사라진다 — 남는 것은 1뎁스 선 하나와 여백이다. ③이름이 접히지 않게 했다(제니 제보 — 「품목별 주문번호」가 두 줄이 됐다). 이름 칸 너비는 «가장 긴 이름» 이 기준이다: 하나라도 접히면 그 줄만 키가 달라져 정렬이 무너진다. 62 → 78px, nowrap. ★ dev 전용. -->
 <!-- (2026-09-02) 이력 입력칸 아래에 «자주 쓰는 기호» 버튼 다섯을 뒀다(제니 요청 · 등록·상세 둘 다). ★ ※ 는 제니가 지정했고 나머지 셋은 CS 이력에서 실제로 쓰이는 자리를 보고 골랐다 — → 는 「무엇이 무엇으로」(교환 → 환불 · 미접수 → 접수)를 한 글자로 적고, · 은 항목을 나란히 적을 때 쓰며(이 콘솔이 이미 곳곳에서 쓰는 구분점이다), ✔ 는 「확인했다·처리했다」를 줄 앞에 세운다. ★★ 다섯을 넘기지 않는다. 고를 것이 많아지면 «어느 것이었더라» 를 찾는 시간이 그냥 손으로 치는 시간보다 길어지고, 그 순간 버튼은 도움이 아니라 장애물이 된다. 자판으로 바로 나오는 글자는 넣지 않았다 — 자리만 먹는다. ★★ 커서 «자리에» 넣고 그 자리에 커서를 돌려놓는다. 맨 뒤에 붙이면 글 중간에 넣으려던 사람이 매번 자리를 다시 찾아야 하고, 커서가 튀면 그다음 글자가 엉뚱한 데 찍힌다. 값이 화면에 그려진 «뒤» 에 옮긴다 — 바로 옮기면 아직 옛 글자 수라 자리가 어긋난다. ★ type="button" 을 준다: 기본값이 submit 이라 폼 안에서 누르면 화면이 통째로 다시 뜬다. ★ dev 전용. -->
 <!-- (2026-09-02) 티켓 등록 화면 ③ 칸을 손봤다(제니). ①★★ 상품코드가 10px 회색 한 줄이라 «있는 줄도 모르는» 자리였다. ③은 상담원이 보면서 안내하는 칸이라 «무슨 상품 이야기인가» 가 가장 먼저 와야 한다 — 상품명을 본문 크기로 앞에 두고 코드를 그 아래 강조색으로 뒀다. ②★★ ③ 안에 «상품 검색» 탭을 냈다(제니 요청). 고객이 주문한 것과 다른 상품을 함께 묻는 일이 있는데, 그러면 쓰던 티켓을 두고 상품 관리 화면으로 갔다 와야 했다 — 보던 자리를 떠나지 않고 찾을 수 있어야 한다. 이름과 코드를 함께 보고(상담원은 둘 중 아는 것으로 찾는다) 20건까지, 목록에서 고르면 같은 모양으로 펼쳐진다. ★ 상품 한 벌을 그리는 자리를 하나로 뒀다(prodBlock) — «이 주문 상품» 과 «검색 결과» 가 같은 모양이어야 눈이 다시 익히지 않는다. ★ 목록에 «CS 정보 있음/없음» 을 함께 적는다 — 없는 것을 열어 보고 나서야 아는 것은 헛걸음이다. ★★ 검색어에서 쉼표·괄호·% 를 걷어낸다. 그것들은 PostgREST or() 의 문법 글자라 그대로 넘기면 검색이 아니라 «틀린 조건» 이 되어 조용히 0건이 온다 — 없는 것과 구분이 안 된다. ③「또 생긴 사건이면 …」 두 문장을 줄로 나눴다 — 고르는 갈림길이라 붙여 두면 «그래서 어느 쪽이지» 로 읽힌다. ★ 상세 화면 ③에는 아직 검색을 안 붙였다 — 요청이 등록 화면 기준이었다. ★ dev 전용. -->
@@ -16935,7 +16936,12 @@ const CS_SYMBOLS = [
   {ch:'★', tip:'중요 표시'},
   {ch:'※', tip:'참고 · 유의사항'},
   {ch:'→', tip:'무엇이 무엇으로 (교환 → 환불)'},
-  {ch:'·',  tip:'가운뎃점 — 항목을 나란히 적을 때'},
+  // ★ 가운뎃점(·)은 뺐다(제니) — 자판에서 바로 나오는 글자라 자리만 먹었다.
+  //   대신 «따옴표» 를 넣는다: 고객이 한 말을 그대로 옮길 때 쓰는데, 옮긴 말과
+  //   우리 판단이 섞이면 나중에 「고객이 그렇게 말했나」 를 알 수 없다.
+  //   ★ 두 글자를 함께 넣고 커서를 «가운데» 에 둔다 — 닫는 짝을 따로 치게 하면
+  //     열기만 하고 안 닫는 줄이 쌓인다.
+  {ch:'「」', tip:'고객 말을 그대로 옮길 때', caret:1},
   {ch:'✔', tip:'확인 · 처리 완료'},
 ];
 // 기호 버튼 한 줄. 두 화면(등록·상세)이 같은 것을 쓴다.
@@ -16944,7 +16950,7 @@ const CS_SYMBOLS = [
 // ★ type="button" 을 반드시 준다 — 안 주면 기본이 submit 이라 폼 안에서는 눌렀을 때
 //   화면이 통째로 다시 뜬다.
 function CsSymbolBar({taRef, value, onChange}){
-  const put = (ch)=>{
+  const put = (ch,caret)=>{
     const el = taRef && taRef.current;
     const v = String(value||'');
     if(!el){ onChange(v + ch); return; }
@@ -16954,13 +16960,15 @@ function CsSymbolBar({taRef, value, onChange}){
     // ★ 값이 화면에 그려진 «뒤» 에 커서를 옮긴다. 바로 옮기면 아직 옛 글자 수라
     //   자리가 어긋난다.
     requestAnimationFrame(()=>{
-      try{ el.focus(); el.setSelectionRange(a+ch.length, a+ch.length); }catch(_e){}
+      try{
+      const at = a + (caret==null ? ch.length : caret);
+      el.focus(); el.setSelectionRange(at, at); }catch(_e){}
     });
   };
   return (
     <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
       {CS_SYMBOLS.map(x=>(
-        <button key={x.ch} type="button" onClick={()=>put(x.ch)} title={x.tip}
+        <button key={x.ch} type="button" onClick={()=>put(x.ch,x.caret)} title={x.tip}
           style={{width:26,height:24,borderRadius:5,fontSize:12,lineHeight:1,
             fontFamily:'inherit',cursor:'pointer',background:'transparent',
             border:'1px solid var(--border)',color:'var(--sub)',padding:0}}>{x.ch}</button>
@@ -19479,25 +19487,46 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     marginBottom:12};
   // ★ 하위 묶음 제목. 칸 이름(lbl)과 크기·색이 같아 구분이 안 됐다(제니 제보) —
   //   한 단계 키우고 굵게, 글자색도 본문색으로 올려 «제목» 으로 읽히게 한다.
-  // ★★ 선이 «두 층» 이다(제니 2026-09-02). 1뎁스(고객·주소·분류·환불·정산)는 진하게,
-  //   그 안에서 한 번 더 나뉘는 자리는 연하게. 두 층이 같은 굵기면 어느 것이 큰
-  //   묶음인지 눈으로 알 수 없어 목록이 평평해진다.
+  // ★★★ ① 칸의 «세 층» — 선 · 묶음 이름 · 항목 (제니 2026-09-02).
+  //   선이 가장 바깥으로 나가고, 묶음 이름이 그보다 안으로, 항목이 다시 더 안으로
+  //   들어온다. 층마다 왼쪽 끝이 «계단» 처럼 밀려 있어야 무엇이 무엇에 딸린 것인지
+  //   눈이 읽는다. 같은 자리에서 시작하면 층이 있어도 없는 것처럼 보인다.
+  //     선     x=8   (패널 안쪽 여백 16보다 8 바깥 — 박스에는 안 닿는다)
+  //     묶음명 x=16  (선보다 8 안쪽)
+  //     항목   x=28  (묶음명보다 12 안쪽)
+  // ★ 선 굵기도 두 층이다 — 1뎁스는 진하게(var(--sub)), 그 안의 갈래는 연하게.
+  //   두 층이 같은 굵기면 어느 것이 큰 묶음인지 알 수 없어 목록이 평평해진다.
+  const secPad = 8;                       // 선이 양옆으로 나가는 만큼
   const sec = {fontSize:11.5,fontWeight:700,color:'var(--text)',letterSpacing:'.02em',
-    margin:'16px 0 10px',paddingTop:12,borderTop:'1px solid var(--sub)'};
+    margin:'16px -'+secPad+'px 10px', paddingTop:12, paddingLeft:secPad,
+    borderTop:'1px solid var(--sub)'};
   // 2뎁스 — 같은 묶음 «안» 을 나눈다. 이름 없이 선과 여백만 둘 때도 쓴다.
-  const sec2 = {marginTop:12,paddingTop:10,borderTop:'1px solid rgba(255,255,255,.07)'};
+  const sec2 = {marginTop:12,paddingTop:10,
+    borderTop:'1px solid rgba(255,255,255,.07)'};
+  // ★★ 항목 한 줄 — 읽기 전용이든 입력칸이든 «같은 틀» 을 쓴다(제니 2026-09-02:
+  //   「두 화면은 기본 틀이 동일한 것이 전제」). 그전에는 읽기 값은 이름을 왼쪽에
+  //   세우고 입력칸은 이름을 «위» 에 얹어, 같은 칸 안에서 값의 시작점이 두 가지였다.
+  //   그러면 세로로 훑을 기준선이 없어 «중구난방» 으로 보인다.
+  const rowPad = 12;                      // 묶음명보다 더 들어오는 만큼
+  const row = (k,node,extra)=>(
+    <div style={{display:'grid',gridTemplateColumns:'78px 1fr',gap:7,
+      alignItems:'center',padding:'4px 0 4px '+rowPad+'px', ...(extra||{})}}>
+      {/* ★ 이름은 접히지 않는다 — 하나라도 접히면 그 줄만 키가 달라져 정렬이 무너진다.
+          칸 너비는 «가장 긴 이름»(품목별 주문번호)이 기준이다. */}
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,textAlign:'right',
+        whiteSpace:'nowrap'}}>{k}</div>
+      <div style={{minWidth:0}}>{node}</div>
+    </div>
+  );
   // ★★ 이름을 왼쪽에 같은 폭으로 세워 값이 한 세로줄로 정렬되게 한다(제니 2026-09-02).
   //   이름이 값 위에 얹혀 있으면 한 항목이 두 줄을 먹고, 값마다 시작점이 달라
   //   눈이 훑을 기준선이 없다. 정렬되면 «다른 것» 이 먼저 눈에 들어온다.
   // ★ break-all 이 아니라 break-word 다 — 한글 주소를 아무 데서나 끊으면 읽기 나쁘다.
-  const ro = (k,v)=>(
-    <div style={{display:'grid',gridTemplateColumns:'62px 1fr',gap:7,alignItems:'baseline',
-      padding:'4px 0'}}>
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,textAlign:'right'}}>{k}</div>
-      <div style={{fontSize:12,lineHeight:1.5,wordBreak:'break-word',
-        color:v?'var(--text)':'var(--sub)'}}>{v||'—'}</div>
-    </div>
-  );
+  // 읽기 전용 값 — row 와 «같은 틀» 이다. 값만 글자로 그린다.
+  const ro = (k,v)=> row(k,
+    <div style={{fontSize:12,lineHeight:1.5,wordBreak:'break-word',
+      color:v?'var(--text)':'var(--sub)'}}>{v||'—'}</div>,
+    {alignItems:'baseline'});
   const req = <span style={{color:'#F6AD09'}}> *</span>;
 
   // ★ 상품 한 벌(이름·코드·CS 정보·메모)을 그리는 자리를 하나로 둔다 —
@@ -19513,40 +19542,75 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         <div style={{fontSize:11,color:'var(--accent)',fontFamily:'monospace',
           marginTop:3,wordBreak:'break-all'}}>{p.product_code || '—'}</div>
       </div>
-      <div style={{fontSize:11,color:'var(--text)',lineHeight:1.75,
-        whiteSpace:'pre-wrap'}}>{p.cs_info || '— CS 정보 없음 —'}</div>
+      {/* ★ 찾는 말이 있으면 그 줄만 도드라진다. 없으면 평소와 똑같이 보인다 —
+          검색을 «켠 적 없는» 사람에게는 아무것도 달라지지 않아야 한다. */}
+      {(()=>{ const n = csHitCount((p.cs_info||'') + '\n' + (p.memo||''));
+        return n===null ? null : (
+          <div style={{fontSize:10,marginBottom:6,
+            color: n>0 ? '#F6AD09' : 'var(--sub)'}}>
+            {n>0 ? '찾은 줄 '+n+'개' : '이 상품 정보에는 없습니다'}</div>
+        ); })()}
+      {p.cs_info
+        ? csLines(p.cs_info, {fontSize:11,color:'var(--text)'})
+        : <div style={{fontSize:11,color:'var(--sub)'}}>— CS 정보 없음 —</div>}
       {p.memo && (
-        <div style={{fontSize:10.5,color:'var(--sub)',marginTop:8,lineHeight:1.7,
-          paddingTop:8,borderTop:'1px solid var(--border)',
-          whiteSpace:'pre-wrap'}}>{p.memo}</div>
+        <div style={{marginTop:8,paddingTop:8,borderTop:'1px solid var(--border)'}}>
+          {csLines(p.memo, {fontSize:10.5,color:'var(--sub)'})}
+        </div>
       )}
     </>
   );
 
-  // ── ③ 안의 «상품 검색» (제니 요청 2026-09-02) ──────────────────────────
-  // ★ 고객이 주문한 것과 «다른» 상품을 함께 묻는 일이 있는데, 그러면 쓰던 티켓을 두고
-  //   상품 관리 화면으로 갔다 와야 했다. 보던 자리를 떠나지 않고 찾을 수 있어야 한다.
-  // ★ 이름과 코드를 «함께» 본다 — 상담원은 둘 중 아는 것으로 찾는다.
-  const [prodTab,setProdTab] = useState('this');
-  const [pq,setPq]     = useState('');
-  const [pHit,setPHit] = useState(null);   // null = 아직 안 찾음
-  const [pPick,setPPick] = useState(null);
-  const [pBusy,setPBusy] = useState(false);
-  const searchProducts = async ()=>{
-    // ★★ 쉼표·괄호·% 는 PostgREST 의 or() 문법 글자다. 그대로 넘기면 검색이 아니라
-    //   «틀린 조건» 이 되어 조용히 0건이 온다 — 없는 것과 구분이 안 된다.
-    const q = pq.replace(/[,()%]/g,' ').trim();
-    if(!q){ setPHit(null); setPPick(null); return; }
-    setPBusy(true); setPPick(null);
-    const {data,error} = await sb.from('products')
-      .select('product_code,product_name,cs_info,memo')
-      .or('product_name.ilike.%'+q+'%,product_code.ilike.%'+q+'%')
-      .order('product_name',{ascending:true}).limit(20);
-    setPBusy(false);
-    if(sbFail('상품 검색', error)){ setPHit([]); return; }
-    setPHit(data||[]);
+  // ── ③ «상품 정보 안에서 찾기» (제니 2026-09-02) ────────────────────────
+  // ★★ 다른 상품을 찾는 것이 아니다. 지금 보고 있는 상품의 CS 정보가 길 때 필요한
+  //   대목으로 데려다 주는 것이 목적이다. 그래서 결과를 따로 띄우지 않고, 있던 자리에
+  //   그대로 두고 «찾은 줄» 만 도드라지게 한다 — 앞뒤 맥락이 함께 보여야 읽을 수 있다.
+  const [pq,setPq] = useState('');
+  // 찾은 낱말에 색을 입힌다. 대소문자는 가리지 않는다.
+  const csMark = (line)=>{
+    const q = pq.trim();
+    if(!q) return line;
+    const low = line.toLowerCase(), lq = q.toLowerCase();
+    const out = []; let i = 0, k = 0;
+    for(;;){
+      const at = low.indexOf(lq, i);
+      if(at < 0){ out.push(<span key={k++}>{line.slice(i)}</span>); break; }
+      if(at > i) out.push(<span key={k++}>{line.slice(i, at)}</span>);
+      out.push(<mark key={k++} style={{background:'rgba(246,173,9,.38)',color:'var(--text)',
+        borderRadius:2,padding:'0 1px'}}>{line.slice(at, at+q.length)}</mark>);
+      i = at + q.length;
+    }
+    return out;
   };
-  // 칸 너비 — 사람마다 따로 남는다. 생성과 상세가 «다른» 열쇠를 쓴다:
+  // 여러 줄 글을 줄 단위로 그린다. 찾은 줄은 왼쪽에 ▸ 를 세우고 배경을 옅게 깐다.
+  // ★ 화살표 자리는 «찾든 안 찾든» 늘 비워 둔다 — 있을 때만 자리를 만들면 글이
+  //   좌우로 들썩여 읽기 나쁘다.
+  const csLines = (text, style)=>{
+    const q = pq.trim();
+    const lines = String(text||'').split(/\r?\n/);
+    return (
+      <div style={{lineHeight:1.75, ...(style||{})}}>
+        {lines.map((ln,i)=>{
+          const on = !!q && ln.toLowerCase().indexOf(q.toLowerCase())>=0;
+          return (
+            <div key={i} style={{display:'grid',gridTemplateColumns:'11px 1fr',gap:3,
+              background: on?'rgba(246,173,9,.10)':'transparent',borderRadius:4}}>
+              <span style={{color:'#F6AD09',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
+              <span style={{whiteSpace:'pre-wrap',wordBreak:'break-word'}}>{csMark(ln)}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+  // 찾은 줄이 몇 개인가 — 0이면 «없다» 고 말해 준다. 조용히 아무 일도 안 일어나면
+  // 사람은 검색이 «안 되는» 줄 안다.
+  const csHitCount = (text)=>{
+    const q = pq.trim();
+    if(!q) return null;
+    return String(text||'').split(/\r?\n/)
+      .filter(ln=>ln.toLowerCase().indexOf(q.toLowerCase())>=0).length;
+  };  // 칸 너비 — 사람마다 따로 남는다. 생성과 상세가 «다른» 열쇠를 쓴다:
   // 만들 때와 볼 때 보는 것이 달라 원하는 폭도 다르다.
   const [paneW, dragPane] = useCsPanes('cs_new_panes', {l:360, r:325});
 
@@ -19711,46 +19775,36 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           })}
           {/* ★ 2뎁스 선 — 「주소」 묶음 «안» 에서 배송지와 회수지를 나눈다.
               1뎁스보다 연해야 «큰 묶음이 아니라 그 안의 갈래» 로 읽힌다. */}
-          <div style={{...sec2,marginBottom:9}}>
-            <label style={lbl}>회수 주소지 <span style={{opacity:.75}}>· 비우면 배송지와 같습니다</span></label>
-            {/* ★ 우편번호는 다섯 자리라 작아도 되고 주소는 길다 — 나란히 두면 좁은
-                칸에서 주소가 잘려 보인다(제니 제보). 주소에 한 줄을 통째로 준다. */}
-            <div style={{display:'flex',gap:6,marginBottom:5,alignItems:'center'}}>
+          <div style={sec2}></div>
+          {row('회수 주소지', (
+            <>
+              <div style={{fontSize:10,color:'var(--sub)',marginBottom:4}}>
+                비우면 배송지와 같습니다</div>
               <input value={f.pickup_zipcode} onChange={e=>set('pickup_zipcode',e.target.value)}
-                placeholder="우편번호" style={{...inp,width:88}}/>
-            </div>
-            <input value={f.pickup_address1} onChange={e=>set('pickup_address1',e.target.value)}
-              placeholder="주소" style={{...inp,marginBottom:5}}/>
-            <input value={f.pickup_address2} onChange={e=>set('pickup_address2',e.target.value)}
-              placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
-            {/* ★ 배송지가 이제 f 가 아니라 «품목» 에 있다. 고른 첫 품목의 배송지를 베낀다
-                — 여러 품목의 배송지가 다르면 회수지는 사람이 정할 일이라 첫 것을 준다. */}
-            <button onClick={()=>{ const g = itemF[(chosen[0]||{}).code]||{};
-                setF(p=>({...p, pickup_zipcode:g.ship_zipcode||'',
-                  pickup_address1:g.ship_address1||'', pickup_address2:g.ship_address2||''})); }}
-              style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-                cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
-                color:'var(--sub)'}}>배송 주소지와 동일</button>
-          </div>
+                placeholder="우편번호" style={{...inp,width:88,marginBottom:5}}/>
+              <input value={f.pickup_address1} onChange={e=>set('pickup_address1',e.target.value)}
+                placeholder="주소" style={{...inp,marginBottom:5}}/>
+              <input value={f.pickup_address2} onChange={e=>set('pickup_address2',e.target.value)}
+                placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
+              {/* ★ 배송지가 f 가 아니라 «품목» 에 있다. 고른 첫 품목의 것을 베낀다 —
+                  여러 품목의 배송지가 다르면 회수지는 사람이 정할 일이라 첫 것을 준다. */}
+              <button onClick={()=>{ const g = itemF[(chosen[0]||{}).code]||{};
+                  setF(p=>({...p, pickup_zipcode:g.ship_zipcode||'',
+                    pickup_address1:g.ship_address1||'', pickup_address2:g.ship_address2||''})); }}
+                style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                  cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                  color:'var(--sub)'}}>배송 주소지와 동일</button>
+            </>
+          ), {alignItems:'start'})}
 
           <div style={sec}>분류</div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>접수 경로{req}</label>
-            <CsPick value={f.intake_path} options={CS_INTAKE}
-              onChange={v=>set('intake_path',v)} placeholder="전화 · 채팅 · 게시판 · 후기"/>
-          </div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>유형{req}</label>
-            <CsPick value={f.cs_type} options={CS_TYPES}
-              onChange={v=>set('cs_type',v)} placeholder="검색하거나 골라 주세요"/>
-          </div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>방향</label>
-            <CsPick value={f.direction} options={CS_DIRECTIONS}
-              onChange={v=>set('direction',v)} placeholder="처리 방향을 선택합니다"/>
-          </div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>리체크 날짜 — 다시 볼 날</label>
+          {row(<>접수 경로{req}</>, <CsPick value={f.intake_path} options={CS_INTAKE}
+            onChange={v=>set('intake_path',v)} placeholder="전화 · 채팅 · 게시판 · 후기"/>)}
+          {row(<>유형{req}</>, <CsPick value={f.cs_type} options={CS_TYPES}
+            onChange={v=>set('cs_type',v)} placeholder="검색하거나 골라 주세요"/>)}
+          {row('방향', <CsPick value={f.direction} options={CS_DIRECTIONS}
+            onChange={v=>set('direction',v)} placeholder="처리 방향을 선택합니다"/>)}
+          {row('리체크 날짜', <>
             <input type="date" value={recheck} onChange={e=>setRecheck(e.target.value)}
               style={{...inp,colorScheme:'dark',marginBottom:5}}/>
             <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
@@ -19763,7 +19817,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               ))}
               <span style={{fontSize:10,color:'var(--sub)',alignSelf:'center'}}>기본 +3일</span>
             </div>
-          </div>
+          </>, {alignItems:'start'})}
 
           {/* ── 환불 ──────────────────────────────────────────────────────
               ★★ 제니 2026-09-01: 「환불 대기로 제출하는데 티켓에 환불 정보를 넣을 데가
@@ -19775,54 +19829,25 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               ★ 계좌는 «계좌이체로 돌려주는 건» 에만 필요하다 — 카드 취소면 안 쓴다.
                 그래서 필수는 금액 하나뿐이고 나머지는 필요할 때 채운다. */}
           <div style={sec}>환불 <span style={{opacity:.7}}>· 환불 진행 시</span></div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>환불 금액</label>
-              <input value={f.refund_amount} onChange={e=>set('refund_amount',e.target.value)}
-                style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
-            </div>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>결제수단</label>
-              <input value={f.refund_method} onChange={e=>set('refund_method',e.target.value)}
-                placeholder="신용카드 · 계좌이체 …" style={inp}/>
-            </div>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>은행</label>
-              <input value={f.refund_bank} onChange={e=>set('refund_bank',e.target.value)} style={inp}/>
-            </div>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>예금주</label>
-              <input value={f.refund_holder} onChange={e=>set('refund_holder',e.target.value)} style={inp}/>
-            </div>
-          </div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>계좌번호</label>
-            <input value={f.refund_account} onChange={e=>set('refund_account',e.target.value)}
-              style={{...inp,fontFamily:'monospace'}}/>
-          </div>
+          {row('환불 금액', <input value={f.refund_amount} onChange={e=>set('refund_amount',e.target.value)}
+            style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>)}
+          {row('결제수단', <input value={f.refund_method} onChange={e=>set('refund_method',e.target.value)}
+            placeholder="신용카드 · 계좌이체 …" style={inp}/>)}
+          {row('은행', <input value={f.refund_bank} onChange={e=>set('refund_bank',e.target.value)} style={inp}/>)}
+          {row('예금주', <input value={f.refund_holder} onChange={e=>set('refund_holder',e.target.value)} style={inp}/>)}
+          {row('계좌번호', <input value={f.refund_account} onChange={e=>set('refund_account',e.target.value)}
+            style={{...inp,fontFamily:'monospace'}}/>)}
 
           {isMaster && (
             <>
               <div style={sec}>정산 <span style={{opacity:.7}}>· 필요할 때만</span></div>
-              <div style={{marginBottom:9}}>
-                <label style={lbl}>대상</label>
-                <CsPick value={f.cost_bearer} options={CS_BEARERS}
-                  onChange={v=>set('cost_bearer',v)} placeholder="아직 안 정함"/>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
-                <div style={{marginBottom:9}}>
-                  <label style={lbl}>정산 상품금액</label>
-                  <input value={f.settle_fee} onChange={e=>set('settle_fee',e.target.value)}
-                    style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
-                </div>
-                <div style={{marginBottom:9}}>
-                  <label style={lbl}>정산 배송료</label>
-                  <input value={f.settle_shipping_fee} onChange={e=>set('settle_shipping_fee',e.target.value)}
-                    style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
-                </div>
-              </div>
+              {row('대상', <CsPick value={f.cost_bearer} options={CS_BEARERS}
+                onChange={v=>set('cost_bearer',v)} placeholder="아직 안 정함"/>)}
+              {row('정산 상품금액', <input value={f.settle_fee} onChange={e=>set('settle_fee',e.target.value)}
+                style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>)}
+              {row('정산 배송료', <input value={f.settle_shipping_fee}
+                onChange={e=>set('settle_shipping_fee',e.target.value)}
+                style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>)}
             </>
           )}
 
@@ -19922,72 +19947,24 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
         <div style={sticky}>
           <div style={ptitle}>③ 상품 CS 정보</div>
-          {/* ★ 「이 주문 상품」 과 「상품 검색」 두 갈래. 기본은 이 주문 상품이다 —
-              열에 아홉은 그것을 보려고 이 칸을 본다. */}
-          <div style={{display:'flex',gap:5,marginBottom:10}}>
-            {[['this','이 주문 상품'],['search','상품 검색']].map(([id,label])=>(
-              <div key={id} onClick={()=>setProdTab(id)}
-                style={{padding:'4px 11px',borderRadius:13,fontSize:11,cursor:'pointer',
-                  userSelect:'none',
-                  border:'1px solid '+(prodTab===id?'var(--primary)':'var(--border)'),
-                  background: prodTab===id?'rgba(120,170,255,.12)':'transparent',
-                  color: prodTab===id?'var(--accent)':'var(--sub)'}}>{label}</div>
-            ))}
+          {/* ★★ 여기 «검색» 은 다른 상품을 찾는 것이 아니라 «지금 보고 있는 상품의
+              CS 정보 안» 에서 찾는 것이다(제니 정정 2026-09-02). 상품 정보가 길면
+              오른쪽에 다 떠 있어도 한눈에 안 들어온다 — 필요한 대목으로 «데려다 주는»
+              것이 목적이지 상품을 고르는 것이 목적이 아니다.
+              ★ 그래서 결과를 따로 띄우지 않는다. 있던 자리에 그대로 두고 찾은 줄만
+                도드라지게 한다 — 앞뒤 맥락이 함께 보여야 읽을 수 있다. */}
+          <div style={{display:'flex',gap:5,marginBottom:9,alignItems:'center'}}>
+            <input value={pq} onChange={e=>setPq(e.target.value)}
+              placeholder="상품 정보 안에서 찾기"
+              style={{...inp,fontSize:11,padding:'6px 8px'}}/>
+            {pq.trim() && (
+              <button type="button" onClick={()=>setPq('')}
+                style={{padding:'6px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                  cursor:'pointer',background:'transparent',
+                  border:'1px solid var(--border)',color:'var(--sub)'}}>지우기</button>
+            )}
           </div>
-
-          {prodTab==='search' ? (
-            <>
-              <div style={{display:'flex',gap:5,marginBottom:9}}>
-                <input value={pq} onChange={e=>setPq(e.target.value)}
-                  onKeyDown={e=>{ if(e.key==='Enter') searchProducts(); }}
-                  placeholder="상품명 또는 상품코드"
-                  style={{...inp,fontSize:11,padding:'6px 8px'}}/>
-                <button onClick={searchProducts} disabled={pBusy}
-                  style={{padding:'6px 12px',background:'var(--primary)',border:'none',
-                    borderRadius:6,color:'#fff',fontSize:11,fontWeight:600,
-                    fontFamily:'inherit',whiteSpace:'nowrap',
-                    cursor:pBusy?'default':'pointer',opacity:pBusy?.6:1}}>
-                  {pBusy?'찾는 중…':'찾기'}</button>
-              </div>
-              {pPick ? (
-                <>
-                  <button onClick={()=>setPPick(null)}
-                    style={{padding:'3px 9px',borderRadius:5,fontSize:10,marginBottom:8,
-                      fontFamily:'inherit',cursor:'pointer',background:'transparent',
-                      border:'1px solid var(--border)',color:'var(--sub)'}}>← 결과 목록</button>
-                  {prodBlock(pPick)}
-                </>
-              ) : pHit===null ? (
-                <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8}}>
-                  상품명이나 상품코드로 찾습니다. 주문과 상관없이 아무 상품이나 볼 수 있습니다.
-                </div>
-              ) : pHit.length===0 ? (
-                <div style={{fontSize:11,color:'var(--sub)'}}>찾은 상품이 없습니다.</div>
-              ) : (
-                <>
-                  <div style={{fontSize:10,color:'var(--sub)',marginBottom:5}}>
-                    {pHit.length}건{pHit.length===20 ? ' (20건까지만 보입니다)' : ''}</div>
-                  {pHit.map(p=>(
-                    <div key={p.product_code} onClick={()=>setPPick(p)}
-                      style={{padding:'6px 8px',borderRadius:6,marginBottom:4,cursor:'pointer',
-                        border:'1px solid var(--border)'}}>
-                      <div style={{fontSize:11.5,color:'var(--text)',lineHeight:1.45,
-                        wordBreak:'break-word'}}>{p.product_name||'—'}</div>
-                      <div style={{display:'flex',gap:7,alignItems:'center',marginTop:2}}>
-                        <span style={{fontSize:10,color:'var(--accent)',
-                          fontFamily:'monospace'}}>{p.product_code}</span>
-                        {/* ★ CS 정보가 «있는지» 를 목록에서 알려 준다 — 없는 것을
-                            열어 보고 나서야 아는 것은 헛걸음이다. */}
-                        <span style={{fontSize:9.5,
-                          color:(p.cs_info&&p.cs_info.trim())?'var(--green)':'var(--sub)'}}>
-                          {(p.cs_info&&p.cs_info.trim())?'CS 정보 있음':'CS 정보 없음'}</span>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-            </>
-          ) : !head ? (
+          {!head ? (
             <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8}}>
               주문을 불러오면 <b>상품 CS 정보</b>와 <b>이 주문자의 최근 티켓</b>이 여기 뜹니다.
             </div>
@@ -20400,25 +20377,46 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     marginBottom:12};
   // ★ 하위 묶음 제목. 칸 이름(lbl)과 크기·색이 같아 구분이 안 됐다(제니 제보) —
   //   한 단계 키우고 굵게, 글자색도 본문색으로 올려 «제목» 으로 읽히게 한다.
-  // ★★ 선이 «두 층» 이다(제니 2026-09-02). 1뎁스(고객·주소·분류·환불·정산)는 진하게,
-  //   그 안에서 한 번 더 나뉘는 자리는 연하게. 두 층이 같은 굵기면 어느 것이 큰
-  //   묶음인지 눈으로 알 수 없어 목록이 평평해진다.
+  // ★★★ ① 칸의 «세 층» — 선 · 묶음 이름 · 항목 (제니 2026-09-02).
+  //   선이 가장 바깥으로 나가고, 묶음 이름이 그보다 안으로, 항목이 다시 더 안으로
+  //   들어온다. 층마다 왼쪽 끝이 «계단» 처럼 밀려 있어야 무엇이 무엇에 딸린 것인지
+  //   눈이 읽는다. 같은 자리에서 시작하면 층이 있어도 없는 것처럼 보인다.
+  //     선     x=8   (패널 안쪽 여백 16보다 8 바깥 — 박스에는 안 닿는다)
+  //     묶음명 x=16  (선보다 8 안쪽)
+  //     항목   x=28  (묶음명보다 12 안쪽)
+  // ★ 선 굵기도 두 층이다 — 1뎁스는 진하게(var(--sub)), 그 안의 갈래는 연하게.
+  //   두 층이 같은 굵기면 어느 것이 큰 묶음인지 알 수 없어 목록이 평평해진다.
+  const secPad = 8;                       // 선이 양옆으로 나가는 만큼
   const sec = {fontSize:11.5,fontWeight:700,color:'var(--text)',letterSpacing:'.02em',
-    margin:'16px 0 10px',paddingTop:12,borderTop:'1px solid var(--sub)'};
+    margin:'16px -'+secPad+'px 10px', paddingTop:12, paddingLeft:secPad,
+    borderTop:'1px solid var(--sub)'};
   // 2뎁스 — 같은 묶음 «안» 을 나눈다. 이름 없이 선과 여백만 둘 때도 쓴다.
-  const sec2 = {marginTop:12,paddingTop:10,borderTop:'1px solid rgba(255,255,255,.07)'};
+  const sec2 = {marginTop:12,paddingTop:10,
+    borderTop:'1px solid rgba(255,255,255,.07)'};
+  // ★★ 항목 한 줄 — 읽기 전용이든 입력칸이든 «같은 틀» 을 쓴다(제니 2026-09-02:
+  //   「두 화면은 기본 틀이 동일한 것이 전제」). 그전에는 읽기 값은 이름을 왼쪽에
+  //   세우고 입력칸은 이름을 «위» 에 얹어, 같은 칸 안에서 값의 시작점이 두 가지였다.
+  //   그러면 세로로 훑을 기준선이 없어 «중구난방» 으로 보인다.
+  const rowPad = 12;                      // 묶음명보다 더 들어오는 만큼
+  const row = (k,node,extra)=>(
+    <div style={{display:'grid',gridTemplateColumns:'78px 1fr',gap:7,
+      alignItems:'center',padding:'4px 0 4px '+rowPad+'px', ...(extra||{})}}>
+      {/* ★ 이름은 접히지 않는다 — 하나라도 접히면 그 줄만 키가 달라져 정렬이 무너진다.
+          칸 너비는 «가장 긴 이름»(품목별 주문번호)이 기준이다. */}
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,textAlign:'right',
+        whiteSpace:'nowrap'}}>{k}</div>
+      <div style={{minWidth:0}}>{node}</div>
+    </div>
+  );
   // ★★ 이름을 왼쪽에 같은 폭으로 세워 값이 한 세로줄로 정렬되게 한다(제니 2026-09-02).
   //   이름이 값 위에 얹혀 있으면 한 항목이 두 줄을 먹고, 값마다 시작점이 달라
   //   눈이 훑을 기준선이 없다. 정렬되면 «다른 것» 이 먼저 눈에 들어온다.
   // ★ break-all 이 아니라 break-word 다 — 한글 주소를 아무 데서나 끊으면 읽기 나쁘다.
-  const ro = (k,v)=>(
-    <div style={{display:'grid',gridTemplateColumns:'62px 1fr',gap:7,alignItems:'baseline',
-      padding:'4px 0'}}>
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,textAlign:'right'}}>{k}</div>
-      <div style={{fontSize:12,lineHeight:1.5,wordBreak:'break-word',
-        color:v?'var(--text)':'var(--sub)'}}>{v||'—'}</div>
-    </div>
-  );
+  // 읽기 전용 값 — row 와 «같은 틀» 이다. 값만 글자로 그린다.
+  const ro = (k,v)=> row(k,
+    <div style={{fontSize:12,lineHeight:1.5,wordBreak:'break-word',
+      color:v?'var(--text)':'var(--sub)'}}>{v||'—'}</div>,
+    {alignItems:'baseline'});
   const [paneW, dragPane] = useCsPanes('cs_detail_panes', {l:330, r:325});
 
   if(t===null || edit===null) return (
@@ -20492,16 +20490,16 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               남긴다(무엇이 무엇으로 바뀌었는지를 그 한 줄에 모아 적는다). */}
         <div style={panel}>
           <div style={ptitle}>① 티켓 정보</div>
-          {ro('접수 경로', t.intake_path)}
           {ro('품목별 주문번호', t.order_item_code)}
           {ro('상품 · 옵션', (t.product_name||'—') + (t.option_name?'  ／ '+t.option_name:''))}
           {/* ★ 주문 수량은 카페24 값이라 그대로 두고, CS 접수 수량만 연다.
-              「3개 중 1개만 불량」 이 흔하고, 처음에 잘못 세는 일도 흔하다. */}
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>주문 수량 / CS 접수 수량</label>
+              「3개 중 1개만 불량」 이 흔하고, 처음에 잘못 세는 일도 흔하다.
+              ★★ 등록 화면과 «같은 두 줄» 로 둔다(제니: 두 화면은 기본 틀이 같아야 한다).
+                한쪽은 「주문 / CS 접수」 한 줄, 다른 쪽은 두 줄이면 같은 값을 볼 때마다
+                눈이 자리를 다시 찾는다. */}
+          {ro('주문 수량', t.order_qty==null ? '' : String(t.order_qty))}
+          {row('CS 접수', (
             <div style={{display:'flex',alignItems:'center',gap:8}}>
-              <span style={{fontSize:12,color:'var(--text)'}}>{t.order_qty??'—'}</span>
-              <span style={{fontSize:12,color:'var(--sub)'}}>/</span>
               <input value={edit.cs_qty}
                 onChange={e=>{
                   // ★ 주문 수량을 넘으면 최대값으로 되돌린다 — 3개 산 것을 4개 접수하면
@@ -20512,8 +20510,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   setE('cs_qty',n);
                 }}
                 inputMode="numeric" style={{...inp,width:72,textAlign:'center'}}/>
+              {t.order_qty>0 && (
+                <span style={{fontSize:10,color:'var(--sub)'}}>최대 {t.order_qty}</span>
+              )}
             </div>
-          </div>
+          ))}
           {ro('공급사', t.supplier_name)}
 
           <div style={sec}>고객</div>
@@ -20536,37 +20537,35 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 여기서는 «아직 안 정했다» 는 뜻까지 담고 있어서, 값만 보이면 정한 것으로 읽힌다. */}
           {/* ★ 2뎁스 선 — 「주소」 묶음 «안» 에서 배송지와 회수지를 나눈다.
               1뎁스보다 연해야 «큰 묶음이 아니라 그 안의 갈래» 로 읽힌다. */}
-          <div style={{...sec2,marginBottom:9}}>
-            <label style={lbl}>회수 주소지
-              <span style={{opacity:.75}}> · 비우면 배송지와 같습니다</span></label>
-            <div style={{display:'flex',gap:6,marginBottom:5,alignItems:'center'}}>
+          <div style={sec2}></div>
+          {row('회수 주소지', (
+            <>
+              <div style={{fontSize:10,color:'var(--sub)',marginBottom:4}}>
+                비우면 배송지와 같습니다</div>
               <input value={edit.pickup_zipcode} onChange={e=>setE('pickup_zipcode',e.target.value)}
-                placeholder="우편번호" style={{...inp,width:88}}/>
-            </div>
-            <input value={edit.pickup_address1} onChange={e=>setE('pickup_address1',e.target.value)}
-              placeholder="주소" style={{...inp,marginBottom:5}}/>
-            <input value={edit.pickup_address2} onChange={e=>setE('pickup_address2',e.target.value)}
-              placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
-            <button onClick={()=>setEdit(p=>({...p,
-                pickup_zipcode:t.ship_zipcode||'', pickup_address1:t.ship_address1||'',
-                pickup_address2:t.ship_address2||''}))}
-              style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-                cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
-                color:'var(--sub)'}}>배송 주소지와 동일</button>
-          </div>
+                placeholder="우편번호" style={{...inp,width:88,marginBottom:5}}/>
+              <input value={edit.pickup_address1} onChange={e=>setE('pickup_address1',e.target.value)}
+                placeholder="주소" style={{...inp,marginBottom:5}}/>
+              <input value={edit.pickup_address2} onChange={e=>setE('pickup_address2',e.target.value)}
+                placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
+              <button onClick={()=>setEdit(p=>({...p,
+                  pickup_zipcode:t.ship_zipcode||'', pickup_address1:t.ship_address1||'',
+                  pickup_address2:t.ship_address2||''}))}
+                style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                  cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                  color:'var(--sub)'}}>배송 주소지와 동일</button>
+            </>
+          ), {alignItems:'start'})}
 
           <div style={sec}>분류</div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>유형</label>
-            <CsPick value={edit.cs_type} options={CS_TYPES} onChange={v=>setE('cs_type',v)}/>
-          </div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>방향</label>
-            <CsPick value={edit.direction} options={CS_DIRECTIONS}
-              onChange={v=>setE('direction',v)} placeholder="처리 방향을 선택합니다"/>
-          </div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>리체크 날짜</label>
+          {/* ★ 접수 경로는 «분류» 다 — 등록 화면이 이미 그 자리에 두고 있었는데 상세만
+              맨 위 카페24 값들 사이에 있었다(제니 제보). 카페24가 준 값이 아니라
+              사람이 고르는 값이라 자리가 틀렸던 것이다. 두 화면의 틀을 맞춘다. */}
+          {ro('접수 경로', t.intake_path)}
+          {row('유형', <CsPick value={edit.cs_type} options={CS_TYPES} onChange={v=>setE('cs_type',v)}/>)}
+          {row('방향', <CsPick value={edit.direction} options={CS_DIRECTIONS}
+            onChange={v=>setE('direction',v)} placeholder="처리 방향을 선택합니다"/>)}
+          {row('리체크 날짜', <>
             <input type="date" value={edit.recheck_at||''} onChange={e=>setE('recheck_at',e.target.value)}
               style={{...inp,colorScheme:'dark',marginBottom:5}}/>
             <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
@@ -20578,7 +20577,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                     color: edit.recheck_at===plusDays(n)?'var(--accent)':'var(--sub)'}}>+{n}일</button>
               ))}
             </div>
-          </div>
+          </>, {alignItems:'start'})}
 
           {/* ── 정산 ────────────────────────────────────────────────────
               ★★ master 만 고친다. 화면에서 숨기는 것과 «별개로» DB 트리거가 한 번 더
@@ -20595,33 +20594,14 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               ★ 상담원도 넣는다 — 고객에게 계좌를 받는 사람이 상담원이다.
                 master 전용은 «정산» 이지 «환불 정보» 가 아니다. */}
           <div style={sec}>환불 <span style={{opacity:.7}}>· 환불 진행 시</span></div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>환불 금액</label>
-              <input value={edit.refund_amount} onChange={e=>setE('refund_amount',e.target.value)}
-                style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>
-            </div>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>결제수단</label>
-              <input value={edit.refund_method} onChange={e=>setE('refund_method',e.target.value)}
-                placeholder="신용카드 · 계좌이체 …" style={inp}/>
-            </div>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>은행</label>
-              <input value={edit.refund_bank} onChange={e=>setE('refund_bank',e.target.value)} style={inp}/>
-            </div>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>예금주</label>
-              <input value={edit.refund_holder} onChange={e=>setE('refund_holder',e.target.value)} style={inp}/>
-            </div>
-          </div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>계좌번호</label>
-            <input value={edit.refund_account} onChange={e=>setE('refund_account',e.target.value)}
-              style={{...inp,fontFamily:'monospace'}}/>
-          </div>
+          {row('환불 금액', <input value={edit.refund_amount} onChange={e=>setE('refund_amount',e.target.value)}
+            style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>)}
+          {row('결제수단', <input value={edit.refund_method} onChange={e=>setE('refund_method',e.target.value)}
+            placeholder="신용카드 · 계좌이체 …" style={inp}/>)}
+          {row('은행', <input value={edit.refund_bank} onChange={e=>setE('refund_bank',e.target.value)} style={inp}/>)}
+          {row('예금주', <input value={edit.refund_holder} onChange={e=>setE('refund_holder',e.target.value)} style={inp}/>)}
+          {row('계좌번호', <input value={edit.refund_account} onChange={e=>setE('refund_account',e.target.value)}
+            style={{...inp,fontFamily:'monospace'}}/>)}
 
           {/* ── 환불 관리로 넘기기 ──────────────────────────────────────
               ★★ 이미 넘긴 티켓에는 버튼 대신 «어디로 넘어갔나» 를 보여 준다.
