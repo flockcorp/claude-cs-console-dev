@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260902f_detail_editable -->
+<!-- v20260902g_ticket_panel_tidy -->
+<!-- (2026-09-02) 제니가 화면을 보고 준 것들을 고쳤다 — 「① 티켓 정보 값들이 시각적으로 구분·정리되어 보이게」 와 어긋난 자리 넷. ①★★ 이름과 값을 «두 열» 로 세웠다(생성·상세 공통). 이름이 값 «위» 에 얹혀 있으면 한 항목이 두 줄을 먹고, 값마다 시작점이 달라 눈이 훑을 기준선이 없다. 이름을 왼쪽 70px 에 세우면 값이 한 세로줄로 정렬되고, 그러면 «다른 것» 이 먼저 눈에 들어온다 — 정리돼 보이는 것의 실체가 그것이다. 줄 사이 선은 아주 옅게 뒀다(진하면 표처럼 보여 오히려 시끄럽다). ②「주문」 이름과 숫자가 틀어져 보이던 것 — 입력칸에만 가운데 정렬을 주고 «글자» 에는 안 줘서 생긴 어긋남이다. 값이 잠겨 글자로 바뀌는 순간 정렬이 사라진 것이다. textAlign 은 블록에만 걸리므로 display:block 을 함께 준다. ③옵션이 길어 줄이 바뀌며 옆 수량과 어긋나던 것 — 셋을 한 줄에 나란히 두면 «가장 긴 값이 나머지를 밀어낸다». 옵션에 한 줄을 통째로 주고, 주문·CS 접수는 이름을 값 옆에 붙여 아래 줄에 뒀다. ④주소가 칸에 다 안 보이던 것 — ① 칸이 330px 라 우편번호와 나란히 두면 주소에 200px 밖에 안 남는다. 우편번호는 다섯 자리라 작아도 되고 주소는 길다 → 주소에 한 줄을 통째로 줬다(배송·회수 둘 다, 생성·상세 둘 다). ⑤★★ CS 접수 수량이 «주문 수량» 을 넘지 못하게 했다(제니). 3개 산 것을 4개 접수하면 정산이 어긋나고 그 어긋남이 공급사 청구까지 그대로 따라간다. ★ 막고 알리는 대신 «넘으면 최대값으로 되돌린다» — 못 넘는다고 알리기만 하면 사람이 다시 지우고 다시 쳐야 한다. 숫자 아닌 글자도 함께 걸러 낸다. ★ 화면이 되돌리지만 저장 직전에 한 번 더 본다(생성·상세 둘 다) — 화면만 믿으면 다른 길로 값이 들어왔을 때 조용히 지나간다. ★ 주문 수량을 못 받은 품목은 상한이 없다: 모르는 값으로 막으면 안 된다. ⑥공급사·주문자 위에 「주문」 묶음 제목을 뒀다 — 없으면 품목 목록에 딸린 값처럼 읽힌다. ★ dev 전용. -->
 <!-- (2026-09-02) 티켓 상세에서 «CS 접수 수량» 과 «회수 주소지» 를 고칠 수 있게 열었다(제니 제보 — 둘 다 수정이 안 됐다). ★★ 무엇을 열고 무엇을 잠글지의 기준은 «카페24가 주는 값인가» 하나다. 카페24가 주는 값(상품·공급사·주문자·수령인·배송지)은 접수 시점 값으로 굳고, 카페24가 «알 길이 없는» 값만 사람이 고친다. CS 접수 수량은 몇 개가 문제인지 고객이 말해 주는 값이고(3개 중 1개만 불량이 흔하다), 회수 주소지는 주문서에 아예 없는 값이다. ★★ 그래서 상세에는 주문 «재조회» 를 두지 않는다(제니 결정) — 재조회를 붙이는 순간 「접수 시점 고정」 이라는 말이 무너지고, 회수 기사에게 이미 알려 준 주소가 소리 없이 바뀔 수 있다. ①CS 접수 수량은 주문 수량 옆에 입력칸으로 둔다. 주문 수량은 카페24 값이라 글자 그대로다. DB 가 «0보다 커야 한다» 로 막아 둔 칸이라 저장 전에 화면이 먼저 잡는다 — 안 잡으면 DB 오류 문구가 그대로 튀어나오고, 그건 사람이 읽을 말이 아니다. ②회수 주소지는 우편번호·주소·상세주소 셋과 [배송 주소지와 동일] 버튼. ★ 라벨의 「비우면 배송지와 같습니다」는 남긴다(제니) — 수령인 쪽은 반대로 「주문자와 같음」 을 걷어냈는데, 회수지의 «비어 있음» 은 «아직 안 정했다» 는 뜻까지 담고 있어 값만 보이면 정한 것으로 읽힌다. ★ 저장할 때 배송지를 «복사해» 채우지 않는다. 복사해 두면 배송지가 바뀌어도 회수지가 그날 값으로 굳는다. 버튼을 누르는 것은 사람이 명시적으로 복사한 것이라 값이 실제로 들어간다. ③★★ 이력에 남길 때 주소는 «가린 값» 으로 적는다(csMaskAddr — 앞의 두 마디만 남기고 번지·동호수를 ○ 로). 이력은 append-only 라 한 번 적히면 못 지우는데, 그대로 적으면 같은 주소가 티켓과 이력 두 벌로 남는다. 그렇다고 「바꿨습니다」 만 적으면 무엇이 어떻게 바뀐 건지 알 수 없다 — 계좌·예금주에서 이미 정한 원칙과 같다. 우편번호는 그 자체로 사람을 가리키지 않아 그대로 적는다. ★ dev 전용. -->
 <!-- (2026-09-02) 티켓 접수 화면이 카페24가 «이미 아는» 값을 사람에게 다시 치게 하던 것을 고쳤다(제니 제보 「주문번호 검색시 일부 정보가 안 불러와져 정확한 상태 파악이 안 된다」). ★★ 원인은 두 겹이었다. ①엣지 함수(refund-fetch-order)가 embed 에 receivers 를 안 넣어 수령인·배송지를 «받아 오지도» 않았다. ②받아 온 값조차 화면이 안 썼다 — option_value 는 응답에 있는데 옵션명 칸은 사람이 치는 칸이었다. 카페24 창을 띄워 놓고 옮겨 적는 자리가 곧 오타 나는 자리다. 함수는 «더하기만» 해서 넓혔고(수령인·배송지·수량·상품코드·클레임 값), 이 판은 화면 쪽이다. ①조회하면 품목마다 옵션·주문수량·수령인·연락처·우편번호·주소를 담는다. ★ CS 접수 수량만은 주문 수량으로 안 채운다 — 「3개 중 1개만 불량」이 흔한데 미리 3을 넣으면 아무도 안 고친 채 전량 접수된다. ②★★ 수령인·배송지를 «품목마다» 그린다. 주문 하나에 배송지가 여럿일 수 있고 티켓은 품목 단위다. 함수가 품목의 shipping_code 로 수령인을 이어 주므로 그 결과를 품목별로 들고 있어야 뜻이 산다 — 하나로 뭉개면 «대부분 맞고 가끔 틀린» 주소가 되고, 그게 가장 나쁘다. 품목이 하나면 화면은 전과 똑같아 보인다. ③★★ 규칙을 하나로 뒀다 — «카페24가 준 값은 잠그고, 비어 있으면 사람이 채운다». 수령인만 예외로 열면 다음에 상품명이 안 왔을 때 또 예외를 만들게 된다. 못 이은 품목에는 노란 줄로 「카페24에서 찾지 못했습니다」를 적어 «없는 주문» 과 «모르는 상태» 를 가른다. ④값이 글자로 굳으면서 빈칸 안내가 사라지므로 옵션·주문·CS 접수 머리글을 새로 뒀다 — 「본품 / 2 / 1」 만 늘어놓으면 어느 것이 무엇인지 모른다. ⑤상품코드를 카페24에서 직접 받는다. 그전에는 상품«명» 으로 콘솔 상품 정보를 뒤져 딱 한 건일 때만 썼는데, 이름은 동기화가 매일 바꾸는 값이라 원래 코드 기준이어야 했다. ⑥「배송 주소지와 동일」 버튼은 이제 고른 첫 품목의 배송지를 베낀다. ⑦문구 셋: 방향 「미정 — 협의하며 정합니다」→「처리 방향을 선택합니다」 · 상세의 수령인 「주문자와 같음」→ 실제 값(카페24가 주면 그 값, 없으면 주문자 값) · 카페24 연동 탭 「어떤 값을 끌어올지」→「어떤 값을 보여줄지」(이제 전부 끌어오고 보여줄 것만 고른다). ★ 회수 주소지 라벨의 「비우면 배송지와 같습니다」는 제니 지시로 남긴다 — 그건 «아직 안 정했다» 는 뜻까지 담고 있어 값만 보이면 정한 것으로 읽힌다. ★★ 티켓 상세에는 주문 «재조회» 를 두지 않는다(제니 결정) — 그래야 모든 카페24 값이 접수 시점에 잠정 고정된다. ★ dev 전용. -->
 <!-- (2026-09-02) 칩 권한 표에 «보이는 티켓» 열을 더했다(제니 요청). 칩 이름만 놓여 있으면 «진행중» 이 어느 상태를 가리키는지 누군가에게 칩을 줄지 말지 정하는 사람이 알 수 없다. 특히 «CS 완료 · 확인 대기»·«종결» 같은 «그룹» 칩은 단계 둘을 묶은 것이라 이름만으로는 안 보인다(재출고 완료 · 환불 대기 / 종결 · 철회). ★★ 단계 이름을 여기 다시 적지 않고 CS_STAGES 에서 읽어 그린다 — 두 번째 목록을 두면 단계 이름을 고쳤을 때 설정 화면만 옛 이름을 말하게 되고, 그 순간 이 표가 거짓말이 된다. ★ «내 티켓»·«오늘의 리체크» 는 단계가 아니라 «조건» 이라(담당자·날짜) 그대로 적었고, 둘 다 «종결 제외» 까지 밝혔다 — 목록 화면의 match() 가 실제로 그렇게 세기 때문이다. ★ dev 전용. -->
@@ -19093,9 +19094,28 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   그래서 규칙을 하나로 뒀다. 값이 있으면 글자로, 없으면 입력칸으로 그린다.
   // ★ 값을 못 받은 것은 «오류» 가 아니라 «모르는 상태» 다. 빈 칸을 그냥 두면 사람은
   //   «없는 주문» 으로 읽는다 — 그래서 채울 수 있게 열어 둔다.
+  // 값 «옆» 에 서는 작은 이름 — 줄바꿈되면 값과 어긋나므로 안 접히게 한다.
+  const miniKey = {fontSize:10,color:'var(--sub)',whiteSpace:'nowrap'};
+
+  // ★★ CS 접수 수량은 주문 수량을 넘을 수 없다(제니 2026-09-02). 3개 산 것을 4개
+  //   접수하면 정산이 어긋나고, 그 어긋남은 공급사 청구까지 그대로 따라간다.
+  //   ★ 막는 것이 아니라 «넘으면 최대값으로 되돌린다» — 못 넘는다고 알리기만 하면
+  //     사람이 다시 지우고 다시 쳐야 한다. 숫자 아닌 글자도 여기서 걸러 낸다.
+  //   ★ 주문 수량을 못 받은 품목(빈 칸)은 상한이 없다 — 모르는 값으로 막으면 안 된다.
+  const setCsQty = (code,v)=>{
+    const max = parseInt((itemF[code]||{}).order_qty,10);
+    let n = String(v||'').replace(/[^0-9]/g,'');
+    if(n && max>0 && parseInt(n,10) > max) n = String(max);
+    setIF(code,'cs_qty',n);
+  };
+
   const cell = (code,k,ph,extra)=>{
     const v = (itemF[code]||{})[k] || '';
-    if(v) return <span style={{fontSize:11,color:'var(--text)',wordBreak:'break-all'}}>{v}</span>;
+    // ★ 값일 때도 «머리글과 같은 정렬» 을 따라야 한다(제니 제보 — 「주문」 이름과
+    //   숫자가 틀어져 보였다). 입력칸에만 정렬을 주고 글자에는 안 줘서 생긴 어긋남이다.
+    //   textAlign 은 블록에만 걸리므로 display:block 을 함께 준다.
+    if(v) return <span style={{fontSize:11.5,color:'var(--text)',display:'block',
+      wordBreak:'break-word',lineHeight:1.5,...(extra||{})}}>{v}</span>;
     return <input value={v} onChange={e=>setIF(code,k,e.target.value)} placeholder={ph}
       style={{...inp,fontSize:11,padding:'5px 7px',...(extra||{})}}/>;
   };
@@ -19235,6 +19255,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   if(!f.intake_path)  missing.push('접수 경로');
   if(!f.cs_type)      missing.push('유형');
   if(chosen.some(i=>!(parseInt(qtyOf(i.code),10)>0))) missing.push('CS 접수 수량');
+  // ★ 화면에서 이미 되돌리지만 여기서도 본다 — 화면만 믿으면 나중에 다른 길로
+  //   값이 들어왔을 때 조용히 지나간다.
+  if(chosen.some(i=>{ const m = parseInt((itemF[i.code]||{}).order_qty,10);
+      return m>0 && parseInt(qtyOf(i.code),10) > m; }))
+    missing.push('CS 접수 수량 (주문 수량을 넘습니다)');
 
   const money = (v)=>{ const x=String(v||'').replace(/[^0-9-]/g,''); return x===''?null:(parseInt(x,10)||0); };
 
@@ -19333,10 +19358,16 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   한 단계 키우고 굵게, 글자색도 본문색으로 올려 «제목» 으로 읽히게 한다.
   const sec = {fontSize:11.5,fontWeight:700,color:'var(--text)',letterSpacing:'.02em',
     margin:'16px 0 10px',paddingTop:12,borderTop:'1px solid var(--border)'};
+  // ★★ 이름을 왼쪽에 같은 폭으로 세워 값이 한 세로줄로 정렬되게 한다(제니 2026-09-02).
+  //   이름이 값 위에 얹혀 있으면 한 항목이 두 줄을 먹고, 값마다 시작점이 달라
+  //   눈이 훑을 기준선이 없다. 정렬되면 «다른 것» 이 먼저 눈에 들어온다.
+  // ★ break-all 이 아니라 break-word 다 — 한글 주소를 아무 데서나 끊으면 읽기 나쁘다.
   const ro = (k,v)=>(
-    <div style={{marginBottom:8}}>
-      <div style={{fontSize:10,color:'var(--sub)',marginBottom:2}}>{k}</div>
-      <div style={{fontSize:12,color:v?'var(--text)':'var(--sub)',wordBreak:'break-all'}}>{v||'—'}</div>
+    <div style={{display:'grid',gridTemplateColumns:'70px 1fr',gap:9,alignItems:'baseline',
+      padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.045)'}}>
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5}}>{k}</div>
+      <div style={{fontSize:12,lineHeight:1.5,wordBreak:'break-word',
+        color:v?'var(--text)':'var(--sub)'}}>{v||'—'}</div>
     </div>
   );
   const req = <span style={{color:'#F6AD09'}}> *</span>;
@@ -19404,23 +19435,31 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     </div>
                     {/* 품목마다 다른 값은 여기서 넣는다 — 3개 중 1개만 불량인 경우가 있다. */}
                     {on && (
-                      <div style={{margin:'0 0 8px 18px'}}>
-                        {/* ★ 머리글을 둔다 — 값이 «글자» 로 바뀌면서 빈칸 안내(placeholder)가
-                            사라졌다. 「본품 / 2 / 1」 만 늘어놓으면 어느 것이 무엇인지 모른다. */}
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 62px 62px',gap:5,
-                          fontSize:9.5,color:'var(--sub)',marginBottom:3}}>
-                          <span>옵션</span><span style={{textAlign:'center'}}>주문</span>
-                          <span style={{textAlign:'center'}}>CS 접수</span>
-                        </div>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 62px 62px',gap:5,
+                      <div style={{margin:'0 0 9px 18px',display:'grid',gap:6}}>
+                        {/* ★★ 옵션을 «한 줄 전체» 로 둔다(제니 제보 — 옵션이 길어 줄이
+                            바뀌면서 옆의 수량과 어긋나 보였다). 셋을 한 줄에 나란히 두면
+                            가장 긴 값이 나머지를 밀어낸다. 이름은 왼쪽에 세워 값을 정렬한다. */}
+                        <div style={{display:'grid',gridTemplateColumns:'46px 1fr',gap:8,
                           alignItems:'center'}}>
-                          {cell(it.code,'option_name','옵션명')}
-                          {cell(it.code,'order_qty','주문',{textAlign:'center'})}
+                          <span style={miniKey}>옵션</span>
+                          <div style={{minWidth:0}}>{cell(it.code,'option_name','옵션명')}</div>
+                        </div>
+                        <div style={{display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}>
+                          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                            <span style={miniKey}>주문</span>
+                            <div style={{width:52}}>
+                              {cell(it.code,'order_qty','—',{textAlign:'center'})}</div>
+                          </div>
                           {/* CS 접수 수량은 «사람이 정하는 값» 이라 늘 입력칸이다 —
                               카페24는 몇 개가 문제인지 모른다. */}
-                          <input value={qtyOf(it.code)}
-                            onChange={e=>setIF(it.code,'cs_qty',e.target.value)}
-                            placeholder="CS" style={{...inp,fontSize:11,padding:'5px 7px',textAlign:'center'}}/>
+                          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                            <span style={miniKey}>CS 접수</span>
+                            <input value={qtyOf(it.code)}
+                              onChange={e=>setCsQty(it.code,e.target.value)}
+                              inputMode="numeric"
+                              style={{...inp,width:52,fontSize:11.5,padding:'5px 7px',
+                                textAlign:'center'}}/>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -19439,6 +19478,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 
           {head && (
             <>
+              {/* ★ 묶음 제목이 없으면 이 둘이 품목 목록에 딸린 값처럼 읽힌다. */}
+              <div style={sec}>주문</div>
               {ro('공급사', head.supplier_name)}
               {ro('주문자', (head.customer_name||'') + (head.customer_phone?' · '+head.customer_phone:''))}
             </>
@@ -19478,23 +19519,31 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     {cell(it.code,'receiver_phone','연락처')}
                   </div>
                 </div>
-                <label style={lbl}>배송 주소지</label>
-                <div style={{display:'flex',gap:5,marginBottom:5,alignItems:'center'}}>
-                  <div style={{width:90}}>{cell(it.code,'ship_zipcode','우편번호')}</div>
-                  <div style={{flex:1,minWidth:0}}>{cell(it.code,'ship_address1','주소')}</div>
+                {/* ★ 주소는 «한 줄 전체» 를 준다(제니 제보 — 칸이 좁아 다 안 보였다).
+                    ① 칸이 330px 라 우편번호와 나란히 두면 주소에 200px 밖에 안 남는다.
+                    우편번호는 다섯 자리라 작아도 되고, 주소는 길어서 넓어야 한다. */}
+                <div style={{display:'grid',gridTemplateColumns:'46px 1fr',gap:8,
+                  alignItems:'center',marginBottom:5}}>
+                  <span style={miniKey}>우편</span>
+                  <div style={{width:76}}>{cell(it.code,'ship_zipcode','—')}</div>
                 </div>
+                <label style={lbl}>배송 주소지</label>
+                <div style={{marginBottom:5}}>{cell(it.code,'ship_address1','주소')}</div>
                 {cell(it.code,'ship_address2','상세 주소')}
               </div>
             );
           })}
           <div style={{marginBottom:9}}>
             <label style={lbl}>회수 주소지 <span style={{opacity:.75}}>· 비우면 배송지와 같습니다</span></label>
-            <div style={{display:'flex',gap:5,marginBottom:5}}>
+            {/* ★ 우편번호는 다섯 자리라 작아도 되고 주소는 길다 — 나란히 두면 좁은
+                칸에서 주소가 잘려 보인다(제니 제보). 주소에 한 줄을 통째로 준다. */}
+            <div style={{display:'flex',gap:6,marginBottom:5,alignItems:'center'}}>
               <input value={f.pickup_zipcode} onChange={e=>set('pickup_zipcode',e.target.value)}
-                placeholder="우편번호" style={{...inp,width:90}}/>
-              <input value={f.pickup_address1} onChange={e=>set('pickup_address1',e.target.value)}
-                placeholder="주소" style={inp}/>
+                placeholder="우편번호" style={{...inp,width:88}}/>
+              <span style={{fontSize:10,color:'var(--sub)'}}>우편번호</span>
             </div>
+            <input value={f.pickup_address1} onChange={e=>set('pickup_address1',e.target.value)}
+              placeholder="주소" style={{...inp,marginBottom:5}}/>
             <input value={f.pickup_address2} onChange={e=>set('pickup_address2',e.target.value)}
               placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
             {/* ★ 배송지가 이제 f 가 아니라 «품목» 에 있다. 고른 첫 품목의 배송지를 베낀다
@@ -20001,6 +20050,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
       toast('CS 접수 수량은 1 이상이어야 합니다.','warn');
       return false;
     }
+    if(t.order_qty>0 && parseInt(edit.cs_qty,10) > t.order_qty){
+      toast('CS 접수 수량은 주문 수량('+t.order_qty+'개)을 넘을 수 없습니다.','warn');
+      return false;
+    }
     setBusy(true);
     const evs = [];
     // ★★ 사람이 적은 말은 «메인에» 쌓는다 — 묶음이 같은 사건을 겪기 때문이다
@@ -20107,10 +20160,16 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //   한 단계 키우고 굵게, 글자색도 본문색으로 올려 «제목» 으로 읽히게 한다.
   const sec = {fontSize:11.5,fontWeight:700,color:'var(--text)',letterSpacing:'.02em',
     margin:'16px 0 10px',paddingTop:12,borderTop:'1px solid var(--border)'};
+  // ★★ 이름을 왼쪽에 같은 폭으로 세워 값이 한 세로줄로 정렬되게 한다(제니 2026-09-02).
+  //   이름이 값 위에 얹혀 있으면 한 항목이 두 줄을 먹고, 값마다 시작점이 달라
+  //   눈이 훑을 기준선이 없다. 정렬되면 «다른 것» 이 먼저 눈에 들어온다.
+  // ★ break-all 이 아니라 break-word 다 — 한글 주소를 아무 데서나 끊으면 읽기 나쁘다.
   const ro = (k,v)=>(
-    <div style={{marginBottom:8}}>
-      <div style={{fontSize:10,color:'var(--sub)',marginBottom:2}}>{k}</div>
-      <div style={{fontSize:12,color:v?'var(--text)':'var(--sub)',wordBreak:'break-all'}}>{v||'—'}</div>
+    <div style={{display:'grid',gridTemplateColumns:'70px 1fr',gap:9,alignItems:'baseline',
+      padding:'5px 0',borderBottom:'1px solid rgba(255,255,255,.045)'}}>
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5}}>{k}</div>
+      <div style={{fontSize:12,lineHeight:1.5,wordBreak:'break-word',
+        color:v?'var(--text)':'var(--sub)'}}>{v||'—'}</div>
     </div>
   );
 
@@ -20194,7 +20253,15 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:12,color:'var(--text)'}}>{t.order_qty??'—'}</span>
               <span style={{fontSize:12,color:'var(--sub)'}}>/</span>
-              <input value={edit.cs_qty} onChange={e=>setE('cs_qty',e.target.value)}
+              <input value={edit.cs_qty}
+                onChange={e=>{
+                  // ★ 주문 수량을 넘으면 최대값으로 되돌린다 — 3개 산 것을 4개 접수하면
+                  //   정산이 어긋나고 그대로 공급사 청구까지 따라간다.
+                  let n = String(e.target.value||'').replace(/[^0-9]/g,'');
+                  const max = parseInt(t.order_qty,10);
+                  if(n && max>0 && parseInt(n,10) > max) n = String(max);
+                  setE('cs_qty',n);
+                }}
                 inputMode="numeric" style={{...inp,width:72,textAlign:'center'}}/>
             </div>
           </div>
@@ -20221,12 +20288,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           <div style={{marginBottom:9}}>
             <label style={lbl}>회수 주소지
               <span style={{opacity:.75}}> · 비우면 배송지와 같습니다</span></label>
-            <div style={{display:'flex',gap:5,marginBottom:5}}>
+            <div style={{display:'flex',gap:6,marginBottom:5,alignItems:'center'}}>
               <input value={edit.pickup_zipcode} onChange={e=>setE('pickup_zipcode',e.target.value)}
-                placeholder="우편번호" style={{...inp,width:90}}/>
-              <input value={edit.pickup_address1} onChange={e=>setE('pickup_address1',e.target.value)}
-                placeholder="주소" style={inp}/>
+                placeholder="우편번호" style={{...inp,width:88}}/>
+              <span style={{fontSize:10,color:'var(--sub)'}}>우편번호</span>
             </div>
+            <input value={edit.pickup_address1} onChange={e=>setE('pickup_address1',e.target.value)}
+              placeholder="주소" style={{...inp,marginBottom:5}}/>
             <input value={edit.pickup_address2} onChange={e=>setE('pickup_address2',e.target.value)}
               placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
             <button onClick={()=>setEdit(p=>({...p,
