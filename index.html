@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260902n_same_frame -->
+<!-- v20260902o_align_left -->
+<!-- (2026-09-02) 제니 검토 5차. ①항목명을 «왼쪽 정렬» 로 바꿨다 — 오른쪽에 붙이면 이름의 끝이 가지런해지는 대신 시작이 들쭉날쭉해진다. 눈은 왼쪽에서 오른쪽으로 읽으니 시작이 맞는 편이 훑기 쉽다. ②주소처럼 «긴 값» 은 이름 칸에 자리를 뺏기면 읽을 수 없다 → 이름을 위에 한 줄 두고 값이 이름의 왼쪽 끝부터 오른쪽 끝까지 다 쓰는 «넓은 줄»(rowWide)을 만들어 회수 주소지에 썼다. 다른 줄과 시작점(x=28)이 같으므로 정렬은 그대로다. ③★★ 잠긴 값(글자)에도 입력칸과 «같은 안쪽 여백»(7px)을 줬다 — 주문 수량 숫자가 CS 접수 입력칸의 숫자와 다른 세로줄에 서 보이던 원인이다. 입력칸은 테두리 안으로 7px 들어가 글자가 시작되는데 글자에는 그 여백이 없었다. ④품목 체크 표시를 «고른 티가 나게» 바꿨다. 어두운 바탕에 짙은 파랑을 채우면 빈 것과 잘 구분되지 않는다 — 밝은 강조색을 채우고 ✓ 를 어두운 글자로 얹었다. 색과 «모양» 이 함께 바뀌어야 흘깃 봐도 안다. ⑤★★ 배송 주소지에서 우편번호 칸을 다섯 자리만큼만 잡고, 상세주소를 «주소와 같은 세로줄» 에 세웠다(제니가 그림으로 알려 줬다). 우편번호는 주소의 일부가 아니라 앞에 붙는 꼬리표라, 상세주소가 그 아래로 들어가면 주소가 두 토막으로 읽힌다. ⑥상세의 「상품 · 옵션」 을 두 줄로 나누고 옵션에 다른 색을 줬다 — 「／」로 이어 붙이면 상품명이 길 때 옵션이 뒤에 묻힌다. 같은 색이면 두 줄이어도 이어 읽힌다. ⑦③의 검색줄에서 [지우기] 가 줄을 바꾸지 않게 못 박았다(칸이 좁아지면 flex 가 버튼부터 접는다). ⑧★★ ③ 검색을 «상세 화면에도» 붙였다. 그러면서 셈(csLinesOf·csHitLines·csMarkText)을 화면 밖으로 옮겼다 — 화면마다 따로 두면 한쪽만 고쳐지고 그 어긋남은 한참 뒤에야 드러난다. ⑨「옵션명·수량·주소·클레임 사유는 조회 창구가 아직 안 내려줍니다」 안내를 걷었다(제니 확인) — 그날 창구를 넓혀 전부 내려받게 됐다. 안내문은 사실이 아니게 되는 순간 지워야 한다: 남아 있으면 그런가 보다 하고 손으로 다시 적는다. ★ dev 전용. -->
 <!-- (2026-09-02) 제니 검토 4차 — «두 화면은 기본 틀이 같아야 한다» 를 실제로 맞췄다. ①★★ ① 칸의 모든 항목이 «같은 행 틀»(row)을 쓴다. 그전에는 읽기 값은 이름을 왼쪽에 세우고, 입력칸은 이름을 «위» 에 얹어 같은 칸 안에서 값의 시작점이 두 가지였다 — 세로로 훑을 기준선이 없으니 «중구난방» 으로 보인 것이다. 이름 칸 78px·오른쪽 정렬, 값은 그 옆. 읽기 전용(ro)도 같은 틀의 «값만 글자» 판으로 바꿨다. ②★★ 뎁스마다 왼쪽 끝을 계단처럼 밀었다(제니) — 선 x=8(패널 여백 16보다 8 바깥, 박스에는 안 닿는다) · 묶음 이름 x=16 · 항목 x=28. 같은 자리에서 시작하면 층이 있어도 없는 것처럼 보인다. ③환불 네 칸을 두 칸씩 나란히 두던 것을 한 줄에 하나씩으로 폈다. 나란히 두면 왼쪽 칸 이름과 오른쪽 칸 이름이 서로 다른 세로줄에 서서 위아래 어느 것과도 안 맞는다. 정산 세 칸·분류 네 칸·회수 주소지도 같은 틀로. ④상세의 「주문 수량 / CS 접수 수량」 한 줄을 등록과 «같은 두 줄» 로 나눴다. 한쪽은 한 줄, 다른 쪽은 두 줄이면 같은 값을 볼 때마다 눈이 자리를 다시 찾는다. 최대 수량도 옆에 적어 준다. ⑤접수 경로를 상세에서도 «분류» 로 옮겼다 — 카페24가 준 값이 아니라 사람이 고르는 값이라 맨 위 스냅샷 사이에 있던 자리가 틀렸다(등록 화면은 이미 분류에 두고 있었다). ⑥★★ ③의 «검색» 을 다시 만들었다(제니 정정). 다른 상품을 찾는 것이 아니라 «지금 보고 있는 상품의 CS 정보 안» 에서 찾는 것이다 — 정보가 길면 오른쪽에 다 떠 있어도 한눈에 안 들어온다. 결과를 따로 띄우지 않고 있던 자리에 그대로 두고 찾은 줄만 도드라지게 한다(왼쪽에 ▸, 배경 옅게, 낱말에 색). 앞뒤 맥락이 함께 보여야 읽을 수 있기 때문이다. ★ 화살표 자리는 찾든 안 찾든 늘 비워 둔다 — 있을 때만 자리를 만들면 글이 좌우로 들썩인다. ★ 0건이면 «없습니다» 라고 말해 준다: 조용히 아무 일도 안 일어나면 사람은 검색이 안 되는 줄 안다. ⑦이력 기호에서 가운뎃점(·)을 빼고 「」 를 넣었다(제니) — 자판에서 바로 나오는 글자는 자리만 먹는다. 「」 는 두 글자를 함께 넣고 커서를 가운데 둔다: 닫는 짝을 따로 치게 하면 열기만 하고 안 닫는 줄이 쌓인다. ★ dev 전용. -->
 <!-- (2026-09-02) 제니 검토 3차 — 선과 이름 자리. ①★★ 구분선을 «두 층» 으로 갈랐다. 1뎁스(고객·주소·분류·환불·정산)는 진하게(var(--sub)), 그 안에서 한 번 더 나뉘는 자리는 연하게(sec2). 두 층이 같은 굵기면 어느 것이 큰 묶음인지 눈으로 알 수 없어 목록이 평평해진다. 2뎁스는 「주소」 묶음 안에서 배송지와 회수지를 나누는 데 먼저 썼다. ②줄마다 있던 옅은 선을 걷은 것과 함께 보면, 공급사 아래에 선이 둘 겹치던 것도 사라진다 — 남는 것은 1뎁스 선 하나와 여백이다. ③이름이 접히지 않게 했다(제니 제보 — 「품목별 주문번호」가 두 줄이 됐다). 이름 칸 너비는 «가장 긴 이름» 이 기준이다: 하나라도 접히면 그 줄만 키가 달라져 정렬이 무너진다. 62 → 78px, nowrap. ★ dev 전용. -->
 <!-- (2026-09-02) 이력 입력칸 아래에 «자주 쓰는 기호» 버튼 다섯을 뒀다(제니 요청 · 등록·상세 둘 다). ★ ※ 는 제니가 지정했고 나머지 셋은 CS 이력에서 실제로 쓰이는 자리를 보고 골랐다 — → 는 「무엇이 무엇으로」(교환 → 환불 · 미접수 → 접수)를 한 글자로 적고, · 은 항목을 나란히 적을 때 쓰며(이 콘솔이 이미 곳곳에서 쓰는 구분점이다), ✔ 는 「확인했다·처리했다」를 줄 앞에 세운다. ★★ 다섯을 넘기지 않는다. 고를 것이 많아지면 «어느 것이었더라» 를 찾는 시간이 그냥 손으로 치는 시간보다 길어지고, 그 순간 버튼은 도움이 아니라 장애물이 된다. 자판으로 바로 나오는 글자는 넣지 않았다 — 자리만 먹는다. ★★ 커서 «자리에» 넣고 그 자리에 커서를 돌려놓는다. 맨 뒤에 붙이면 글 중간에 넣으려던 사람이 매번 자리를 다시 찾아야 하고, 커서가 튀면 그다음 글자가 엉뚱한 데 찍힌다. 값이 화면에 그려진 «뒤» 에 옮긴다 — 바로 옮기면 아직 옛 글자 수라 자리가 어긋난다. ★ type="button" 을 준다: 기본값이 submit 이라 폼 안에서 누르면 화면이 통째로 다시 뜬다. ★ dev 전용. -->
@@ -16924,6 +16925,57 @@ function csTodayKst(){
   return d.toISOString().slice(0,10);
 }
 
+// ── 글 «안에서» 찾기 (제니 2026-09-02) ───────────────────────────────────
+// ★★ 다른 상품을 찾는 것이 아니다. 지금 보고 있는 상품의 CS 정보가 길 때 필요한
+//   대목으로 데려다 주는 것이 목적이다. 그래서 결과를 따로 띄우지 않고, 있던 자리에
+//   그대로 두고 «찾은 줄» 만 도드라지게 한다 — 앞뒤 맥락이 함께 보여야 읽을 수 있다.
+// ★ 등록과 상세가 «같은 것» 을 쓰도록 화면 밖에 둔다. 화면마다 따로 두면 한쪽만
+//   고쳐지고, 그 어긋남은 한참 뒤에야 드러난다.
+function csMarkText(line, q){
+  if(!q) return line;
+  const low = line.toLowerCase(), lq = q.toLowerCase();
+  const out = []; let i = 0, k = 0;
+  for(;;){
+    const at = low.indexOf(lq, i);
+    if(at < 0){ out.push(<span key={k++}>{line.slice(i)}</span>); break; }
+    if(at > i) out.push(<span key={k++}>{line.slice(i, at)}</span>);
+    out.push(<mark key={k++} style={{background:'rgba(246,173,9,.38)',color:'var(--text)',
+      borderRadius:2,padding:'0 1px'}}>{line.slice(at, at+q.length)}</mark>);
+    i = at + q.length;
+  }
+  return out;
+}
+// 여러 줄 글을 줄 단위로 그린다. 찾은 줄은 왼쪽에 ▸ 를 세우고 배경을 옅게 깐다.
+// ★ 화살표 자리는 «찾든 안 찾든» 늘 비워 둔다 — 있을 때만 자리를 만들면 글이
+//   좌우로 들썩여 읽기 나쁘다.
+function csLinesOf(text, rawQ, style){
+  const q = String(rawQ||'').trim();
+  const lines = String(text||'').split(/\r?\n/);
+  return (
+    <div style={{lineHeight:1.75, ...(style||{})}}>
+      {lines.map((ln,i)=>{
+        const on = !!q && ln.toLowerCase().indexOf(q.toLowerCase())>=0;
+        return (
+          <div key={i} style={{display:'grid',gridTemplateColumns:'11px 1fr',gap:3,
+            background: on?'rgba(246,173,9,.10)':'transparent',borderRadius:4}}>
+            <span style={{color:'#F6AD09',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
+            <span style={{whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
+              {csMarkText(ln, q)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+// 찾은 줄이 몇 개인가 — 0이면 «없다» 고 말해 준다. 조용히 아무 일도 안 일어나면
+// 사람은 검색이 «안 되는» 줄 안다.
+function csHitLines(text, rawQ){
+  const q = String(rawQ||'').trim();
+  if(!q) return null;
+  return String(text||'').split(/\r?\n/)
+    .filter(ln=>ln.toLowerCase().indexOf(q.toLowerCase())>=0).length;
+}
+
 // 이력에 자주 쓰는 기호 (제니 요청 2026-09-02).
 // ★★ 다섯 개를 넘기지 않는다. 고를 것이 많아지면 «어느 것이었더라» 를 찾는 시간이
 //   그냥 손으로 치는 시간보다 길어진다 — 그 순간 버튼은 도움이 아니라 장애물이 된다.
@@ -19245,8 +19297,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     // ★ 값일 때도 «머리글과 같은 정렬» 을 따라야 한다(제니 제보 — 「주문」 이름과
     //   숫자가 틀어져 보였다). 입력칸에만 정렬을 주고 글자에는 안 줘서 생긴 어긋남이다.
     //   textAlign 은 블록에만 걸리므로 display:block 을 함께 준다.
+    // ★ 잠긴 값(글자)에도 입력칸과 «같은 안쪽 여백» 을 준다(제니 제보 — 주문 수량
+    //   숫자가 CS 접수 입력칸의 숫자와 다른 세로줄에 섰다). 입력칸은 7px 안으로
+    //   들어가 글자가 시작되는데 글자에는 그 여백이 없어 왼쪽으로 밀려 보였다.
     if(v) return <span style={{fontSize:11.5,color:'var(--text)',display:'block',
-      wordBreak:'break-word',lineHeight:1.5,...(extra||{})}}>{v}</span>;
+      padding:'4px 7px',wordBreak:'break-word',lineHeight:1.5,...(extra||{})}}>{v}</span>;
     return <input value={v} onChange={e=>setIF(code,k,e.target.value)} placeholder={ph}
       style={{...inp,fontSize:11,padding:'5px 7px',...(extra||{})}}/>;
   };
@@ -19513,8 +19568,20 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
       alignItems:'center',padding:'4px 0 4px '+rowPad+'px', ...(extra||{})}}>
       {/* ★ 이름은 접히지 않는다 — 하나라도 접히면 그 줄만 키가 달라져 정렬이 무너진다.
           칸 너비는 «가장 긴 이름»(품목별 주문번호)이 기준이다. */}
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,textAlign:'right',
+      {/* ★ 왼쪽 정렬이다(제니 2026-09-02). 오른쪽에 붙이면 이름의 «끝» 이 가지런해지는
+          대신 «시작» 이 들쭉날쭉해진다 — 눈은 왼쪽에서 오른쪽으로 읽으므로 시작이
+          맞는 편이 훑기 쉽다. */}
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,
         whiteSpace:'nowrap'}}>{k}</div>
+      <div style={{minWidth:0}}>{node}</div>
+    </div>
+  );
+  // ★★ 주소처럼 «긴 값» 은 이름 칸에 자리를 뺏기면 읽을 수 없다. 이름을 위에 한 줄로
+  //   두고 값이 이름의 «왼쪽 끝부터» 오른쪽 끝까지 다 쓰게 한다(제니 2026-09-02).
+  //   다른 줄과 시작점이 같으므로(x=28) 정렬은 그대로 지켜진다.
+  const rowWide = (k,node)=>(
+    <div style={{padding:'4px 0 4px '+rowPad+'px'}}>
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,marginBottom:4}}>{k}</div>
       <div style={{minWidth:0}}>{node}</div>
     </div>
   );
@@ -19561,56 +19628,13 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     </>
   );
 
-  // ── ③ «상품 정보 안에서 찾기» (제니 2026-09-02) ────────────────────────
-  // ★★ 다른 상품을 찾는 것이 아니다. 지금 보고 있는 상품의 CS 정보가 길 때 필요한
-  //   대목으로 데려다 주는 것이 목적이다. 그래서 결과를 따로 띄우지 않고, 있던 자리에
-  //   그대로 두고 «찾은 줄» 만 도드라지게 한다 — 앞뒤 맥락이 함께 보여야 읽을 수 있다.
-  const [pq,setPq] = useState('');
-  // 찾은 낱말에 색을 입힌다. 대소문자는 가리지 않는다.
-  const csMark = (line)=>{
-    const q = pq.trim();
-    if(!q) return line;
-    const low = line.toLowerCase(), lq = q.toLowerCase();
-    const out = []; let i = 0, k = 0;
-    for(;;){
-      const at = low.indexOf(lq, i);
-      if(at < 0){ out.push(<span key={k++}>{line.slice(i)}</span>); break; }
-      if(at > i) out.push(<span key={k++}>{line.slice(i, at)}</span>);
-      out.push(<mark key={k++} style={{background:'rgba(246,173,9,.38)',color:'var(--text)',
-        borderRadius:2,padding:'0 1px'}}>{line.slice(at, at+q.length)}</mark>);
-      i = at + q.length;
-    }
-    return out;
-  };
-  // 여러 줄 글을 줄 단위로 그린다. 찾은 줄은 왼쪽에 ▸ 를 세우고 배경을 옅게 깐다.
-  // ★ 화살표 자리는 «찾든 안 찾든» 늘 비워 둔다 — 있을 때만 자리를 만들면 글이
-  //   좌우로 들썩여 읽기 나쁘다.
-  const csLines = (text, style)=>{
-    const q = pq.trim();
-    const lines = String(text||'').split(/\r?\n/);
-    return (
-      <div style={{lineHeight:1.75, ...(style||{})}}>
-        {lines.map((ln,i)=>{
-          const on = !!q && ln.toLowerCase().indexOf(q.toLowerCase())>=0;
-          return (
-            <div key={i} style={{display:'grid',gridTemplateColumns:'11px 1fr',gap:3,
-              background: on?'rgba(246,173,9,.10)':'transparent',borderRadius:4}}>
-              <span style={{color:'#F6AD09',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
-              <span style={{whiteSpace:'pre-wrap',wordBreak:'break-word'}}>{csMark(ln)}</span>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-  // 찾은 줄이 몇 개인가 — 0이면 «없다» 고 말해 준다. 조용히 아무 일도 안 일어나면
-  // 사람은 검색이 «안 되는» 줄 안다.
-  const csHitCount = (text)=>{
-    const q = pq.trim();
-    if(!q) return null;
-    return String(text||'').split(/\r?\n/)
-      .filter(ln=>ln.toLowerCase().indexOf(q.toLowerCase())>=0).length;
-  };  // 칸 너비 — 사람마다 따로 남는다. 생성과 상세가 «다른» 열쇠를 쓴다:
+  // ── ③ «상품 정보 안에서 찾기» ─────────────────────────────────────────
+  // ★ 셈은 화면 밖(csLinesOf·csHitLines)에 있다 — 등록과 상세가 «같은 것» 을 써야
+  //   한쪽만 고쳐지는 일이 없다. 여기 남는 것은 찾는 말 하나뿐이다.
+  const [pq,setPq]  = useState('');
+  const csLines     = (text,style)=> csLinesOf(text, pq, style);
+  const csHitCount  = (text)=> csHitLines(text, pq);
+ // 칸 너비 — 사람마다 따로 남는다. 생성과 상세가 «다른» 열쇠를 쓴다:
   // 만들 때와 볼 때 보는 것이 달라 원하는 폭도 다르다.
   const [paneW, dragPane] = useCsPanes('cs_new_panes', {l:360, r:325});
 
@@ -19670,10 +19694,16 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                         cursor: blocked?'not-allowed':'pointer', opacity: blocked?.45:1,
                         border:'1px solid '+(on?'var(--primary)':'var(--border)'),
                         background: on?'rgba(42,71,141,.22)':'transparent'}}>
-                      <span style={{display:'inline-block',width:11,height:11,borderRadius:3,
-                        marginRight:7,verticalAlign:-1,
-                        border:'1px solid '+(on?'var(--primary)':'var(--sub)'),
-                        background: on?'var(--primary)':'transparent'}}></span>
+                      {/* ★ 고른 티가 나야 한다(제니 제보). 어두운 바탕에 짙은 파랑을
+                          채우면 «비어 있는 것» 과 잘 구분되지 않는다 — 밝은 강조색을
+                          채우고 «✓» 를 어두운 글자로 얹는다. 색과 «모양» 이 함께
+                          바뀌어야 흘깃 봐도 알 수 있다. */}
+                      <span style={{display:'inline-flex',alignItems:'center',
+                        justifyContent:'center',width:13,height:13,borderRadius:3,
+                        marginRight:7,verticalAlign:-2,fontSize:10,fontWeight:700,
+                        lineHeight:1,color: on?'#12203c':'transparent',
+                        border:'1px solid '+(on?'var(--accent)':'var(--sub)'),
+                        background: on?'var(--accent)':'transparent'}}>✓</span>
                       <span style={{fontFamily:'monospace',color:'var(--accent)'}}>…{it.code.slice(-3)}</span>
                       <span style={{marginLeft:7}}>{it.product_name||'—'}</span>
                       <span style={{marginLeft:7,color:'var(--sub)'}}>{it.supplier_name||''}</span>
@@ -19764,19 +19794,27 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                 </div>
                 {/* ★ 우편번호와 주소는 «한 주소» 라 한 줄에 둔다(제니). 우편번호는
                     다섯 자리라 좁아도 되고, 남는 폭은 전부 주소가 가져간다. */}
+                {/* ★★ 우편번호 칸을 «다섯 자리만큼» 만 잡는다(제니 제보 — 사이가 너무 멀었다).
+                    그리고 상세주소를 «주소와 같은 세로줄» 에 세운다. 우편번호는 주소의
+                    일부가 아니라 앞에 붙는 꼬리표라, 상세주소가 그 아래로 들어가면
+                    주소가 두 토막으로 읽힌다.
+                      06151 서울 강남구 언주로98길 36 루트원 레지던스
+                            607호                                        */}
                 <label style={lbl}>배송 주소지</label>
-                <div style={{display:'flex',gap:6,marginBottom:5,alignItems:'center'}}>
-                  <div style={{width:70,flexShrink:0}}>{cell(it.code,'ship_zipcode','우편번호')}</div>
-                  <div style={{flex:1,minWidth:0}}>{cell(it.code,'ship_address1','주소')}</div>
+                <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:'4px 5px',
+                  alignItems:'baseline'}}>
+                  <div style={{width:62}}>{cell(it.code,'ship_zipcode','우편')}</div>
+                  <div style={{minWidth:0}}>{cell(it.code,'ship_address1','주소')}</div>
+                  <div></div>
+                  <div style={{minWidth:0}}>{cell(it.code,'ship_address2','상세 주소')}</div>
                 </div>
-                {cell(it.code,'ship_address2','상세 주소')}
               </div>
             );
           })}
           {/* ★ 2뎁스 선 — 「주소」 묶음 «안» 에서 배송지와 회수지를 나눈다.
               1뎁스보다 연해야 «큰 묶음이 아니라 그 안의 갈래» 로 읽힌다. */}
           <div style={sec2}></div>
-          {row('회수 주소지', (
+          {rowWide('회수 주소지', (
             <>
               <div style={{fontSize:10,color:'var(--sub)',marginBottom:4}}>
                 비우면 배송지와 같습니다</div>
@@ -19795,7 +19833,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
                   color:'var(--sub)'}}>배송 주소지와 동일</button>
             </>
-          ), {alignItems:'start'})}
+          ))}
 
           <div style={sec}>분류</div>
           {row(<>접수 경로{req}</>, <CsPick value={f.intake_path} options={CS_INTAKE}
@@ -19851,11 +19889,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             </>
           )}
 
-          <div style={{fontSize:10,color:'var(--sub)',marginTop:11,lineHeight:1.7,
-            paddingTop:9,borderTop:'1px solid var(--border)'}}>
-            ★ 옵션명·수량·주소·클레임 사유는 카페24가 갖고 있지만 조회 창구가 아직
-            안 내려줍니다. 그동안은 직접 넣습니다.
-          </div>
+          {/* (2026-09-02) 「옵션명·수량·주소·클레임 사유는 카페24가 갖고 있지만 조회
+              창구가 아직 안 내려줍니다」 라는 안내가 여기 있었다 — 그날 창구를 넓혀
+              전부 내려받게 되어 걷어냈다(제니 확인). 안내문은 사실이 아니게 되는
+              순간 지워야 한다: 남아 있으면 «그런가 보다» 하고 손으로 다시 적는다. */}
         </div>
 
         <CsPaneBar onMouseDown={dragPane('l')}/>
@@ -19953,14 +19990,17 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               것이 목적이지 상품을 고르는 것이 목적이 아니다.
               ★ 그래서 결과를 따로 띄우지 않는다. 있던 자리에 그대로 두고 찾은 줄만
                 도드라지게 한다 — 앞뒤 맥락이 함께 보여야 읽을 수 있다. */}
-          <div style={{display:'flex',gap:5,marginBottom:9,alignItems:'center'}}>
+          {/* ★ 버튼이 줄을 바꾸지 않게 «안 줄어드는» 것으로 못 박는다(제니 제보) —
+              칸이 좁아지면 flex 가 버튼부터 접어 아래로 내려보낸다. */}
+          <div style={{display:'flex',gap:5,marginBottom:9,alignItems:'center',
+            flexWrap:'nowrap'}}>
             <input value={pq} onChange={e=>setPq(e.target.value)}
               placeholder="상품 정보 안에서 찾기"
-              style={{...inp,fontSize:11,padding:'6px 8px'}}/>
+              style={{...inp,fontSize:11,padding:'6px 8px',minWidth:0,flex:1}}/>
             {pq.trim() && (
               <button type="button" onClick={()=>setPq('')}
                 style={{padding:'6px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-                  cursor:'pointer',background:'transparent',
+                  cursor:'pointer',background:'transparent',whiteSpace:'nowrap',flexShrink:0,
                   border:'1px solid var(--border)',color:'var(--sub)'}}>지우기</button>
             )}
           </div>
@@ -20208,6 +20248,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   // ★ 이름을 noteRef 로 두면 안 된다 — 이 화면에는 «이력 지우기» 가 쓰는 noteRef 가
   //   이미 있다(쌓인 이력 줄을 가리킨다). 같은 이름을 두면 늦게 선언한 쪽이 이겨
   //   지우기가 조용히 입력칸을 긁게 된다.
+  // ── ③ «상품 정보 안에서 찾기» — 등록 화면과 같은 것을 쓴다.
+  const [pq,setPq]  = useState('');
+  const csLines     = (text,style)=> csLinesOf(text, pq, style);
+  const csHitCount  = (text)=> csHitLines(text, pq);
   const draftRef = useRef(null);
   const [openEdits,setOpenEdits] = useState({});  // 펼쳐 둔 «값 변경» 이력
   const [handoff,setHandoff] = useState(false);   // 환불 관리로 넘기는 창
@@ -20403,8 +20447,20 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
       alignItems:'center',padding:'4px 0 4px '+rowPad+'px', ...(extra||{})}}>
       {/* ★ 이름은 접히지 않는다 — 하나라도 접히면 그 줄만 키가 달라져 정렬이 무너진다.
           칸 너비는 «가장 긴 이름»(품목별 주문번호)이 기준이다. */}
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,textAlign:'right',
+      {/* ★ 왼쪽 정렬이다(제니 2026-09-02). 오른쪽에 붙이면 이름의 «끝» 이 가지런해지는
+          대신 «시작» 이 들쭉날쭉해진다 — 눈은 왼쪽에서 오른쪽으로 읽으므로 시작이
+          맞는 편이 훑기 쉽다. */}
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,
         whiteSpace:'nowrap'}}>{k}</div>
+      <div style={{minWidth:0}}>{node}</div>
+    </div>
+  );
+  // ★★ 주소처럼 «긴 값» 은 이름 칸에 자리를 뺏기면 읽을 수 없다. 이름을 위에 한 줄로
+  //   두고 값이 이름의 «왼쪽 끝부터» 오른쪽 끝까지 다 쓰게 한다(제니 2026-09-02).
+  //   다른 줄과 시작점이 같으므로(x=28) 정렬은 그대로 지켜진다.
+  const rowWide = (k,node)=>(
+    <div style={{padding:'4px 0 4px '+rowPad+'px'}}>
+      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,marginBottom:4}}>{k}</div>
       <div style={{minWidth:0}}>{node}</div>
     </div>
   );
@@ -20491,7 +20547,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         <div style={panel}>
           <div style={ptitle}>① 티켓 정보</div>
           {ro('품목별 주문번호', t.order_item_code)}
-          {ro('상품 · 옵션', (t.product_name||'—') + (t.option_name?'  ／ '+t.option_name:''))}
+          {/* ★ 상품과 옵션을 «두 줄» 로 나눈다(제니). 「／」로 이어 붙이면 상품명이 길
+              때 옵션이 그 뒤에 묻혀, 어디까지가 상품이고 어디부터가 옵션인지 안 보인다.
+              옵션은 색을 달리해 한 번 더 갈라 준다 — 같은 색이면 두 줄이어도 이어 읽힌다. */}
+          {ro('상품', t.product_name)}
+          {row('옵션', <div style={{fontSize:12,lineHeight:1.5,wordBreak:'break-word',
+            color: t.option_name?'var(--accent)':'var(--sub)'}}>{t.option_name||'—'}</div>,
+            {alignItems:'baseline'})}
           {/* ★ 주문 수량은 카페24 값이라 그대로 두고, CS 접수 수량만 연다.
               「3개 중 1개만 불량」 이 흔하고, 처음에 잘못 세는 일도 흔하다.
               ★★ 등록 화면과 «같은 두 줄» 로 둔다(제니: 두 화면은 기본 틀이 같아야 한다).
@@ -20538,7 +20600,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           {/* ★ 2뎁스 선 — 「주소」 묶음 «안» 에서 배송지와 회수지를 나눈다.
               1뎁스보다 연해야 «큰 묶음이 아니라 그 안의 갈래» 로 읽힌다. */}
           <div style={sec2}></div>
-          {row('회수 주소지', (
+          {rowWide('회수 주소지', (
             <>
               <div style={{fontSize:10,color:'var(--sub)',marginBottom:4}}>
                 비우면 배송지와 같습니다</div>
@@ -20555,7 +20617,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
                   color:'var(--sub)'}}>배송 주소지와 동일</button>
             </>
-          ), {alignItems:'start'})}
+          ))}
 
           <div style={sec}>분류</div>
           {/* ★ 접수 경로는 «분류» 다 — 등록 화면이 이미 그 자리에 두고 있었는데 상세만
@@ -20862,6 +20924,20 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         {/* ── ③ 안내에 쓰는 것 ────────────────────────────────────── */}
         <div style={sticky}>
           <div style={ptitle}>③ 이 상품 CS 정보</div>
+          {/* ★ 등록 화면과 같은 «내용 안에서 찾기». 상세에서도 상품 정보가 길기는
+              마찬가지고, 오히려 여기서 더 오래 들여다본다(제니 요청 2026-09-02). */}
+          <div style={{display:'flex',gap:5,marginBottom:9,alignItems:'center',
+            flexWrap:'nowrap'}}>
+            <input value={pq} onChange={e=>setPq(e.target.value)}
+              placeholder="상품 정보 안에서 찾기"
+              style={{...inp,fontSize:11,padding:'6px 8px',minWidth:0,flex:1}}/>
+            {pq.trim() && (
+              <button type="button" onClick={()=>setPq('')}
+                style={{padding:'6px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                  cursor:'pointer',background:'transparent',whiteSpace:'nowrap',flexShrink:0,
+                  border:'1px solid var(--border)',color:'var(--sub)'}}>지우기</button>
+            )}
+          </div>
           {csInfo===null ? (
             <div style={{fontSize:11,color:'var(--sub)'}}>찾는 중…</div>
           ) : csInfo.ambiguous!==undefined ? (
@@ -20873,13 +20949,23 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <div style={{fontSize:11,color:'var(--sub)'}}>이 상품의 CS 정보가 없습니다.</div>
           ) : (
             <>
-              <div style={{fontSize:10,color:'var(--sub)',marginBottom:6,fontFamily:'monospace'}}>
-                {csInfo.product_code}</div>
-              <div style={{fontSize:11,color:'var(--text)',lineHeight:1.75,whiteSpace:'pre-wrap',
-                maxHeight:260,overflowY:'auto'}}>{csInfo.cs_info || '— CS 정보 없음 —'}</div>
+              <div style={{fontSize:11,color:'var(--accent)',fontFamily:'monospace',
+                marginBottom:6,wordBreak:'break-all'}}>{csInfo.product_code}</div>
+              {(()=>{ const n = csHitCount([csInfo.cs_info||'', csInfo.memo||''].join('\n'));
+                return n===null ? null : (
+                  <div style={{fontSize:10,marginBottom:6,
+                    color: n>0 ? '#F6AD09' : 'var(--sub)'}}>
+                    {n>0 ? '찾은 줄 '+n+'개' : '이 상품 정보에는 없습니다'}</div>
+                ); })()}
+              <div style={{maxHeight:260,overflowY:'auto'}}>
+                {csInfo.cs_info
+                  ? csLines(csInfo.cs_info, {fontSize:11,color:'var(--text)'})
+                  : <div style={{fontSize:11,color:'var(--sub)'}}>— CS 정보 없음 —</div>}
+              </div>
               {csInfo.memo && (
-                <div style={{fontSize:10.5,color:'var(--sub)',marginTop:8,lineHeight:1.7,
-                  paddingTop:8,borderTop:'1px solid var(--border)',whiteSpace:'pre-wrap'}}>{csInfo.memo}</div>
+                <div style={{marginTop:8,paddingTop:8,borderTop:'1px solid var(--border)'}}>
+                  {csLines(csInfo.memo, {fontSize:10.5,color:'var(--sub)'})}
+                </div>
               )}
             </>
           )}
