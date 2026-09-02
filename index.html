@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260901ay_note_hint -->
+<!-- v20260902a_cs_settings_tabs -->
+<!-- (2026-09-02) CS 설정 화면의 나머지 탭 셋을 만들었다 — 칩 권한 · 칸 · 권한 · 카페24 연동. ★★ 셋이 하는 일은 하나다: 그동안 씨앗 SQL(sql/cs_tickets.sql)에만 있어 «한 줄 바꾸려면 나를 불러 SQL 을 돌려야» 했던 값을 master 가 화면에서 고치게 한다. 설정이 화면에 없으면 그 설정은 사실상 코드에 박힌 것과 같다. ①칩 권한(cs_chip_roles) — 권한×칩 격자. 「전체」는 끌 수 없게 잠갔다: 칩을 다 끄면 목록으로 돌아올 길이 없어진다. 권한마다 «보이는 칩 수» 를 맨 아래 줄에 세어 준다(1 이하면 노랗게 — 다 꺼 놓고 모르는 자리다). ★ 설정에 키가 없으면 «전원에게 보인다» 가 목록 화면의 규칙이라(!allowed), 편집칸도 똑같이 체크된 채로 편다. 한쪽만 다르게 읽으면 볼수록 헷갈린다. ②칸 · 권한(cs_field_rules) — 칸마다 «언제 꼭 있어야 하나»(만들 때/종결할 때/안 함)와 «누가 고칠 수 있나». ★★ 둘의 성격이 정반대라 그것을 화면에 적어 뒀다: 필수는 DB 가 안 보는 «돕는» 규칙이고(이관처럼 정당하게 비우는 때가 있다), 권한은 DB 트리거가 이 설정을 그대로 읽어 «막는» 규칙이다. 그래서 정산 다섯 칸의 잠금을 넓힐 때는 한 번 묻는다 — 화면만 열리는 것이 아니라 실제로 열린다. ★ MASTER 체크박스는 늘 켜진 채 잠갔다: 트리거가 master 를 맨 앞에서 통과시키므로 목록에서 빼도 못 막는데, 화면에 꺼 둘 수 있으면 «막았다» 고 오해한다. ★ 전원이 고치는 칸은 edit 키를 아예 안 적어 씨앗과 같은 모양으로 남긴다. ③카페24 연동(cs_cafe24_fields + cs_detail_order) — 끌어올 값 고르기와 티켓 왼쪽 차례를 «한 화면»에 뒀다. ★★ 따로 두면 「골랐는데 화면에 안 보인다」가 반드시 생긴다. 여기서는 고른 것이 곧 차례 목록이라 그 어긋남이 구조적으로 없다 — 켜면 차례 맨 뒤에 붙고, 끄면 차례에서 빠진다. 주문번호는 티켓이 이미 갖고 있는 값이라 못 끄게 잠갔다. 개인정보 값에는 뱃지를 달았다(스냅샷은 통째로 마스킹되므로 골라도 백업 마스킹 목록은 안 밀린다). ★★★ 셋 다 «모르는 키는 지우지 않는다» — 화면에 없는 칩/칸/값이 설정에 있으면 노란 줄로 보여 주고 저장할 때 그대로 다시 담는다. 내가 모른다고 남의 값을 지우면 다음 판에서 그 칩을 만들었을 때 설정이 사라져 있다. 2026-09-01 에 칩 id 가 어긋나 설정이 조용히 무시된 적이 있어 «조용히» 를 없앤 것이다. ★ 설정 조회가 실패하면(undefined) 저장 버튼을 잠근다 — 못 읽은 화면에서 저장하면 멀쩡한 운영 기준을 빈 값으로 덮는다. ★ 저장하면 그 값은 «사람 것» 이 되어 씨앗 SQL 이 다시 돌아도 안 덮인다(updated_by 조건). 저장 줄에 마지막으로 바꾼 사람과 시각을 적어 둔다. ★ dev 전용. -->
 <!-- (2026-09-01) 셋을 고쳤다(제니). ①★★ «CS 완료» 단계를 걷어냈다 — 「재출고 완료」(교환 쪽)와 「환불 대기」(반품 쪽)가 **이미 상담원 처리 끝**이라는 제니 정정. 내가 그 위에 단계를 하나 더 뒀던 것이 군더더기였다: 상담원이 「환불 대기」로 옮기고 «또» 「CS 완료」로 옮기는 두 번 일이 된다. 그 둘을 «확인 대기» 그룹으로 올렸고, **교환/환불 구분도 여기서 갈린다** — 방향으로 걸러 보는 것이 아니라 단계가 이미 두 갈래다. 기존 cs_done 티켓은 방향을 보고 옮겼다. ②「무슨 일」 드롭박스와 「누가」 라벨을 걷어냈다(제니). 두 번이나 «이게 뭐냐» 는 질문이 나온 칸이고, 값 목록에 «상태를 옮기는 것» 과 «단순 이력» 이 섞여 있어 저장 버튼(=단계)과도 겹쳐 보였다. 이제 이력은 «누가 무슨 말을 했나» 만 남기고 단계는 저장 버튼이 정한다. ★ 잃는 것이 없다 — 「공급사별 평균 회신 일수」는 action='회신' 을 세려던 것이었는데 **«누가»(side='공급사')가 이미 그 일을 한다**: 공급사가 남긴 첫 이력 시각에서 supplier_sent_at 을 빼면 된다. 사람이 남기는 이력은 전부 action='기록' 이고, 화면에는 그 이름을 안 보인다(모든 줄에 같은 말이 붙으면 소음이다). ③★★ **이력 «가리기»(블라인드)** — 제니 요청: 「이력 자체를 지우는 게 아니라 이력은 남고 그 안에 텍스트만 지우기」. 잘못 적은 내용을 바로잡을 길이 없으면 «정정합니다» 이력을 또 쌓아야 하고 읽는 사람이 어느 것이 맞는지 헷갈린다. ★ 줄은 지워지지 않는다 — 「이 자리에 이력이 있었고 누가 언제 왜 가렸다」가 남는다. ★★ 본문은 «실제로» 지운다: 숨기기만 하면 지운 줄 알았던 글이 덤프·백업에 그대로 남는다 — 고객 이름이나 잘못된 금액이 적혀 있었다면 그게 문제다. 되돌릴 수 없으므로 사유를 받는다. ★ 가릴 수 있는 사람은 그 글을 쓴 본인 또는 master 이고, **DB 정책도 같다.** ★★ append-only 는 그대로다 — update 정책을 열되 트리거가 «본문을 지우는 것 말고는 아무것도 못 바꾸게» 막는다(다른 글로 바꿔치기하는 것은 고치는 것이라 막는다. 이미 가려진 줄도 다시 못 건드린다). ★ dev 전용. -->
 <!-- v20260901v_cs_stage_groups -->
 <!-- (2026-09-01) 단계를 «그룹 + 하위 상태» 두 층으로 다시 짰다(제니 설계). 젠데스크가 쓰던 방식이고(신규/등록/보류/해결 네 묶음 + 그 안의 상태), 사람들이 이미 그렇게 생각하고 있다. [접수] 티켓 등록 / [처리중] 진행중·보류·재출고 완료·환불 대기 / [확인 대기] CS 완료 / [완료] 환불 완료·정산 대기 / [종결] 종결·철회. ★★ 그룹을 넷이 아니라 다섯으로 둔 이유 — «CS 완료» 는 «완료» 가 아니다. 상담원 일이 끝났을 뿐 환불도 정산도 아직이다. «완료» 에 넣으면 「완료 12건」인데 그중 일곱이 master 가 손대야 하는 것이 되고, 목록을 접어 두면 안 보인다. 바통을 넘기는 자리는 그룹 이름에 드러나야 한다. ★★ 없앤 셋 — 공급사 접수·회수·입고 확인(제니). 공급사에 보내면 곧바로 «진행중» 이고, 회수와 입고는 그 안에서 일어나는 «사건» 이라 이력으로 남으면 된다. **단계는 «지금 무엇을 기다리나» 만 말해야 한다.** ★★ 더한 셋 — 보류·환불 완료·철회. 보류는 겹쳐 걸리는 표시(held_at)였는데 실무에서 «사진·입금 대기» 라 진행중과 동시에 있을 수 없고, 철회는 종결의 한 종류로 목록에 보여야 한다(그전에는 close_reason 이었다). ★ 잃는 것: «어느 단계에서 보류됐나» 가 칸에서 사라진다 — 다만 이력에 「단계 : 진행중 -> 보류」로 남으므로 실제로 잃는 것은 없다. 보류 사유·재개 예정일·요청 횟수 칸은 그대로 쓴다(단계가 아니라 부가 정보다). ★★ «교환과 환불의 CS 완료를 어떻게 구분하나» 라는 제니 물음에 대한 답이 여기 있다 — 이제 «재출고 완료»(교환 쪽)와 «환불 대기»(반품 쪽)가 처리중에 나란히 서서 방향이 단계에 그대로 드러난다. ★ 목록 칩도 «그룹» 단위로 바꿨다: 단계가 열 개인데 칩도 열 개면 목록 위가 단계 목록이 된다. 정확한 단계는 표의 단계 열에 뱃지로 보인다. ★★ 트리거에서 «단계를 refund 로 옮기는 것» 잠금을 걷어냈다 — 새 구조의 refund 는 «환불 대기» 이고 상담원이 넘기는 자리다. **되돌릴 수 없는 것은 단계가 아니라 «환불 요청(refunds 행 생성)» 과 «정산 반영(settled_at)» 이고**, 그 둘은 그대로 막혀 있다. 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다. ★ 없어진 단계에 있던 티켓은 «진행중» 으로, 보류가 걸려 있던 티켓은 «보류» 로, 철회 종결은 «철회» 로 옮겼다(dev 적용 완료). ★ dev 전용. -->
@@ -17404,21 +17405,665 @@ function editCount(e){
     .filter(l=>l.trim() && l.trim().indexOf('(')!==0).length;
 }
 
+// ── CS 설정 · 세 탭이 함께 쓰는 것 ─────────────────────────────────────────
+// ★★ 이 세 탭이 하는 일은 하나다 — 그동안 씨앗 SQL(sql/cs_tickets.sql)에만 있어
+//   바꾸려면 내가 SQL 을 돌려야 했던 값들을, master 가 화면에서 고치게 하는 것.
+//   그래서 «값» 만 화면이 갖고 «목록»(어떤 칩·어떤 칸이 있나)은 코드가 갖는다.
+//   목록까지 화면에서 늘리게 하면 화면·DB check 제약·트리거 셋이 갈린다.
+
+// 권한 셋. 좌측 하단 뱃지와 «같은 말» 을 쓴다 — 거기서 MASTER 를 보고 온 사람이
+// 여기서 «관리자» 같은 다른 이름을 만나면 같은 것인지 한 번 더 생각해야 한다.
+const CS_ROLES = [
+  {id:'master',  label:'MASTER',  color:'#F6AD09'},
+  {id:'manager', label:'MANAGER', color:'#A8DEF6'},
+  {id:'crew',    label:'CREW',    color:'#dce8ff'},
+];
+const CS_ROLE_IDS = CS_ROLES.map(r=>r.id);
+
+// ── 티켓 칸 목록 (칸 · 권한 탭) ────────────────────────────────────────────
+// ★ 여기 없는 칸은 «규칙이 없는» 칸이다 — 필수가 아니고 전원이 고칠 수 있다.
+//   목록을 화면에서 늘리지 않는 이유: 칸 이름은 cs_tickets 의 실제 열 이름이라
+//   사람이 타이핑으로 더하면 오타가 조용히 «아무 일도 안 하는 규칙» 이 된다.
+const CS_FIELD_DEFS = [
+  {g:'접수', id:'intake_path',     label:'접수 경로'},
+  {g:'접수', id:'order_item_code', label:'품목별 주문번호'},
+  {g:'접수', id:'cs_type',         label:'유형'},
+  {g:'접수', id:'cs_qty',          label:'CS 접수 수량'},
+  {g:'접수', id:'supplier_name',   label:'공급사'},
+  {g:'고객', id:'orderer_name',    label:'주문자 이름'},
+  {g:'고객', id:'orderer_phone',   label:'주문자 연락처'},
+  {g:'고객', id:'receiver_name',   label:'수령인 이름'},
+  {g:'고객', id:'receiver_phone',  label:'수령인 연락처'},
+  {g:'주소', id:'ship_address1',   label:'배송 주소'},
+  {g:'주소', id:'pickup_address1', label:'회수 주소'},
+  {g:'마무리', id:'direction',     label:'방향'},
+  {g:'마무리', id:'assignee',      label:'담당자'},
+  {g:'마무리', id:'close_reason',  label:'종결 사유'},
+  {g:'마무리', id:'memo',          label:'메모'},
+  // ★★ 돈이 오가는 칸이다. 여기 «고칠 수 있는 사람» 을 넓히면 화면만이 아니라
+  //   DB 트리거의 자물쇠도 함께 풀린다(트리거가 이 설정을 읽어 판정한다).
+  {g:'정산', id:'cost_bearer',        label:'비용 부담', money:true},
+  {g:'정산', id:'settle_fee',         label:'정산 상품금액', money:true},
+  {g:'정산', id:'settle_shipping_fee',label:'정산 배송료', money:true},
+  {g:'정산', id:'settled_at',         label:'정산 완료 시각', money:true},
+  {g:'정산', id:'refund_id',          label:'환불 건 연결', money:true},
+];
+// «언제 꼭 있어야 하나». 참/거짓이 아니라 «언제» 인 이유는 매뉴얼에 있다 —
+// 필수를 접수 시점에 걸어 놓으니 사람이 «-» 를 채워 넣었고, 그 «-» 는 빈값보다 나쁘다.
+const CS_REQ_OPTS = [
+  {v:'create', label:'만들 때',   hint:'티켓을 만들 때 이미 아는 값'},
+  {v:'close',  label:'종결할 때', hint:'협의하며 정해지는 값'},
+  {v:false,    label:'안 함',     hint:'없어도 된다'},
+];
+
+// ── 카페24에서 끌어올 주문 정보 (카페24 연동 탭) ───────────────────────────
+// ★ 값 이름은 2026-08-31·09-01 실측으로 확인된 것만 올린다(주문 품목 조회 + 주문 머리).
+//   supply_price 처럼 "0.00" 으로만 오는 것, refund_bank_name 처럼 빈 문자열로만
+//   오는 것은 목록에 없다 — 있지도 않은 값을 고르게 하면 안 된다.
+// ★★ 고른 값은 칸이 늘지 않고 cafe24_snapshot jsonb 한 칸에 통째로 담긴다.
+//   그래서 백업 마스킹(tools/mask_dump.py)도 키마다 따로 적지 않고 통째로 지운다 —
+//   여기서 개인정보를 더 골라도 마스킹 목록이 밀리지 않는다.
+const CS_CAFE24_FIELDS = [
+  {g:'품목', id:'order_id',        label:'주문번호', always:true,
+   note:'티켓이 이미 갖고 있는 값이라 끌 수 없습니다'},
+  {g:'품목', id:'order_item_code', label:'품목별 주문번호'},
+  {g:'품목', id:'item_no',         label:'품목 번호'},
+  {g:'품목', id:'product_code',    label:'상품코드'},
+  {g:'품목', id:'option_value',    label:'옵션'},
+  {g:'품목', id:'quantity',        label:'수량'},
+  {g:'품목', id:'product_price',   label:'상품 금액'},
+  {g:'품목', id:'option_price',    label:'옵션 금액'},
+  {g:'품목', id:'supplier_id',     label:'공급사 코드'},
+  {g:'품목', id:'supplier_name',   label:'공급사명'},
+  {g:'품목', id:'supplier_product_name', label:'공급사 상품명'},
+  {g:'품목', id:'individual_shipping_fee', label:'개별 배송비'},
+  {g:'배송', id:'tracking_no',     label:'송장번호'},
+  {g:'배송', id:'shipping_company_name', label:'택배사'},
+  {g:'배송', id:'shipped_date',    label:'출고일'},
+  {g:'배송', id:'delivered_date',  label:'배송완료일'},
+  {g:'클레임', id:'status_text',   label:'주문 상태'},
+  {g:'클레임', id:'claim_reason',  label:'반품 사유(고객이 쓴 원문)',
+   note:'★ 접수할 때 끌어오면 상담원이 사유를 다시 옮겨 적지 않아도 됩니다'},
+  {g:'클레임', id:'return_request_date',   label:'반품 신청일'},
+  {g:'클레임', id:'return_collected_date', label:'회수 완료일'},
+  {g:'클레임', id:'exchange_request_date', label:'교환 신청일'},
+  {g:'클레임', id:'cancel_request_date',   label:'취소 신청일'},
+  {g:'클레임', id:'order_status_before_cs',label:'CS 전 주문 상태'},
+  {g:'주문',   id:'order_date',       label:'주문일'},
+  {g:'주문',   id:'order_place_name', label:'유입처'},
+  {g:'주문',   id:'market_id',        label:'마켓'},
+  {g:'주문',   id:'market_order_no',  label:'마켓 주문번호'},
+  {g:'주문자', id:'buyer.name',       label:'주문자 이름', pii:true},
+  {g:'주문자', id:'buyer.cellphone',  label:'주문자 휴대폰', pii:true},
+  {g:'주문자', id:'buyer.phone',      label:'주문자 전화', pii:true},
+  {g:'주문자', id:'buyer.email',      label:'주문자 메일', pii:true},
+  {g:'수령인 · 배송지', id:'receivers.name',      label:'수령인 이름', pii:true},
+  {g:'수령인 · 배송지', id:'receivers.cellphone', label:'수령인 휴대폰', pii:true},
+  {g:'수령인 · 배송지', id:'receivers.phone',     label:'수령인 전화', pii:true},
+  {g:'수령인 · 배송지', id:'receivers.zipcode',   label:'우편번호', pii:true},
+  {g:'수령인 · 배송지', id:'receivers.address1',  label:'주소', pii:true},
+  {g:'수령인 · 배송지', id:'receivers.address2',  label:'상세 주소', pii:true},
+  {g:'수령인 · 배송지', id:'receivers.shipping_message', label:'배송 메모'},
+  {g:'결제', id:'payment_method_name', label:'결제수단'},
+  {g:'결제', id:'payment_date',        label:'결제일'},
+];
+const CS_CAFE24_GROUPS = ['품목','배송','클레임','주문','주문자','수령인 · 배송지','결제'];
+
+// console_settings 한 줄을 읽는다.
+// ★★ 세 결과를 «구분해서» 돌려준다 — undefined(못 읽었다) · null(아직 없다) · 값.
+//   셋을 뭉뚱그리면 「설정이 비었다」와 「조회가 실패했다」가 같아 보이고, 그러면
+//   실패한 화면에서 [저장] 을 눌러 멀쩡한 운영 기준을 빈 값으로 덮게 된다.
+async function csLoadSetting(key){
+  const {data,error} = await sb.from('console_settings')
+    .select('value,updated_at,updated_by').eq('key',key).maybeSingle();
+  if(sbFail('설정 조회', error)) return undefined;
+  return data || null;
+}
+// ★★ 저장하는 순간 그 값은 «사람 것» 이 된다. 씨앗 SQL 은 updated_by 가
+//   'sql:cs_tickets' 인 행만 갱신하므로, 한 번이라도 여기서 저장하면 내가 SQL 을
+//   다시 돌려도 이 값을 안 덮는다. 이 화면을 만든 이유가 바로 그것이다.
+async function csSaveSetting(key, value, email){
+  const {error} = await sb.from('console_settings')
+    .upsert({key, value, updated_by:email, updated_at:new Date().toISOString()},
+            {onConflict:'key'});
+  if(sbFail('설정 저장', error, {write:true})) return false;
+  return true;
+}
+
+// 세 탭이 «같은 자리에» 같은 모양으로 저장한다.
+// ★ 탭마다 저장 버튼 자리가 다르면 저장한 줄 알고 나가는 일이 생긴다.
+// ★ 화면 아래에 붙여 둔다(sticky) — 목록이 길어 스크롤해도 늘 보인다.
+function CsSaveBar({row, dirty, busy, onSave, onReset}){
+  const btn = (primary)=>({padding:'6px 15px',borderRadius:7,fontSize:12,
+    fontFamily:'inherit',fontWeight:600,cursor:'pointer',
+    border: primary?'none':'1px solid var(--border)',
+    background: primary?'var(--primary)':'transparent',
+    color: primary?'#fff':'var(--sub)'});
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:9,flexWrap:'wrap',
+      marginTop:14,padding:'10px 12px',background:'var(--card)',
+      border:'1px solid '+(dirty?'rgba(246,173,9,.45)':'var(--border)'),
+      borderRadius:8,position:'sticky',bottom:12}}>
+      <span style={{fontSize:11,color:'var(--sub)'}}>
+        {row===undefined ? '설정을 못 읽었습니다 — 저장하지 마세요.'
+         : row && row.updated_at
+           ? '마지막 저장 '+csStamp(row.updated_at)
+             +(row.updated_by?' · '+csShortUser(row.updated_by):'')
+           : '아직 화면에서 저장한 적이 없습니다 (설치할 때 넣은 값)'}
+      </span>
+      <div style={{flex:1}}></div>
+      {dirty && <span style={{fontSize:11,color:'#F6AD09'}}>● 저장하지 않은 변경이 있습니다</span>}
+      <button onClick={onReset} disabled={!dirty||busy} style={{...btn(false),
+        opacity:(!dirty||busy)?.4:1, cursor:(!dirty||busy)?'default':'pointer'}}>되돌리기</button>
+      <button onClick={onSave} disabled={!dirty||busy||row===undefined} style={{...btn(true),
+        opacity:(!dirty||busy||row===undefined)?.4:1,
+        cursor:(!dirty||busy||row===undefined)?'default':'pointer'}}>
+        {busy?'저장하는 중…':'저장'}</button>
+    </div>
+  );
+}
+
+// 설정 화면의 «왜 이렇게 되어 있나» 한 줄. 규칙을 바꾸는 자리라 뜻을 옆에 적어 둔다.
+function CsSetNote({children}){
+  return (
+    <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.65,marginBottom:12,
+      padding:'9px 12px',background:'rgba(120,170,255,.06)',
+      border:'1px solid var(--border)',borderRadius:8}}>{children}</div>
+  );
+}
+const csSetTh = {fontSize:11,color:'var(--sub)',fontWeight:600,textAlign:'left',
+  padding:'7px 10px',borderBottom:'1px solid var(--border)'};
+const csSetTd = {fontSize:12,color:'var(--text)',padding:'7px 10px',
+  borderBottom:'1px solid rgba(255,255,255,.05)'};
+const csChk = {width:15,height:15,accentColor:'#78AAFF',cursor:'pointer',margin:0};
+
+// ── ① 칩 권한 ──────────────────────────────────────────────────────────────
+// 어느 권한이 목록에서 어떤 칩을 보나. cs_chip_roles.
+// ★★ 칩은 «보안 장치가 아니다» — 꺼도 티켓이 숨겨지지 않는다(진짜 차단은 RLS).
+//   목록을 좁히는 지름길이라, 여기서 정하는 것은 «누구에게 그 지름길을 주나» 다.
+function CsChipRoleSettings({currentUserEmail}){
+  const [row,setRow]     = useState(null);
+  const [loaded,setLoaded] = useState(false);
+  const [base,setBase]   = useState({});
+  const [draft,setDraft] = useState({});
+  const [extra,setExtra] = useState([]);   // 화면에 없는 칩 id (설정에만 있는 것)
+  const [busy,setBusy]   = useState(false);
+
+  // 저장된 값을 «화면이 아는 칩» 기준으로 편다.
+  // ★★ 칩 id 가 없으면 «전원에게 보인다» 가 목록 화면의 규칙이다(!allowed). 편집칸도
+  //   똑같이 읽어야 한다 — 화면에서 체크가 다 빠져 보이는데 실제로는 다 보이면
+  //   설정을 볼수록 헷갈린다.
+  const spread = (v)=>{
+    const out = {};
+    CS_CHIPS.forEach(c=>{
+      const a = v && Array.isArray(v[c.id]) ? v[c.id] : CS_ROLE_IDS;
+      out[c.id] = CS_ROLE_IDS.filter(id=>a.indexOf(id)>=0);
+    });
+    return out;
+  };
+  useEffect(()=>{ (async()=>{
+    const r = await csLoadSetting('cs_chip_roles');
+    setRow(r); setLoaded(true);
+    const v = (r && r.value) || {};
+    const s = spread(v);
+    setBase(s); setDraft(s);
+    setExtra(Object.keys(v).filter(k=>!CS_CHIPS.some(c=>c.id===k)));
+  })(); },[]);
+
+  const dirty = JSON.stringify(base)!==JSON.stringify(draft);
+  const has = (chip,role)=> (draft[chip]||[]).indexOf(role)>=0;
+  const toggle = (chip,role)=>{
+    setDraft(p=>{
+      const cur = p[chip]||[];
+      const next = cur.indexOf(role)>=0 ? cur.filter(x=>x!==role) : cur.concat([role]);
+      return {...p,[chip]:CS_ROLE_IDS.filter(id=>next.indexOf(id)>=0)};
+    });
+  };
+  const save = async ()=>{
+    // ★ 설정에만 있던 칩 id 는 «지우지 않고» 그대로 다시 담는다. 내가 모른다고
+    //   남의 값을 지우면, 다음 판에서 그 칩을 만들었을 때 설정이 사라져 있다.
+    const out = {};
+    CS_CHIPS.forEach(c=>{ out[c.id] = draft[c.id]||[]; });
+    const old = (row && row.value) || {};
+    extra.forEach(k=>{ out[k] = old[k]; });
+    setBusy(true);
+    const ok = await csSaveSetting('cs_chip_roles', out, currentUserEmail);
+    setBusy(false);
+    if(!ok) return;
+    setBase(draft);
+    setRow({value:out, updated_at:new Date().toISOString(), updated_by:currentUserEmail});
+    toast('칩 권한을 저장했습니다.','ok');
+  };
+
+  if(!loaded) return <div style={{fontSize:12,color:'var(--sub)',padding:'30px 0'}}>읽는 중…</div>;
+
+  return (
+    <div style={{width:'100%',maxWidth:'max(680px, 68%)'}}>
+      <CsSetNote>
+        목록 위의 <b>칩</b>을 어느 권한에게 보일지 정합니다.
+        <br/>★ 칩을 꺼도 <b>티켓이 숨겨지지는 않습니다</b> — 목록을 좁히는 지름길일 뿐이고,
+        진짜 차단은 권한(RLS)이 합니다. 「이 사람에게 안 보이게」가 목적이라면 여기가 아닙니다.
+        <br/>★ 「전체」는 끌 수 없습니다 — 칩을 다 끄면 목록으로 돌아올 길이 없어집니다.
+      </CsSetNote>
+
+      <div style={{border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',
+        background:'var(--card)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead>
+            <tr>
+              <th style={csSetTh}>칩</th>
+              {CS_ROLES.map(r=>(
+                <th key={r.id} style={{...csSetTh,textAlign:'center',width:96}}>
+                  <span style={{color:r.color,fontFamily:'monospace',fontSize:10,
+                    letterSpacing:'.06em'}}>{r.label}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {CS_CHIPS.map(c=>{
+              const locked = c.id==='all';
+              return (
+                <tr key={c.id}>
+                  <td style={csSetTd}>
+                    {c.label}
+                    <span style={{marginLeft:7,fontFamily:'monospace',fontSize:10,
+                      color:'var(--sub)',opacity:.65}}>{c.id}</span>
+                  </td>
+                  {CS_ROLES.map(r=>(
+                    <td key={r.id} style={{...csSetTd,textAlign:'center'}}>
+                      <input type="checkbox" style={{...csChk,
+                          cursor:locked?'not-allowed':'pointer', opacity:locked?.5:1}}
+                        checked={locked ? true : has(c.id,r.id)}
+                        disabled={locked}
+                        title={locked?'「전체」는 늘 보입니다':undefined}
+                        onChange={()=>toggle(c.id,r.id)}/>
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+            <tr>
+              <td style={{...csSetTd,fontSize:11,color:'var(--sub)',borderBottom:'none'}}>
+                권한마다 보이는 칩 수</td>
+              {CS_ROLES.map(r=>{
+                const n = CS_CHIPS.filter(c=>c.id==='all'||has(c.id,r.id)).length;
+                return (
+                  <td key={r.id} style={{...csSetTd,textAlign:'center',borderBottom:'none',
+                    fontFamily:'monospace',color:n<=1?'#F6AD09':'var(--sub)'}}>{n}</td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {!!extra.length && (
+        <div style={{marginTop:10,fontSize:11.5,color:'#F6AD09',lineHeight:1.6}}>
+          ⚠ 이 설정에만 있고 화면에는 없는 칩이 있습니다 —
+          <span style={{fontFamily:'monospace'}}> {extra.join(' · ')}</span>.
+          목록 화면은 이 값을 조용히 무시합니다. 지우지 않고 그대로 두었으니,
+          칩을 새로 만들 때 이름이 맞는지 보면 됩니다.
+        </div>
+      )}
+
+      <CsSaveBar row={row} dirty={dirty} busy={busy} onSave={save}
+        onReset={()=>setDraft(base)}/>
+    </div>
+  );
+}
+
+// ── ② 칸 · 권한 ────────────────────────────────────────────────────────────
+// 칸마다 «언제 꼭 있어야 하나» 와 «누가 고칠 수 있나». cs_field_rules.
+// ★★ 둘을 한 설정에 담는다 — 따로 두면 「필수인데 못 고치는 칸」 같은 어긋남이
+//   생기고, 그때 어느 쪽이 맞는지 알 수 없다. 한 칸의 규칙은 한 곳에 있어야 한다.
+function CsFieldRuleSettings({currentUserEmail}){
+  const [row,setRow]     = useState(null);
+  const [loaded,setLoaded] = useState(false);
+  const [base,setBase]   = useState({});
+  const [draft,setDraft] = useState({});
+  const [extra,setExtra] = useState([]);
+  const [busy,setBusy]   = useState(false);
+
+  // ★ edit 가 없는 칸은 «전원» 이다(트리거가 그렇게 읽는다). 편집칸에서는 셋 다
+  //   켠 것으로 편다 — 빈 칸으로 두면 「아무도 못 고친다」로 읽힌다.
+  const spread = (v)=>{
+    const out = {};
+    CS_FIELD_DEFS.forEach(f=>{
+      const r = (v && v[f.id]) || {};
+      const req = (r.required==='create'||r.required==='close') ? r.required : false;
+      const ed  = Array.isArray(r.edit) ? CS_ROLE_IDS.filter(id=>r.edit.indexOf(id)>=0)
+                                        : CS_ROLE_IDS.slice();
+      // master 는 트리거가 맨 앞에서 통과시킨다 — 목록에서 빼도 못 막으므로 늘 켠다.
+      out[f.id] = {required:req, edit: ed.indexOf('master')>=0 ? ed : ['master'].concat(ed)};
+    });
+    return out;
+  };
+  useEffect(()=>{ (async()=>{
+    const r = await csLoadSetting('cs_field_rules');
+    setRow(r); setLoaded(true);
+    const v = (r && r.value) || {};
+    const s = spread(v);
+    setBase(s); setDraft(s);
+    setExtra(Object.keys(v).filter(k=>!CS_FIELD_DEFS.some(f=>f.id===k)));
+  })(); },[]);
+
+  const dirty = JSON.stringify(base)!==JSON.stringify(draft);
+  const setReq  = (id,v)=> setDraft(p=>({...p,[id]:{...p[id],required:v}}));
+  const canEdit = (id,role)=> ((draft[id]||{}).edit||[]).indexOf(role)>=0;
+  const toggleEdit = (id,role)=>{
+    if(role==='master') return;            // 늘 켜져 있다
+    setDraft(p=>{
+      const cur = (p[id]||{}).edit||[];
+      const next = cur.indexOf(role)>=0 ? cur.filter(x=>x!==role) : cur.concat([role]);
+      return {...p,[id]:{...p[id],edit:CS_ROLE_IDS.filter(x=>next.indexOf(x)>=0)}};
+    });
+  };
+
+  const save = async ()=>{
+    // ★★ 돈이 오가는 칸의 자물쇠를 넓히는 것은 한 번 묻는다. 화면에서 숨기는 것과
+    //   달리 이 설정은 DB 트리거가 그대로 읽으므로, 넓히면 «진짜로» 풀린다.
+    const opened = CS_FIELD_DEFS.filter(f=>f.money &&
+      (draft[f.id].edit.length > (base[f.id]||{edit:[]}).edit.length));
+    if(opened.length){
+      const names = opened.map(f=>'· '+f.label).join('\n');
+      if(!window.confirm('돈이 오가는 칸의 잠금을 풉니다.\n\n'+names
+        +'\n\n이 설정은 DB 트리거가 그대로 읽습니다 — 화면뿐 아니라 실제로 열립니다.\n계속할까요?')) return;
+    }
+    const out = {};
+    CS_FIELD_DEFS.forEach(f=>{
+      const d = draft[f.id];
+      const o = {required: d.required};
+      // 전원이면 edit 를 아예 안 적는다 — 씨앗과 같은 모양으로 남는다.
+      if(d.edit.length < CS_ROLE_IDS.length) o.edit = d.edit;
+      out[f.id] = o;
+    });
+    const old = (row && row.value) || {};
+    extra.forEach(k=>{ out[k] = old[k]; });
+    setBusy(true);
+    const ok = await csSaveSetting('cs_field_rules', out, currentUserEmail);
+    setBusy(false);
+    if(!ok) return;
+    setBase(draft);
+    setRow({value:out, updated_at:new Date().toISOString(), updated_by:currentUserEmail});
+    toast('칸 규칙을 저장했습니다.','ok');
+  };
+
+  if(!loaded) return <div style={{fontSize:12,color:'var(--sub)',padding:'30px 0'}}>읽는 중…</div>;
+
+  const groups = [];
+  CS_FIELD_DEFS.forEach(f=>{ if(groups.indexOf(f.g)<0) groups.push(f.g); });
+
+  return (
+    <div style={{width:'100%',maxWidth:'max(760px, 72%)'}}>
+      <CsSetNote>
+        <b>필수</b>는 «참/거짓» 이 아니라 «언제» 입니다 — 만들 때 필수로 걸면, 아직 모르는 값을
+        사람이 「-」로 채웁니다. 그 「-」는 빈칸보다 나쁩니다(빈칸은 «아직 모른다» 지만
+        「-」는 데이터처럼 보입니다).
+        <br/>★ <b>필수는 DB 가 안 봅니다</b> — 사람이 빠뜨리지 않게 «돕는» 규칙이라 화면만 씁니다
+        (과거 티켓 이관처럼 정당하게 비워 넣어야 할 때가 있습니다).
+        <br/>★ <b>고칠 수 있는 사람</b>은 반대입니다 — DB 트리거가 이 설정을 읽어 «막습니다».
+        여기서 넓히면 실제로 열립니다. MASTER 는 늘 고칠 수 있습니다(트리거가 먼저 통과시킵니다).
+        <br/>★ 여기 없는 칸은 규칙이 없습니다 — 필수가 아니고 전원이 고칩니다.
+      </CsSetNote>
+
+      <div style={{border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',
+        background:'var(--card)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead>
+            <tr>
+              <th style={csSetTh}>칸</th>
+              <th style={{...csSetTh,width:250}}>언제 꼭 있어야 하나</th>
+              {CS_ROLES.map(r=>(
+                <th key={r.id} style={{...csSetTh,textAlign:'center',width:84}}>
+                  <span style={{color:r.color,fontFamily:'monospace',fontSize:10,
+                    letterSpacing:'.06em'}}>{r.label}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {groups.map(g=>(
+              <React.Fragment key={g}>
+                <tr>
+                  <td colSpan={2+CS_ROLES.length} style={{...csSetTd,fontSize:11,
+                    color:'var(--sub)',background:'rgba(255,255,255,.02)',
+                    fontWeight:600,letterSpacing:'.02em'}}>
+                    {g}{g==='정산' && <span style={{marginLeft:8,color:'#F6AD09',fontWeight:400}}>
+                      돈이 오가는 칸 · 넓히면 DB 자물쇠도 함께 풀립니다</span>}
+                  </td>
+                </tr>
+                {CS_FIELD_DEFS.filter(f=>f.g===g).map(f=>(
+                  <tr key={f.id}>
+                    <td style={csSetTd}>
+                      {f.label}
+                      <span style={{marginLeft:7,fontFamily:'monospace',fontSize:10,
+                        color:'var(--sub)',opacity:.65}}>{f.id}</span>
+                    </td>
+                    <td style={csSetTd}>
+                      <div style={{display:'flex',gap:5}}>
+                        {CS_REQ_OPTS.map(o=>{
+                          const on = (draft[f.id]||{}).required===o.v;
+                          return (
+                            <div key={String(o.v)} onClick={()=>setReq(f.id,o.v)} title={o.hint}
+                              style={{padding:'3px 10px',borderRadius:12,fontSize:11,
+                                cursor:'pointer',userSelect:'none',
+                                border:'1px solid '+(on?'var(--primary)':'var(--border)'),
+                                background:on?'rgba(120,170,255,.12)':'transparent',
+                                color:on?'var(--accent)':'var(--sub)'}}>{o.label}</div>
+                          );
+                        })}
+                      </div>
+                    </td>
+                    {CS_ROLES.map(r=>(
+                      <td key={r.id} style={{...csSetTd,textAlign:'center'}}>
+                        <input type="checkbox" style={{...csChk,
+                            cursor:r.id==='master'?'not-allowed':'pointer',
+                            opacity:r.id==='master'?.5:1}}
+                          checked={canEdit(f.id,r.id)} disabled={r.id==='master'}
+                          title={r.id==='master'?'MASTER 는 늘 고칠 수 있습니다':undefined}
+                          onChange={()=>toggleEdit(f.id,r.id)}/>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {!!extra.length && (
+        <div style={{marginTop:10,fontSize:11.5,color:'#F6AD09',lineHeight:1.6}}>
+          ⚠ 이 설정에만 있고 화면 목록에는 없는 칸이 있습니다 —
+          <span style={{fontFamily:'monospace'}}> {extra.join(' · ')}</span>.
+          지우지 않고 그대로 둡니다(트리거는 이 값도 읽습니다).
+        </div>
+      )}
+
+      <CsSaveBar row={row} dirty={dirty} busy={busy} onSave={save}
+        onReset={()=>setDraft(base)}/>
+    </div>
+  );
+}
+
+// ── ③ 카페24 연동 ──────────────────────────────────────────────────────────
+// 카페24에서 «무엇을» 끌어오고, 티켓 왼쪽에 «어떤 차례로» 보일지.
+// cs_cafe24_fields(고르기) + cs_detail_order(차례) 두 설정을 한 화면에서 다룬다.
+// ★★ 둘을 한 화면에 둔 이유: 따로 두면 「골랐는데 화면에 안 보인다」가 생긴다.
+//   여기서는 고른 것이 곧 차례 목록이라 그 어긋남이 «구조적으로» 없다.
+function CsCafe24Settings({currentUserEmail}){
+  const [rowF,setRowF] = useState(null);
+  const [rowO,setRowO] = useState(null);
+  const [loaded,setLoaded] = useState(false);
+  const [base,setBase]   = useState([]);   // 저장된 «켠 것의 차례»
+  const [order,setOrder] = useState([]);   // 지금 고른 것의 차례 (항상 있는 값 포함)
+  const [busy,setBusy]   = useState(false);
+  const [extraOrder,setExtraOrder] = useState({});  // cs_detail_order 의 다른 묶음
+
+  const defOf = (id)=> CS_CAFE24_FIELDS.find(f=>f.id===id);
+  useEffect(()=>{ (async()=>{
+    const [rf,ro] = [await csLoadSetting('cs_cafe24_fields'),
+                     await csLoadSetting('cs_detail_order')];
+    setRowF(rf); setRowO(ro); setLoaded(true);
+    const on  = (rf && rf.value && Array.isArray(rf.value.on)) ? rf.value.on : [];
+    const ord = (ro && ro.value && Array.isArray(ro.value.order)) ? ro.value.order : [];
+    // 켠 것 = on 목록 + «항상 있는 값». 차례는 cs_detail_order 를 먼저 따르고,
+    // 거기 없는 것은 뒤에 붙인다 — 두 설정이 어긋나 있어도 아무것도 잃지 않는다.
+    const always = CS_CAFE24_FIELDS.filter(f=>f.always).map(f=>f.id);
+    const live = always.concat(on.filter(id=>always.indexOf(id)<0));
+    const seq = ord.filter(id=>live.indexOf(id)>=0)
+                   .concat(live.filter(id=>ord.indexOf(id)<0));
+    setBase(seq); setOrder(seq);
+    const rest = {};
+    if(ro && ro.value) Object.keys(ro.value).forEach(k=>{ if(k!=='order') rest[k]=ro.value[k]; });
+    setExtraOrder(rest);
+  })(); },[]);
+
+  const dirty = JSON.stringify(base)!==JSON.stringify(order);
+  const on = (id)=> order.indexOf(id)>=0;
+  // 켜면 차례의 «맨 뒤» 에 붙는다. 가운데 끼워 넣으면 방금 켠 것이 어디 갔는지 못 찾는다.
+  const toggle = (f)=>{
+    if(f.always) return;
+    setOrder(p=> p.indexOf(f.id)>=0 ? p.filter(x=>x!==f.id) : p.concat([f.id]));
+  };
+  const move = (id,dir)=>{
+    setOrder(p=>{
+      const i = p.indexOf(id), j = i+(dir==='up'?-1:1);
+      if(i<0||j<0||j>=p.length) return p;
+      const n = p.slice(); const t = n[i]; n[i]=n[j]; n[j]=t; return n;
+    });
+  };
+
+  const save = async ()=>{
+    const always = CS_CAFE24_FIELDS.filter(f=>f.always).map(f=>f.id);
+    const onIds  = order.filter(id=>always.indexOf(id)<0);
+    // ★ 모르는 값(설정에만 있던 것)은 off 로 밀지 않고 그대로 둔다.
+    const oldOff = (rowF && rowF.value && Array.isArray(rowF.value.off)) ? rowF.value.off : [];
+    const offIds = CS_CAFE24_FIELDS.filter(f=>!f.always && onIds.indexOf(f.id)<0).map(f=>f.id)
+      .concat(oldOff.filter(id=>!defOf(id) && onIds.indexOf(id)<0));
+    setBusy(true);
+    const ok1 = await csSaveSetting('cs_cafe24_fields', {on:onIds, off:offIds}, currentUserEmail);
+    const ok2 = ok1 && await csSaveSetting('cs_detail_order',
+      {...extraOrder, order}, currentUserEmail);
+    setBusy(false);
+    if(!ok1 || !ok2) return;
+    setBase(order);
+    const now = new Date().toISOString();
+    setRowF({value:{on:onIds,off:offIds}, updated_at:now, updated_by:currentUserEmail});
+    setRowO({value:{...extraOrder,order}, updated_at:now, updated_by:currentUserEmail});
+    toast('카페24 연동 설정을 저장했습니다.','ok');
+  };
+
+  if(!loaded) return <div style={{fontSize:12,color:'var(--sub)',padding:'30px 0'}}>읽는 중…</div>;
+
+  const unknown = order.filter(id=>!defOf(id));
+
+  return (
+    <div style={{width:'100%',maxWidth:'max(760px, 72%)'}}>
+      <CsSetNote>
+        티켓을 만들 때 카페24 주문에서 <b>어떤 값을 끌어올지</b>와, 그 값들이 티켓 왼쪽에
+        <b> 보이는 차례</b>를 정합니다.
+        <br/>★ 고른 값은 티켓에 칸이 늘지 않고 <span style={{fontFamily:'monospace'}}>cafe24_snapshot</span> 한
+        칸에 통째로 담깁니다 — 그래서 개인정보를 더 골라도 백업 마스킹이 밀리지 않습니다(통째로 가립니다).
+        <br/>★ 여기 값은 <b>참고로 보여 주는 값</b>입니다. 티켓이 스스로 쓰는 값(상품명·수량·연락처·주소)은
+        제 칸에 따로 있습니다 — 섞으면 어느 쪽이 진짜인지 모르게 됩니다.
+      </CsSetNote>
+
+      <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:14,alignItems:'start'}}>
+        {/* 고르기 */}
+        <div style={{border:'1px solid var(--border)',borderRadius:8,background:'var(--card)',
+          padding:'4px 0'}}>
+          {CS_CAFE24_GROUPS.map(g=>(
+            <div key={g}>
+              <div style={{fontSize:11,color:'var(--sub)',fontWeight:600,padding:'8px 12px 5px',
+                background:'rgba(255,255,255,.02)'}}>{g}</div>
+              {CS_CAFE24_FIELDS.filter(f=>f.g===g).map(f=>(
+                <label key={f.id} title={f.note||undefined}
+                  style={{display:'flex',alignItems:'center',gap:9,padding:'5px 12px',
+                    cursor:f.always?'default':'pointer'}}>
+                  <input type="checkbox" style={{...csChk,
+                      cursor:f.always?'not-allowed':'pointer', opacity:f.always?.5:1}}
+                    checked={on(f.id)} disabled={!!f.always} onChange={()=>toggle(f)}/>
+                  <span style={{fontSize:12,color:'var(--text)'}}>{f.label}</span>
+                  {f.pii && <span style={{fontSize:9.5,color:'#F6AD09',opacity:.85,
+                    border:'1px solid rgba(246,173,9,.4)',borderRadius:8,padding:'0 5px'}}>개인정보</span>}
+                  <span style={{marginLeft:'auto',fontFamily:'monospace',fontSize:10,
+                    color:'var(--sub)',opacity:.55}}>{f.id}</span>
+                </label>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        {/* 차례 */}
+        <div style={{border:'1px solid var(--border)',borderRadius:8,background:'var(--card)',
+          padding:'10px 12px',position:'sticky',top:12}}>
+          <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:8,lineHeight:1.55}}>
+            티켓 왼쪽에 보이는 차례 <span style={{fontFamily:'monospace',opacity:.7}}>({order.length})</span>
+            <br/><span style={{opacity:.8}}>켜면 맨 뒤에 붙습니다</span>
+          </div>
+          {order.map((id,i)=>{
+            const f = defOf(id);
+            return (
+              <div key={id} style={{display:'flex',alignItems:'center',gap:6,
+                padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,.05)'}}>
+                <span style={{fontFamily:'monospace',fontSize:10,color:'var(--sub)',
+                  opacity:.55,width:16}}>{i+1}</span>
+                <span style={{fontSize:11.5,color:f?'var(--text)':'#F6AD09',flex:1,
+                  minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {f ? f.label : id}</span>
+                <button onClick={()=>move(id,'up')} disabled={i===0}
+                  style={{background:'transparent',border:'none',color:'var(--sub)',
+                    cursor:i===0?'default':'pointer',opacity:i===0?.25:1,
+                    fontSize:11,padding:'0 3px',fontFamily:'inherit'}}>↑</button>
+                <button onClick={()=>move(id,'down')} disabled={i===order.length-1}
+                  style={{background:'transparent',border:'none',color:'var(--sub)',
+                    cursor:i===order.length-1?'default':'pointer',
+                    opacity:i===order.length-1?.25:1,
+                    fontSize:11,padding:'0 3px',fontFamily:'inherit'}}>↓</button>
+              </div>
+            );
+          })}
+          {!order.length && (
+            <div style={{fontSize:11.5,color:'var(--sub)',padding:'14px 0',textAlign:'center'}}>
+              고른 값이 없습니다.</div>
+          )}
+        </div>
+      </div>
+
+      {!!unknown.length && (
+        <div style={{marginTop:10,fontSize:11.5,color:'#F6AD09',lineHeight:1.6}}>
+          ⚠ 설정에만 있고 화면 목록에는 없는 값이 있습니다 —
+          <span style={{fontFamily:'monospace'}}> {unknown.join(' · ')}</span>.
+          지우지 않고 차례에 그대로 두었습니다.
+        </div>
+      )}
+
+      <CsSaveBar row={rowF} dirty={dirty} busy={busy} onSave={save}
+        onReset={()=>setOrder(base)}/>
+    </div>
+  );
+}
+
 // ── CS 관리 > 설정 ────────────────────────────────────────────────────────
 // ★★ master 전용이다(제니). 여기서 바꾸는 것은 «다른 사람이 무엇을 볼 수 있나» 와
 //   «무엇을 반드시 넣어야 하나» 라, 상담원이 스스로 풀 수 있으면 잠금이 아니다.
 // ★★★ 화면에서 숨기는 것만으로 «막았다» 고 하지 않는다 — 진짜 자물쇠는 RLS 와
 //   DB 트리거다. 이 화면은 그 자물쇠의 «설정값» 을 고치는 자리일 뿐이다.
-// ★ 첫 판은 «문구(매크로)» 만 만든다. 제니가 문구 13종 본문을 직접 채우기로 했는데
-//   채울 화면이 없어 그 일이 통째로 막혀 있었다 — 막힌 것부터 푼다.
-//   나머지 탭(칩 권한·칸별 필수/권한·카페24 필드·표시 순서)은 이어서 붙인다.
+// ★ 네 탭이 다 돈다(2026-09-02). 첫 판은 «문구(매크로)» 만 만들었는데, 제니가 문구
+//   13종 본문을 직접 채우기로 했는데 채울 화면이 없어 그 일이 막혀 있어서였다.
+// ★★ 나머지 셋은 모양이 다 달라도 하는 일이 같다 — 그동안 씨앗 SQL 에만 있어
+//   바꾸려면 내가 SQL 을 돌려야 했던 값을 화면에서 고치게 한다. 그래서 셋 다
+//   ①«목록» 은 코드가 갖고 «값» 만 화면이 고치며 ②모르는 키는 지우지 않고 보여 주고
+//   ③같은 자리(CsSaveBar)에서 저장한다.
 function CsSettingsPage({currentUserEmail, role}){
   const isMaster = role==='master';
   const TABS = [
     {id:'macro', label:'매크로'},
-    {id:'chip',  label:'칩 권한',   soon:true},
-    {id:'field', label:'칸 · 권한', soon:true},
-    {id:'cafe24',label:'카페24 연동', soon:true},
+    {id:'chip',  label:'칩 권한'},
+    {id:'field', label:'칸 · 권한'},
+    {id:'cafe24',label:'카페24 연동'},
   ];
   const [tab,setTab] = useState('macro');
 
@@ -17456,7 +18101,10 @@ function CsSettingsPage({currentUserEmail, role}){
         ))}
       </div>
 
-      {tab==='macro' && <CsMacroSettings currentUserEmail={currentUserEmail}/>}
+      {tab==='macro'  && <CsMacroSettings currentUserEmail={currentUserEmail}/>}
+      {tab==='chip'   && <CsChipRoleSettings currentUserEmail={currentUserEmail}/>}
+      {tab==='field'  && <CsFieldRuleSettings currentUserEmail={currentUserEmail}/>}
+      {tab==='cafe24' && <CsCafe24Settings currentUserEmail={currentUserEmail}/>}
     </div>
   );
 }
