@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- v20260902d_chip_shows -->
+<!-- v20260902f_detail_editable -->
+<!-- (2026-09-02) 티켓 상세에서 «CS 접수 수량» 과 «회수 주소지» 를 고칠 수 있게 열었다(제니 제보 — 둘 다 수정이 안 됐다). ★★ 무엇을 열고 무엇을 잠글지의 기준은 «카페24가 주는 값인가» 하나다. 카페24가 주는 값(상품·공급사·주문자·수령인·배송지)은 접수 시점 값으로 굳고, 카페24가 «알 길이 없는» 값만 사람이 고친다. CS 접수 수량은 몇 개가 문제인지 고객이 말해 주는 값이고(3개 중 1개만 불량이 흔하다), 회수 주소지는 주문서에 아예 없는 값이다. ★★ 그래서 상세에는 주문 «재조회» 를 두지 않는다(제니 결정) — 재조회를 붙이는 순간 「접수 시점 고정」 이라는 말이 무너지고, 회수 기사에게 이미 알려 준 주소가 소리 없이 바뀔 수 있다. ①CS 접수 수량은 주문 수량 옆에 입력칸으로 둔다. 주문 수량은 카페24 값이라 글자 그대로다. DB 가 «0보다 커야 한다» 로 막아 둔 칸이라 저장 전에 화면이 먼저 잡는다 — 안 잡으면 DB 오류 문구가 그대로 튀어나오고, 그건 사람이 읽을 말이 아니다. ②회수 주소지는 우편번호·주소·상세주소 셋과 [배송 주소지와 동일] 버튼. ★ 라벨의 「비우면 배송지와 같습니다」는 남긴다(제니) — 수령인 쪽은 반대로 「주문자와 같음」 을 걷어냈는데, 회수지의 «비어 있음» 은 «아직 안 정했다» 는 뜻까지 담고 있어 값만 보이면 정한 것으로 읽힌다. ★ 저장할 때 배송지를 «복사해» 채우지 않는다. 복사해 두면 배송지가 바뀌어도 회수지가 그날 값으로 굳는다. 버튼을 누르는 것은 사람이 명시적으로 복사한 것이라 값이 실제로 들어간다. ③★★ 이력에 남길 때 주소는 «가린 값» 으로 적는다(csMaskAddr — 앞의 두 마디만 남기고 번지·동호수를 ○ 로). 이력은 append-only 라 한 번 적히면 못 지우는데, 그대로 적으면 같은 주소가 티켓과 이력 두 벌로 남는다. 그렇다고 「바꿨습니다」 만 적으면 무엇이 어떻게 바뀐 건지 알 수 없다 — 계좌·예금주에서 이미 정한 원칙과 같다. 우편번호는 그 자체로 사람을 가리키지 않아 그대로 적는다. ★ dev 전용. -->
+<!-- (2026-09-02) 티켓 접수 화면이 카페24가 «이미 아는» 값을 사람에게 다시 치게 하던 것을 고쳤다(제니 제보 「주문번호 검색시 일부 정보가 안 불러와져 정확한 상태 파악이 안 된다」). ★★ 원인은 두 겹이었다. ①엣지 함수(refund-fetch-order)가 embed 에 receivers 를 안 넣어 수령인·배송지를 «받아 오지도» 않았다. ②받아 온 값조차 화면이 안 썼다 — option_value 는 응답에 있는데 옵션명 칸은 사람이 치는 칸이었다. 카페24 창을 띄워 놓고 옮겨 적는 자리가 곧 오타 나는 자리다. 함수는 «더하기만» 해서 넓혔고(수령인·배송지·수량·상품코드·클레임 값), 이 판은 화면 쪽이다. ①조회하면 품목마다 옵션·주문수량·수령인·연락처·우편번호·주소를 담는다. ★ CS 접수 수량만은 주문 수량으로 안 채운다 — 「3개 중 1개만 불량」이 흔한데 미리 3을 넣으면 아무도 안 고친 채 전량 접수된다. ②★★ 수령인·배송지를 «품목마다» 그린다. 주문 하나에 배송지가 여럿일 수 있고 티켓은 품목 단위다. 함수가 품목의 shipping_code 로 수령인을 이어 주므로 그 결과를 품목별로 들고 있어야 뜻이 산다 — 하나로 뭉개면 «대부분 맞고 가끔 틀린» 주소가 되고, 그게 가장 나쁘다. 품목이 하나면 화면은 전과 똑같아 보인다. ③★★ 규칙을 하나로 뒀다 — «카페24가 준 값은 잠그고, 비어 있으면 사람이 채운다». 수령인만 예외로 열면 다음에 상품명이 안 왔을 때 또 예외를 만들게 된다. 못 이은 품목에는 노란 줄로 「카페24에서 찾지 못했습니다」를 적어 «없는 주문» 과 «모르는 상태» 를 가른다. ④값이 글자로 굳으면서 빈칸 안내가 사라지므로 옵션·주문·CS 접수 머리글을 새로 뒀다 — 「본품 / 2 / 1」 만 늘어놓으면 어느 것이 무엇인지 모른다. ⑤상품코드를 카페24에서 직접 받는다. 그전에는 상품«명» 으로 콘솔 상품 정보를 뒤져 딱 한 건일 때만 썼는데, 이름은 동기화가 매일 바꾸는 값이라 원래 코드 기준이어야 했다. ⑥「배송 주소지와 동일」 버튼은 이제 고른 첫 품목의 배송지를 베낀다. ⑦문구 셋: 방향 「미정 — 협의하며 정합니다」→「처리 방향을 선택합니다」 · 상세의 수령인 「주문자와 같음」→ 실제 값(카페24가 주면 그 값, 없으면 주문자 값) · 카페24 연동 탭 「어떤 값을 끌어올지」→「어떤 값을 보여줄지」(이제 전부 끌어오고 보여줄 것만 고른다). ★ 회수 주소지 라벨의 「비우면 배송지와 같습니다」는 제니 지시로 남긴다 — 그건 «아직 안 정했다» 는 뜻까지 담고 있어 값만 보이면 정한 것으로 읽힌다. ★★ 티켓 상세에는 주문 «재조회» 를 두지 않는다(제니 결정) — 그래야 모든 카페24 값이 접수 시점에 잠정 고정된다. ★ dev 전용. -->
 <!-- (2026-09-02) 칩 권한 표에 «보이는 티켓» 열을 더했다(제니 요청). 칩 이름만 놓여 있으면 «진행중» 이 어느 상태를 가리키는지 누군가에게 칩을 줄지 말지 정하는 사람이 알 수 없다. 특히 «CS 완료 · 확인 대기»·«종결» 같은 «그룹» 칩은 단계 둘을 묶은 것이라 이름만으로는 안 보인다(재출고 완료 · 환불 대기 / 종결 · 철회). ★★ 단계 이름을 여기 다시 적지 않고 CS_STAGES 에서 읽어 그린다 — 두 번째 목록을 두면 단계 이름을 고쳤을 때 설정 화면만 옛 이름을 말하게 되고, 그 순간 이 표가 거짓말이 된다. ★ «내 티켓»·«오늘의 리체크» 는 단계가 아니라 «조건» 이라(담당자·날짜) 그대로 적었고, 둘 다 «종결 제외» 까지 밝혔다 — 목록 화면의 match() 가 실제로 그렇게 세기 때문이다. ★ dev 전용. -->
 <!-- (2026-09-02) 설정 두 탭(칩 권한·칸 · 권한) 머리글의 MASTER·MANAGER·CREW 가 뭉개져 보이던 것을 고쳤다(제니 제보). ★★ 원인은 크기가 아니라 «글꼴» 이다 — CSS 에 `monospace` 라고만 적으면 윈도우 크롬은 Courier New 를 고르는데, 그 글꼴은 획이 가늘어 10px 짜리 옅은 색(파스텔) 글자로 그리면 어두운 바탕에서 획이 뭉개진다. 본문 글꼴(Pretendard)로 그리는 다른 글자들이 멀쩡해 보이는 것과 대비된다. → 글꼴을 집어 준다(Consolas → Segoe UI Mono → monospace). Consolas 는 윈도우에 늘 있고 작은 크기에서 또렷하다. 겸해 크기 10 → 11px, 굵기 700. ★ 크기만 키우는 것으로는 안 된다 — 획이 가는 것이 문제라 커져도 흐릿함이 그대로 남는다. 굵기와 글꼴이 함께 가야 한다. ★ 이 화면 말고도 fontFamily:'monospace' 를 쓴 자리가 여럿 있다(사이드바 권한 뱃지 등). 같은 증상이 보이면 같은 이유다. ★ dev 전용. -->
 <!-- (2026-09-02) 제니가 설정 세 탭을 화면으로 훑고 준 수정을 한꺼번에 반영했다. ★★ 가장 큰 것은 «반품 사유» 라는 이름이 틀렸다는 지적이다 — 카페24는 클레임(취소·교환·반품) 사유 칸을 하나로 두고 종류는 날짜 칸과 claim_reason_type 이 가르는데, 내가 09-01 실측을 반품 건 하나로 해 놓고 그 문장을 그대로 라벨로 옮겨 «반품» 전용처럼 보이게 했다. 실측 한 건의 말을 이름으로 옮기면 그 건에만 맞는 이름이 된다. 「클레임 사유(고객이 쓴 원문)」로 넓히고 claim_reason_type(사유 분류)을 목록에 더했다 — 사유 원문만 있으면 무슨 클레임인지 날짜로 짐작해야 한다. ⏳ 취소·교환 건에서도 그 칸에 값이 실제로 오는지는 아직 안 쟀다(배포 뒤 읽기 실측). ②설명 문구를 실무 말로 갈아 끼웠다 — 내가 쓴 「진짜 차단은 RLS」·「DB 트리거가 막는다」·「돈이 오가는 칸」 같은 말은 만든 사람의 말이지 쓰는 사람의 말이 아니다. 「티켓 자체의 노출 설정이 아닙니다」·「필수는 실제 저장을 막지 않습니다」·「설정한 권한만 해당 값을 수정할 수 있습니다」·「금액 관련 항목 · 권한 설정에 유의하세요」로 바꿨다. 뜻은 그대로이고 구현 용어만 뺐다 — 화면은 무엇이 일어나는지를 말해야지 어디서 막는지를 말할 자리가 아니다. ③카페24 탭 안내에 «연동 시점의 값을 가져온다(다시 조회하면 조회 시점 값)»와 «예외: 티켓 접수 시점 고정값 = 상품명·수량·연락처·주소» 를 적었다. ★ 제니 질문에서 나온 것이다 — 「상품명은 주문서에서 읽어오는 것 아니냐」. 맞다. 내가 쓴 «티켓이 스스로 쓰는 값» 이 오해를 샀다: 상품명도 접수할 때 주문서에서 베껴 담는다. 구분의 핵심은 출처가 아니라 «주인» 이다 — 스냅샷은 카페24가 주인이라 다시 끌면 바뀌고, 티켓 칸은 접수 시점에 굳어 사람이 고친다(상품 동기화가 매일 이름을 바꾸므로 접수 당시 이름을 들고 있어야 나중에 무슨 건인지 안다). ④«티켓 왼쪽에 보이는 차례» → «티켓 필드 순서 조정», ↑↓ 버튼을 걷고 줄 왼쪽 손잡이(≡)를 잡아 끄는 방식으로 바꿨다. ★★ 줄 전체를 draggable 로 두지 않았다 — 글자를 고르려고 끌 때도 줄이 딸려 움직인다. 손잡이를 «누른 줄만» 열어 준다(armed). ★ 놓을 자리는 줄 색이 아니라 «선» 으로 알린다 — 색을 깔면 그 줄과 자리를 바꾸는 것처럼 보이는데 실제로는 앞뒤에 끼워 넣는 것이다. ⑤저장 줄의 sticky 를 걷었다(제니) — 늘 보이라고 붙여 뒀는데 내용 위를 덮으며 따라 움직이는 것이 «화면이 흔들리는» 것으로 읽혔다. 저장은 다 보고 나서 하는 일이라 맨 아래여도 늦지 않다. ★ 우측 순서 조정 칸의 sticky 는 제니 지시로 그대로 뒀다. ⑥세 탭의 영문 이름(칩 id·칸 이름·카페24 값 이름)을 10 → 11.5px 로 키우고 흐림도 걷었다 — 작은 글자는 크기만 키워도 회색이 남아 여전히 안 읽힌다. ⑦「필수 시점」(머리글) · 「없음」(버튼)으로 말을 줄였다. ★ dev 전용. -->
@@ -16864,6 +16866,19 @@ function csMaskAcct(v){
   return t.length<=4 ? t : '•'.repeat(Math.min(t.length-4,8)) + t.slice(-4);
 }
 
+// 주소도 개인정보다. 이력은 append-only 라 한 번 적히면 못 지운다 —
+// 그대로 적으면 같은 주소가 티켓과 이력, 두 벌로 남는다.
+// ★ 그렇다고 «바꿨습니다» 만 적으면 무엇이 어떻게 바뀐 건지 알 수 없다(제니 원칙).
+//   → 앞의 두 마디(시·구)는 남기고 나머지를 가린다. 「어디에서 어디로」 는 보이고
+//     번지·동호수는 안 새어 나간다.
+function csMaskAddr(v){
+  const t = String(v||'').trim();
+  if(!t) return '';
+  const p = t.split(/\s+/);
+  if(p.length<=2) return p[0] + (p[1] ? ' ' + p[1] : '');
+  const restLen = p.slice(2).join(' ').length;
+  return p[0]+' '+p[1]+' '+'○'.repeat(Math.min(restLen,8));
+}
 function csShortUser(v){ return v ? String(v).split('@')[0] : '—'; }
 function csDate(v){ return v ? String(v).slice(5,10) : '—'; }
 // «09-01 18:16» — 날짜만으로는 같은 날 여러 번 손댄 것이 구분되지 않는다.
@@ -18025,7 +18040,7 @@ function CsCafe24Settings({currentUserEmail}){
   return (
     <div style={{width:'100%',maxWidth:'max(760px, 72%)'}}>
       <CsSetNote>
-        티켓을 만들 때 카페24 주문에서 <b>어떤 값을 끌어올지</b>와, 그 값들이 티켓 왼쪽에
+        티켓을 만들 때 카페24 주문에서 <b>어떤 값을 보여줄지</b>와, 그 값들이 티켓 왼쪽에
         <b> 보이는 차례</b>를 정합니다.
         <br/>★ 고른 값은 티켓에 칸이 늘지 않고 <span style={{fontFamily:'monospace'}}>cafe24_snapshot</span> 한
         칸에 통째로 담깁니다.
@@ -19062,8 +19077,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 
   const [f,setF] = useState({
     intake_path:'', cs_type:'', direction:'', memo:'',
-    receiver_name:'', receiver_phone:'',
-    ship_zipcode:'', ship_address1:'', ship_address2:'',
+    // ★ 수령인·배송지는 여기 없다 — 품목마다 다를 수 있어 itemF 로 옮겼다(2026-09-02).
+    //   회수 주소지만 남는다: 카페24에 없는 값이고 사람이 정한다.
     pickup_zipcode:'', pickup_address1:'', pickup_address2:'',
     // ★ 정산 대상은 «공급사» 가 기본이다(제니 2026-09-01) — 대부분 그쪽이고,
     //   원룸만들기가 부담하는 경우에만 사람이 바꾼다.
@@ -19072,6 +19087,18 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   });
   const set = (k,v)=> setF(p=>({...p,[k]:v}));
   const setIF = (code,k,v)=> setItemF(p=>({...p,[code]:{...(p[code]||{}),[k]:v}}));
+
+  // ★★ 카페24가 준 값은 «잠그고», 비어 있으면 사람이 채운다(제니 2026-09-02).
+  //   수령인만 예외로 열면 다음에 상품명이 안 왔을 때 또 예외를 만들게 된다 —
+  //   그래서 규칙을 하나로 뒀다. 값이 있으면 글자로, 없으면 입력칸으로 그린다.
+  // ★ 값을 못 받은 것은 «오류» 가 아니라 «모르는 상태» 다. 빈 칸을 그냥 두면 사람은
+  //   «없는 주문» 으로 읽는다 — 그래서 채울 수 있게 열어 둔다.
+  const cell = (code,k,ph,extra)=>{
+    const v = (itemF[code]||{})[k] || '';
+    if(v) return <span style={{fontSize:11,color:'var(--text)',wordBreak:'break-all'}}>{v}</span>;
+    return <input value={v} onChange={e=>setIF(code,k,e.target.value)} placeholder={ph}
+      style={{...inp,fontSize:11,padding:'5px 7px',...(extra||{})}}/>;
+  };
 
   const plusDays = (n)=> new Date(Date.now()+9*3600*1000+n*86400000).toISOString().slice(0,10);
   const [recheck,setRecheck] = useState(()=>plusDays(3));
@@ -19149,6 +19176,30 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     }
     if(!found.length){ setMsg({t:'err',m:'품목을 찾지 못했습니다. 번호를 확인해 주세요.'}); setBusy(false); return; }
     setItems(found);
+    // ★★ 조회로 «이미 아는» 값은 사람이 다시 치지 않게 미리 담는다(제니 2026-09-02).
+    //   그전에는 카페24가 준 옵션값조차 화면이 안 써서 상담원이 카페24 창을 띄워 놓고
+    //   옮겨 적고 있었다. 옮겨 적는 자리가 곧 오타 나는 자리다.
+    // ★★ 수령인·배송지를 «품목마다» 담는다. 주문 하나에 배송지가 여럿일 수 있고
+    //   (엣지 함수가 품목의 shipping_code 로 이어 준다) 티켓은 품목 단위다.
+    //   하나로 뭉개면 «대부분 맞고 가끔 틀린» 주소가 되는데, 그게 가장 나쁘다 —
+    //   틀린 주소로 회수 기사가 가고 아무도 왜 틀렸는지 모른다.
+    // ★ CS 접수 수량만은 주문 수량으로 안 채운다. 「3개 중 1개만 불량」이 흔한데
+    //   미리 3을 넣어 두면 아무도 안 고친 채로 전량 접수된다. 기본은 1이다.
+    const pre = {};
+    found.forEach(it=>{
+      pre[it.code] = {
+        option_name:    it.option_value || '',
+        order_qty:      it.quantity!=null ? String(it.quantity) : '',
+        cs_qty:         '1',
+        receiver_name:  it.receiver_name  || '',
+        receiver_phone: it.receiver_phone || '',
+        ship_zipcode:   it.ship_zipcode   || '',
+        ship_address1:  it.ship_address1  || '',
+        ship_address2:  it.ship_address2  || '',
+        receiver_match: it.receiver_match || 'none',
+      };
+    });
+    setItemF(pre);
     const first = [found[0].code];
     setSel(first);
     await loadSide([found[0]]);
@@ -19205,12 +19256,18 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
       return {
         order_id: baseOf(it.code), order_item_code: it.code,
         product_name: it.product_name || null, option_name: g.option_name || null,
-        product_code: (csInfo && csInfo.product_code && chosen.length===1) ? csInfo.product_code : null,
+        // ★ 상품코드를 카페24가 직접 준다(2026-09-02). 그전에는 상품«명» 으로 콘솔
+        //   상품 정보를 뒤져 «딱 한 건일 때만» 썼다 — 이름은 동기화가 매일 바꾸는 값이라
+        //   원래 코드 기준이어야 했다. 못 받으면 예전 길로 물러선다.
+        product_code: it.product_code
+          || ((csInfo && csInfo.product_code && chosen.length===1) ? csInfo.product_code : null),
         supplier_name: it.supplier_name || null,
         orderer_name: it.customer_name || null, orderer_phone: it.customer_phone || null,
-        receiver_name: f.receiver_name || null, receiver_phone: f.receiver_phone || null,
-        ship_zipcode: f.ship_zipcode || null,
-        ship_address1: f.ship_address1 || null, ship_address2: f.ship_address2 || null,
+        // ★ 수령인·배송지는 «그 품목» 의 것이다(g). 주문 단위로 하나만 두면
+        //   배송지가 여럿인 주문에서 틀린 주소가 섞인다.
+        receiver_name: g.receiver_name || null, receiver_phone: g.receiver_phone || null,
+        ship_zipcode: g.ship_zipcode || null,
+        ship_address1: g.ship_address1 || null, ship_address2: g.ship_address2 || null,
         // ★ 회수 주소지는 «비어 있으면 배송지와 같다» 는 뜻이다. 저장할 때 복사해 채우지
         //   않는다 — 복사해 두면 배송지가 바뀌어도 회수지가 그날 값으로 굳는다.
         pickup_zipcode: f.pickup_zipcode || null,
@@ -19347,17 +19404,24 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     </div>
                     {/* 품목마다 다른 값은 여기서 넣는다 — 3개 중 1개만 불량인 경우가 있다. */}
                     {on && (
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 62px 62px',gap:5,
-                        margin:'0 0 8px 18px'}}>
-                        <input value={(itemF[it.code]||{}).option_name||''}
-                          onChange={e=>setIF(it.code,'option_name',e.target.value)}
-                          placeholder="옵션명 (본품=…)" style={{...inp,fontSize:11,padding:'5px 7px'}}/>
-                        <input value={(itemF[it.code]||{}).order_qty||''}
-                          onChange={e=>setIF(it.code,'order_qty',e.target.value)}
-                          placeholder="주문" style={{...inp,fontSize:11,padding:'5px 7px',textAlign:'center'}}/>
-                        <input value={qtyOf(it.code)}
-                          onChange={e=>setIF(it.code,'cs_qty',e.target.value)}
-                          placeholder="CS" style={{...inp,fontSize:11,padding:'5px 7px',textAlign:'center'}}/>
+                      <div style={{margin:'0 0 8px 18px'}}>
+                        {/* ★ 머리글을 둔다 — 값이 «글자» 로 바뀌면서 빈칸 안내(placeholder)가
+                            사라졌다. 「본품 / 2 / 1」 만 늘어놓으면 어느 것이 무엇인지 모른다. */}
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 62px 62px',gap:5,
+                          fontSize:9.5,color:'var(--sub)',marginBottom:3}}>
+                          <span>옵션</span><span style={{textAlign:'center'}}>주문</span>
+                          <span style={{textAlign:'center'}}>CS 접수</span>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 62px 62px',gap:5,
+                          alignItems:'center'}}>
+                          {cell(it.code,'option_name','옵션명')}
+                          {cell(it.code,'order_qty','주문',{textAlign:'center'})}
+                          {/* CS 접수 수량은 «사람이 정하는 값» 이라 늘 입력칸이다 —
+                              카페24는 몇 개가 문제인지 모른다. */}
+                          <input value={qtyOf(it.code)}
+                            onChange={e=>setIF(it.code,'cs_qty',e.target.value)}
+                            placeholder="CS" style={{...inp,fontSize:11,padding:'5px 7px',textAlign:'center'}}/>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -19380,31 +19444,49 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             </>
           )}
 
-          <div style={sec}>고객</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>수령인</label>
-              <input value={f.receiver_name} onChange={e=>set('receiver_name',e.target.value)}
-                placeholder="같으면 비움" style={inp}/>
-            </div>
-            <div style={{marginBottom:9}}>
-              <label style={lbl}>수령인 연락처</label>
-              <input value={f.receiver_phone} onChange={e=>set('receiver_phone',e.target.value)} style={inp}/>
-            </div>
-          </div>
-
-          <div style={sec}>주소</div>
-          <div style={{marginBottom:9}}>
-            <label style={lbl}>배송 주소지</label>
-            <div style={{display:'flex',gap:5,marginBottom:5}}>
-              <input value={f.ship_zipcode} onChange={e=>set('ship_zipcode',e.target.value)}
-                placeholder="우편번호" style={{...inp,width:90}}/>
-              <input value={f.ship_address1} onChange={e=>set('ship_address1',e.target.value)}
-                placeholder="주소" style={inp}/>
-            </div>
-            <input value={f.ship_address2} onChange={e=>set('ship_address2',e.target.value)}
-              placeholder="상세 주소" style={inp}/>
-          </div>
+          {/* ── 수령인 · 배송지 ────────────────────────────────────────────
+              ★★ «품목마다» 그린다. 주문 하나에 배송지가 여럿일 수 있어서다.
+                품목이 하나면 지금까지와 똑같아 보이고, 여럿일 때만 갈라진다.
+              ★ 카페24가 준 값은 글자로 굳고, 못 받은 것만 입력칸이 된다. */}
+          <div style={sec}>수령인 · 배송지</div>
+          {!chosen.length && (
+            <div style={{fontSize:11,color:'var(--sub)',marginBottom:9}}>
+              품목을 고르면 카페24 주문서의 수령인·배송지가 여기 나옵니다.</div>
+          )}
+          {chosen.map(it=>{
+            const g = itemF[it.code]||{};
+            const unmatched = (g.receiver_match||'none')==='none';
+            return (
+              <div key={it.code} style={{marginBottom:10}}>
+                {chosen.length>1 && (
+                  <div style={{fontSize:10,color:'var(--accent)',fontFamily:'monospace',
+                    marginBottom:4}}>…{it.code.slice(-3)}</div>
+                )}
+                {unmatched && (
+                  <div style={{fontSize:10.5,color:'#F6AD09',lineHeight:1.6,marginBottom:5}}>
+                    ⚠ 카페24에서 이 품목의 수령인·배송지를 찾지 못했습니다.
+                    확인해서 직접 넣어 주세요.
+                  </div>
+                )}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 9px'}}>
+                  <div style={{marginBottom:7}}>
+                    <label style={lbl}>수령인</label>
+                    {cell(it.code,'receiver_name','이름')}
+                  </div>
+                  <div style={{marginBottom:7}}>
+                    <label style={lbl}>연락처</label>
+                    {cell(it.code,'receiver_phone','연락처')}
+                  </div>
+                </div>
+                <label style={lbl}>배송 주소지</label>
+                <div style={{display:'flex',gap:5,marginBottom:5,alignItems:'center'}}>
+                  <div style={{width:90}}>{cell(it.code,'ship_zipcode','우편번호')}</div>
+                  <div style={{flex:1,minWidth:0}}>{cell(it.code,'ship_address1','주소')}</div>
+                </div>
+                {cell(it.code,'ship_address2','상세 주소')}
+              </div>
+            );
+          })}
           <div style={{marginBottom:9}}>
             <label style={lbl}>회수 주소지 <span style={{opacity:.75}}>· 비우면 배송지와 같습니다</span></label>
             <div style={{display:'flex',gap:5,marginBottom:5}}>
@@ -19415,9 +19497,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             </div>
             <input value={f.pickup_address2} onChange={e=>set('pickup_address2',e.target.value)}
               placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
-            <button onClick={()=>setF(p=>({...p,
-                pickup_zipcode:p.ship_zipcode, pickup_address1:p.ship_address1,
-                pickup_address2:p.ship_address2}))}
+            {/* ★ 배송지가 이제 f 가 아니라 «품목» 에 있다. 고른 첫 품목의 배송지를 베낀다
+                — 여러 품목의 배송지가 다르면 회수지는 사람이 정할 일이라 첫 것을 준다. */}
+            <button onClick={()=>{ const g = itemF[(chosen[0]||{}).code]||{};
+                setF(p=>({...p, pickup_zipcode:g.ship_zipcode||'',
+                  pickup_address1:g.ship_address1||'', pickup_address2:g.ship_address2||''})); }}
               style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
                 cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
                 color:'var(--sub)'}}>배송 주소지와 동일</button>
@@ -19437,7 +19521,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           <div style={{marginBottom:9}}>
             <label style={lbl}>방향</label>
             <CsPick value={f.direction} options={CS_DIRECTIONS}
-              onChange={v=>set('direction',v)} placeholder="미정 — 협의하며 정합니다"/>
+              onChange={v=>set('direction',v)} placeholder="처리 방향을 선택합니다"/>
           </div>
           <div style={{marginBottom:9}}>
             <label style={lbl}>리체크 날짜 — 다시 볼 날</label>
@@ -19736,6 +19820,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     refund_holder: r.refund_holder||'', refund_account: r.refund_account||'',
     settle_fee: r.settle_fee==null ? '' : String(r.settle_fee),
     settle_shipping_fee: r.settle_shipping_fee==null ? '' : String(r.settle_shipping_fee),
+    // ★★ 카페24가 «안 주는» 값만 고칠 수 있다(제니 2026-09-02).
+    //   CS 접수 수량은 카페24가 알 길이 없고(몇 개가 문제인지는 고객이 말한다),
+    //   회수 주소지도 주문서에 없는 값이다. 나머지는 접수 시점 값으로 굳는다 —
+    //   상세에 주문 «재조회» 를 두지 않기로 한 것도 같은 결정이다.
+    cs_qty: r.cs_qty==null ? '' : String(r.cs_qty),
+    pickup_zipcode: r.pickup_zipcode||'', pickup_address1: r.pickup_address1||'',
+    pickup_address2: r.pickup_address2||'',
   });
 
   const isMaster = role==='master';
@@ -19811,6 +19902,17 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
       const was = String(t[k]||''), now = String(edit[k]||'');
       if(was !== now)
         changes.push(label+' : '+(was ? f(was) : '—')+' -> '+(now ? f(now) : '—'));
+    });
+    if(String(edit.cs_qty||'') !== String(t.cs_qty==null?'':t.cs_qty))
+      changes.push('CS 접수 수량 : '+(t.cs_qty??'—')+' -> '+(edit.cs_qty||'—'));
+    // ★ 주소는 «가린 값» 으로 적는다(csMaskAddr). 우편번호는 그 자체로 사람을
+    //   가리키지 않으므로 그대로 둔다 — 무엇이 바뀌었는지 보이는 편이 낫다.
+    [['pickup_zipcode','회수 우편번호',(v)=>v],
+     ['pickup_address1','회수 주소',   csMaskAddr],
+     ['pickup_address2','회수 상세주소',csMaskAddr]].forEach(([k,label,fn])=>{
+      const was = String(t[k]||''), now = String(edit[k]||'');
+      if(was !== now)
+        changes.push(label+' : '+(was ? fn(was) : '—')+' -> '+(now ? fn(now) : '—'));
     });
     if(edit.cost_bearer !== (t.cost_bearer||''))
       changes.push('대상 : '+(t.cost_bearer||'아직 안 정함')+' -> '+(edit.cost_bearer||'아직 안 정함'));
@@ -19893,6 +19995,12 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         return false;
       }
     }
+    // ★★ CS 접수 수량은 DB 가 «0보다 커야 한다» 로 막아 둔 칸이다. 여기서 먼저 잡지
+    //   않으면 저장을 눌렀을 때 DB 오류 문구가 그대로 튀어나온다 — 사람이 읽을 말이 아니다.
+    if(!(parseInt(edit.cs_qty,10) > 0)){
+      toast('CS 접수 수량은 1 이상이어야 합니다.','warn');
+      return false;
+    }
     setBusy(true);
     const evs = [];
     // ★★ 사람이 적은 말은 «메인에» 쌓는다 — 묶음이 같은 사건을 겪기 때문이다
@@ -19918,6 +20026,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         refund_bank: edit.refund_bank || null,
         refund_holder: edit.refund_holder || null,
         refund_account: edit.refund_account ? String(edit.refund_account).replace(/\s/g,'') : null,
+        cs_qty: parseInt(edit.cs_qty,10),
+        pickup_zipcode: edit.pickup_zipcode || null,
+        pickup_address1: edit.pickup_address1 || null,
+        pickup_address2: edit.pickup_address2 || null,
         cost_bearer: edit.cost_bearer || null,
         settle_fee: money(edit.settle_fee),
         settle_shipping_fee: money(edit.settle_shipping_fee),
@@ -20009,8 +20121,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const addr = (z,a1,a2)=> [z?'['+z+']':'', a1, a2].filter(Boolean).join(' ');
   // ★ 회수지가 비어 있으면 «배송지와 같다» 는 뜻이다 — 읽을 때 대신 채운다.
   //   저장할 때 복사해 두지 않는 이유는 배송지가 바뀌어도 회수지가 굳기 때문이다.
-  const pickupShown = t.pickup_address1 ? addr(t.pickup_zipcode,t.pickup_address1,t.pickup_address2)
-                                        : addr(t.ship_zipcode,t.ship_address1,t.ship_address2);
+  // (회수 주소지가 입력칸이 되면서 «보여 줄 한 줄» 은 더 필요 없어졌다 — 2026-09-02)
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
@@ -20076,17 +20187,55 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           {ro('접수 경로', t.intake_path)}
           {ro('품목별 주문번호', t.order_item_code)}
           {ro('상품 · 옵션', (t.product_name||'—') + (t.option_name?'  ／ '+t.option_name:''))}
-          {ro('주문 수량 / CS 접수', (t.order_qty??'—')+' / '+t.cs_qty)}
+          {/* ★ 주문 수량은 카페24 값이라 그대로 두고, CS 접수 수량만 연다.
+              「3개 중 1개만 불량」 이 흔하고, 처음에 잘못 세는 일도 흔하다. */}
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>주문 수량 / CS 접수 수량</label>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:12,color:'var(--text)'}}>{t.order_qty??'—'}</span>
+              <span style={{fontSize:12,color:'var(--sub)'}}>/</span>
+              <input value={edit.cs_qty} onChange={e=>setE('cs_qty',e.target.value)}
+                inputMode="numeric" style={{...inp,width:72,textAlign:'center'}}/>
+            </div>
+          </div>
           {ro('공급사', t.supplier_name)}
 
           <div style={sec}>고객</div>
           {ro('주문자', (t.orderer_name||'—') + (t.orderer_phone?' · '+t.orderer_phone:''))}
-          {ro('수령인', t.receiver_name ? t.receiver_name+(t.receiver_phone?' · '+t.receiver_phone:'')
-                                        : '주문자와 같음')}
+          {/* ★ 「주문자와 같음」 이라는 말 대신 «실제 값» 을 적는다(제니 2026-09-02).
+              카페24가 수령인을 주면 그 값을, 안 주는 주문이면 주문자 값을 그대로 —
+              어느 쪽이든 읽는 사람이 한 번 더 옮겨 생각하지 않아도 된다.
+              ★ 회수 주소지는 반대로 라벨을 남긴다(제니 지시) — 그건 «아직 안 정했다» 는
+                뜻까지 담고 있어서, 값만 보이면 정한 것으로 읽힌다. */}
+          {ro('수령인', (t.receiver_name || t.orderer_name || '—')
+            + ((t.receiver_phone || t.orderer_phone)
+                ? ' · ' + (t.receiver_phone || t.orderer_phone) : ''))}
 
           <div style={sec}>주소</div>
           {ro('배송 주소지', addr(t.ship_zipcode,t.ship_address1,t.ship_address2))}
-          {ro(t.pickup_address1 ? '회수 주소지' : '회수 주소지 · 배송지와 같음', pickupShown)}
+          {/* ★ 회수 주소지는 카페24에 없는 값이라 사람이 정한다. 비우면 «배송지와
+              같다» 는 뜻이고, 저장할 때 배송지를 복사해 채우지 않는다 — 복사해 두면
+              배송지가 바뀌어도 회수지가 그날 값으로 굳는다.
+              ★ 라벨의 「비우면 배송지와 같습니다」는 제니 지시로 남긴다(수령인과 반대다) —
+                여기서는 «아직 안 정했다» 는 뜻까지 담고 있어서, 값만 보이면 정한 것으로 읽힌다. */}
+          <div style={{marginBottom:9}}>
+            <label style={lbl}>회수 주소지
+              <span style={{opacity:.75}}> · 비우면 배송지와 같습니다</span></label>
+            <div style={{display:'flex',gap:5,marginBottom:5}}>
+              <input value={edit.pickup_zipcode} onChange={e=>setE('pickup_zipcode',e.target.value)}
+                placeholder="우편번호" style={{...inp,width:90}}/>
+              <input value={edit.pickup_address1} onChange={e=>setE('pickup_address1',e.target.value)}
+                placeholder="주소" style={inp}/>
+            </div>
+            <input value={edit.pickup_address2} onChange={e=>setE('pickup_address2',e.target.value)}
+              placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
+            <button onClick={()=>setEdit(p=>({...p,
+                pickup_zipcode:t.ship_zipcode||'', pickup_address1:t.ship_address1||'',
+                pickup_address2:t.ship_address2||''}))}
+              style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                color:'var(--sub)'}}>배송 주소지와 동일</button>
+          </div>
 
           <div style={sec}>분류</div>
           <div style={{marginBottom:9}}>
@@ -20096,7 +20245,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           <div style={{marginBottom:9}}>
             <label style={lbl}>방향</label>
             <CsPick value={edit.direction} options={CS_DIRECTIONS}
-              onChange={v=>setE('direction',v)} placeholder="미정 — 협의하며 정합니다"/>
+              onChange={v=>setE('direction',v)} placeholder="처리 방향을 선택합니다"/>
           </div>
           <div style={{marginBottom:9}}>
             <label style={lbl}>리체크 날짜</label>
