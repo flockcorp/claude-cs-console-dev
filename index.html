@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260902zb_date_icon -->
+<!-- v20260902zc_new_stage_submit -->
+<!-- (2026-09-02) 등록 화면의 [티켓 만들기] 를 상세와 «같은 버튼»(CsStageSubmit)으로 바꿨다(제니 — 누락됐다는 지적). 저장이 곧 «어느 상태로 보내는가» 이고, 화살표를 누르면 다른 상태를 고를 수 있다. ★ 기본은 「티켓 등록」 이다 — 대부분은 접수만 하고 끝난다. 다만 이미 공급사에 넘긴 건을 나중에 티켓으로 남기는 일이 있는데, 그때는 만들자마자 상태를 다시 옮기는 두 번 일이 됐다. ★ crew·manager 에게는 환불·정산·종결을 목록에서 아예 뺀다(상세와 같은 규칙) — 못 누르게 막는 것보다 «어디까지가 내 일인지» 를 보이는 편이 낫다. ★ 고른 단계를 인자로 넘겨 저장한다: setState 는 다음 그림에 반영되므로 방금 고른 값으로 바로 저장하려면 넘겨야 한다(상세에서 이미 같은 이유로 그렇게 돼 있다). ★ 두 화면이 같은 동작을 하는데 한쪽만 다른 모양이면 «여기서는 안 되나» 를 매번 생각하게 된다. ★ dev 전용. -->
 <!-- (2026-09-02) 날짜 칸의 달력 아이콘이 검게 보이던 것을 고쳤다(제니 제보 — 티켓 목록 필터). ★★ 원인은 «두 손질이 서로를 지운 것» 이다: 이 콘솔은 오래전부터 전역 CSS 로 달력 아이콘을 뒤집어(invert) 흰색으로 만들고 있는데, 나중에 만든 날짜 칸들에 colorScheme:'dark' 를 줬다. 그러면 브라우저가 아이콘을 «이미 밝게» 그리고, 거기에 전역의 뒤집기가 한 번 더 걸려 검어진다. 각각은 맞는 손질인데 합치면 틀린다. → 날짜 칸에서 colorScheme 을 걷고, 흰 아이콘은 전역 CSS 한 곳이 맡게 했다(티켓 목록 필터 · 등록·상세의 리체크 날짜 셋). ★ 같은 일을 두 곳에서 하면 반드시 이런 자리가 생긴다 — 손질은 한 곳에서만. ★ dev 전용. -->
 <!-- (2026-09-02) 등록 화면의 [목록으로] 를 상세 화면과 같은 밝은 버튼으로 바꿨다(제니). 어두운 화면에서 «투명 배경 + 회색 글자» 는 눌러도 되는 것으로 안 읽힌다 — 상세에서 이미 같은 이유로 고친 자리인데 등록만 남아 있었다. ★ 파란 주 버튼은 여전히 안 쓴다: 이 화면의 주 동작은 «티켓 만들기» 이고 나가는 길이 그것보다 세게 보이면 안 된다. ★ dev 전용. -->
 <!-- (2026-09-02) 상세의 「옵션」 값만 튀어나와 보이던 것을 고쳤다(제니). ★★ 원인은 «특별하게 그린 줄» 이다 — 옵션에 다른 색을 주려고 그 줄만 손으로 만들어 뒀더니, 읽기 값(ro)이 받은 왼쪽 여백 8px 과 촘촘한 상하 여백을 그 줄만 못 받았다. 값 하나를 특별하게 그리면 그 줄은 나머지가 받는 손질에서 빠진다 — 색만 바꿔 끼우고 자리는 공용 틀이 정하게 해야 한다. ★ dev 전용. -->
@@ -19331,6 +19332,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 
   const plusDays = (n)=> new Date(Date.now()+9*3600*1000+n*86400000).toISOString().slice(0,10);
   const [recheck,setRecheck] = useState(()=>plusDays(3));
+  // ★★ 만들 때부터 «어느 상태로» 를 고른다(제니 2026-09-02 · 상세 화면과 같은 버튼).
+  //   기본은 「티켓 등록」 이다 — 대부분은 접수만 하고 끝난다.
+  //   ★ 이미 공급사에 넘긴 건을 나중에 티켓으로 남기는 일이 있는데, 그때 만들자마자
+  //     다시 상태를 옮기는 두 번 일이 됐다. 버튼이 곧 «어디로 보내는가» 여야 한다.
+  const [newStage,setNewStage] = useState('received');
 
   const isItemCode = (v)=> /-\d{2}$/.test(String(v||'').trim());
   const baseOf = (v)=>{ const s=String(v||'').trim(); return isItemCode(s) ? s.slice(0,-3) : s; };
@@ -19472,8 +19478,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 
   const money = (v)=>{ const x=String(v||'').replace(/[^0-9-]/g,''); return x===''?null:(parseInt(x,10)||0); };
 
-  const save = async ()=>{
+  // ★ 고른 단계를 «인자로» 받는다. setState 는 다음 그림에 반영되므로, 목록에서
+  //   방금 고른 값으로 바로 저장하려면 넘겨야 한다(상세 화면과 같은 이유).
+  const save = async (stageOverride)=>{
     if(missing.length) return;
+    const st = stageOverride || newStage;
     setBusy(true);
     // ★★ 메인 판정 — ①「본품」 이 든 옵션명이 있으면 그것 ②없으면 품목번호가 가장 낮은 것.
     //   실측 주문에서 본품이 -02 였던 적이 있어(2026-08-31) 번호만으로는 못 고른다.
@@ -19516,7 +19525,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         refund_account: f.refund_account ? String(f.refund_account).replace(/\s/g,'') : null,
         cost_bearer: f.cost_bearer || null,
         settle_fee: money(f.settle_fee), settle_shipping_fee: money(f.settle_shipping_fee),
-        stage:'received', recheck_at: recheck, group_key: gkey,
+        stage: st, recheck_at: recheck, group_key: gkey,
         assignee: currentUserEmail, created_by: currentUserEmail, updated_by: currentUserEmail,
         memo: f.memo || null,
       };
@@ -20048,12 +20057,16 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             <button onClick={onCancel} style={{padding:'8px 16px',background:'transparent',
               border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:12,
               cursor:'pointer',fontFamily:'inherit'}}>취소</button>
-            <button onClick={save} disabled={busy || missing.length>0}
-              style={{padding:'8px 22px',border:'none',borderRadius:6,color:'#fff',fontSize:12,
-                fontWeight:700,fontFamily:'inherit',
-                background:(busy||missing.length)?'var(--border)':'var(--primary)',
-                cursor:(busy||missing.length)?'default':'pointer'}}>
-              {busy?'저장 중…':'티켓 만들기'}</button>
+            {/* ★★ 상세 화면과 «같은 버튼» 이다 — 저장이 곧 «어느 상태로 보내는가».
+                버튼 이름이 「티켓 등록으로 저장」 처럼 바뀌고, 화살표를 누르면 다른
+                상태를 고를 수 있다. 두 화면이 같은 동작을 하는데 한쪽만 다른 모양이면
+                «여기서는 안 되나» 를 매번 생각하게 된다.
+                ★ crew·manager 에게는 환불·정산·종결을 아예 빼 준다(상세와 같은 규칙) —
+                  못 누르게 막는 것보다 «어디까지가 내 일인지» 를 보이는 편이 낫다. */}
+            <CsStageSubmit stage={newStage} busy={busy} dirty={missing.length===0}
+              onSave={()=>save()}
+              onPick={id=>{ setNewStage(id); save(id); }}
+              options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
           </div>
         </div>
 
