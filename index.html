@@ -17596,7 +17596,11 @@ function CsChipRoleSettings({currentUserEmail}){
   const spread = (v)=>{
     const out = {};
     CS_CHIPS.forEach(c=>{
-      const a = v && Array.isArray(v[c.id]) ? v[c.id] : CS_ROLE_IDS;
+      // ★ 「전체」는 화면에서 늘 켜진 채로 잠가 두었으니 값도 늘 전원이어야 한다.
+      //   저장된 값이 좁아도 화면은 켜져 보이는데 저장은 좁은 채로 나가면,
+      //   화면이 거짓말을 하는 자리가 된다.
+      const a = (c.id==='all') ? CS_ROLE_IDS
+              : (v && Array.isArray(v[c.id]) ? v[c.id] : CS_ROLE_IDS);
       out[c.id] = CS_ROLE_IDS.filter(id=>a.indexOf(id)>=0);
     });
     return out;
