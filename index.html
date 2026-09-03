@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260903n_tooltip_rollback -->
+<!-- (2026-09-03) **마우스오버 툴팁을 브라우저 기본(title=)으로 되돌렸다**(제니 지시). ★★★ 왜 되돌렸나 — 문구는 한 글자도 안 바꿨는데도 «원래 안 뜨던 곳에서 갑자기 뜬다» 는 제보가 이어졌다. 원인은 문구가 아니라 «뜨는 방식» 이었다: 브라우저 기본 툴팁은 마우스를 1초쯤 «멈춰야» 뜨고 몇 초 뒤 스스로 사라지는데, 내가 만든 풍선은 mousemove 로 찾아 «지나가기만 해도 즉시» 떴다. 그래서 원래 있던 문구들이 화면 곳곳에서 튀어나왔고, 쓰는 사람에게는 없던 툴팁이 새로 생긴 것과 똑같이 보인다. 겸해 브라우저는 disabled 요소에 기본 툴팁을 «안» 띄우는데 내 방식은 hit-test 라 회색 버튼 위에서도 떴다(그 자리만 19곳이었다). **한 가지 값(문구)이 같아도 «언제·어디서 나타나는가» 가 다르면 그것은 같은 기능이 아니다** — 바꾸기 전에 그 차이를 재지 않은 것이 이 판의 잘못이다. → data-tip 105곳을 전부 title= 로 되돌리고 TipLayer 를 지웠다. 지금 툴팁은 작업 직전과 «같은 것» 이다(문자열을 대조해 확인: 없어진 7 = 제니가 빼라고 한 채널 버튼 중복 2 + 내가 넣었다 뺀 5, 새로 생긴 2 = 권한 안내 문구 다듬은 것 + 복사 버튼). ★ **「?」 말풍선(CsHint)은 남는다** — 제니가 「디자인 템플릿 좋다」고 한 그것이고, «눌러서 여는» 것이라 지나가다 뜨는 문제가 없다. 사진 첨부 조건 안내가 그 자리다. 폭이 좁고 길쭉해졌던 것도 고쳤다: 한때 이 상수를 마우스오버 툴팁과 함께 쓰면서 «짧은 말에 판이 크다» 는 지적에 여백·줄간격·폭을 줄였는데, 여러 줄 안내에는 그 잣대가 맞지 않는다. 원래 크기(여백 9/11 · 줄간격 1.8 · 고정 폭 236)로 되돌렸다. ★ 제니가 따로 요청한 툴팁 손질 셋은 그대로 살아 있다: ①상품 정보 목록의 상품명은 **잘렸을 때만** 뜬다(기본 툴팁으로도 되게, 마우스가 올라온 자리에서 scrollWidth 를 재서 title 을 붙이거나 뗀다) ②공급사 «소통 채널» 버튼의 중복 툴팁 제거(권한 없을 때 안내만 남김) ③«총 공급사»·«채널 미설정» 카드 툴팁 제거. «배송비 미설정» 줄바꿈은 기본 툴팁이 원래 살려 주므로 저절로 해결됐다. ★ dev 전용. -->
 <!-- v20260903m_tooltip_trim -->
 <!-- (2026-09-03) 툴팁 손질 넷 + 크기 줄이기 + 내가 새로 넣었던 툴팁 걷어내기(제니). ①**상품 정보 목록의 상품명은 «잘렸을 때만»** 툴팁이 뜬다 — 짧은 이름에도 전체 이름이 떠서 성가셨다. 잘림은 CSS 가 정하는 것이라 코드가 미리 알 수 없어, 마우스가 올라온 «그 자리에서» scrollWidth>clientWidth 로 잰다(data-tip-clip). 다른 곳에서도 같은 일이 생기면 그 속성만 붙이면 된다. ②**공급사 관리 «소통 채널» 버튼의 툴팁을 없앴다** — 버튼에 적힌 이름과 «똑같은 말» 이 떴다. 같은 말을 두 번 하면 툴팁 전체를 안 읽게 된다. 권한이 없어 못 바꾸는 경우의 안내는 남긴다(그건 버튼에 없는 정보다). ③**«배송비 미설정» 카드 툴팁의 줄바꿈을 살렸다** — 문구는 원래 여러 줄이었는데 브라우저 기본 툴팁은 줄바꿈을 살려 주고 내가 만든 풍선은 뭉갰다(white-space:normal). pre-line 으로 바꿨다: 넣어 둔 줄바꿈은 살리되 긴 줄은 폭에 맞춰 접힌다. ④**«총 공급사»·«채널 미설정» 카드 툴팁을 뺐다** — 카드 이름이 이미 그 말이라 설명이 필요 없다. ⑤**크기를 글자에 맞췄다** — 대부분이 「복사」·「위로」처럼 두세 글자인데 여백 9/11 에 줄간격 1.8 이라 짧은 말에 큼직한 판이 떴다. 여백 5/9 · 줄간격 1.55 · 모서리 7 · 그림자도 낮췄고, 폭은 아예 주지 않아 «내용만큼» 만 쓰게 했다(fixed 요소의 성질이다). 최대 폭만 250 으로 묶어 긴 문구가 화면을 가로지르지 않게 한다. CsHint 도 고정 폭에서 최대 폭으로 바꿨다. ⑥★★ **어제까지 툴팁이 없던 자리에 내가 새로 넣었던 다섯을 도로 걷어냈다**(제니 지시: 기존에 툴팁 안 뜨던 곳은 추가로 넣지 말 것) — 사진 미리보기 ✕ · 이력 사진 썸네일 · 공급사 채널 뱃지 · 카페24 실제 환불액 버튼 · 묶음 메인/서브 티켓 버튼. 제니가 «커서 대면 복사라고 뜨게» 라고 직접 요청한 복사 버튼만 남긴다. ★ 오늘 110곳을 title= 에서 data-tip 으로 옮긴 것은 **말을 한 글자도 바꾸지 않았다** — 실측으로 대조해 확인했다(오늘 새로 생긴 말은 위 다섯 + 복사뿐이었다). ★ dev 전용. -->
 <!-- v20260903l_tooltip_std_and_copy -->
@@ -2756,7 +2758,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
     // ★ 부모 칸(상품코드)이 monospace 라 그대로 두면 한글이 그 글꼴로 떨어져 더 뭉개진다.
     //   글꼴을 본문 글꼴로 되돌리고 크기도 9→10px 로 올린다.
     const tag=(text,fg,bg,bd,tip)=>(
-      <span key={text} data-tip={tip}
+      <span key={text} title={tip}
         style={{display:'inline-flex',alignItems:'center',fontFamily:'inherit',fontSize:10,fontWeight:700,
           lineHeight:1,padding:'3px 6px',borderRadius:4,whiteSpace:'nowrap',
           color:fg,background:bg,border:'1px solid '+bd}}>{text}</span>
@@ -3934,7 +3936,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
               const glow=red?'rgba(248,113,113,.8)':yellow?'rgba(246,173,9,.75)':'transparent';
               return (
                 <div className={tone?'alert-pulse':undefined}
-                  data-tip={tone?'상품 동기화가 정상적으로 돌지 않고 있습니다.':undefined}
+                  title={tone?'상품 동기화가 정상적으로 돌지 않고 있습니다.':undefined}
                   style={{background:bg,border:(tone?'2px':'1px')+' solid '+bd,borderRadius:8,padding:tone?'8px 17px':'9px 18px',textAlign:'center',maxWidth:264,'--alert-glow':glow}}>
                   <div style={{fontSize:11,color:tone?nc:'var(--sub)',marginBottom:2,fontWeight:tone?700:400}}>{tone?'⚠ 총 상품':'총 상품'}</div>
                   <div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{totalCount.products.toLocaleString()}<span style={{fontSize:12,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
@@ -3965,7 +3967,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                 주 동작에 쓰는 모양이라, 되돌릴 수 없는 것에 쓰면 손이 먼저 간다. */}
           {isMaster&&(
             <button onClick={deleteMissingProducts} disabled={purgingMissing||!totalCount.missing}
-              data-tip={totalCount.missing
+              title={totalCount.missing
                 ? '카페24 상품 목록에 없는 상품 '+totalCount.missing+'건을 콘솔에서 지웁니다. 되돌릴 수 없습니다.'
                 : '카페24에서 사라진 상품이 없습니다'}
               style={{alignSelf:'stretch',padding:'0 16px',borderRadius:8,fontSize:12,fontWeight:700,
@@ -4036,7 +4038,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                 배경은 그대로 두고 테두리·굵기·바깥 링으로 알린다. 링은 box-shadow 라
                 자리를 차지하지 않아 옆 것이 밀리지도 않는다. */}
             <select value={cafeFilter} onChange={e=>setCafeFilter(e.target.value)}
-              data-tip="카페24에서 가져온 상태로 좁혀 봅니다"
+              title="카페24에서 가져온 상태로 좁혀 봅니다"
               style={{padding:'8px 12px',background:'var(--card)',border:'1px solid '+(cafeFilter==='all'?'var(--border)':'#F6AD09'),borderRadius:8,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none',
                 fontWeight:cafeFilter==='all'?400:700,
                 boxShadow:cafeFilter==='all'?'none':'0 0 0 2px rgba(246,173,9,.35)'}}>
@@ -4092,13 +4094,13 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                       const isOpen=labelPopover&&labelPopover.anchorId===popId;
                       // 권한 없으면 클릭 불가, 색상은 동일하게 표시 (정보는 모두에게 노출)
                       if(!canManageSupplier){
-                        return <span style={{display:'inline-block',padding:'3px 10px',background:st.bg,color:st.color,border:'1px solid '+st.border,borderRadius:4,fontSize:11,fontWeight:700,userSelect:'none'}} data-tip={'채널: '+st.label}>{sn}</span>;
+                        return <span style={{display:'inline-block',padding:'3px 10px',background:st.bg,color:st.color,border:'1px solid '+st.border,borderRadius:4,fontSize:11,fontWeight:700,userSelect:'none'}} title={'채널: '+st.label}>{sn}</span>;
                       }
                       return (
                         <span data-sup-popover style={{position:'relative',display:'inline-block'}}>
                           <span onClick={(e)=>{e.stopPropagation();setLabelPopover(isOpen?null:{name:sn,anchorId:popId});}}
                             style={{display:'inline-block',padding:'3px 10px',background:st.bg,color:st.color,border:'1px solid '+st.border,borderRadius:4,fontSize:11,fontWeight:700,cursor:'pointer',userSelect:'none'}}
-                            data-tip={'채널: '+st.label+' (클릭하여 변경)'}>{sn}</span>
+                            title={'채널: '+st.label+' (클릭하여 변경)'}>{sn}</span>
                           {isOpen&&(
                             <div data-sup-popover style={{position:'absolute',top:'100%',left:0,marginTop:4,background:'#fff',border:'1px solid #2A478D',borderRadius:8,boxShadow:'0 6px 16px rgba(42,71,141,.18)',padding:6,zIndex:50,minWidth:160}}>
                               <div style={{fontSize:9,color:'#6a80a0',fontWeight:700,textTransform:'uppercase',letterSpacing:'.04em',padding:'4px 8px 6px',borderBottom:'1px solid #f0f0f0',marginBottom:4}}>{sn} — 채널 변경</div>
@@ -4127,7 +4129,14 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                       <div>{p.product_code||'-'}</div>
                       <Cafe24Tags p={p}/>
                     </td>
-                    <td style={{cursor:'pointer',color:'var(--primary)',textDecoration:'underline',textDecorationStyle:'dotted',maxWidth:280,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onClick={()=>{setDetailProd(p);setDetailMode('basic');}} data-tip={p.product_name} data-tip-clip>{p.product_name}</td>
+                    <td style={{cursor:'pointer',color:'var(--primary)',textDecoration:'underline',textDecorationStyle:'dotted',maxWidth:280,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onClick={()=>{setDetailProd(p);setDetailMode('basic');}}
+                      /* ★★ 이름이 너무 길어 «잘렸을 때» 만 전체를 보여 준다(제니 2026-09-03).
+                         짧은 이름에도 띄워서 성가셨다. 잘림은 CSS(ellipsis)가 정하는 것이라
+                         코드가 미리 알 수 없다 — 마우스가 올라온 «그 자리에서» 재서
+                         title 을 붙이거나 둔다. +1 은 소수점 반올림 여유다. */
+                      onMouseEnter={e=>{ const el=e.currentTarget;
+                        if(el.scrollWidth > el.clientWidth + 1) el.title = p.product_name || '';
+                        else el.removeAttribute('title'); }}>{p.product_name}</td>
 
                     <td style={{fontSize:11,color:'#1a3060'}}>
                       <div style={{fontWeight:500}}>{p.shipping_method||'-'}</div>
@@ -4581,7 +4590,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                 {[['A','일괄 등록(덮어쓰기)','올린 파일 내용으로 그 상품의 CS 정보를 통째로 바꿉니다'],
                   ['B','추가 등록','공급사에게 받은 FAQ 답변을 «기존 것을 지우지 않고» 채웁니다'],
                   ['M','FAQ 문항 코드','문항ID·문항 문구·유형의 기준표. 추가 등록에서 빈 칸을 이걸로 채웁니다']].map(([k,label,tip])=>(
-                  <button key={k} onClick={()=>{setFormKind(k);setUploadMsg('');setFaqPreview(null);setMasterPreview(null);}} data-tip={tip}
+                  <button key={k} onClick={()=>{setFormKind(k);setUploadMsg('');setFaqPreview(null);setMasterPreview(null);}} title={tip}
                     style={{padding:'7px 16px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit',
                       background:formKind===k?'var(--primary)':'transparent',
                       color:formKind===k?'#fff':'var(--sub)',
@@ -4843,7 +4852,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                       };
                       return (
                         <div key={name} style={{display:'grid',gridTemplateColumns:'180px 100px 100px 130px 100px 100px 200px 70px',gap:10,padding:'8px 14px',borderBottom:'1px solid var(--border)',alignItems:'center',fontSize:12,background:isDirty?'rgba(246,173,9,.06)':'transparent'}}>
-                          <span style={{color:'var(--text)',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} data-tip={name}>{name}</span>
+                          <span style={{color:'var(--text)',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={name}>{name}</span>
                           {/* 배송방법 */}
                           <select value={cur.method} onChange={e=>updateEdit({method:e.target.value})}
                             style={{padding:'5px 6px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:4,color:'var(--text)',fontSize:11,fontFamily:'inherit'}}>
@@ -5951,7 +5960,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
         {(()=>{
           const isAll = filterChannel==='all'&&filterCond==='all'&&filterCafe==='all'&&!search;
           const card=(label,value,warn,active,onClick,tip)=>(
-            <div onClick={onClick} data-tip={tip}
+            <div onClick={onClick} title={tip}
               style={{background:'var(--card)',
                 border:'1px solid '+(active?'#F6AD09':'var(--border)'),
                 boxShadow:active?'0 0 0 2px rgba(246,173,9,.30)':'none',
@@ -6020,7 +6029,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
           {/* ★ 배경색으로 «걸려 있음» 을 알리지 않는다 — 펼친 목록이 그 배경을 물려받아
               글자가 안 보인다(2026-08-26 제니 제보). 테두리·굵기·바깥 링으로 알린다. */}
           <select value={filterCafe} onChange={e=>setFilterCafe(e.target.value)}
-            data-tip="카페24가 알려 준 사용여부·거래상태로 좁혀 봅니다"
+            title="카페24가 알려 준 사용여부·거래상태로 좁혀 봅니다"
             style={{padding:'8px 10px',background:'var(--card)',border:'1px solid '+(filterCafe==='all'?'var(--border)':'#F6AD09'),borderRadius:6,color:'var(--text)',fontSize:12,fontFamily:'inherit',
               fontWeight:filterCafe==='all'?400:700,
               boxShadow:filterCafe==='all'?'none':'0 0 0 2px rgba(246,173,9,.35)'}}>
@@ -6129,7 +6138,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                     세 곳(그룹헤더·컬럼헤더·행)에 똑같이 적혀 있고 minWidth 가 1301 이라,
                     열을 하나 더하면 셋을 다 고치고 폭도 다시 맞춰야 한다.
                     이름 뒤에 붙이면 그 계열의 문제가 통째로 사라진다(사이드바 M 뱃지와 같은 이유). */}
-                <span style={{display:'flex',alignItems:'center',minWidth:0}} data-tip={s.name}>
+                <span style={{display:'flex',alignItems:'center',minWidth:0}} title={s.name}>
                   <span style={{color:'#1A2240',fontWeight:500,flex:'0 1 auto',minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.name}</span>
                   {(()=>{
                     // 사용여부 F 또는 거래상태 P 면 그 공급사 상품은 팔 수 없다.
@@ -6140,7 +6149,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                       :'카페24 거래상태가 «거래중지» 입니다';
                     // ★ 흰 배경 표라 «진한 글자 + 연한 바탕 + 같은 계열 테두리» 로 둔다.
                     //   상품 목록 뱃지와 같은 색을 쓴다 — 같은 뜻이 화면마다 다른 색이면 안 된다.
-                    return <span data-tip={why}
+                    return <span title={why}
                       style={{flex:'none',marginLeft:6,display:'inline-flex',alignItems:'center',position:'relative',top:1,
                         fontSize:10,fontWeight:700,lineHeight:1,padding:'3px 6px',borderRadius:4,whiteSpace:'nowrap',
                         color:'#93500A',background:'#FDEBD0',border:'1px solid #F0BE72'}}>미사용</span>;
@@ -6159,7 +6168,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                     return (
                       <button key={ck} onClick={()=>canManage&&updateChannel(s.name,ck==='none'?null:ck)}
                         disabled={!canManage}
-                        data-tip={canManage?undefined:`읽기 전용입니다. master/manager만 채널을 바꿀 수 있습니다`}
+                        title={canManage?undefined:`읽기 전용입니다. master/manager만 채널을 바꿀 수 있습니다`}
                         style={{flex:1,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:3,padding:'4px 4px',borderRadius:3,fontSize:10,fontWeight:600,cursor:canManage?'pointer':'default',fontFamily:'inherit',whiteSpace:'nowrap',
                           background:active?cs.bg:'transparent',
                           color:active?cs.color:'#1A2240',
@@ -6222,7 +6231,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                     ★ 배송비가 «미설정» 인 곳은 이 칸이 비어 있는 것이 정상이다 —
                       그런 곳은 상단 «배송비 미설정» 으로 걸러 카페24에서 확인해 넣는다. */}
                 <span style={{textAlign:'center',fontSize:10,color:'#8895B0',whiteSpace:'nowrap'}}
-                  data-tip={s.updated_at
+                  title={s.updated_at
                     ? '콘솔에서 마지막으로 고친 때: '+String(s.updated_at).slice(0,16).replace('T',' ')
                       +' (카페24 자동 동기화는 이 값을 밀지 않습니다)'
                     : '콘솔에서 고친 기록이 없습니다'}>
@@ -6231,7 +6240,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                 {/* 저장. 권한이 없어 회색인 경우가 있는데 표가 길어 헤더의 '읽기 전용' 안내가
                     화면 밖으로 나가 있을 수 있다 — 버튼 자리에서도 이유를 알 수 있게 한다. */}
                 <button disabled={!canManage||!isDirty||isSaving}
-                  data-tip={!canManage?'읽기 전용입니다 — master/manager만 배송비를 편집할 수 있습니다':(isDirty?'변경한 내용을 저장합니다':'변경한 내용이 없습니다')}
+                  title={!canManage?'읽기 전용입니다 — master/manager만 배송비를 편집할 수 있습니다':(isDirty?'변경한 내용을 저장합니다':'변경한 내용이 없습니다')}
                   onClick={()=>updateShipping(s.name,cur)}
                   style={{padding:'5px 8px',background:isDirty&&canManage?'#2A478D':'#F1F5FB',border:'1px solid '+(isDirty&&canManage?'#2A478D':'#DCE8FF'),borderRadius:4,color:isDirty&&canManage?'#fff':'#8895B0',fontSize:10,fontWeight:700,cursor:(canManage&&isDirty&&!isSaving)?'pointer':'default',fontFamily:'inherit',opacity:isSaving?0.5:1}}>
                   {isSaving?'저장중':isDirty?'저장':'완료'}
@@ -6319,7 +6328,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                     <tr key={i} style={{borderBottom:'1px solid #ECF1F8',color:'#1A2240',background:r.skip?'#fef3e8':'transparent',opacity:r.skip?0.7:1}}>
                       <td style={{padding:'6px'}}>
                         {r.skip?
-                          <span style={{padding:'2px 6px',background:'rgba(246,173,9,.25)',color:'#a85800',borderRadius:3,fontSize:10,fontWeight:600}} data-tip={r.skipReason}>제외</span>:
+                          <span style={{padding:'2px 6px',background:'rgba(246,173,9,.25)',color:'#a85800',borderRadius:3,fontSize:10,fontWeight:600}} title={r.skipReason}>제외</span>:
                           r.action==='new'?
                           <span style={{padding:'2px 6px',background:'rgba(34,211,160,.18)',color:'#0a6a3a',borderRadius:3,fontSize:10,fontWeight:600}}>신규</span>:
                           <span style={{padding:'2px 6px',background:'rgba(168,222,251,.4)',color:'#0F4A6B',borderRadius:3,fontSize:10,fontWeight:600}}>업데이트</span>
@@ -6328,7 +6337,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                       <td style={{padding:'6px',fontFamily:'monospace',color:'#5F7195'}}>{r.code}</td>
                       <td style={{padding:'6px',fontWeight:500}}>
                         {r.originalName!==r.name&&r.action==='update'?
-                          <span data-tip={'CSV명: '+r.name}>{r.originalName} <span style={{color:'#8895B0',fontSize:10}}>({r.name})</span></span>:
+                          <span title={'CSV명: '+r.name}>{r.originalName} <span style={{color:'#8895B0',fontSize:10}}>({r.name})</span></span>:
                           r.name
                         }
                       </td>
@@ -6337,7 +6346,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                       <td style={{padding:'6px'}}>{r.cond||'-'}</td>
                       <td style={{padding:'6px',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{r.fee==null?'-':r.fee.toLocaleString()}</td>
                       <td style={{padding:'6px',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{r.threshold==null?'-':r.threshold.toLocaleString()}</td>
-                      <td style={{padding:'6px',color:'#5F7195',maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} data-tip={r.memo||''}>{r.memo||'-'}</td>
+                      <td style={{padding:'6px',color:'#5F7195',maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.memo||''}>{r.memo||'-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -6748,7 +6757,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
                 {refPaymentAmount!=null && (
                   <span
                     onClick={()=>setRefundAmount(Number(refPaymentAmount).toLocaleString())}
-                    data-tip="클릭하면 이 금액으로 입력됩니다"
+                    title="클릭하면 이 금액으로 입력됩니다"
                     style={{fontSize:10,color:'#78AAFF',cursor:'pointer',fontWeight:400}}>
                     결제액 {KRW(refPaymentAmount)} ↵
                   </span>
@@ -6877,7 +6886,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
             {refPaymentMethod && refPaymentMethod!==pgInfo && (
               <span
                 onClick={()=>setPgInfo(refPaymentMethod)}
-                data-tip="클릭하면 카페24 조회값으로 바꿉니다"
+                title="클릭하면 카페24 조회값으로 바꿉니다"
                 style={{fontSize:10,color:'#78AAFF',cursor:'pointer',fontWeight:400}}>
                 카페24 · {refPaymentMethod} ↵
               </span>
@@ -7338,7 +7347,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
                 {!isReadOnly && refPaymentAmount!=null && (
                   <span
                     onClick={()=>setRefundAmount(Number(refPaymentAmount).toLocaleString())}
-                    data-tip="클릭하면 이 금액으로 입력됩니다"
+                    title="클릭하면 이 금액으로 입력됩니다"
                     style={{fontSize:10,color:'#78AAFF',cursor:'pointer',fontWeight:400}}>
                     결제액 {KRW(refPaymentAmount)} ↵
                   </span>
@@ -7506,7 +7515,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
                         opacity:holdFormOpen?0.4:1,cursor:holdFormOpen?'not-allowed':'auto'}}/>
               <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
                 <button onClick={()=>performAction('resolve_review')} disabled={saving||holdFormOpen}
-                  data-tip={holdFormOpen?'보류 전환을 취소하면 다시 쓸 수 있습니다.':undefined}
+                  title={holdFormOpen?'보류 전환을 취소하면 다시 쓸 수 있습니다.':undefined}
                   style={{fontSize:12,padding:'7px 12px',
                     background: holdFormOpen?'transparent':'rgba(126,217,87,.18)',
                     border:'1px solid '+(holdFormOpen?'var(--border)':'rgba(126,217,87,.5)'),
@@ -7517,13 +7526,13 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
                 {isHeld ? (
                   <button onClick={()=>performAction('resume_review')} disabled={saving}
                     style={{fontSize:12,padding:'7px 12px',background:'transparent',border:'1px solid rgba(248,113,113,.45)',color:'#f87171',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}
-                    data-tip="보류를 풀고 다시 '확인 필요' 상태로 되돌립니다">
+                    title="보류를 풀고 다시 '확인 필요' 상태로 되돌립니다">
                     🔎 보류 해제 — 다시 확인 필요
                   </button>
                 ) : (!holdOpen && (
                   <button onClick={()=>setHoldOpen(true)} disabled={saving}
                     style={{fontSize:12,padding:'7px 12px',background:'transparent',border:'1px solid rgba(255,169,77,.5)',color:'#FFA94D',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}
-                    data-tip="지금 진행할 수 없는 건이면 보류로 빼 둡니다">
+                    title="지금 진행할 수 없는 건이면 보류로 빼 둡니다">
                     ⏸ 보류로 전환
                   </button>
                 ))}
@@ -7575,7 +7584,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
               ) : (
                 <button onClick={()=>setReviewOpen(true)}
                   style={{fontSize:12,padding:'7px 12px',background:'transparent',border:'1px solid rgba(248,113,113,.45)',color:'#f87171',borderRadius:6,cursor:'pointer'}}
-                  data-tip="처리 전에 확인이 필요하면 사유를 남겨 요청자에게 알립니다">
+                  title="처리 전에 확인이 필요하면 사유를 남겨 요청자에게 알립니다">
                   🔎 추가 확인 요청
                 </button>
               )}
@@ -7652,7 +7661,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
             {stKey==='pending3' && (
               <button onClick={()=>performAction('revert_to_pending2')} disabled={saving}
                 style={{fontSize:12,padding:'8px 14px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}
-                data-tip="환불 완료 상태 해제 → 환불 대기로 되돌림">
+                title="환불 완료 상태 해제 → 환불 대기로 되돌림">
                 ↺ 환불 대기로 원복
               </button>
             )}
@@ -7660,7 +7669,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
             {stKey==='done' && (
               <button onClick={()=>performAction('revert_to_pending3')} disabled={saving}
                 style={{fontSize:12,padding:'8px 14px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}
-                data-tip="후처리 완료(3차) 해제 → 후처리 대기로 되돌림">
+                title="후처리 완료(3차) 해제 → 후처리 대기로 되돌림">
                 ↺ 후처리 대기로 원복
               </button>
             )}
@@ -7689,14 +7698,14 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
             )}
             {stKey==='pending2' && (
               <button onClick={()=>performAction('mark_refund_complete')} disabled={saving || !isValid || isHeld}
-                data-tip={isHeld?'보류 중입니다. 위에서 보류를 해제한 뒤 처리하세요.':undefined}
+                title={isHeld?'보류 중입니다. 위에서 보류를 해제한 뒤 처리하세요.':undefined}
                 style={{fontSize:13,padding:'8px 14px',background:(isValid&&!isHeld)?'rgba(246,173,9,.18)':'transparent',border:'1px solid rgba(246,173,9,.5)',color:(isValid&&!isHeld)?'#F6AD09':'var(--sub)',borderRadius:6,cursor:(saving||!isValid||isHeld)?'not-allowed':'pointer',fontWeight:600}}>
                 ✓ 환불 완료 처리
               </button>
             )}
             {stKey==='pending3' && (
               <button onClick={()=>performAction('mark_cafe24_done')} disabled={saving || !isValid || isHeld}
-                data-tip={isHeld?'보류 중입니다. 위에서 보류를 해제한 뒤 처리하세요.':undefined}
+                title={isHeld?'보류 중입니다. 위에서 보류를 해제한 뒤 처리하세요.':undefined}
                 style={{fontSize:13,padding:'8px 14px',background:(isValid&&!isHeld)?'rgba(120,170,255,.18)':'transparent',border:'1px solid rgba(120,170,255,.5)',color:(isValid&&!isHeld)?'#78AAFF':'var(--sub)',borderRadius:6,cursor:(saving||!isValid||isHeld)?'not-allowed':'pointer',fontWeight:600}}>
                 ✓ 후처리 완료
               </button>
@@ -7906,7 +7915,7 @@ function RefundReasonsModal({ reasons: initialReasons, refundsUsageMap, onClose,
                     {/* 비활성화/삭제 */}
                     <button onClick={()=>deactivate(r)} disabled={saving}
                       style={smallBtn(usageCount===0?'#FF6B6B':'var(--sub)')}
-                      data-tip={usageCount===0?'완전 삭제 가능 (사용 0건)':'비활성화 (과거 데이터 보존)'}>
+                      title={usageCount===0?'완전 삭제 가능 (사용 0건)':'비활성화 (과거 데이터 보존)'}>
                       {usageCount===0?'🗑 삭제':'비활성화'}
                     </button>
                   </div>
@@ -8629,7 +8638,7 @@ function RefundManagementPage({ currentUserEmail }) {
           ))}
         </div>
         <button onClick={()=>setReasonsModalOpen(true)}
-          style={{fontSize:12,padding:'8px 12px',background:'var(--surface)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,cursor:'pointer'}} data-tip="환불 사유 마스터 관리">⚙️ 사유 관리</button>
+          style={{fontSize:12,padding:'8px 12px',background:'var(--surface)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,cursor:'pointer'}} title="환불 사유 마스터 관리">⚙️ 사유 관리</button>
         <button onClick={()=>setAddOpen(true)}
           style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:6,cursor:'pointer',fontWeight:600}}>+ 환불 요청 추가</button>
       </div>
@@ -8640,7 +8649,7 @@ function RefundManagementPage({ currentUserEmail }) {
           ★ 아래 확인 요청 배너와 달리 이 배너는 눌러서 바로 걸러 준다 — 카드 6개 중
             어디를 눌러야 하는지 찾게 만들면 알림이 한 단계 더 멀어진다. */}
       {kpi.heldDue>0 && (
-        <div onClick={()=>setActiveKpi('held')} data-tip="누르면 보류 건만 모아 봅니다"
+        <div onClick={()=>setActiveKpi('held')} title="누르면 보류 건만 모아 봅니다"
           style={{display:'flex',alignItems:'center',gap:10,marginBottom:14,padding:'12px 14px',cursor:'pointer',
           background:'rgba(255,169,77,.12)',border:'1px solid rgba(255,169,77,.5)',borderRadius:8}}>
           <span style={{fontSize:16}}>⏸</span>
@@ -8799,7 +8808,7 @@ function RefundManagementPage({ currentUserEmail }) {
                     }}
                     disabled={selectableIds.length===0}
                     style={{cursor:selectableIds.length===0?'not-allowed':'pointer',accentColor:'#F6AD09'}}
-                    data-tip="처리 가능한 행 전체 선택"/>
+                    title="처리 가능한 행 전체 선택"/>
                 </th>
                 <th style={{...th,width:50,textAlign:'center'}}></th>
                 <th style={{...th,width:70}}>일자</th>
@@ -8847,7 +8856,7 @@ function RefundManagementPage({ currentUserEmail }) {
                     <td style={{...td,textAlign:'center',padding:'10px 4px'}} onClick={e=>e.stopPropagation()}>
                       {/* 보류 행은 체크칸을 그냥 비우지 않고 왜 못 고르는지 남긴다 — 빈 칸이면 고장으로 읽힌다. */}
                       {!selectable && isHeldRow(r) && (
-                        <span data-tip="보류 중 — 일괄 처리에서 제외됩니다. 행을 열어 보류를 해제한 뒤 처리하세요."
+                        <span title="보류 중 — 일괄 처리에서 제외됩니다. 행을 열어 보류를 해제한 뒤 처리하세요."
                           style={{fontSize:11,color:'#FFA94D',cursor:'help'}}>⏸</span>
                       )}
                       {selectable && (
@@ -8865,7 +8874,7 @@ function RefundManagementPage({ currentUserEmail }) {
                     {/* 그룹 표시 (그룹 첫 행에만 아이콘+합계금액 표시) */}
                     <td style={{...td,textAlign:'center',borderLeft:isInGroup?'3px solid #F6AD09':'3px solid transparent'}}>
                       {isInGroup && isFirstInGroup && (
-                        <div data-tip={`주문 그룹 합계: ${KRW(groupSum)}`} style={{display:'inline-flex',flexDirection:'column',alignItems:'center',gap:1}}>
+                        <div title={`주문 그룹 합계: ${KRW(groupSum)}`} style={{display:'inline-flex',flexDirection:'column',alignItems:'center',gap:1}}>
                           <span style={{fontSize:14}}>🔗</span>
                           <span style={{fontSize:9,color:'#F6AD09'}}>{KRW(groupSum)}</span>
                         </div>
@@ -8890,8 +8899,8 @@ function RefundManagementPage({ currentUserEmail }) {
                     <td style={{...td,fontFamily:'monospace',fontSize:11}}>{r.account_number||'—'}</td>
                     <td style={td}>{r.account_holder||'—'}</td>
                     <td style={td}>{r.customer_name||'—'}</td>
-                    <td style={{...td,fontFamily:'monospace',fontSize:11}} data-tip={r.order_id}>{r.order_id}</td>
-                    <td style={{...td,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}} data-tip={r.product_name}>{r.product_name||'—'}</td>
+                    <td style={{...td,fontFamily:'monospace',fontSize:11}} title={r.order_id}>{r.order_id}</td>
+                    <td style={{...td,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}} title={r.product_name}>{r.product_name||'—'}</td>
                     <td style={td}>{r.supplier_name||'—'}</td>
                     <td style={{...td,textAlign:'center'}}>
                       <div style={{display:'flex',gap:4,justifyContent:'center',alignItems:'center',flexWrap:'wrap'}}>
@@ -8901,14 +8910,14 @@ function RefundManagementPage({ currentUserEmail }) {
                         )}
                         {/* 추가 확인 필요 — 기존 상태와 별개로 덧붙는 표시. 사유는 마우스를 올리면 보인다. */}
                         {isHeldRow(r) ? (
-                          <span data-tip={(r.hold_reason||'사유 미기재')+'\n보류: '+(r.hold_by||'-')
+                          <span title={(r.hold_reason||'사유 미기재')+'\n보류: '+(r.hold_by||'-')
                                        +'\n최초 요청 사유: '+(r.review_note||'미기재')}
                             style={{background:'rgba(255,169,77,.18)',color:'#FFA94D',padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap',fontWeight:600,cursor:'help'}}>
                             ⏸ 보류{r.hold_until ? ` (~${r.hold_until.slice(5)})` : ''}
                             {r.hold_until && r.hold_until <= todayLocal() && <span style={{color:'#FF6B6B'}}> !</span>}
                           </span>
                         ) : r.needs_review ? (
-                          <span data-tip={(r.review_note||'사유 미기재')+'\n요청: '+(r.review_requested_by||'-')}
+                          <span title={(r.review_note||'사유 미기재')+'\n요청: '+(r.review_requested_by||'-')}
                             style={{background:'rgba(248,113,113,.18)',color:'#f87171',padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap',fontWeight:600,cursor:'help'}}>
                             🔎 확인 필요
                           </span>
@@ -9818,7 +9827,7 @@ function DelayRegisterTab({isMaster,isManager,onCountChange}){
                       : r.initial_send_type==='blast' && !r.blast_sent_at
                         ? <div style={{display:'inline-flex',flexDirection:'column',alignItems:'center',gap:3}}>
                             <button onClick={()=>handleBlastClick(r)} disabled={SEND_BLOCKED}
-                              data-tip={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
+                              title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
                               style={{background:SEND_BLOCKED?'var(--border)':'#F6AD09',border:SEND_BLOCKED?'1px solid var(--border)':'1px solid #F6AD09',padding:'4px 10px',fontSize:11,borderRadius:4,cursor:SEND_BLOCKED?'not-allowed':'pointer',color:SEND_BLOCKED?'var(--sub)':'#fff',fontWeight:700,fontFamily:'inherit'}}>
                               발송하기
                             </button>
@@ -10335,8 +10344,8 @@ function DelayAddModal({ editingRow, onClose, onSaved }){
                                 checked={selectedVariantCodes.has(v.variant_code)}
                                 disabled={rowDisabled}
                                 onChange={()=>toggleVariant(v.variant_code)}/>
-                              <span style={{fontFamily:'monospace',fontSize:11,color:'var(--sub)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} data-tip={v.variant_code}>{v.variant_code}</span>
-                              <span style={{display:'flex',alignItems:'center',gap:6,overflow:'hidden',minWidth:0}} data-tip={isAlreadyDelayed?`이미 지연 등록됨 (${delayedInfo.reason||''}${delayedInfo.eta?' / '+delayedInfo.eta:''})`:v.option_text}>
+                              <span style={{fontFamily:'monospace',fontSize:11,color:'var(--sub)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={v.variant_code}>{v.variant_code}</span>
+                              <span style={{display:'flex',alignItems:'center',gap:6,overflow:'hidden',minWidth:0}} title={isAlreadyDelayed?`이미 지연 등록됨 (${delayedInfo.reason||''}${delayedInfo.eta?' / '+delayedInfo.eta:''})`:v.option_text}>
                                 {isAlreadyDelayed && <span style={{fontSize:10,padding:'1px 6px',background:'rgba(246,173,9,.18)',color:'#F6AD09',borderRadius:3,whiteSpace:'nowrap',flexShrink:0,fontWeight:600}}>이미 지연중</span>}
                                 <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',minWidth:0}}>{v.option_text}</span>
                               </span>
@@ -10856,10 +10865,10 @@ function QuillEditor({ initialValue, onChange, editorRef }) {
         '<button type="button" data-width="50%">50%</button>' +
         '<button type="button" data-width="75%">75%</button>' +
         '<button type="button" data-width="100%">100%</button>' +
-        '<button type="button" data-width="custom" data-tip="직접 입력 (예: 200px)">직접</button>' +
+        '<button type="button" data-width="custom" title="직접 입력 (예: 200px)">직접</button>' +
         '<div class="ql-image-toolbar-divider"></div>' +
-        '<button type="button" data-align="left" data-tip="왼쪽 정렬">⬅</button>' +
-        '<button type="button" data-align="center" data-tip="가운데 정렬">⇆</button>';
+        '<button type="button" data-align="left" title="왼쪽 정렬">⬅</button>' +
+        '<button type="button" data-align="center" title="가운데 정렬">⇆</button>';
 
       imgToolbar.addEventListener('mousedown', (ev) => {
         // mousedown으로 막아야 click이 doc로 새지 않음
@@ -11368,7 +11377,7 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
         <div style={{padding:'14px 22px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,background:'#162244'}}>
           <button type="button" onClick={handleTestSend} disabled={saving}
             style={{padding:'8px 14px',background:'transparent',border:'1px dashed var(--border)',borderRadius:6,fontSize:12,cursor: saving ? 'not-allowed' : 'pointer',color:'var(--sub)',fontFamily:'inherit'}}
-            data-tip="입력한 이메일로 테스트 메일을 보냅니다 (Phase D 후 활성화)">
+            title="입력한 이메일로 테스트 메일을 보냅니다 (Phase D 후 활성화)">
             🧪 테스트 발송
           </button>
           <div style={{display:'flex',gap:8}}>
@@ -11858,7 +11867,7 @@ function AutoDeliveryRegisterTab({ currentUserEmail }) {
             <div style={{textAlign:'center'}}>
               <button onClick={()=>handleManualSend(t)}
                 style={{padding:'4px 10px',background:'rgba(96,165,250,.15)',border:'1px solid rgba(96,165,250,.3)',borderRadius:4,color:'#60a5fa',fontSize:11,cursor:'pointer',fontFamily:'inherit',fontWeight:600}}
-                data-tip="해당 템플릿으로 특정 주문에 수동 발송 (Phase D 후 활성화)">
+                title="해당 템플릿으로 특정 주문에 수동 발송 (Phase D 후 활성화)">
                 📨 발송
               </button>
             </div>
@@ -12091,7 +12100,7 @@ function ManualSendDialog({ tpl, orderId, setOrderId, step, lookup, email, setEm
                       srcDoc={composeEmailHtml(previewSubject, previewBody, previewButtons)}
                       sandbox=""
                       style={{width:'100%',height:340,border:'1px solid var(--border)',borderRadius:6,background:'#fff'}}
-                      data-tip="manual-send-preview"
+                      title="manual-send-preview"
                     />
                   </div>
                 )}
@@ -12173,7 +12182,7 @@ function ManualSendDialog({ tpl, orderId, setOrderId, step, lookup, email, setEm
               <button
                 onClick={onSend}
                 disabled={SEND_BLOCKED}
-                data-tip={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
+                title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
                 style={{padding:'7px 18px',background:SEND_BLOCKED?'var(--border)':'#F6AD09',color:SEND_BLOCKED?'var(--sub)':'#0d1628',border:SEND_BLOCKED?'1px solid var(--border)':'1px solid #F6AD09',borderRadius:6,fontSize:12,cursor:SEND_BLOCKED?'not-allowed':'pointer',fontWeight:700,fontFamily:'inherit'}}
               >📨 발송하기</button>
             </>
@@ -12437,7 +12446,7 @@ function AutoDeliveryHistoryTab() {
                           srcDoc={l.rendered_body}
                           sandbox=""
                           style={{width:'100%',height:480,border:'1px solid var(--border)',borderRadius:6,background:'#fff'}}
-                          data-tip={`mail-${l.id}`}
+                          title={`mail-${l.id}`}
                         />
                       </div>
                     )}
@@ -12946,7 +12955,7 @@ function DelayHistoryTab(){
             <button
               onClick={()=>setSupplierFilter('all')}
               style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',background:'none',border:'none',color:'var(--sub)',cursor:'pointer',fontSize:14,padding:0,lineHeight:1}}
-              data-tip="공급사 필터 초기화">
+              title="공급사 필터 초기화">
               ×
             </button>
           )}
@@ -12988,7 +12997,7 @@ function DelayHistoryTab(){
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,padding:'10px 14px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.3)',borderRadius:8,flexWrap:'wrap'}}>
           <span style={{fontSize:13,color:'var(--text)',fontWeight:700}}>실패 {selectedIds.size}건 선택됨</span>
           <button onClick={handleResendSelected} disabled={resending || SEND_BLOCKED}
-            data-tip={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
+            title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
             style={{padding:'8px 16px',background:(resending||SEND_BLOCKED)?'var(--border)':'#f87171',border:'none',borderRadius:7,color:SEND_BLOCKED?'var(--sub)':'#fff',fontSize:13,fontWeight:700,cursor:SEND_BLOCKED?'not-allowed':(resending?'default':'pointer'),fontFamily:'inherit'}}>
             {resending ? '재발송 중...' : '🔄 선택 재발송'}
           </button>
@@ -13034,7 +13043,7 @@ function DelayHistoryTab(){
                         return n;
                       });
                     }}
-                    data-tip={pageFailedIds.length===0?'재발송할 실패 건이 없습니다':'이 페이지의 실패 건 전체 선택'}
+                    title={pageFailedIds.length===0?'재발송할 실패 건이 없습니다':'이 페이지의 실패 건 전체 선택'}
                     style={{cursor:pageFailedIds.length===0?'default':'pointer'}}/>
                 </th>
                 <th style={{textAlign:'left',padding:'10px 14px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>발송일시</th>
@@ -13074,17 +13083,17 @@ function DelayHistoryTab(){
                                 return n;
                               });
                             }}
-                            data-tip="재발송 선택"
+                            title="재발송 선택"
                             style={{cursor:'pointer'}}/>
                         ) : null}
                       </td>
                       <td style={{padding:'12px 14px',color:'var(--text)',fontFamily:'monospace',fontSize:11}}>{fmtIsoLocal(r.sent_at)}</td>
-                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} data-tip={r.product_name_snapshot}>{r.product_name_snapshot||'-'}</td>
-                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} data-tip={r.option_text_snapshot}>{r.option_text_snapshot||<span style={{color:'var(--sub)',fontStyle:'italic'}}>단일 옵션</span>}</td>
+                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.product_name_snapshot}>{r.product_name_snapshot||'-'}</td>
+                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.option_text_snapshot}>{r.option_text_snapshot||<span style={{color:'var(--sub)',fontStyle:'italic'}}>단일 옵션</span>}</td>
                       <td style={{padding:'12px 8px',color:'var(--text)'}}>{r.supplier_name||'-'}</td>
                       <td style={{padding:'12px 8px',color:'var(--text)',fontFamily:'monospace',fontSize:11}}>{r.order_id||'-'}</td>
                       <td style={{padding:'12px 8px',color:'var(--text)'}} onClick={e=>{e.stopPropagation(); toggleUnmask(r.id);}}>
-                        <div style={{cursor:'pointer'}} data-tip={isUnmasked?'클릭하여 마스킹':'클릭하여 전체 표시'}>
+                        <div style={{cursor:'pointer'}} title={isUnmasked?'클릭하여 마스킹':'클릭하여 전체 표시'}>
                           {isUnmasked ? (r.customer_name||'-') : maskName(r.customer_name)}
                         </div>
                       </td>
@@ -13109,7 +13118,7 @@ function DelayHistoryTab(){
                               <div style={{fontSize:11,color:'var(--sub)',fontWeight:700,marginBottom:6}}>발송 상세</div>
                               <div style={{lineHeight:1.7}}>
                                 <div><span style={{color:'var(--sub)'}}>휴대폰: </span>
-                                  <span style={{cursor:'pointer'}} onClick={()=>toggleUnmask(r.id)} data-tip={isUnmasked?'클릭하여 마스킹':'클릭하여 전체 표시'}>
+                                  <span style={{cursor:'pointer'}} onClick={()=>toggleUnmask(r.id)} title={isUnmasked?'클릭하여 마스킹':'클릭하여 전체 표시'}>
                                     {isUnmasked ? (r.customer_phone||'-') : maskPhone(r.customer_phone)}
                                   </span>
                                 </div>
@@ -14378,13 +14387,13 @@ function SetupTab({ project, patch }) {
                   onChange={(e) => updVar(v.id, "max", e.target.value)}
                 />
               </div>
-              <button className="tcc-mini" onClick={() => moveVar(v.id, -1)} data-tip="위로">
+              <button className="tcc-mini" onClick={() => moveVar(v.id, -1)} title="위로">
                 ↑
               </button>
-              <button className="tcc-mini" onClick={() => moveVar(v.id, 1)} data-tip="아래로">
+              <button className="tcc-mini" onClick={() => moveVar(v.id, 1)} title="아래로">
                 ↓
               </button>
-              <button className="tcc-x" onClick={() => delVar(v.id)} data-tip="삭제">
+              <button className="tcc-x" onClick={() => delVar(v.id)} title="삭제">
                 ×
               </button>
             </div>
@@ -14430,7 +14439,7 @@ function SetupTab({ project, patch }) {
                       </option>
                     ))}
                   </select>
-                  <button className="tcc-x" onClick={() => delService(s.id)} data-tip="삭제">
+                  <button className="tcc-x" onClick={() => delService(s.id)} title="삭제">
                     ×
                   </button>
                 </div>
@@ -14591,7 +14600,7 @@ function CostTab({ project, patch, exportCsv }) {
           // 무엇보다 '지금 값이 얼마인지' 를 보는 자리다. 식 수정은 설정 탭에서 한다.
           if (isVarFormula(v)) {
             return (
-              <div className="tcc-varchip is-calc" key={v.id} data-tip={"= " + String(v.value).trim().slice(1)}>
+              <div className="tcc-varchip is-calc" key={v.id} title={"= " + String(v.value).trim().slice(1)}>
                 <span className="tcc-varchip-label">{v.label}</span>
                 <span className="tcc-varchip-calc">
                   {rv && rv.error ? "계산 불가" : won(rv ? rv.value : 0)}
@@ -14669,7 +14678,7 @@ function CostTab({ project, patch, exportCsv }) {
                     <p
                       className="tcc-desctext"
                       onClick={() => setOpenNote(it.id)}
-                      data-tip="눌러서 수정"
+                      title="눌러서 수정"
                     >
                       {it.note}
                     </p>
@@ -14887,7 +14896,7 @@ function FeatureTab({ project, patch }) {
                     <p
                       className="tcc-desctext"
                       onClick={() => setOpenDesc(f.id)}
-                      data-tip="눌러서 수정"
+                      title="눌러서 수정"
                     >
                       {f.desc}
                     </p>
@@ -14920,7 +14929,7 @@ function FeatureTab({ project, patch }) {
                             "tcc-dot" + (Number(f.scores[s.id]) === n ? " is-on" : "")
                           }
                           onClick={() => updScore(f.id, s.id, n)}
-                          data-tip={n + "점"}
+                          title={n + "점"}
                         >
                           {n}
                         </button>
@@ -14929,10 +14938,10 @@ function FeatureTab({ project, patch }) {
                   </td>
                 ))}
                 <td className="tcc-td-tool">
-                  <button className="tcc-mini" onClick={() => moveFeature(f.id, -1)} data-tip="위로">
+                  <button className="tcc-mini" onClick={() => moveFeature(f.id, -1)} title="위로">
                     ↑
                   </button>
-                  <button className="tcc-mini" onClick={() => moveFeature(f.id, 1)} data-tip="아래로">
+                  <button className="tcc-mini" onClick={() => moveFeature(f.id, 1)} title="아래로">
                     ↓
                   </button>
                   <button className="tcc-mini tcc-mini-del" onClick={() => delFeature(f.id)}>
@@ -15201,7 +15210,7 @@ function ResultTab({ project, patch }) {
             <div
               className="tcc-card-total"
               style={{ fontSize: tccTotalFont(wonKo(r.total)) }}
-              data-tip={won(r.total) + "원"}
+              title={won(r.total) + "원"}
             >
               {wonKo(r.total)}
               <span className="tcc-card-cur">원</span>
@@ -15720,7 +15729,7 @@ function HistoryTab({ project, patch, me }) {
                       className="tcc-snap-name"
                       value={s.name}
                       aria-label="회차 이름"
-                      data-tip="이름을 눌러 고칠 수 있습니다"
+                      title="이름을 눌러 고칠 수 있습니다"
                       onChange={(e) => renameSnapshot(s.id, e.target.value)}
                     />
                     <div className="tcc-snap-date">
@@ -15982,11 +15991,11 @@ function Dashboard({ projects, onOpen }) {
             원 단위까지 정확한 값은 카드와 마찬가지로 마우스를 올리면 보인다. */}
         <div className="tcc-dashstat">
           <span className="tcc-dashstat-label">사용 중인 툴 월 비용</span>
-          <span className="tcc-dashstat-num" data-tip={won(monthlySum) + "원"}>{wonKo(monthlySum)}원</span>
+          <span className="tcc-dashstat-num" title={won(monthlySum) + "원"}>{wonKo(monthlySum)}원</span>
         </div>
         <div className="tcc-dashstat">
           <span className="tcc-dashstat-label">연 환산</span>
-          <span className="tcc-dashstat-num" data-tip={won(monthlySum * 12) + "원"}>{wonKo(monthlySum * 12)}원</span>
+          <span className="tcc-dashstat-num" title={won(monthlySum * 12) + "원"}>{wonKo(monthlySum * 12)}원</span>
         </div>
       </div>
 
@@ -16045,7 +16054,7 @@ function Dashboard({ projects, onOpen }) {
                         left: reviewPos + "%",
                         width: Math.max(1, pos - reviewPos) + "%",
                       }}
-                      data-tip="재검토 기간"
+                      title="재검토 기간"
                     />
                   )}
                   {inRange && (
@@ -16236,7 +16245,7 @@ function ConfirmButton({ className, label, confirmLabel, onConfirm, title }) {
     <button
       className={(className || "tcc-btn") + (armed ? " is-armed" : "")}
       onClick={click}
-      data-tip={title}
+      title={title}
     >
       {armed ? confirmLabel : label}
     </button>
@@ -17197,7 +17206,7 @@ function CsSymbolBar({taRef, value, onChange, light}){
   return (
     <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
       {CS_SYMBOLS.map(x=>(
-        <button key={x.ch} type="button" onClick={()=>put(x.ch,x.caret)} data-tip={x.tip}
+        <button key={x.ch} type="button" onClick={()=>put(x.ch,x.caret)} title={x.tip}
           style={{width:26,height:24,borderRadius:5,fontSize:12,lineHeight:1,
             fontFamily:'inherit',cursor:'pointer',
             background: light ? CS_WRITE.field : 'transparent',
@@ -17348,7 +17357,7 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
         {busy ? '저장 중…' : cur.label + csRo(cur.label) + ' 저장'}</button>
       {/* ★ 화살표도 «같은 판» 이다 — 두 쪽이 다른 색이면 한 버튼으로 안 읽힌다.
           그전에는 여기만 언제나 진한 색이라, 왼쪽이 회색으로 누울 때 둘이 갈라져 보였다. */}
-      <button onClick={()=>setOpen(o=>!o)} disabled={busy} data-tip="다른 상태로 저장하기"
+      <button onClick={()=>setOpen(o=>!o)} disabled={busy} title="다른 상태로 저장하기"
         style={{padding:'8px 10px',borderRadius:'0 6px 6px 0',fontSize:11,
           fontFamily:'inherit',border:'none', color: fg,
           borderLeft:'1px solid '+(on?'rgba(255,255,255,.22)':'rgba(22,35,63,.12)'),
@@ -17408,7 +17417,7 @@ function CsStagePill({stage, held, big}){
         borderRadius:big?12:10, fontSize:big?12.5:10, fontWeight:600,
         lineHeight:1.6, whiteSpace:'nowrap'}}>{s.label}</span>
       {/* 보류는 단계가 아니라 «겹쳐 걸리는 표시» 다 — 그래서 단계 옆에 따로 붙인다. */}
-      {held && <span data-tip="보류 중" style={{fontSize:big?12.5:10}}>⏸</span>}
+      {held && <span title="보류 중" style={{fontSize:big?12.5:10}}>⏸</span>}
     </span>
   );
 }
@@ -17640,7 +17649,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
             background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',
             borderRadius:6,fontFamily:'inherit'}}/>
         {isMaster && (
-          <span data-tip="아직 만드는 중입니다"
+          <span title="아직 만드는 중입니다"
             style={{padding:'5px 12px',borderRadius:16,fontSize:12,
               border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',opacity:.55,
               whiteSpace:'nowrap',userSelect:'none'}}>⚙ 보기 설정</span>
@@ -17727,7 +17736,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                 /* ★★ 줄 어디를 눌러도 열린다(제니). 번호만 누르게 두면 «눌리는 곳» 이
                      6px 폭이라, 알고도 두어 번 빗나간다. 번호는 그대로 링크처럼
                      보이게 둔다 — 어디를 눌러야 하는지 알려 주는 표시로 남는다. */
-                <tr key={t.id} onClick={()=>goTicket(t.id)} data-tip="티켓 열기"
+                <tr key={t.id} onClick={()=>goTicket(t.id)} title="티켓 열기"
                   className="cs-row"
                   style={{borderTop:'1px solid var(--border)',cursor:'pointer'}}>
                   <td style={csTd}>
@@ -18103,7 +18112,7 @@ function CsChipRoleSettings({currentUserEmail}){
                           cursor:locked?'not-allowed':'pointer', opacity:locked?.5:1}}
                         checked={locked ? true : has(c.id,r.id)}
                         disabled={locked}
-                        data-tip={locked?'「전체」는 늘 보입니다':undefined}
+                        title={locked?'「전체」는 늘 보입니다':undefined}
                         onChange={()=>toggle(c.id,r.id)}/>
                     </td>
                   ))}
@@ -18277,7 +18286,7 @@ function CsFieldRuleSettings({currentUserEmail}){
                         {CS_REQ_OPTS.map(o=>{
                           const on = (draft[f.id]||{}).required===o.v;
                           return (
-                            <div key={String(o.v)} onClick={()=>setReq(f.id,o.v)} data-tip={o.hint}
+                            <div key={String(o.v)} onClick={()=>setReq(f.id,o.v)} title={o.hint}
                               style={{padding:'3px 10px',borderRadius:12,fontSize:11,
                                 cursor:'pointer',userSelect:'none',
                                 border:'1px solid '+(on?'var(--primary)':'var(--border)'),
@@ -18293,7 +18302,7 @@ function CsFieldRuleSettings({currentUserEmail}){
                             cursor:r.id==='master'?'not-allowed':'pointer',
                             opacity:r.id==='master'?.5:1}}
                           checked={canEdit(f.id,r.id)} disabled={r.id==='master'}
-                          data-tip={r.id==='master'?'MASTER 는 늘 고칠 수 있습니다':undefined}
+                          title={r.id==='master'?'MASTER 는 늘 고칠 수 있습니다':undefined}
                           onChange={()=>toggleEdit(f.id,r.id)}/>
                       </td>
                     ))}
@@ -18427,7 +18436,7 @@ function CsCafe24Settings({currentUserEmail}){
               <div style={{fontSize:11,color:'var(--sub)',fontWeight:600,padding:'8px 12px 5px',
                 background:'rgba(255,255,255,.02)'}}>{g}</div>
               {CS_CAFE24_FIELDS.filter(f=>f.g===g).map(f=>(
-                <label key={f.id} data-tip={f.note||undefined}
+                <label key={f.id} title={f.note||undefined}
                   style={{display:'flex',alignItems:'center',gap:9,padding:'5px 12px',
                     cursor:f.always?'default':'pointer'}}>
                   <input type="checkbox" style={{...csChk,
@@ -18473,7 +18482,7 @@ function CsCafe24Settings({currentUserEmail}){
                   borderBottom: (over===id && order.indexOf(drag)<i)
                     ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,.05)'}}>
                 <span onMouseDown={()=>setArmed(id)} onMouseUp={()=>setArmed(null)}
-                  data-tip="끌어서 순서를 바꿉니다"
+                  title="끌어서 순서를 바꿉니다"
                   style={{cursor:'grab',color:'var(--sub)',opacity:.6,fontSize:12,
                     padding:'0 2px',userSelect:'none',lineHeight:1}}>≡</span>
                 <span style={{fontFamily:'monospace',fontSize:10,color:'var(--sub)',
@@ -18564,7 +18573,7 @@ function CsPaneBar({onMouseDown}){
   return (
     <div onMouseDown={onMouseDown}
       onMouseEnter={()=>setHot(true)} onMouseLeave={()=>setHot(false)}
-      data-tip="끌어서 칸 너비를 바꿉니다"
+      title="끌어서 칸 너비를 바꿉니다"
       style={{cursor:'col-resize',width:12,alignSelf:'stretch',
         display:'flex',justifyContent:'center',zIndex:5}}>
       <div style={{width:hot?3:1,borderRadius:2,transition:'background .12s, width .12s',
@@ -18616,7 +18625,7 @@ function CsSettingsPage({currentUserEmail, role}){
       <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
         {TABS.map(x=>(
           <div key={x.id} onClick={()=>{ if(!x.soon) setTab(x.id); }}
-            data-tip={x.soon?'아직 만드는 중입니다':undefined}
+            title={x.soon?'아직 만드는 중입니다':undefined}
             style={{padding:'6px 14px',borderRadius:16,fontSize:12,
               cursor: x.soon?'not-allowed':'pointer', userSelect:'none',
               border:'1px solid '+(tab===x.id?'var(--accent)':'var(--border)'),
@@ -18946,12 +18955,12 @@ function CsMacroSettings({currentUserEmail}){
                 borderRadius:4,padding:'1px 6px'}}>꺼짐</span>
             )}
             <div style={{flex:1}}></div>
-            <button onClick={()=>move(r,'up')} disabled={busy} data-tip="위로"
+            <button onClick={()=>move(r,'up')} disabled={busy} title="위로"
               style={miniBtn}>↑</button>
-            <button onClick={()=>move(r,'down')} disabled={busy} data-tip="아래로"
+            <button onClick={()=>move(r,'down')} disabled={busy} title="아래로"
               style={miniBtn}>↓</button>
             <button onClick={()=>toggleActive(r)} disabled={busy}
-              data-tip={r.is_active?'끄면 티켓에서 부를 수 없습니다':'다시 쓸 수 있게 켭니다'}
+              title={r.is_active?'끄면 티켓에서 부를 수 없습니다':'다시 쓸 수 있게 켭니다'}
               style={{...miniBtn, fontWeight:600,
                 color: r.is_active ? '#FF9B9B' : 'var(--green)',
                 borderColor: r.is_active ? 'rgba(248,113,113,.55)' : 'rgba(34,211,160,.55)',
@@ -19075,7 +19084,7 @@ function CsCatPick({value, cats, inp, onPick, onAdd, onRemove}){
                 <span onClick={()=>pick(c)}
                   style={{flex:1,cursor:'pointer',overflow:'hidden',
                     textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c}</span>
-                <span onClick={()=>onRemove(c)} data-tip="이 분류를 없앱니다"
+                <span onClick={()=>onRemove(c)} title="이 분류를 없앱니다"
                   style={{cursor:'pointer',color:'var(--sub)',opacity:.6,
                     fontSize:12,padding:'0 2px'}}>✕</span>
               </div>
@@ -19458,7 +19467,7 @@ function CsPick({value, options, onChange, placeholder, width}){
       {value && (
         <button type="button" onMouseDown={e=>e.preventDefault()}
           onClick={()=>{ onChange(''); setQ(''); setOpen(true); }}
-          data-tip="지우기"
+          title="지우기"
           style={{position:'absolute',right:6,top:6,background:'transparent',border:'none',
             color:'var(--sub)',fontSize:13,cursor:'pointer',lineHeight:1,padding:2}}>×</button>
       )}
@@ -19534,7 +19543,7 @@ const PHOTO_MAX    = 10;   // 한 줄에 붙일 수 있는 장수
 //
 // 그래서 두 갈래로 둔다 — **모양(풍선)은 하나, 부르는 법만 둘**이다.
 //   ① CsHint   … 「?」를 눌러 여는 것. 굵은 글씨·여러 줄 같은 «꾸민 내용» 을 담는다.
-//   ② data-tip … 버튼·항목에 바로 뜨는 것. 글자만 담는다. 예전 title= 을 대신한다.
+//   ② title=  … 버튼·항목에 바로 뜨는 것. 브라우저가 그리는 기본 툴팁 그대로다.
 //
 // ★★★ **왜 title= 을 걷어냈나** — 브라우저 기본 툴팁은 ①0.5~1초 늦게 뜨고 ②모양을
 //   못 고치며 ③어두운 콘솔 위에 흰 시스템 상자로 떠서 화면과 따로 논다. 110곳을
@@ -19549,92 +19558,26 @@ const PHOTO_MAX    = 10;   // 한 줄에 붙일 수 있는 장수
 //   대부분의 툴팁은 「복사」·「위로」처럼 두세 글자라, 넉넉한 여백과 1.8 줄간격을
 //   그대로 두면 짧은 말 하나에 큼직한 판이 뜬다. 여백·줄간격·모서리를 줄이고
 //   폭은 «내용만큼»(fixed 요소는 저절로 그렇게 된다) 쓰되 최대만 묶는다.
+// ★★ 이 값은 «「?」 풍선» 의 것이다 — 제니가 사진 첨부 조건 안내를 보고 「디자인 좋다」고
+//   한 그 크기다. 한때 이 상수를 «마우스오버 툴팁» 에도 함께 썼다가 짧은 말에 판이
+//   커 보여 줄였는데, 그 툴팁은 통째로 되돌렸으므로 여기도 원래 크기로 돌아온다.
+//   ★ 「?」 풍선은 여러 줄 안내를 담는 자리라 여백·줄간격이 넉넉해야 읽힌다 —
+//     한 줄짜리 툴팁과 같은 잣대로 재면 안 된다(줄여 놓으니 좁고 길쭉해졌다).
 const TIP_BOX = {
-  background:'#FFFFFF', border:'1px solid #C3D3EC', borderRadius:7,
-  boxShadow:'0 4px 12px rgba(11,22,45,.26)',
-  padding:'5px 9px', fontSize:10.5, lineHeight:1.55, color:'#16233F',
-  // ★★ pre-line 이다(normal 아님) — 문구에 넣어 둔 줄바꿈이 살아야 한다(제니 2026-09-03:
-  //   「배송비 미설정 카드 툴팁에 줄바꿈이 없어 내용 이해가 어렵다」). 그 문구는 원래
-  //   여러 줄이었는데 브라우저 기본 툴팁은 줄바꿈을 살려 주고 내 풍선은 뭉갰다.
-  //   ★ pre 가 아니라 pre-line 인 이유: 줄바꿈은 살리되 긴 줄은 폭에 맞춰 접혀야 한다.
-  textAlign:'left', fontWeight:400, whiteSpace:'pre-line',
+  background:'#FFFFFF', border:'1px solid #C3D3EC', borderRadius:9,
+  boxShadow:'0 6px 18px rgba(11,22,45,.28)',
+  padding:'9px 11px', fontSize:10.5, lineHeight:1.8, color:'#16233F',
+  textAlign:'left', fontWeight:400, whiteSpace:'normal',
 };
 // 꼬리 — 네모를 45° 돌려 만들고 «두 변만» 남겨 풍선과 이어 붙인다.
 function TipCaret({down, left}){
   return (
-    <span style={{position:'absolute',left:left,width:8,height:8,
+    <span style={{position:'absolute',left:left,width:9,height:9,
       transform:'rotate(45deg)',background:'#FFFFFF',
-      ...(down ? {top:'100%',marginTop:-4.5,
+      ...(down ? {top:'100%',marginTop:-5,
                   borderRight:'1px solid #C3D3EC',borderBottom:'1px solid #C3D3EC'}
-               : {bottom:'100%',marginBottom:-4.5,
+               : {bottom:'100%',marginBottom:-5,
                   borderLeft:'1px solid #C3D3EC',borderTop:'1px solid #C3D3EC'})}}></span>
-  );
-}
-
-// 화면에 하나만 둔다(App 맨 끝). data-tip 이 붙은 것 위에 오면 그 풍선을 그린다.
-function TipLayer(){
-  const [tip,setTip] = useState(null);   // {text, rect}
-  const [pos,setPos] = useState(null);   // {top,left,down,caret}
-  const cur = useRef(null);
-  const box = useRef(null);
-
-  useEffect(()=>{
-    const move = (e)=>{
-      const hit = document.elementFromPoint(e.clientX, e.clientY);
-      const el  = hit && hit.closest ? hit.closest('[data-tip]') : null;
-      if(el === cur.current) return;          // 같은 것 위면 아무 일도 안 한다
-      cur.current = el;
-      let text = el && el.getAttribute('data-tip');
-      // ★★ data-tip-clip 이 붙어 있으면 «글자가 잘렸을 때만» 띄운다(제니 2026-09-03:
-      //   상품 목록에서 짧은 상품명에도 툴팁이 떠서 성가시다). 잘림은 CSS 가 정하는
-      //   것이라 코드가 미리 알 수 없다 — 그 자리에서 재는 수밖에 없다.
-      //   +1 은 소수점 반올림 여유다(잘리지 않았는데 1px 차이로 잘린 것처럼 잡힌다).
-      if(text && el.hasAttribute('data-tip-clip') && el.scrollWidth <= el.clientWidth + 1){
-        text = null;
-      }
-      setPos(null);
-      setTip(text ? {text, rect: el.getBoundingClientRect()} : null);
-    };
-    const gone = ()=>{ cur.current = null; setPos(null); setTip(null); };
-    document.addEventListener('mousemove', move, {passive:true});
-    document.addEventListener('mouseleave', gone);
-    // ★ 구르거나 창을 떠나면 지운다 — 안 지우면 풍선만 남아 엉뚱한 자리에 떠 있는다.
-    window.addEventListener('scroll', gone, true);
-    window.addEventListener('blur', gone);
-    return ()=>{
-      document.removeEventListener('mousemove', move);
-      document.removeEventListener('mouseleave', gone);
-      window.removeEventListener('scroll', gone, true);
-      window.removeEventListener('blur', gone);
-    };
-  },[]);
-
-  // ★ 자리는 «그린 뒤» 에 잰다 — 풍선 크기를 알아야 위/아래를 정할 수 있다.
-  //   그래서 처음 한 번은 안 보이게 그리고(visibility) 재서 옮긴다.
-  useLayoutEffect(()=>{
-    if(!tip || !box.current) return;
-    const b = box.current.getBoundingClientRect();
-    const r = tip.rect, vw = window.innerWidth, vh = window.innerHeight;
-    const up = r.top - b.height - 10 >= 8;         // 위에 자리가 있나
-    const top = up ? r.top - b.height - 10
-                   : Math.min(vh - b.height - 8, r.bottom + 10);
-    let left = r.left + r.width/2 - b.width/2;
-    left = Math.max(8, Math.min(left, vw - b.width - 8));
-    // 꼬리는 «가리키는 것의 한가운데» 를 향하되 풍선 밖으로 나가지 않게 묶는다.
-    const caret = Math.max(10, Math.min(r.left + r.width/2 - left - 4.5, b.width - 19));
-    setPos({top, left, down:up, caret});
-  },[tip]);
-
-  if(!tip) return null;
-  return (
-    <div ref={box} style={{position:'fixed',zIndex:4000,pointerEvents:'none',
-      // ★ 폭을 안 준다 — fixed 요소는 내용만큼만 쓴다. 긴 문구만 이 선에서 접힌다.
-      maxWidth:250, ...TIP_BOX,
-      top: pos ? pos.top : -9999, left: pos ? pos.left : -9999,
-      visibility: pos ? 'visible' : 'hidden'}}>
-      {tip.text}
-      {pos && <TipCaret down={pos.down} left={pos.caret}/>}
-    </div>
   );
 }
 
@@ -19646,7 +19589,7 @@ function TipLayer(){
 //   «겹친 네모 두 개» 인데, 그 모양의 유니코드 글자(🗐·⧉)는 글꼴에 따라 네모(□)로
 //   떨어지거나 크기가 제멋대로다 — 작은 아이콘일수록 그 위험이 크다(이모지가
 //   작게 뭉개지던 것을 이미 겪었다). SVG 는 어디서나 같게 그려지고 색도 물려받는다.
-// ★ 커서를 대면 «복사» 가 뜬다 — 콘솔 공통 툴팁(data-tip)을 쓴다.
+// ★ 커서를 대면 «복사» 가 뜬다(브라우저 기본 툴팁).
 function CsCopy({value}){
   const [ok,setOk] = useState(false);
   const text = value==null ? '' : String(value).trim();
@@ -19675,7 +19618,7 @@ function CsCopy({value}){
   };
 
   return (
-    <button type="button" onClick={go} data-tip={ok ? '복사했습니다' : '복사'}
+    <button type="button" onClick={go} title={ok ? '복사했습니다' : '복사'}
       style={{marginLeft:5,width:19,height:19,padding:0,flex:'0 0 auto',
         display:'inline-flex',alignItems:'center',justifyContent:'center',
         verticalAlign:'middle',borderRadius:4,cursor:'pointer',
@@ -19712,10 +19655,11 @@ function CsHint({children, width}){
           fontSize:10,fontWeight:700,lineHeight:1,userSelect:'none',
           background:'#DEE9FF',color:'#1B3E86',border:'1px solid #A9C3F2'}}>?</span>
       {on && (
-        // ★ 모양은 TIP_BOX 하나에서 온다 — data-tip 풍선과 «같은 것» 이어야 한다.
-        //   두 벌로 두면 한쪽만 손보게 되고, 그때부터 화면에 툴팁이 두 종류가 된다.
+        // ★ 모양은 TIP_BOX 한 곳에서 온다 — 「?」 풍선이 여럿 생겨도 한 모양이다.
         <span style={{position:'absolute',bottom:'calc(100% + 8px)',left:-6,
-          maxWidth:width||236,zIndex:60, ...TIP_BOX}}>
+          // ★ 폭은 «고정» 이다. 내용에 맡기면(maxWidth) 짧은 줄에 맞춰 통째로 좁아져
+          //   여러 줄 안내가 세로로 길쭉해진다(제니 제보 2026-09-03).
+          width:width||236,zIndex:60, ...TIP_BOX}}>
           {children}
           <TipCaret down left={14}/>
         </span>
@@ -20580,7 +20524,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                 return (
                   <div key={it.code}>
                     <div onClick={()=>!blocked && toggle(it)}
-                      data-tip={blocked ? '공급사가 달라 함께 접수할 수 없습니다 ('+(it.supplier_name||'—')+')' : ''}
+                      title={blocked ? '공급사가 달라 함께 접수할 수 없습니다 ('+(it.supplier_name||'—')+')' : ''}
                       style={{padding:'7px 9px',borderRadius:6,marginBottom:4,fontSize:11,
                         cursor: blocked?'not-allowed':'pointer', opacity: blocked?.45:1,
                         border:'1px solid '+(on?'var(--primary)':'var(--border)'),
@@ -21799,7 +21743,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               ['edit','🕐','변경 이벤트']].map(([id,label,tip])=>{
               const on = evTab===id;
               return (
-                <div key={id} onClick={()=>setEvTab(id)} data-tip={tip}
+                <div key={id} onClick={()=>setEvTab(id)} title={tip}
                   style={{padding:'4px 11px',borderRadius:13,fontSize:11,cursor:'pointer',
                     userSelect:'none',
                     border:'1px solid '+(on?'var(--primary)':'var(--border)'),
@@ -21848,7 +21792,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                     /* ★ 뱃지 자체가 여는 손잡이다. 옆에 [펼치기] 를 따로 두면
                          작은 글씨 옆에 작은 버튼이 하나 더 붙어 둘 다 안 눌린다. */
                     <span onClick={()=>setOpenEdits(p=>({...p,[e.id]:!p[e.id]}))}
-                      data-tip={openEdits[e.id]?'접기':'무엇이 바뀌었는지 보기'}
+                      title={openEdits[e.id]?'접기':'무엇이 바뀌었는지 보기'}
                       style={{fontSize:10,fontWeight:600,color:'var(--sub)',cursor:'pointer',
                         border:'1px dashed var(--border)',borderRadius:4,padding:'1px 6px',
                         userSelect:'none'}}>
@@ -21887,7 +21831,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                         (지우기는 «잘못 적은 대목» 을 위한 것이다.) */}
                   {!isEdit && e.side!=='시스템' && e.note && (isMaster || e.actor===currentUserEmail) && (
                     <button onClick={()=>setRedactId(redactId===e.id?null:e.id)} disabled={busy}
-                      data-tip="잘못 적은 대목을 지웁니다"
+                      title="잘못 적은 대목을 지웁니다"
                       style={{background:'transparent',border:'none',
                         color: redactId===e.id ? 'var(--red)' : 'var(--sub)',
                         fontSize:10,cursor:'pointer',padding:'0 2px',lineHeight:1,
@@ -22128,7 +22072,7 @@ function CsSortTh({k, w, label, sortable=true, sort, onClick}){
   return (
     <th style={{...csTh(w), cursor: sortable?'pointer':'default',
         color: on ? 'var(--accent)' : 'var(--sub)', userSelect:'none'}}
-      data-tip={sortable ? '눌러서 정렬' : undefined}
+      title={sortable ? '눌러서 정렬' : undefined}
       onClick={sortable ? ()=>onClick(k) : undefined}>
       {label}
       <span style={{marginLeft:4, visibility: on?'visible':'hidden'}}>
@@ -22227,7 +22171,7 @@ class PageErrorBoundary extends React.Component {
 function RoleTag() {
   /* ★ 「M」 한 글자인 이유는 자리다 — 220px 사이드바에서 「master」(약 39px)를 달면
      이름이 긴 메뉴가 잘린다. 뜻은 마우스를 올렸을 때 뜬다. */
-  return <span className="nav-tag" data-tip="master 전용 메뉴입니다">M</span>;
+  return <span className="nav-tag" title="master 전용 메뉴입니다">M</span>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22724,7 +22668,7 @@ function AccountPage({session,role,alerts,onGo}){
                 {/* ★ 충전 «페이지» 가 아니라 SOLAPI 콘솔 첫 화면으로 보낸다. 깊은 주소는
                     서비스 개편으로 조용히 죽는데, 그러면 급할 때 404 를 만난다. */}
                 <a href="https://console.solapi.com/" target="_blank" rel="noreferrer"
-                  data-tip="SOLAPI 콘솔이 새 탭으로 열립니다"
+                  title="SOLAPI 콘솔이 새 탭으로 열립니다"
                   style={{padding:'8px 14px',background:'rgba(246,173,9,.12)',
                     border:'1px solid rgba(246,173,9,.45)',borderRadius:8,color:'#F6AD09',
                     fontSize:12,fontWeight:700,fontFamily:'inherit',whiteSpace:'nowrap',
@@ -23050,7 +22994,7 @@ function App() {
                         key={p.id}
                         className={`nav-child ${page==='costs'&&costState.view==='project'&&costState.activeId===p.id?'active':''}`}
                         onClick={()=>goCost({view:'project',id:p.id})}
-                        data-tip={p.name}
+                        title={p.name}
                         style={{display:'flex',alignItems:'center',gap:6}}
                       >
                         <span style={{flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
@@ -23086,7 +23030,7 @@ function App() {
           {/* ★ 창이 아니라 «화면» 으로 간다(제니 지시 2026-08-26). 계정 정보 밑에
               메뉴별 설정이 붙을 자리라 창 크기로는 감당이 안 된다. */}
           <div className={"user-info"+(page==='account'?' active':'')} onClick={()=>navigateTo('account')}
-            data-tip="계정 정보 · 설정">
+            title="계정 정보 · 설정">
             <div className="user-avatar">{session.user.email?.[0]?.toUpperCase()}</div>
             <div style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:3}}>
               <div className="user-email">{session.user.email}</div>
@@ -23098,7 +23042,7 @@ function App() {
                 };
                 // 알 수 없는 role(예: stale 토큰의 옛 권한값)은 'UNKNOWN' 회색 뱃지로 표시 (crew로 fallback X)
                 const rs=roleStyle[role]||{label:'UNKNOWN',bg:'rgba(150,150,150,.15)',color:'#888888',border:'rgba(150,150,150,.4)'};
-                return <span data-tip={role?('현재 권한값: '+role):'권한 정보 없음'} style={{display:'inline-block',alignSelf:'flex-start',padding:'1px 7px',background:rs.bg,color:rs.color,border:'1px solid '+rs.border,borderRadius:3,fontSize:9,fontWeight:700,letterSpacing:'.06em',fontFamily:'monospace'}}>{rs.label}</span>;
+                return <span title={role?('현재 권한값: '+role):'권한 정보 없음'} style={{display:'inline-block',alignSelf:'flex-start',padding:'1px 7px',background:rs.bg,color:rs.color,border:'1px solid '+rs.border,borderRadius:3,fontSize:9,fontWeight:700,letterSpacing:'.06em',fontFamily:'monospace'}}>{rs.label}</span>;
               })()}
             </div>
             {/* ── 알림 종 (2026-08-31 제니 요청) ────────────────────────────────
@@ -23110,7 +23054,7 @@ function App() {
                 ★ 알림이 없으면 회색으로 조용히 있는다. 색이 늘 노랗게 켜져 있으면
                   «켜져 있음» 이 배경이 되어 정작 알림이 왔을 때 눈에 안 띈다. */}
             <button ref={bellRef} onClick={(e)=>{e.stopPropagation();setBellOpen(o=>!o);}}
-              data-tip={alerts.length>0?alerts.length+'건의 알림이 있습니다':'알림이 없습니다'}
+              title={alerts.length>0?alerts.length+'건의 알림이 있습니다':'알림이 없습니다'}
               style={{position:'relative',flex:'0 0 auto',background:'transparent',border:'none',
                 padding:'2px 4px 2px 6px',cursor:'pointer',lineHeight:1,fontSize:17,
                 filter:alerts.length>0?'none':'grayscale(1)',opacity:alerts.length>0?1:.45}}>
@@ -23149,7 +23093,7 @@ function App() {
               <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
                 <span style={{fontSize:11,fontWeight:700,color:'#F6AD09'}}>확인이 필요합니다</span>
                 <span style={{flex:1}}></span>
-                <button onClick={()=>setBellOpen(false)} data-tip="접어 둡니다"
+                <button onClick={()=>setBellOpen(false)} title="접어 둡니다"
                   style={{background:'transparent',border:'none',color:'var(--sub)',fontSize:14,
                     cursor:'pointer',lineHeight:1,padding:0}}>×</button>
               </div>
@@ -23195,11 +23139,6 @@ function App() {
         {page==='auditLog'&&(isMaster?<AuditLogPage/>:<NoAccessPage/>)}
         </PageErrorBoundary>
       </div>
-      {/* ★ 툴팁은 화면에 «하나» 만 둔다(2026-09-03). data-tip 이 붙은 것 위에 마우스가
-          오면 이 레이어가 풍선을 그린다. 여기 두는 이유는 ①화면마다 만들면 모양이
-          갈리고 ②position:fixed 라 어느 화면에 있든 잘리지 않기 때문이다.
-          ★ 로그인 화면 밖(이 안쪽)에 두어도 된다 — 로그인 전에는 툴팁을 쓸 일이 없다. */}
-      <TipLayer/>
     </div>
   );
 }
