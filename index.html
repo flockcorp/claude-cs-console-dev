@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260903b_nav_depth_size -->
+<!-- (2026-09-03) 사이드바에서 1뎁스 메뉴명이 하위 메뉴명보다 «작았다»(제니 지적). 실제로 그랬다 — .nav-parent 11px < .nav-child 12px 이고, 자식 없는 1뎁스 메뉴(.nav-item)만 13px 이라 1뎁스 안에서도 두 크기가 섞여 있었다. 원인은 부모를 처음에 «작은 대문자 라벨»(uppercase + letter-spacing .1em)로 그린 것이다. 그건 «구역 이름표» 의 꼴인데, 이 클래스는 그룹 헤더(상품 관리·CS 관리)만이 아니라 자식 없는 1뎁스 메뉴(환불 관리·비용 비교 도구)까지 함께 쓰고 있어서 라벨처럼 작게 두면 그 메뉴들이 바로 아래 자식보다 작아진다. → 크기를 «뎁스» 로 통일했다: 1뎁스 13px(.nav-item 과 같은 값) · 2뎁스 12px. ★★ 키우면서 letter-spacing 을 함께 걷어냈다 — 220px 사이드바에서 자간은 곧 폭이다. 「비용 비교 도구」는 이름·M 뱃지·화살표가 한 줄에 서는 가장 빡빡한 줄이고 2026-08-25 에 실제로 잘렸던 자리라, 자간을 둔 채 키우면 다시 잘린다. 11px+.1em ≈ 77px → 13px+자간0 ≈ 82px 로, 이름 몫 약 111px(220 − 여백 24 − 여백 24 − 아이콘 18 − gap 10 − 뱃지 21 − 화살표 12) 안에 그대로 든다. ★ uppercase 도 뺐다 — 이름이 전부 한글이라 하는 일이 없는데 남겨 두면 나중에 영문 이름을 넣는 사람이 «왜 대문자가 되지» 를 겪는다. ★ 색은 안 건드렸다: 부모 var(--text) · 자식 var(--sub) 이라 크기와 색이 «같은 방향» 으로 뎁스를 말한다 — 1px 차이 하나에 층 읽기를 맡기지 않는다. ★ 뱃지의 text-transform:none·letter-spacing:0 방어는 남겼다(부모가 다시 자간을 갖게 돼도 뱃지가 «M A S T E R» 로 벌어지지 않게). 메뉴 구성·권한 판정·라우팅은 한 줄도 안 건드렸다. ★ dev 전용. -->
 <!-- v20260903a_reason_dir_fix -->
 <!-- (2026-09-03) 환불 사유 «방향» 정렬이 조용히 안 걸리던 것을 고쳤다. csReasonDir 이 split(/s+/) 로 쪼개고 있었다 — /\s+/ 를 넣으려던 것인데 셸을 거치며 백슬래시가 한 겹 먹혀 «알파벳 s» 가 됐다. 「불량 취소」가 안 쪼개지니 모든 사유가 «방향 모름»(999)이 되어 그룹 차례가 통째로 무시됐고, 오류는 한 줄도 안 났다. 제니가 화면을 보고 「반영이 안 됐다」고 한 자리다. ★★ «배포됐다» 와 «동작한다» 는 다른 말이다 — 배포 확인만 하고 넘어가지 말 것. ★ 고치면서 정규식을 아예 걷어냈다: 이름은 «유형 + 한 칸 + 방향» 한 모양인데 방향에 칸이 든 것(«정산 반영»)이 있어 마지막 낱말만 떼는 방법으로는 그것을 영영 못 찾는다. 차례 목록(CS_REASON_DIR_ORDER)에서 «끝말이 맞는 것» 을 찾고 겹치면 긴 쪽을 집는다. ★ 그래서 목록을 함수보다 «위» 로 올렸다(선언 순서). ★ 「오입금」·「기타」처럼 방향이 없는 이름은 예전대로 맨 뒤로 간다. ★ 이 함수는 운영에도 같은 모양으로 들어가 있다 — 운영도 같이 고쳐야 한다. -->
 <!-- v20260902zg_direction_edit -->
@@ -342,8 +344,23 @@
     .nav-section{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin:16px 0 6px}
     .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--sub);cursor:pointer;transition:all .15s;margin-bottom:2px}
     .nav-item:hover{background:var(--hover);color:var(--text)} .nav-item.active{background:rgba(246,173,9,.08);color:#F6AD09;border-left-color:#F6AD09;font-weight:600}
-    /* 2단계 메뉴: 부모(그룹 헤더) — 안 B 스타일 (작은 대문자 라벨) */
-    .nav-parent{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text);cursor:pointer;transition:all .15s;margin-top:8px;margin-bottom:2px}
+    /* 2단계 메뉴: 부모(그룹 헤더)
+       ★★ 크기는 «뎁스» 를 따른다 — 1뎁스 13px · 2뎁스 12px (2026-09-03 제니 지적:
+         「1뎁스보다 하위 메뉴명이 더 커 보인다」). 실제로 그랬다: 부모가 11px 인데
+         자식이 12px 이었다. 처음에 부모를 «작은 대문자 라벨» 로 그린 탓인데,
+         그건 «구역 이름표» 의 꼴이지 «메뉴» 의 꼴이 아니다. 그런데 이 클래스는
+         그룹 헤더(상품 관리·CS 관리)만이 아니라 자식 없는 1뎁스 메뉴(환불 관리·
+         비용 비교 도구)까지 쓰고 있어서, 라벨처럼 작게 두면 그 메뉴들이 바로 아래
+         자식들보다 작아진다. → .nav-item(13px)과 같은 크기로 맞췄다.
+       ★★ 키우면서 letter-spacing 을 함께 걷어냈다 — 220px 사이드바에서 자간은 곧 폭이다.
+         「비용 비교 도구」는 이름·M 뱃지·화살표가 한 줄에 서는 가장 빡빡한 줄이라
+         (2026-08-25 에 잘렸던 그 줄이다) 자간을 둔 채 키우면 다시 잘린다.
+         11px+.1em ≈ 77px → 13px+자간0 ≈ 82px 로, 이름 몫 약 111px 안에 그대로 든다.
+       ★ uppercase 도 뺐다 — 메뉴 이름이 전부 한글이라 하는 일이 없는데, 남겨 두면
+         나중에 영문 이름을 넣는 사람이 «왜 대문자가 되지» 를 겪는다.
+       ★ 색은 그대로 var(--text) 다. 자식은 var(--sub) 이라 크기와 색이 «같은 방향»
+         으로 뎁스를 말한다 — 1px 차이만으로 층을 읽히게 하지 않는다. */
+    .nav-parent{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;transition:all .15s;margin-top:8px;margin-bottom:2px}
     .nav-parent:hover{background:var(--hover)}
     /* 폭을 고정한다 — ▼/▶ 는 폰트마다 폭이 달라, 이 값이 흔들리면 아래 뱃지 정렬도 함께 흔들린다. */
     .nav-parent .chevron{margin-left:auto;font-size:11px;color:var(--sub);transition:transform .2s;width:12px;flex:none;text-align:center}
@@ -361,14 +378,15 @@
        뱃지 위치에 관여해 줄마다 어긋난다. 내용 폭만 쓰게 두면 뱃지가 이름에 붙는다.
        min-width:0 + shrink 는 남겨 둔다 — 자리가 모자라면 이름이 줄어 «…» 로 잘려야 한다. */
     .nav-label{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    /* 권한 뱃지 — master 전용은 또렷하게, master·manager 는 옅게.
-       ★ 부모 메뉴(.nav-parent)는 uppercase·letter-spacing 이 걸려 있어 그대로 두면
-         뱃지만 «M A S T E R» 로 벌어진다. 뱃지에서는 둘 다 끈다. */
+    /* 권한 뱃지 — master 전용은 또렷하게, master·manager 는 옅게. */
     /* master 전용 뱃지.
        ★ 테두리를 안 둔다 — 220px 사이드바에서는 2px 도 이름 자리다.
        ★ 배경은 active 배경(.08)보다 진한 .16 — 같은 노랑이라 연하면
          «지금 보고 있는 메뉴» 강조와 구분이 안 된다. 알약 모양이 따로 읽힐 만큼만 진하게.
-       ★ 부모 메뉴(.nav-parent)는 uppercase·letter-spacing 이 걸려 있어 뱃지에서만 둔다. */
+       ★ 뱃지 자신이 text-transform:none·letter-spacing:0 을 들고 있다 — 예전에 부모 메뉴가
+         uppercase·자간을 걸고 있어 뱃지만 «M A S T E R» 로 벌어졌던 자리다. 2026-09-03 에
+         부모 쪽 그 두 속성을 걷어냈지만, 이 방어는 남긴다: 뱃지가 어느 줄에 붙든
+         자기 모양을 스스로 지켜야 다음에 또 밟지 않는다. */
     /* ★ 뱃지는 «메뉴명 바로 뒤» 에 붙는다(2026-08-25 제니 제안으로 바꿈).
        그전에는 margin-left:auto 로 오른쪽 끝에 붙였는데, 그러면 뱃지가 «오른쪽 끝을
        정하는 것들» 과 얽힌다 — 토글 폭, 컨테이너 여백, 들여쓰기(.nav-child), 스크롤바.
