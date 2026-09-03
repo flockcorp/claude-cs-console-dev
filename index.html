@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<!-- v20260903e_order_level_receiver -->
+<!-- (2026-09-03) 카페24 «실제 환불액» 이 «품목 몫» 인지 아닌지를 밝히고, 아닐 때는 자동으로 넣지 않는다(제니 제보: 주문 20260903-0002139 를 등록 화면에서 조회하니 158,900원이 그대로 채워졌다). ★★★ 실측해 보니 카페24는 환불액을 «환불 건» 단위로 준다 — 품목별로 쪼개 주지 않는다. 그 주문은 환불이 «한 건» 인데 그 한 건이 품목 3개를 덮고 actual_refund_amount 는 158,900 하나뿐이다. 그래서 품목 하나로 좁혀도 158,900 이 그대로 나온다. 「품목으로 좁혔다」는 «그 품목이 든 환불을 골랐다» 는 뜻이지 «그 품목 몫만 셌다» 가 아니었다 — 내가 앞 판 설명에서 이 둘을 섞어 말했다. ★★ 겸해 함수의 matched_by_item 이 거짓말을 하고 있었다: 주문번호로 물으면 itemCode 가 없어 모든 행이 통과하므로 언제나 true 였고, 그래서 화면이 「주문 전체를 셌다」 를 영영 못 알렸다. → 함수에 scope(무엇을 물었나) · item_exact(이 금액을 티켓 한 건에 그대로 넣어도 되는가) · covers_item_count(이 환불이 덮는 품목 수) 를 더했다(백업 저장소 ea446a7 · dev 배포 완료). 화면은 item_exact 일 때만 자동으로 넣고, 아니면 「이 환불은 품목 3건을 함께 돌려준 건입니다 — 금액도 그 합계입니다」 와 「이 티켓 몫만 넣으려면 직접 적어 주세요」 를 적고 [그대로 넣기] 를 사람이 누를 때만 넣는다. ★ 버튼 이름을 「그대로 넣기」 로 둔 이유: 무엇을 하는지가 이름에 남아야 한다. -->
+<!-- (2026-09-03) 등록 화면에서 수령인·배송 주소지를 «주문마다 한 번» 만 그린다(제니: 「우리가 쓰는 카페24는 동일 주문번호 안의 품목별 주문번호가 같은 주문자·수령자·배송지를 갖는다. 품목별로 다른 값을 가질 수 없다」). ⚠ 2026-09-02 에 내가 반대로 만들었다 — 카페24 응답의 receivers 가 «배열» 이고 품목마다 shipping_code 로 이어지는 «구조» 를 보고 «주문 하나에 배송지가 여럿일 수 있다» 고 판단했다. **구조상 가능한 것과 이 쇼핑몰에서 실제로 일어나는 것은 다르다.** 그 결과 품목 셋을 고르면 같은 수령인·주소가 세 번 찍혔고, 값이 여러 번 보이면 «다를 수도 있는 값» 으로 읽힌다. ★★ DB 는 그대로 티켓마다 갖는다 — 티켓이 제 값을 들고 있어야 나중에 주문을 다시 안 봐도 된다. 그래서 화면에서 한 칸을 고치면 고른 품목 «전부» 에 들어간다(setAllIF). 첫 품목에만 쓰면 나머지 티켓이 빈 채로 저장되는데, 화면에는 한 번만 보이므로 사람이 알아챌 수 없다. ★ 보여 줄 값은 «값이 있는 첫 품목» 의 것을 쓴다(ordG). 「배송 주소지와 동일」 버튼도 그 값을 베끼게 바꿨다 — 그전에는 «고른 첫 품목» 을 집어서, 첫 품목만 값이 비면 화면에는 주소가 보이는데 버튼은 빈 값을 넣었다. ★ 「카페24에서 못 찾았습니다」 경고도 주문 단위로 바뀌었다(고른 품목이 다 못 이었을 때만). ★ 상세 화면은 티켓 하나 = 품목 하나라 원래 한 번만 나온다 — 이제 두 화면이 같은 모양이다. ★ 품목마다 다른 값(옵션명·주문 수량·CS 접수 수량)은 그대로 품목마다 둔다. ★ dev 전용. -->
 <!-- v20260903d_cs_fetch_refund -->
 <!-- (2026-09-03) 카페24가 «실제로 얼마를 돌려줬나» 를 티켓에서 바로 읽어 온다 — 엣지 함수 cs-fetch-refund 를 티켓 «등록·상세» 두 화면에 붙였다(제니 지시). 왜: 카드 결제 건은 상담원이 카페24 주문서에서 곧장 취소하고 티켓을 «환불 완료» 로 제출하는데, 그러면 금액을 손으로 옮겨 적을 이유가 없다 — 카페24가 이미 갖고 있고 옮겨 적으면 오타가 나며 그 오타가 정산까지 따라간다. ★★ 채우는 규칙은 «환불 수정 창»(2026-08-10)에서 정한 것을 그대로 썼다: ①빈 칸이면 채운다 ②값이 있으면 덮지 않고 「49,000 → 27,500」 으로 보여만 준다 ③바꾸는 것은 사람이 [카페24 값으로 바꾸기] 를 누를 때. 조용한 덮어쓰기가 가장 위험하다 — 같은 문제를 이미 푼 자리가 있으면 새 규칙을 만들지 않는다. ★★ 「환불이 없습니다」 를 붉게 그리지 않는다(회색이다). 네이버페이 주문은 카페24에 환불이 따로 안 잡혀 0건이 정상인 경우가 있고(제니 확인) 방금 처리한 건은 아직 안 올라와 있을 수 있다 — 붉게 그리면 멀쩡한 건을 사고로 읽는다. ★★ 조회 기준이 두 화면에서 다르다: 상세는 티켓이 품목 하나를 가리키므로 언제나 품목별 주문번호로 좁히고, 등록은 품목을 «하나» 골랐을 때만 그 품목으로 좁힌다 — 등록의 환불 금액은 고른 품목 전부에 같은 값으로 들어가서(rowOf), 품목 하나로 좁힌 금액을 여럿에 복사하면 틀리기 때문이다. 주문 전체로 셌을 때는 함수가 matched_by_item:false 로 알려 주고 화면이 「주문 전체의 환불을 셌습니다」 를 적는다. ★ 주문번호가 바뀌면 앞 주문의 조회 결과를 버린다(환불 수정 창에서 실제로 겪어 고친 자리다). ★ 이미 환불 관리로 넘긴 건에는 버튼을 두지 않는다 — 그 뒤로는 환불 «건» 이 진짜라 여기서 금액을 바꿔도 넘어간 건은 안 바뀐다. 바꿀 수 없는 값 옆의 조회 버튼은 「눌렀는데 반영이 안 된다」 가 된다. ★ 근거(환불번호·환불일·건수·취소수수료·적립금)를 함께 적는다 — 숫자만 보여 주면 어디서 온 값인지 못 되짚는다. ★ 두 화면이 «한 컴포넌트»(CsRefundFetch)를 쓴다: 환불 추가/수정 두 창이 갈라져 늘 같이 고쳐야 했던 전례가 있어 처음부터 한 곳에 뒀다. ★ 실측: 오늘 환불 건(20260903-0002376)으로 창구를 확인했다 — actual_refund_amount 27,500 · refund_code · refund_date 가 오고, order_item_code 는 «배열» 로 온다(함수가 배열 분기를 갖고 있다). 판정표 9가지를 파일에서 잘라 돌려 «값이 든 칸을 조용히 덮는 경우 없음» 을 확인했다. ★ 엣지 함수는 dev 에 배포 완료(워크플로 「Supabase - 엣지 함수 배포」). ★ dev 전용. -->
 <!-- v20260903c_recheck_row_align -->
@@ -19439,16 +19442,23 @@ function CsRefundFetch({orderRef, current, onPick}){
     setBusy(false);
     if(error){ setErr('카페24 환불 조회에 실패했습니다 — '+(error.message||'알 수 없는 오류')); return; }
     setRes(data||null);
-    // ★ 빈 칸일 때만 자동으로 넣는다(위 규칙 ①). 값이 있으면 건드리지 않는다.
-    if(data && data.found && cur==null && data.actual_refund_amount!=null){
+    // ★ 빈 칸이고 «이 품목 혼자의 금액» 일 때만 자동으로 넣는다.
+    //   item_exact 가 아니면 사람이 보고 정할 일이다(아래 exact 주석 참고).
+    if(data && data.found && data.item_exact && cur==null && data.actual_refund_amount!=null){
       onPick(data.actual_refund_amount); setFilled(true);
     }
   };
   const take = (n)=>{ onPick(n); setFilled(true); };
 
   const amt  = res && res.found ? res.actual_refund_amount : null;
-  const same = amt!=null && cur!=null && amt===cur;
-  const diff = amt!=null && cur!=null && amt!==cur;
+  // ★★★ exact = «이 금액을 이 티켓에 그대로 넣어도 되는가»(2026-09-03 제니 제보로 추가).
+  //   카페24는 환불액을 «환불 건» 단위로 준다 — 품목별로 쪼개 주지 않는다.
+  //   한 환불이 품목 3개를 함께 덮으면 금액도 3품목 합계 하나뿐이라, 품목 하나로
+  //   좁혀도 그 합계가 그대로 나온다. 그걸 티켓 한 건에 넣으면 그냥 틀린 값이다.
+  //   → 함수가 item_exact 로 답해 주고, 아닐 때는 «넣지 않고 보여만» 준다.
+  const exact = !!(res && res.found && res.item_exact);
+  const same = exact && amt!=null && cur!=null && amt===cur;
+  const diff = exact && amt!=null && cur!=null && amt!==cur;
   const box  = {fontSize:10.5,lineHeight:1.6,marginTop:4};
 
   return (
@@ -19467,8 +19477,26 @@ function CsRefundFetch({orderRef, current, onPick}){
       {err && <div style={{...box,color:'var(--red)'}}>{err}</div>}
 
       {res && res.found && (
-        <div style={{...box,color: diff ? '#F6AD09' : 'var(--green)'}}>
-          {diff ? (
+        <div style={{...box,color: (!exact || diff) ? '#F6AD09' : 'var(--green)'}}>
+          {/* ★★ 이 품목 «혼자» 의 금액이 아닐 때 — 넣지 않고 사실만 알린다.
+              숫자는 보여 준다(참고는 되니까). 다만 «넣기» 는 사람이 누를 때만이고,
+              버튼 이름도 「그대로 넣기」 로 두어 무엇을 하는지가 이름에 남게 했다. */}
+          {!exact ? (
+            <>
+              {res.note || '이 금액은 이 품목 혼자의 것이 아닙니다.'}
+              <div style={{marginTop:2}}>
+                카페24 환불액 <b>{won(amt)}</b>
+                {res.covers_item_count>1 && <> · 품목 {res.covers_item_count}건 합계</>}
+                <button onClick={()=>take(amt)}
+                  style={{marginLeft:6,padding:'2px 7px',borderRadius:5,fontSize:10,
+                    fontFamily:'inherit',cursor:'pointer',background:'transparent',
+                    border:'1px solid #F6AD09',color:'#F6AD09'}}>그대로 넣기</button>
+              </div>
+              <div style={{color:'var(--sub)',marginTop:2}}>
+                이 티켓 몫만 넣으려면 직접 적어 주세요.
+              </div>
+            </>
+          ) : diff ? (
             <>
               카페24 실제 환불액은 <b>{won(amt)}</b> 입니다 — 지금 칸의 값은 {won(cur)}.
               <button onClick={()=>take(amt)}
@@ -19487,13 +19515,6 @@ function CsRefundFetch({orderRef, current, onPick}){
             {res.cancel_fee_amount ? <> · 취소수수료 {won(res.cancel_fee_amount)}</> : null}
             {res.used_points ? <> · 적립금 {won(res.used_points)}</> : null}
           </div>
-          {/* 품목으로 못 좁혔으면 «주문 전체를 셌다» 는 것을 밝힌다 — 품목이 여럿인
-              주문에서 이 차이는 곧 금액 차이다. */}
-          {res.matched_by_item===false && (
-            <div style={{color:'#F6AD09',marginTop:2}}>
-              이 품목으로 좁혀지지 않아 <b>주문 전체</b>의 환불을 셌습니다. 확인해 주세요.
-            </div>
-          )}
         </div>
       )}
 
@@ -19561,8 +19582,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     setIF(code,'cs_qty',n);
   };
 
-  const cell = (code,k,ph,extra)=>{
-    const v = (itemF[code]||{})[k] || '';
+  // ★ 그리는 법과 «어디에 쓰나» 를 갈랐다(2026-09-03). 품목 칸(cell)과 주문 칸(ocell)이
+  //   생김새는 같고 쓰는 자리만 다르다 — 스타일을 두 벌 두면 한쪽만 손보게 된다.
+  const cellView = (v,ph,onSet,extra)=>{
     // ★ 값일 때도 «머리글과 같은 정렬» 을 따라야 한다(제니 제보 — 「주문」 이름과
     //   숫자가 틀어져 보였다). 입력칸에만 정렬을 주고 글자에는 안 줘서 생긴 어긋남이다.
     //   textAlign 은 블록에만 걸리므로 display:block 을 함께 준다.
@@ -19571,9 +19593,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     //   들어가 글자가 시작되는데 글자에는 그 여백이 없어 왼쪽으로 밀려 보였다.
     if(v) return <span style={{fontSize:12,color:'var(--text)',display:'block',
       paddingLeft:8,wordBreak:'break-word',lineHeight:1.5,...(extra||{})}}>{v}</span>;
-    return <input value={v} onChange={e=>setIF(code,k,e.target.value)} placeholder={ph}
+    return <input value={v} onChange={e=>onSet(e.target.value)} placeholder={ph}
       style={{...inp,fontSize:11,padding:'5px 7px',...(extra||{})}}/>;
   };
+  const cell = (code,k,ph,extra)=>
+    cellView((itemF[code]||{})[k] || '', ph, (v)=>setIF(code,k,v), extra);
 
   const plusDays = (n)=> new Date(Date.now()+9*3600*1000+n*86400000).toISOString().slice(0,10);
   const [recheck,setRecheck] = useState(()=>plusDays(3));
@@ -19589,6 +19613,35 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 
   const chosen = items.filter(i=>sel.indexOf(i.code)>=0);
   const head = chosen[0] || null;           // 공통 값(공급사·주문자)은 첫 품목에서 본다
+
+  // ★★★ 수령인·배송지는 «주문» 의 값이다 — 품목마다 갖지 않는다(제니 2026-09-03).
+  //   「우리가 쓰는 카페24는 동일 주문번호 안의 품목별 주문번호가 같은 주문자·수령자·
+  //   배송지를 갖는다. 품목별로 다른 값을 가질 수 없다.」
+  //   ⚠ 내가 2026-09-02 에 반대로 만들었다 — 카페24 응답의 receivers 가 «배열» 이고
+  //     품목마다 shipping_code 로 이어진다는 «구조» 를 보고 «주문 하나에 배송지가
+  //     여럿일 수 있다» 고 판단했다. 구조상 가능한 것과 이 쇼핑몰에서 실제로 일어나는
+  //     것은 다르다. 그 결과 품목 셋을 고르면 같은 수령인·주소가 세 번 찍혔다.
+  //   → 화면에는 «한 번만» 그린다. DB 는 그대로 티켓마다 갖는다(티켓이 제 값을 들고
+  //     있어야 나중에 주문을 다시 안 봐도 된다) — 그래서 고칠 때 고른 품목 «전부» 에 쓴다.
+  const ordG = (()=>{                       // 보여 줄 값: 값이 있는 첫 품목의 것
+    for(const it of chosen){
+      const g = itemF[it.code]||{};
+      if(g.receiver_name || g.receiver_phone || g.ship_zipcode || g.ship_address1) return g;
+    }
+    return head ? (itemF[head.code]||{}) : {};
+  })();
+  // ★ 한 칸을 고치면 고른 품목 전부에 같이 들어간다. 첫 품목에만 쓰면 나머지 티켓이
+  //   빈 채로 저장된다 — 화면에서 한 번만 보이므로 사람은 그것을 알아챌 수 없다.
+  const setAllIF = (k,v)=> setItemF(p=>{
+    const n = {...p};
+    chosen.forEach(it=>{ n[it.code] = {...(n[it.code]||{}), [k]:v}; });
+    return n;
+  });
+  // 카페24가 이 주문의 수령인을 못 이어 줬나 — 고른 품목이 다 못 이었을 때만 알린다.
+  const ordUnmatched = chosen.length>0 &&
+    chosen.every(it=> ((itemF[it.code]||{}).receiver_match||'none')==='none');
+  // 주문 칸 — 보이는 값은 ordG 에서, 고치면 고른 품목 «전부» 에 들어간다.
+  const ocell = (k,ph,extra)=> cellView(ordG[k] || '', ph, (v)=>setAllIF(k,v), extra);
   const lockSupplier = chosen.length ? (chosen[0].supplier_name||'') : null;
 
   const fetchOne = async (code)=>{
@@ -20052,8 +20105,16 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               ★★ 상세 화면과 «같은 뎁스» 다 — 고객(주문자·수령인) / 주소(배송·회수).
                 그전에는 등록만 「수령인 · 배송지」 라는 한 묶음이라, 같은 티켓을
                 만들 때와 볼 때 값이 다른 이름 아래 있었다.
-              ★★ 수령인은 «품목마다» 그린다. 주문 하나에 배송지가 여럿일 수 있어서다.
-                품목이 하나면 한 줄만 보이고, 여럿일 때만 갈라진다.
+              ★★★ 수령인·배송지는 «주문» 의 값이라 한 번만 그린다(제니 2026-09-03).
+                「동일 주문번호 안의 품목별 주문번호는 같은 주문자·수령자·배송지를 갖는다.
+                품목별로 다른 값을 가질 수 없다.」
+                ⚠ 2026-09-02 에 내가 반대로 만들었다 — 카페24 응답의 receivers 가 «배열»
+                  이고 품목마다 shipping_code 로 이어지는 «구조» 를 보고 «주문 하나에
+                  배송지가 여럿일 수 있다» 고 판단했다. **구조상 가능한 것과 이 쇼핑몰에서
+                  실제로 일어나는 것은 다르다.** 그래서 품목 셋을 고르면 같은 수령인·주소가
+                  세 번 찍혔다. 값이 여러 번 보이면 «다를 수도 있는 값» 으로 읽힌다.
+              ★ DB 는 그대로 티켓마다 갖는다 — 티켓이 제 값을 들고 있어야 나중에 주문을
+                다시 안 봐도 된다. 그래서 고치면 고른 품목 «전부» 에 들어간다(setAllIF).
               ★ 카페24가 준 값은 글자로 굳고, 못 받은 것만 입력칸이 된다. */}
           <div style={sec}>고객</div>
           {head && ro('주문자', (head.customer_name||'')
@@ -20062,82 +20123,50 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             <div style={{fontSize:11,color:'var(--sub)',marginBottom:9}}>
               품목을 고르면 카페24 주문서의 수령인·배송지가 여기 나옵니다.</div>
           )}
-          {chosen.map(it=>{
-            const g = itemF[it.code]||{};
-            const unmatched = (g.receiver_match||'none')==='none';
-            return (
-              <div key={it.code} style={{marginBottom:10}}>
-                {chosen.length>1 && (
-                  <div style={{fontSize:10,color:'var(--accent)',fontFamily:'monospace',
-                    marginBottom:4}}>…{it.code.slice(-3)}</div>
-                )}
-                {unmatched && (
-                  <div style={{fontSize:10.5,color:'#F6AD09',lineHeight:1.6,marginBottom:5}}>
-                    ⚠ 카페24에서 이 품목의 수령인·배송지를 찾지 못했습니다.
-                    확인해서 직접 넣어 주세요.
-                  </div>
-                )}
-                {/* ★★ «주문» 뎁스(공급사·주문자)와 «같은 줄 틀» 을 쓴다(제니 2026-09-02).
-                    여기만 따로 만든 격자를 쓰고 있어서 바로 위 줄들과 이름 자리가
-                    어긋났다 — 같은 칸 안에서 기준선이 둘이면 정렬이 없는 것과 같다.
-                    ★ 이름·연락처는 한 줄에 나란히 — 「홍길동 / 010-…」 은 한 사람을
-                      가리키는 한 덩어리라 두 줄로 나누면 오히려 흩어져 보인다. */}
-                {/* ★★ 바로 위 「주문자」 와 «같은 모양» 으로 그린다(제니 2026-09-02).
-                    같은 뎁스에서 한 줄은 「이름 · 연락처」, 다른 줄은 「이름 / 연락처」 에
-                    글자 크기까지 다르면 두 값이 서로 다른 것처럼 읽힌다. 「/」와 11.5px 은
-                    입력칸 둘을 나란히 두려고 쓴 것이었는데, 값이 있을 때는 입력칸이
-                    아니므로 나눌 이유도 없다.
-                    ★ 카페24가 못 준 때만 입력칸 둘로 편다 — 그때는 나눠 넣어야 한다. */}
-                {(g.receiver_name || g.receiver_phone)
-                  ? ro('수령인', [g.receiver_name, g.receiver_phone].filter(Boolean).join(' · '))
-                  : roRow('수령인', (
-                      <div style={{display:'flex',gap:6,alignItems:'center',minWidth:0}}>
-                        <div style={{minWidth:0}}>{cell(it.code,'receiver_name','이름')}</div>
-                        <div style={{flex:1,minWidth:0}}>{cell(it.code,'receiver_phone','연락처')}</div>
-                      </div>
-                    ))}
-              </div>
-            );
-          })}
+          {ordUnmatched && (
+            <div style={{fontSize:10.5,color:'#F6AD09',lineHeight:1.6,marginBottom:5}}>
+              ⚠ 카페24에서 이 주문의 수령인·배송지를 찾지 못했습니다.
+              확인해서 직접 넣어 주세요.
+            </div>
+          )}
+          {/* ★★ 바로 위 「주문자」 와 «같은 모양» 으로 그린다(제니 2026-09-02).
+              같은 뎁스에서 한 줄은 「이름 · 연락처」, 다른 줄은 「이름 / 연락처」 에
+              글자 크기까지 다르면 두 값이 서로 다른 것처럼 읽힌다.
+              ★ 카페24가 못 준 때만 입력칸 둘로 편다 — 그때는 나눠 넣어야 한다. */}
+          {chosen.length>0 && ((ordG.receiver_name || ordG.receiver_phone)
+            ? ro('수령인', [ordG.receiver_name, ordG.receiver_phone].filter(Boolean).join(' · '))
+            : roRow('수령인', (
+                <div style={{display:'flex',gap:6,alignItems:'center',minWidth:0}}>
+                  <div style={{minWidth:0}}>{ocell('receiver_name','이름')}</div>
+                  <div style={{flex:1,minWidth:0}}>{ocell('receiver_phone','연락처')}</div>
+                </div>
+              )))}
 
           {/* ── 주소 ───────────────────────────────────────────────────────
-              ★ 배송 주소지도 «품목마다» 다. 위 「고객」 과 같은 차례로 돈다. */}
+              ★ 배송 주소지도 «주문» 의 값이다 — 위 「수령인」 과 같은 규칙으로 한 번만. */}
           <div style={sec}>주소</div>
-          {chosen.map(it=>{
-            const g = itemF[it.code]||{};
-            return (
-              <div key={it.code} style={{marginBottom:6}}>
-                {chosen.length>1 && (
-                  <div style={{fontSize:10,color:'var(--accent)',fontFamily:'monospace',
-                    marginBottom:4}}>…{it.code.slice(-3)}</div>
-                )}
-                {/* ★★ 카페24가 준 주소는 «한 줄» 로 잇고, 이름 «오른쪽» 에 둔다(제니).
-                      [06151] 서울 강남구 언주로98길 36 루트원 레지던스 607호
-                    우편번호·주소·상세주소는 «한 주소» 이지 세 값이 아니다 — 칸을 나눠
-                    두면 읽는 사람이 머릿속에서 다시 이어 붙여야 한다.
-                    ★ 못 받았을 때만 세 칸으로 편다(그때는 사람이 나눠 넣어야 한다).
-                      그 경우에만 이름을 위에 두는 «넓은 줄» 이 된다 — 입력칸 셋이
-                      이름 옆 좁은 자리에 들어가면 주소가 다시 잘린다. */}
-                {(g.ship_zipcode || g.ship_address1 || g.ship_address2)
-                  ? roRow('배송 주소지', (
-                      <div style={{fontSize:11.5,color:'var(--text)',padding:'0 8px',
-                        lineHeight:1.5,wordBreak:'break-word'}}>
-                        {[g.ship_zipcode ? '['+g.ship_zipcode+']' : '',
-                          g.ship_address1, g.ship_address2].filter(Boolean).join(' ')}
-                      </div>
-                    ), {alignItems:'baseline'})
-                  : rowWide('배송 주소지', (
-                      <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:'4px 5px',
-                        alignItems:'baseline'}}>
-                        <div style={{width:62}}>{cell(it.code,'ship_zipcode','우편')}</div>
-                        <div style={{minWidth:0}}>{cell(it.code,'ship_address1','주소')}</div>
-                        <div></div>
-                        <div style={{minWidth:0}}>{cell(it.code,'ship_address2','상세 주소')}</div>
-                      </div>
-                    ))}
-              </div>
-            );
-          })}
+          {/* ★★ 카페24가 준 주소는 «한 줄» 로 잇고, 이름 «오른쪽» 에 둔다(제니).
+                [06151] 서울 강남구 언주로98길 36 루트원 레지던스 607호
+              우편번호·주소·상세주소는 «한 주소» 이지 세 값이 아니다 — 칸을 나눠
+              두면 읽는 사람이 머릿속에서 다시 이어 붙여야 한다.
+              ★ 못 받았을 때만 세 칸으로 편다(그때는 사람이 나눠 넣어야 한다). */}
+          {chosen.length>0 && ((ordG.ship_zipcode || ordG.ship_address1 || ordG.ship_address2)
+            ? roRow('배송 주소지', (
+                <div style={{fontSize:11.5,color:'var(--text)',padding:'0 8px',
+                  lineHeight:1.5,wordBreak:'break-word'}}>
+                  {[ordG.ship_zipcode ? '['+ordG.ship_zipcode+']' : '',
+                    ordG.ship_address1, ordG.ship_address2].filter(Boolean).join(' ')}
+                </div>
+              ), {alignItems:'baseline'})
+            : rowWide('배송 주소지', (
+                <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:'4px 5px',
+                  alignItems:'baseline'}}>
+                  <div style={{width:62}}>{ocell('ship_zipcode','우편')}</div>
+                  <div style={{minWidth:0}}>{ocell('ship_address1','주소')}</div>
+                  <div></div>
+                  <div style={{minWidth:0}}>{ocell('ship_address2','상세 주소')}</div>
+                </div>
+              )))}
           {/* ★ 2뎁스 선 — 「주소」 묶음 «안» 에서 배송지와 회수지를 나눈다.
               1뎁스보다 연해야 «큰 묶음이 아니라 그 안의 갈래» 로 읽힌다. */}
           <div style={sec2}></div>
@@ -20160,11 +20189,13 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                 placeholder="주소" style={{...inp,marginBottom:5}}/>
               <input value={f.pickup_address2} onChange={e=>set('pickup_address2',e.target.value)}
                 placeholder="상세 주소" style={{...inp,marginBottom:5}}/>
-              {/* ★ 배송지가 f 가 아니라 «품목» 에 있다. 고른 첫 품목의 것을 베낀다 —
-                  여러 품목의 배송지가 다르면 회수지는 사람이 정할 일이라 첫 것을 준다. */}
-              <button onClick={()=>{ const g = itemF[(chosen[0]||{}).code]||{};
-                  setF(p=>({...p, pickup_zipcode:g.ship_zipcode||'',
-                    pickup_address1:g.ship_address1||'', pickup_address2:g.ship_address2||''})); }}
+              {/* ★ 배송지는 f 가 아니라 품목 칸에 담겨 있다. 위에서 보여 준 그 값(ordG)을
+                  그대로 베낀다 — 화면에 보이는 주소와 버튼이 넣는 주소가 달라지면 안 된다.
+                  (2026-09-03 이전에는 «고른 첫 품목» 을 집었는데, 첫 품목만 값이 비어 있으면
+                   화면에는 주소가 보이는데 버튼은 빈 값을 넣는 일이 생긴다.) */}
+              <button onClick={()=>{
+                  setF(p=>({...p, pickup_zipcode:ordG.ship_zipcode||'',
+                    pickup_address1:ordG.ship_address1||'', pickup_address2:ordG.ship_address2||''})); }}
                 style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
                   cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
                   color:'var(--sub)'}}>배송 주소지와 동일</button>
