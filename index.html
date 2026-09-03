@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260903f_history_light_and_badges -->
+<!-- (2026-09-03) 제니 요청 넷을 함께 넣었다. ①**시스템 이력**: 작성자를 «시스템» 으로 적고 «지우기» 를 없앴다. 그전에는 그 줄을 만든 워크플로 이름(workflow)이 사람 자리에 그대로 찍혔다 — 누가 적었는지는 이미 왼쪽 «시스템» 뱃지가 말하므로 같은 말을 쓴다. 지우기를 뺀 이유는 그것이 사람이 «적은 글» 이 아니라 «일어난 일의 기록» 이기 때문이다: 지우면 그 일이 안 일어난 것처럼 보이고, 애초에 잘못 적을 사람도 없다(지우기는 «잘못 적은 대목» 을 위한 것이다). ②**이력 작성 칸을 밝게**(등록·상세 둘 다) — 「사람이 수동으로 처리해야 하는 부분이라 구분되게」. 쌓인 이력은 «읽는 곳» 이라 어두운 채로 두고 적는 칸만 밝혀, 그 경계가 곧 «읽는 곳 / 쓰는 곳» 의 경계가 되게 했다. ★★ 밝은 바탕에는 어두운 글자다 — 어두운 화면용 색을 그대로 옮기면 밝은 글자가 밝은 바탕에 잠긴다(2026-08-26 에 뱃지 색을 흰 표로 옮기다 실제로 밟았고 「글자가 뭉개져 보인다」는 말을 들었다). 그래서 «누가» 칩에 밝은 판용 색표(CS_SIDE_STYLE_LIGHT)를 따로 뒀다 — 뜻(색 계열)은 지키고 명도만 뒤집어서, 저장하면 붙을 뱃지와 같은 색으로 읽힌다. ★ 못 누르는 버튼도 함께 고쳤다: var(--border)(어두운 남색)를 밝은 바탕에 두면 오히려 «누를 수 있는 것» 처럼 진해 보인다 → 밝은 회색으로 눕혔다. 판 안의 노란 알림(«티켓 정보에서 바꾼 것»)도 밝은 노랑으로 바꿨다. 색은 CS_WRITE 한 곳에서만 온다. ③**공급사 이름 옆에 소통 채널 뱃지**(등록·상세). 공급사 접수는 건별 실시간이고 채널이 공급사마다 다르다(메일·네이트온·카카오톡) — 티켓을 보는 자리에서 「어디로 보내나」가 바로 읽히면 공급사 관리 화면을 따로 열 일이 없다. ★★ «미설정» 과 «못 읽었다» 를 가른다: 채널이 실제로 안 정해진 공급사는 그 사실을 보여 주고(그 공급사에는 접수를 못 보낸다는 뜻이다), 조회가 실패하면 아무것도 안 그린다 — 없는 것을 설명할 때 이유를 지어내지 않는다. ★ 겸해 같은 색표가 두 컴포넌트에 복사돼 있던 것을 모듈 자리 하나로 올렸다(SUP_CHANNELS). 세 벌이 되면 «같은 뜻은 화면마다 같은 색» 이 반드시 깨진다. ④**묶음 티켓의 «메인» 버튼을 따로 칠했다** — 형제 번호가 모두 같은 회색이라 어느 것이 메인인지 눌러 봐야 알았다. 이력이 메인에 쌓이므로 그 번호는 묶음에서 가장 자주 누르는 자리다. 색은 바로 왼쪽 «메인» 뱃지와 같은 색을 쓴다 — 같은 뜻을 다른 색으로 칠하면 둘이 다른 것을 가리키는 줄 알게 된다. ★ dev 전용. -->
 <!-- v20260903e_order_level_receiver -->
 <!-- (2026-09-03) 카페24 «실제 환불액» 이 «품목 몫» 인지 아닌지를 밝히고, 아닐 때는 자동으로 넣지 않는다(제니 제보: 주문 20260903-0002139 를 등록 화면에서 조회하니 158,900원이 그대로 채워졌다). ★★★ 실측해 보니 카페24는 환불액을 «환불 건» 단위로 준다 — 품목별로 쪼개 주지 않는다. 그 주문은 환불이 «한 건» 인데 그 한 건이 품목 3개를 덮고 actual_refund_amount 는 158,900 하나뿐이다. 그래서 품목 하나로 좁혀도 158,900 이 그대로 나온다. 「품목으로 좁혔다」는 «그 품목이 든 환불을 골랐다» 는 뜻이지 «그 품목 몫만 셌다» 가 아니었다 — 내가 앞 판 설명에서 이 둘을 섞어 말했다. ★★ 겸해 함수의 matched_by_item 이 거짓말을 하고 있었다: 주문번호로 물으면 itemCode 가 없어 모든 행이 통과하므로 언제나 true 였고, 그래서 화면이 「주문 전체를 셌다」 를 영영 못 알렸다. → 함수에 scope(무엇을 물었나) · item_exact(이 금액을 티켓 한 건에 그대로 넣어도 되는가) · covers_item_count(이 환불이 덮는 품목 수) 를 더했다(백업 저장소 ea446a7 · dev 배포 완료). 화면은 item_exact 일 때만 자동으로 넣고, 아니면 「이 환불은 품목 3건을 함께 돌려준 건입니다 — 금액도 그 합계입니다」 와 「이 티켓 몫만 넣으려면 직접 적어 주세요」 를 적고 [그대로 넣기] 를 사람이 누를 때만 넣는다. ★ 버튼 이름을 「그대로 넣기」 로 둔 이유: 무엇을 하는지가 이름에 남아야 한다. -->
 <!-- (2026-09-03) 등록 화면에서 수령인·배송 주소지를 «주문마다 한 번» 만 그린다(제니: 「우리가 쓰는 카페24는 동일 주문번호 안의 품목별 주문번호가 같은 주문자·수령자·배송지를 갖는다. 품목별로 다른 값을 가질 수 없다」). ⚠ 2026-09-02 에 내가 반대로 만들었다 — 카페24 응답의 receivers 가 «배열» 이고 품목마다 shipping_code 로 이어지는 «구조» 를 보고 «주문 하나에 배송지가 여럿일 수 있다» 고 판단했다. **구조상 가능한 것과 이 쇼핑몰에서 실제로 일어나는 것은 다르다.** 그 결과 품목 셋을 고르면 같은 수령인·주소가 세 번 찍혔고, 값이 여러 번 보이면 «다를 수도 있는 값» 으로 읽힌다. ★★ DB 는 그대로 티켓마다 갖는다 — 티켓이 제 값을 들고 있어야 나중에 주문을 다시 안 봐도 된다. 그래서 화면에서 한 칸을 고치면 고른 품목 «전부» 에 들어간다(setAllIF). 첫 품목에만 쓰면 나머지 티켓이 빈 채로 저장되는데, 화면에는 한 번만 보이므로 사람이 알아챌 수 없다. ★ 보여 줄 값은 «값이 있는 첫 품목» 의 것을 쓴다(ordG). 「배송 주소지와 동일」 버튼도 그 값을 베끼게 바꿨다 — 그전에는 «고른 첫 품목» 을 집어서, 첫 품목만 값이 비면 화면에는 주소가 보이는데 버튼은 빈 값을 넣었다. ★ 「카페24에서 못 찾았습니다」 경고도 주문 단위로 바뀌었다(고른 품목이 다 못 이었을 때만). ★ 상세 화면은 티켓 하나 = 품목 하나라 원래 한 번만 나온다 — 이제 두 화면이 같은 모양이다. ★ 품목마다 다른 값(옵션명·주문 수량·CS 접수 수량)은 그대로 품목마다 둔다. ★ dev 전용. -->
@@ -2383,6 +2385,19 @@ function imgToBase64(file){
   });
 }
 
+// ── 공급사 «소통 채널» 색표 ────────────────────────────────────────────────
+// ★★ 2026-09-03 에 모듈 자리로 올렸다. 그전에는 똑같은 표가 두 컴포넌트 안에
+//   각각 있었고(상품 관리·공급사 관리), CS 티켓 화면이 세 번째로 필요해졌다.
+//   같은 뜻의 색을 세 벌 두면 «같은 뜻은 화면마다 같은 색» 이 반드시 깨진다.
+// ★ 이 색들은 «밝은 바탕에 어두운 글자» 다 — 공급사 관리의 흰 표에서 쓰던 것이라
+//   어두운 티켓 화면에서는 오히려 또렷하게 도드라진다(불투명이라 배경을 안 탄다).
+const SUP_CHANNELS={
+  kakao:  {label:'카카오톡', icon:'💬', bg:'#F6AD09', color:'#3A2E00', border:'#D89400'},
+  nateon: {label:'네이트온', icon:'📨', bg:'#A89AE0', color:'#2D1F66', border:'#8B7BCC'},
+  email:  {label:'메일',     icon:'✉️', bg:'#A8DEF6', color:'#0F4A6B', border:'#7AC4E8'},
+  none:   {label:'미설정',   icon:'⚪', bg:'#dce8ff', color:'#1a3a8f', border:'#b4ccf0'},
+};
+
 // ── 이미지 → Supabase Storage 업로드 (최대 800px 리사이즈) → public URL 반환
 //    DB 절약을 위해 base64 대신 URL만 cs_images jsonb에 저장
 async function uploadImage(file, productCode){
@@ -2672,12 +2687,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   const [migStatus,setMigStatus]=useState('');
   const [migProgress,setMigProgress]=useState({done:0,total:0,migrated:0,failed:0});
   // 채널 색상/메타 정의 (#1~6 확정 영역과 별개의 새 팔레트)
-  const SUP_CHANNELS={
-    kakao:  {label:'카카오톡', icon:'💬', bg:'#F6AD09', color:'#3A2E00', border:'#D89400'},
-    nateon: {label:'네이트온', icon:'📨', bg:'#A89AE0', color:'#2D1F66', border:'#8B7BCC'},
-    email:  {label:'메일',     icon:'✉️', bg:'#A8DEF6', color:'#0F4A6B', border:'#7AC4E8'},
-    none:   {label:'미설정',   icon:'⚪', bg:'#dce8ff', color:'#1a3a8f', border:'#b4ccf0'},
-  };
+  // ★ 표는 모듈 자리의 SUP_CHANNELS 하나뿐이다(2026-09-03). 같은 색표를 화면마다
+  //   따로 두면 «같은 뜻은 같은 색» 이 조용히 깨진다.
   const getSupStyle=name=>{
     const ch=supplierMap[name]||'none';
     return SUP_CHANNELS[ch]||SUP_CHANNELS.none;
@@ -5448,12 +5459,8 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
   const [csvResult,setCsvResult]=useState(null);   // null | {success, fail, total}
 
   // Constants 재사용 (ProductsPage와 동일하게 자기 충족적)
-  const SUP_CHANNELS={
-    kakao:  {label:'카카오톡', icon:'💬', bg:'#F6AD09', color:'#3A2E00', border:'#D89400'},
-    nateon: {label:'네이트온', icon:'📨', bg:'#A89AE0', color:'#2D1F66', border:'#8B7BCC'},
-    email:  {label:'메일',     icon:'✉️', bg:'#A8DEF6', color:'#0F4A6B', border:'#7AC4E8'},
-    none:   {label:'미설정',   icon:'⚪', bg:'#dce8ff', color:'#1a3a8f', border:'#b4ccf0'},
-  };
+  // ★ 표는 모듈 자리의 SUP_CHANNELS 하나뿐이다(2026-09-03). 같은 색표를 화면마다
+  //   따로 두면 «같은 뜻은 같은 색» 이 조용히 깨진다.
   const SUP_SHIP_CONDS=['무료','고정 배송비','금액 조건부 무료','수량 비례','수량별 차등','금액별 차등','무게별 차등','메모 확인'];
   const memoConds=['메모 확인','수량별 차등','금액별 차등','무게별 차등'];
 
@@ -17149,7 +17156,9 @@ const CS_SYMBOLS = [
 //   사람이 매번 자리를 다시 찾아야 하고, 커서가 튀면 그다음 글자가 엉뚱한 데 찍힌다.
 // ★ type="button" 을 반드시 준다 — 안 주면 기본이 submit 이라 폼 안에서는 눌렀을 때
 //   화면이 통째로 다시 뜬다.
-function CsSymbolBar({taRef, value, onChange}){
+// light: 이력을 «적는» 밝은 판 안에 있을 때(2026-09-03). 어두운 화면용 색을 그대로
+//   두면 밝은 바탕에 옅은 회색 글자가 되어 기호가 안 보인다.
+function CsSymbolBar({taRef, value, onChange, light}){
   const put = (ch,caret)=>{
     const el = taRef && taRef.current;
     const v = String(value||'');
@@ -17170,8 +17179,10 @@ function CsSymbolBar({taRef, value, onChange}){
       {CS_SYMBOLS.map(x=>(
         <button key={x.ch} type="button" onClick={()=>put(x.ch,x.caret)} title={x.tip}
           style={{width:26,height:24,borderRadius:5,fontSize:12,lineHeight:1,
-            fontFamily:'inherit',cursor:'pointer',background:'transparent',
-            border:'1px solid var(--border)',color:'var(--sub)',padding:0}}>{x.ch}</button>
+            fontFamily:'inherit',cursor:'pointer',
+            background: light ? CS_WRITE.field : 'transparent',
+            border:'1px solid '+(light ? CS_WRITE.btnBd : 'var(--border)'),
+            color: light ? CS_WRITE.text : 'var(--sub)',padding:0}}>{x.ch}</button>
       ))}
     </div>
   );
@@ -17199,6 +17210,28 @@ const CS_SIDE_STYLE = {
   '공급사':    {fg:'#B8C4DA', bg:'rgba(184,196,218,.12)', bd:'rgba(184,196,218,.42)'},
   '시스템':    {fg:'#F6AD09', bg:'rgba(246,173,9,.12)',   bd:'rgba(246,173,9,.40)'},
 };
+// ── 이력을 «적는» 칸은 밝게 (제니 2026-09-03) ──────────────────────────────
+// 「사람이 수동으로 처리해야 하는 부분이라 구분되게 밝게 보이는 게 좋겠다」.
+// ★★ 콘솔에서 밝은 바탕은 «사람이 손대는 곳» 이라는 뜻이 된다 — 쌓인 이력(읽는 것)은
+//   어두운 채로 두고 적는 칸만 밝히면, 그 경계가 곧 «읽는 곳 / 쓰는 곳» 의 경계다.
+const CS_WRITE = {
+  bg:'#EDF2FA', bd:'#BFD0EA',            // 판
+  text:'#16233F', sub:'#5A6A88',         // 글자
+  field:'#FFFFFF', fieldBd:'#C3D3EC',    // 입력칸
+  btnBd:'#C3D3EC',
+};
+// ★★ 밝은 바탕에는 «어두운 글자» 다. 어두운 화면용 색(CS_SIDE_STYLE)을 그대로 가져오면
+//   밝은 글자가 밝은 바탕에 잠긴다 — 2026-08-26 에 뱃지 색을 흰 표로 옮기다 실제로 밟았고
+//   제니 표현으로 「글자가 뭉개져 보인다」 였다. 뜻(색 계열)은 지키고 명도만 뒤집는다.
+const CS_SIDE_STYLE_LIGHT = {
+  '고객':      {fg:'#0B6B4F', bg:'#DBF5EC', bd:'#8FD9C2'},
+  '원룸만들기':{fg:'#1B3E86', bg:'#DEE9FF', bd:'#A9C3F2'},
+  '공급사':    {fg:'#3F4B63', bg:'#E6EAF2', bd:'#B7C1D4'},
+  '시스템':    {fg:'#93500A', bg:'#FDEBD0', bd:'#F0BE72'},
+};
+function csSideStyleLight(side){
+  return CS_SIDE_STYLE_LIGHT[side] || CS_SIDE_STYLE_LIGHT['시스템'];
+}
 // 받침이 있으면 «으로», 없거나 ㄹ 받침이면 «로». 「접수됨으로」·「회신 대기로」.
 // ★ 버튼 글자는 사람이 매번 읽는 자리라 조사가 틀리면 눈에 걸린다.
 function csRo(word){
@@ -17218,7 +17251,9 @@ function csRo(word){
 // ★ 목록은 위로 편다 — 버튼이 칸 맨 아래에 있어 아래로 열면 화면 밖으로 나간다.
 // ★ 좌표를 재서 fixed 로 띄운다: 이 패널은 overflow 가 걸린 자리라 안에 열면 잘린다
 //   (알림 말풍선·CsPick 에서 이미 정한 방식이다).
-function CsStageSubmit({stage, options, onPick, onSave, busy, dirty}){
+// light: 이력을 «적는» 밝은 판 안에 놓일 때(2026-09-03). 못 누르는 상태의 색만 다르다 —
+//   var(--border)(어두운 남색)를 밝은 바탕에 두면 오히려 «누를 수 있는 것» 처럼 진해 보인다.
+function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
   const [open,setOpen] = useState(false);
   const [pos,setPos]   = useState(null);
   const ref = useRef(null);
@@ -17236,8 +17271,9 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty}){
     <div ref={ref} style={{position:'relative',display:'flex'}}>
       <button onClick={onSave} disabled={!on}
         style={{padding:'8px 16px',borderRadius:'6px 0 0 6px',fontSize:12,fontWeight:700,
-          fontFamily:'inherit',border:'none',color:'#fff',
-          background: on?'var(--primary)':'var(--border)',
+          fontFamily:'inherit',border:'none',
+          color: on ? '#fff' : (light ? '#9AA7BE' : '#fff'),
+          background: on?'var(--primary)':(light?'#DCE4F1':'var(--border)'),
           cursor: on?'pointer':'default',whiteSpace:'nowrap'}}>
         {busy ? '저장 중…' : cur.label + csRo(cur.label) + ' 저장'}</button>
       <button onClick={()=>setOpen(o=>!o)} disabled={busy} title="다른 상태로 저장하기"
@@ -19388,6 +19424,41 @@ function CsPick({value, options, onChange, placeholder, width}){
 //   함께 접수하는 일이 실제로 있는데, 하나씩 조회해 따로 만들면 같은 말을 두 번 적게 된다.
 //   → **접수 행위는 한 번, 티켓은 품목마다 하나**. 이것이 설계의 «메인 · 서브 묶음» 이다
 //     (같은 주문번호 + 같은 공급사면 메인 1 + 서브 N).
+// ── 공급사 이름 옆의 «소통 채널» 뱃지 (제니 2026-09-03) ──────────────────────
+// 왜: 공급사 접수는 «건별 실시간» 이고 채널이 공급사마다 다르다(메일·네이트온·카카오톡).
+//   티켓을 보는 자리에서 「이 공급사에는 어디로 보내나」가 바로 보여야, 공급사 관리
+//   화면을 따로 열어 확인하는 일이 없어진다.
+// ★★ «미설정» 은 «못 읽었다» 와 다르다. 채널이 실제로 안 정해진 공급사는 그 사실을
+//   보여 줘야 한다(그 공급사에는 접수를 못 보낸다는 뜻이다). 반대로 조회가 실패한
+//   때는 아무것도 안 그린다 — 없는 것을 설명할 때 이유를 지어내지 않는다.
+function CsSupplierChannel({name}){
+  const [ch,setCh] = useState(undefined);   // undefined=아직·못 읽음 / 문자열=값
+  useEffect(()=>{
+    let alive = true;
+    setCh(undefined);
+    if(!name){ return; }
+    (async()=>{
+      const {data,error} = await sb.from('suppliers').select('channel')
+        .eq('name', name).maybeSingle();
+      if(!alive) return;
+      // ★ 조회 실패·없는 공급사는 undefined 로 둔다(뱃지를 안 그린다).
+      if(error || !data){ setCh(undefined); return; }
+      setCh(data.channel || 'none');
+    })();
+    return ()=>{ alive = false; };
+  },[name]);
+  if(!name || ch===undefined) return null;
+  const c = SUP_CHANNELS[ch] || SUP_CHANNELS.none;
+  return (
+    <span title={'공급사 접수 채널 — '+c.label}
+      style={{display:'inline-flex',alignItems:'center',gap:3,marginLeft:6,
+        padding:'1px 7px',borderRadius:9,fontSize:9.5,fontWeight:700,lineHeight:1.6,
+        whiteSpace:'nowrap',verticalAlign:'middle',
+        background:c.bg,color:c.color,border:'1px solid '+c.border}}>
+      <span style={{fontSize:9}}>{c.icon}</span>{c.label}</span>
+  );
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // 카페24가 «실제로 얼마를 돌려줬나» — 엣지 함수 cs-fetch-refund (2026-09-03)
 // ----------------------------------------------------------------------------
@@ -20097,7 +20168,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               {/* ★ 묶음 제목이 없으면 이 둘이 품목 목록에 딸린 값처럼 읽힌다. */}
               {/* ★ 공급사는 «주문» 에 딸린 값이다 — 카페24 주문서가 주는 것이고,
                   고객이 누구인가와는 다른 이야기다(제니 2026-09-02). */}
-              {ro('공급사', head.supplier_name)}
+              {/* ★ 이름 «옆» 에 채널 뱃지(제니 2026-09-03) — 접수를 어디로 보내는지가
+                  티켓을 보는 자리에서 바로 읽힌다. */}
+              {ro('공급사', <>{head.supplier_name || '—'}
+                <CsSupplierChannel name={head.supplier_name}/></>)}
             </>
           )}
 
@@ -20319,19 +20393,23 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             </div>
           ))}
 
-          <div style={{marginTop:12,border:'1px solid var(--border)',borderRadius:8,
-            background:'var(--bg)',padding:'10px 11px'}}>
+          {/* ★★ 적는 칸은 «밝게» 다(제니 2026-09-03) — 쌓인 이력은 읽는 곳이고 여기는
+              사람이 손대는 곳이라, 밝기로 그 경계를 긋는다. 색은 CS_WRITE 한 곳에서 온다. */}
+          <div style={{marginTop:12,border:'1px solid '+CS_WRITE.bd,borderRadius:8,
+            background:CS_WRITE.bg,padding:'10px 11px'}}>
             <div style={{display:'flex',gap:5,marginBottom:8,flexWrap:'wrap'}}>
               {/* ★ 고른 칩의 색이 «그 줄에 붙을 뱃지 색» 과 같아야 한다(제니) —
-                  고르는 순간 무엇이 될지가 보이면 다시 확인할 일이 없다. */}
+                  고르는 순간 무엇이 될지가 보이면 다시 확인할 일이 없다.
+                  ★ 다만 여기서는 «밝은 판용» 색을 쓴다(csSideStyleLight). 뜻(색 계열)은
+                    같고 명도만 뒤집은 것이라, 저장하면 붙을 뱃지와 같은 색으로 읽힌다. */}
               {CS_SIDES.map(s=>{
-                const c = csSideStyle(s);
+                const c = csSideStyleLight(s);
                 return (
                 <button key={s} onClick={()=>setSide(s)}
                   style={{padding:'4px 11px',borderRadius:14,fontSize:11,fontFamily:'inherit',
-                    cursor:'pointer', background: side===s ? c.bg : 'transparent',
-                    border:'1px solid '+(side===s ? c.bd : 'var(--border)'),
-                    color: side===s ? c.fg : 'var(--sub)',
+                    cursor:'pointer', background: side===s ? c.bg : CS_WRITE.field,
+                    border:'1px solid '+(side===s ? c.bd : CS_WRITE.btnBd),
+                    color: side===s ? c.fg : CS_WRITE.sub,
                     fontWeight: side===s ? 700 : 400}}>{s}</button>
                 );
               })}
@@ -20339,15 +20417,19 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             <textarea ref={noteRef} value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
               onKeyDown={e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) addNote(); }}
               placeholder={CS_NOTE_HINT[side] || ''}
-              style={{...inp,resize:'vertical'}}/>
-            <CsSymbolBar taRef={noteRef} value={draft} onChange={setDraft}/>
+              style={{...inp,resize:'vertical',background:CS_WRITE.field,
+                border:'1px solid '+CS_WRITE.fieldBd,color:CS_WRITE.text,colorScheme:'light'}}/>
+            <CsSymbolBar taRef={noteRef} value={draft} onChange={setDraft} light/>
             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:7}}>
-              <span style={{fontSize:10,color:'var(--sub)'}}>Ctrl+Enter 로도 남길 수 있습니다</span>
+              <span style={{fontSize:10,color:CS_WRITE.sub}}>Ctrl+Enter 로도 남길 수 있습니다</span>
               <div style={{flex:1}}></div>
+              {/* ★ 밝은 판 위에서는 «못 누르는» 버튼이 var(--border)(어두운 남색)면
+                  오히려 눌러도 되는 것처럼 진하게 보인다 — 밝은 회색으로 눕힌다. */}
               <button onClick={addNote} disabled={!draft.trim()}
                 style={{padding:'6px 14px',borderRadius:6,fontSize:11,fontWeight:600,
-                  fontFamily:'inherit',border:'none',color:'#fff',
-                  background: draft.trim()?'var(--primary)':'var(--border)',
+                  fontFamily:'inherit',border:'none',
+                  color: draft.trim()?'#fff':'#9AA7BE',
+                  background: draft.trim()?'var(--primary)':'#DCE4F1',
                   cursor: draft.trim()?'pointer':'default'}}>남기기</button>
             </div>
           </div>
@@ -20938,12 +21020,24 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               color: t.main_ticket_id?'var(--sub)':'var(--accent)'}}>
               {t.main_ticket_id ? '서브' : '메인'}</span>
             <span style={{color:'var(--sub)'}}>묶음</span>
-            {group.filter(g=>g.id!==t.id).map(g=>(
+            {/* ★★ 메인 티켓으로 가는 버튼은 따로 칠한다(제니 2026-09-03) — 형제 번호가
+                모두 같은 회색이면 «어느 것이 메인인지» 를 눌러 봐야 안다. 이력이 메인에
+                쌓이므로 그 번호는 이 묶음에서 가장 자주 누르는 자리다.
+                ★ 색은 바로 왼쪽 «메인» 뱃지와 «같은 색» 을 쓴다. 같은 뜻을 다른 색으로
+                  칠하면 둘이 다른 것을 가리키는 줄 알게 된다. */}
+            {group.filter(g=>g.id!==t.id).map(g=>{
+              const gMain = !g.main_ticket_id;
+              return (
               <button key={g.id} onClick={()=>goTicket(g.id)}
+                title={gMain ? '메인 티켓 — 이력이 여기 쌓입니다' : '서브 티켓'}
                 style={{padding:'2px 8px',borderRadius:5,fontSize:10,fontFamily:'monospace',
-                  cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
-                  color:'var(--sub)'}}>#{g.id}</button>
-            ))}
+                  cursor:'pointer',
+                  background: gMain ? 'rgba(42,71,141,.35)' : 'transparent',
+                  border:'1px solid '+(gMain ? 'var(--primary)' : 'var(--border)'),
+                  color: gMain ? 'var(--accent)' : 'var(--sub)',
+                  fontWeight: gMain ? 700 : 400}}>#{g.id}</button>
+              );
+            })}
           </span>
         )}
         <span style={{fontSize:12,color:'var(--sub)'}}>
@@ -21008,7 +21102,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               )}
             </div>
           ))}
-          {ro('공급사', t.supplier_name)}
+          {/* ★ 등록 화면과 같은 자리·같은 뱃지(제니 2026-09-03). */}
+          {ro('공급사', <>{t.supplier_name || '—'}
+            <CsSupplierChannel name={t.supplier_name}/></>)}
 
           <div style={sec}>고객</div>
           {ro('주문자', (t.orderer_name||'—') + (t.orderer_phone?' · '+t.orderer_phone:''))}
@@ -21263,10 +21359,19 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                       opacity: e.ticket_id===t.id ? 1 : .7}}>#{e.ticket_id}</span>
                   )}
                   <div style={{flex:1}}></div>
+                  {/* ★★ 시스템이 남긴 줄은 작성자를 «시스템» 으로 적는다(제니 2026-09-03).
+                      그전에는 그 줄을 만든 워크플로 이름(workflow)이 그대로 찍혀서,
+                      읽는 사람에게는 «누구지?» 인 이름이 사람 자리에 앉아 있었다.
+                      누가 적었느냐는 이미 왼쪽 «시스템» 뱃지가 말하므로 같은 말을 쓴다. */}
                   <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>
-                    {String(e.created_at).slice(5,16).replace('T',' ')} {csShortUser(e.actor)}</span>
-                  {/* ★ 지울 수 있는 사람: 그 글을 쓴 본인, 또는 master. DB 정책도 같다. */}
-                  {!isEdit && e.note && (isMaster || e.actor===currentUserEmail) && (
+                    {String(e.created_at).slice(5,16).replace('T',' ')}{' '}
+                    {e.side==='시스템' ? '시스템' : csShortUser(e.actor)}</span>
+                  {/* ★ 지울 수 있는 사람: 그 글을 쓴 본인, 또는 master. DB 정책도 같다.
+                      ★★ 시스템 줄에는 «지우기» 를 두지 않는다(제니 2026-09-03).
+                        그건 사람이 «적은 글» 이 아니라 «일어난 일의 기록» 이다. 지우면
+                        그 일이 안 일어난 것처럼 보이고, 애초에 잘못 적을 사람도 없다.
+                        (지우기는 «잘못 적은 대목» 을 위한 것이다.) */}
+                  {!isEdit && e.side!=='시스템' && e.note && (isMaster || e.actor===currentUserEmail) && (
                     <button onClick={()=>setRedactId(redactId===e.id?null:e.id)} disabled={busy}
                       title="잘못 적은 대목을 지웁니다"
                       style={{background:'transparent',border:'none',
@@ -21325,8 +21430,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               ★★ 저장 지점은 «하나» 다(제니 2026-09-01). 1단의 [저장] 과 2단의 [남기기] 가
                 따로 있으면 «어느 것을 눌러야 저장되나» 를 매번 따지게 되고, 하나만 누르고
                 나가면 나머지가 조용히 사라진다. */}
-          <div style={{marginTop:12,border:'1px solid var(--border)',borderRadius:8,
-            background:'var(--bg)',padding:'10px 11px'}}>
+          {/* ★★ 적는 칸은 «밝게» 다(제니 2026-09-03) — 등록 화면과 같은 색표(CS_WRITE).
+              쌓인 이력은 읽는 곳이라 어두운 채로 두고, 여기만 밝혀 경계를 긋는다. */}
+          <div style={{marginTop:12,border:'1px solid '+CS_WRITE.bd,borderRadius:8,
+            background:CS_WRITE.bg,padding:'10px 11px'}}>
             {/* ★ 라벨을 안 붙여 뒀더니 «이 드롭박스가 뭐냐» 는 질문이 나왔다(제니).
                 두 값 다 이력에 저장되는 값이다 — 「누가」는 side, 「무슨 일」은 action.
                 ★ 「무슨 일」이 통계의 근거다: 공급사별 평균 회신 일수는 action='회신' 을
@@ -21335,13 +21442,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               {/* ★ 고른 칩의 색이 «그 줄에 붙을 뱃지 색» 과 같아야 한다(제니) —
                   고르는 순간 무엇이 될지가 보이면 다시 확인할 일이 없다. */}
               {CS_SIDES.map(s=>{
-                const c = csSideStyle(s);
+                const c = csSideStyleLight(s);
                 return (
                 <button key={s} onClick={()=>setSide(s)}
                   style={{padding:'4px 11px',borderRadius:14,fontSize:11,fontFamily:'inherit',
-                    cursor:'pointer', background: side===s ? c.bg : 'transparent',
-                    border:'1px solid '+(side===s ? c.bd : 'var(--border)'),
-                    color: side===s ? c.fg : 'var(--sub)',
+                    cursor:'pointer', background: side===s ? c.bg : CS_WRITE.field,
+                    border:'1px solid '+(side===s ? c.bd : CS_WRITE.btnBd),
+                    color: side===s ? c.fg : CS_WRITE.sub,
                     fontWeight: side===s ? 700 : 400}}>{s}</button>
                 );
               })}
@@ -21349,18 +21456,21 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <textarea ref={draftRef} value={draft} onChange={e=>setDraft(e.target.value)} rows={3}
               onKeyDown={e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) saveAll(); }}
               placeholder={CS_NOTE_HINT[side] || ''}
-              style={{...inp,resize:'vertical'}}/>
-            <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft}/>
+              style={{...inp,resize:'vertical',background:CS_WRITE.field,
+                border:'1px solid '+CS_WRITE.fieldBd,color:CS_WRITE.text,colorScheme:'light'}}/>
+            <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft} light/>
 
             {/* 1단에서 바꾼 것을 여기 모아 보여 준다 — 저장 버튼 바로 위가 «누르면
                 무슨 일이 일어나나» 를 읽는 자리다. ★ 한 항목이 한 줄이다(제니). */}
+            {/* ★ 이 알림도 밝은 판 «안» 이라 밝은 노랑으로 바꾼다. 어두운 화면용
+                rgba(246,173,9,.08) 은 밝은 바탕 위에서 거의 안 보인다. */}
             {changes.length>0 && (
               <div style={{marginTop:9,padding:'8px 10px',borderRadius:6,
-                background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.35)'}}>
-                <div style={{fontSize:10,fontWeight:700,color:'#F6AD09',marginBottom:5}}>
+                background:'#FDEBD0',border:'1px solid #F0BE72'}}>
+                <div style={{fontSize:10,fontWeight:700,color:'#93500A',marginBottom:5}}>
                   티켓 정보에서 바꾼 것</div>
                 {changes.map((c,i)=>(
-                  <div key={i} style={{fontSize:11,color:'var(--text)',lineHeight:1.75}}>{c}</div>
+                  <div key={i} style={{fontSize:11,color:'#3A2E00',lineHeight:1.75}}>{c}</div>
                 ))}
               </div>
             )}
@@ -21376,18 +21486,19 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   고치던 것을 물리는 이유는 대개 «이 티켓이 아니었다» 이지 «이 값만 물리자» 가
                   아니다 — 그때 필요한 것은 목록으로 나가는 길이다. */}
               <button onClick={onBack} disabled={busy}
-                style={{padding:'6px 14px',background:'transparent',border:'1px solid var(--border)',
-                  borderRadius:6,color:'var(--sub)',fontSize:11,cursor:'pointer',
+                style={{padding:'6px 14px',background:CS_WRITE.field,
+                  border:'1px solid '+CS_WRITE.btnBd,
+                  borderRadius:6,color:CS_WRITE.sub,fontSize:11,cursor:'pointer',
                   fontFamily:'inherit'}}>취소</button>
               {/* ★★ 저장 버튼이 곧 «어느 단계로 보내는가» 다(제니 · 젠데스크 방식).
                   단계를 고르는 목록이 버튼 안에 들어와서 화면에 드롭박스가 하나만 남는다. */}
-              <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
+              <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty} light
                 onSave={()=>saveAll()}
                 onPick={id=>{ setE('stage', id); saveAll(id); }}
                 options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
             </div>
             {!isMaster && (
-              <div style={{fontSize:10,color:'var(--sub)',marginTop:7,lineHeight:1.6}}>
+              <div style={{fontSize:10,color:CS_WRITE.sub,marginTop:7,lineHeight:1.6}}>
                 환불·정산·종결은 master 가 확인해서 처리합니다.
                 내 일이 끝나면 <b>«CS 완료»</b> 로 넘기세요.
               </div>
