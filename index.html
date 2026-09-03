@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260903d_cs_fetch_refund -->
+<!-- (2026-09-03) 카페24가 «실제로 얼마를 돌려줬나» 를 티켓에서 바로 읽어 온다 — 엣지 함수 cs-fetch-refund 를 티켓 «등록·상세» 두 화면에 붙였다(제니 지시). 왜: 카드 결제 건은 상담원이 카페24 주문서에서 곧장 취소하고 티켓을 «환불 완료» 로 제출하는데, 그러면 금액을 손으로 옮겨 적을 이유가 없다 — 카페24가 이미 갖고 있고 옮겨 적으면 오타가 나며 그 오타가 정산까지 따라간다. ★★ 채우는 규칙은 «환불 수정 창»(2026-08-10)에서 정한 것을 그대로 썼다: ①빈 칸이면 채운다 ②값이 있으면 덮지 않고 「49,000 → 27,500」 으로 보여만 준다 ③바꾸는 것은 사람이 [카페24 값으로 바꾸기] 를 누를 때. 조용한 덮어쓰기가 가장 위험하다 — 같은 문제를 이미 푼 자리가 있으면 새 규칙을 만들지 않는다. ★★ 「환불이 없습니다」 를 붉게 그리지 않는다(회색이다). 네이버페이 주문은 카페24에 환불이 따로 안 잡혀 0건이 정상인 경우가 있고(제니 확인) 방금 처리한 건은 아직 안 올라와 있을 수 있다 — 붉게 그리면 멀쩡한 건을 사고로 읽는다. ★★ 조회 기준이 두 화면에서 다르다: 상세는 티켓이 품목 하나를 가리키므로 언제나 품목별 주문번호로 좁히고, 등록은 품목을 «하나» 골랐을 때만 그 품목으로 좁힌다 — 등록의 환불 금액은 고른 품목 전부에 같은 값으로 들어가서(rowOf), 품목 하나로 좁힌 금액을 여럿에 복사하면 틀리기 때문이다. 주문 전체로 셌을 때는 함수가 matched_by_item:false 로 알려 주고 화면이 「주문 전체의 환불을 셌습니다」 를 적는다. ★ 주문번호가 바뀌면 앞 주문의 조회 결과를 버린다(환불 수정 창에서 실제로 겪어 고친 자리다). ★ 이미 환불 관리로 넘긴 건에는 버튼을 두지 않는다 — 그 뒤로는 환불 «건» 이 진짜라 여기서 금액을 바꿔도 넘어간 건은 안 바뀐다. 바꿀 수 없는 값 옆의 조회 버튼은 「눌렀는데 반영이 안 된다」 가 된다. ★ 근거(환불번호·환불일·건수·취소수수료·적립금)를 함께 적는다 — 숫자만 보여 주면 어디서 온 값인지 못 되짚는다. ★ 두 화면이 «한 컴포넌트»(CsRefundFetch)를 쓴다: 환불 추가/수정 두 창이 갈라져 늘 같이 고쳐야 했던 전례가 있어 처음부터 한 곳에 뒀다. ★ 실측: 오늘 환불 건(20260903-0002376)으로 창구를 확인했다 — actual_refund_amount 27,500 · refund_code · refund_date 가 오고, order_item_code 는 «배열» 로 온다(함수가 배열 분기를 갖고 있다). 판정표 9가지를 파일에서 잘라 돌려 «값이 든 칸을 조용히 덮는 경우 없음» 을 확인했다. ★ 엣지 함수는 dev 에 배포 완료(워크플로 「Supabase - 엣지 함수 배포」). ★ dev 전용. -->
 <!-- v20260903c_recheck_row_align -->
 <!-- (2026-09-03) 티켓 «등록·상세» ① 영역 분류 뎁스에서 「리체크 날짜」 이름이 오른쪽 날짜 입력칸과 세로 중앙이 안 맞던 것을 고쳤다(제니 지적). ★★ 원인은 «한 칸에 두 줄을 넣은 것» 이다: 날짜 입력칸과 [+1일][+3일][+7일] 버튼을 값 칸 하나에 함께 넣으니 그 줄만 두 줄 높이가 되어 공용 틀의 기본 정렬(center)을 쓸 수 없었고, alignItems:'start' 로 바꿔 «위» 를 맞추고 있었다. 그런데 이름은 제 글자 높이(10.5px × 1.5 ≈ 16px)만 차지하고 날짜 입력칸은 여백 7px·테두리까지 합쳐 약 30px 이라, 위를 맞추면 이름이 입력칸 «글자보다 위» 에 뜬다 — 그게 제니 눈에 보인 어긋남이다. ★★ padding 으로 그 차이를 메우지 않았다. 그렇게 하면 입력칸 여백이나 글자 크기를 바꾸는 날 이 줄만 따로 어긋나고, 어긋난 이유가 코드에 안 남는다 — 자리를 «그 줄만 아는 숫자» 로 정하면 다음 손질에서 반드시 빠진다. → 공용 틀(row)을 두 번 쓴다: 날짜 줄은 기본 center 정렬이라 위아래 다른 줄들과 기준선이 저절로 같아지고, 빠른 버튼은 이름 없는 다음 줄에서 값 칸(x=78)에 붙는다. 입력칸의 marginBottom:5 는 지웠다 — 줄 간격은 이제 틀이 정한다(버튼 줄 paddingTop:0). ★ 등록·상세 두 화면을 같은 방법으로 함께 고쳤다: 「두 화면은 기본 틀이 같다」가 전제라 한쪽만 고치면 그 전제가 깨진다. ★ 값·저장·리체크 기본 +3일 규칙은 한 줄도 안 건드렸다. ★ dev 전용. -->
 <!-- v20260903b_nav_depth_size -->
@@ -19383,6 +19385,129 @@ function CsPick({value, options, onChange, placeholder, width}){
 //   함께 접수하는 일이 실제로 있는데, 하나씩 조회해 따로 만들면 같은 말을 두 번 적게 된다.
 //   → **접수 행위는 한 번, 티켓은 품목마다 하나**. 이것이 설계의 «메인 · 서브 묶음» 이다
 //     (같은 주문번호 + 같은 공급사면 메인 1 + 서브 N).
+// ════════════════════════════════════════════════════════════════════════════
+// 카페24가 «실제로 얼마를 돌려줬나» — 엣지 함수 cs-fetch-refund (2026-09-03)
+// ----------------------------------------------------------------------------
+// 왜 있나: 카드 결제 건은 상담원이 카페24 주문서에서 곧장 취소하고 티켓을 «환불 완료»
+//   로 제출한다. 그러면 금액을 손으로 옮겨 적을 이유가 없다 — 카페24가 이미 갖고 있고,
+//   옮겨 적으면 오타가 나며 그 오타가 정산까지 따라간다.
+//
+// ★★ 채우는 규칙은 «환불 수정 창» 에서 정한 것을 그대로 쓴다(2026-08-10).
+//   ①빈 칸이면 채운다  ②값이 있으면 덮지 않고 «49,000 → 27,500» 으로 보여만 준다
+//   ③바꾸는 것은 사람이 누를 때  — **조용한 덮어쓰기가 가장 위험하다.**
+//   같은 문제를 이미 푼 자리가 있으면 새 규칙을 만들지 않는다.
+//
+// ★★ «환불이 없습니다» 를 «오류» 로 그리지 않는다(붉은색을 안 쓴다).
+//   네이버페이 주문은 카페24에 환불이 따로 안 잡혀서 0건이 «정상» 인 경우가 있고
+//   (제니 확인), 방금 처리한 건은 아직 안 올라와 있을 수 있다. 붉게 그리면 멀쩡한
+//   건을 사고로 읽게 된다.
+//
+// ★ 두 화면(등록·상세)이 같은 컴포넌트를 쓴다. 환불 «추가/수정» 두 창이 갈라져
+//   따로 손봐야 했던 전례가 있어(5번 항목), 처음부터 한 곳에 둔다.
+//
+// props
+//   orderRef : 조회 기준. 품목별 주문번호(20260903-0002376-01)면 그 품목으로 좁히고,
+//              주문번호만 주면 주문 전체를 센다.
+//   current  : 지금 «환불 금액» 칸에 든 값(문자열이어도 된다)
+//   onPick   : 사람이 «넣기» 를 택했을 때 부른다 — 숫자를 넘긴다
+function CsRefundFetch({orderRef, current, onPick}){
+  const [busy,setBusy]     = useState(false);
+  const [res,setRes]       = useState(null);
+  const [err,setErr]       = useState('');
+  const [seen,setSeen]     = useState(orderRef);
+  // ★ «이번에 내가 넣었다» 를 따로 기억한다. 넣고 나면 칸 값과 카페24 값이 같아져
+  //   «같습니다» 로 읽히는데, 그건 사람이 이미 맞게 넣어 둔 경우와 구별이 안 된다.
+  //   방금 무슨 일이 일어났는지는 그 자리에서 말해 줘야 한다.
+  const [filled,setFilled] = useState(false);
+
+  // ★ 주문번호가 바뀌면 앞 주문의 조회 결과를 «버린다». 남겨 두면 다른 주문의 금액을
+  //   보고 판단하게 된다 — 환불 수정 창에서 실제로 겪어 고친 자리다(2026-08-24).
+  useEffect(()=>{
+    if(orderRef!==seen){ setSeen(orderRef); setRes(null); setErr(''); setFilled(false); }
+  },[orderRef]);
+
+  const num = (v)=>{ const x=String(v==null?'':v).replace(/[^0-9-]/g,'');
+                     return x===''?null:(parseInt(x,10)||0); };
+  const cur = num(current);
+  const won = (n)=> Number(n).toLocaleString()+'원';
+
+  const go = async ()=>{
+    if(!orderRef){ setErr('먼저 주문번호를 불러와 주세요.'); return; }
+    setBusy(true); setErr(''); setRes(null); setFilled(false);
+    const {data,error} = await sb.functions.invoke('cs-fetch-refund',
+      { body:{ order_id: orderRef } });
+    setBusy(false);
+    if(error){ setErr('카페24 환불 조회에 실패했습니다 — '+(error.message||'알 수 없는 오류')); return; }
+    setRes(data||null);
+    // ★ 빈 칸일 때만 자동으로 넣는다(위 규칙 ①). 값이 있으면 건드리지 않는다.
+    if(data && data.found && cur==null && data.actual_refund_amount!=null){
+      onPick(data.actual_refund_amount); setFilled(true);
+    }
+  };
+  const take = (n)=>{ onPick(n); setFilled(true); };
+
+  const amt  = res && res.found ? res.actual_refund_amount : null;
+  const same = amt!=null && cur!=null && amt===cur;
+  const diff = amt!=null && cur!=null && amt!==cur;
+  const box  = {fontSize:10.5,lineHeight:1.6,marginTop:4};
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:5,alignItems:'center'}}>
+        <button onClick={go} disabled={busy || !orderRef}
+          title={!orderRef ? '주문을 먼저 불러와야 조회할 수 있습니다.' : ''}
+          style={{padding:'4px 9px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
+            whiteSpace:'nowrap',background:'transparent',
+            border:'1px solid '+(busy||!orderRef?'var(--border)':'var(--primary)'),
+            color: busy||!orderRef?'var(--sub)':'var(--accent)',
+            cursor: busy||!orderRef?'default':'pointer'}}>
+          {busy ? '조회 중…' : '카페24 실제 환불액'}</button>
+      </div>
+
+      {err && <div style={{...box,color:'var(--red)'}}>{err}</div>}
+
+      {res && res.found && (
+        <div style={{...box,color: diff ? '#F6AD09' : 'var(--green)'}}>
+          {diff ? (
+            <>
+              카페24 실제 환불액은 <b>{won(amt)}</b> 입니다 — 지금 칸의 값은 {won(cur)}.
+              <button onClick={()=>take(amt)}
+                style={{marginLeft:6,padding:'2px 7px',borderRadius:5,fontSize:10,
+                  fontFamily:'inherit',cursor:'pointer',background:'transparent',
+                  border:'1px solid #F6AD09',color:'#F6AD09'}}>카페24 값으로 바꾸기</button>
+            </>
+          ) : filled ? <>카페24 실제 환불액 <b>{won(amt)}</b> 을 넣었습니다.</>
+             : same  ? <>카페24 실제 환불액과 같습니다 — <b>{won(amt)}</b></>
+                     : <>카페24 실제 환불액은 <b>{won(amt)}</b> 입니다.</>}
+          {/* 근거를 함께 남긴다 — 숫자만 보여 주면 «어디서 온 값인가» 를 못 되짚는다. */}
+          <div style={{color:'var(--sub)',marginTop:2}}>
+            {res.refund_code || '환불번호 없음'}
+            {res.refund_date && <> · {String(res.refund_date).slice(0,10)}</>}
+            {res.refund_count>1 && <> · {res.refund_count}건 합계</>}
+            {res.cancel_fee_amount ? <> · 취소수수료 {won(res.cancel_fee_amount)}</> : null}
+            {res.used_points ? <> · 적립금 {won(res.used_points)}</> : null}
+          </div>
+          {/* 품목으로 못 좁혔으면 «주문 전체를 셌다» 는 것을 밝힌다 — 품목이 여럿인
+              주문에서 이 차이는 곧 금액 차이다. */}
+          {res.matched_by_item===false && (
+            <div style={{color:'#F6AD09',marginTop:2}}>
+              이 품목으로 좁혀지지 않아 <b>주문 전체</b>의 환불을 셌습니다. 확인해 주세요.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ★★ 못 찾은 것은 «오류가 아니다» — 회색으로 사실만 적는다. */}
+      {res && !res.found && (
+        <div style={{...box,color:'var(--sub)'}}>
+          {res.reason || '카페24에 등록된 환불이 없습니다.'}
+          {res.hint && <div style={{marginTop:2}}>{res.hint}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 //   ★ 공급사가 다르면 함께 못 고른다 — 접수는 «공급사 단위» 로 나가기 때문이다.
 function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   const isMaster = role==='master';
@@ -20091,6 +20216,17 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           <div style={sec}>환불 <span style={{opacity:.7}}>· 환불 진행 시</span></div>
           {row('환불 금액', <input value={f.refund_amount} onChange={e=>set('refund_amount',e.target.value)}
             style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>)}
+          {/* ★★ 카페24 실제 환불액 조회(2026-09-03 제니 지시 — 등록·상세 둘 다에 붙인다).
+              ★ 조회 기준: 품목을 «하나» 골랐으면 그 품목별 주문번호로 좁히고, 여럿이면
+                주문번호로 센다. 등록 화면의 환불 금액은 고른 품목 «전부» 에 같은 값으로
+                들어가므로(rowOf 참고), 품목 하나로 좁힌 금액을 여럿에 복사하면 틀린다.
+                주문 전체로 셌을 때는 함수가 matched_by_item:false 로 알려 주고 화면이 그걸 적는다.
+              ★ 버튼은 값 칸(x=78)에 붙는다 — 이름 없는 줄이라 위의 «환불 금액» 을 잇는 것으로 읽힌다. */}
+          {row('', <CsRefundFetch
+            orderRef={chosen.length===1 ? chosen[0].code
+                      : (chosen.length ? baseOf(chosen[0].code) : '')}
+            current={f.refund_amount}
+            onPick={n=>set('refund_amount', String(n))}/>, {paddingTop:0})}
           {row('결제수단', <input value={f.refund_method} onChange={e=>set('refund_method',e.target.value)}
             placeholder="신용카드 · 계좌이체 …" style={inp}/>)}
           {row('은행', <input value={f.refund_bank} onChange={e=>set('refund_bank',e.target.value)} style={inp}/>)}
@@ -20931,6 +21067,15 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           <div style={sec}>환불 <span style={{opacity:.7}}>· 환불 진행 시</span></div>
           {row('환불 금액', <input value={edit.refund_amount} onChange={e=>setE('refund_amount',e.target.value)}
             style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>)}
+          {/* ★★ 등록 화면과 «같은 컴포넌트» 다(2026-09-03). 여기는 티켓이 품목 하나를
+              가리키므로 언제나 품목별 주문번호로 좁힌다 — 없으면 주문번호로 물러선다.
+              ★ 이미 환불 관리로 넘긴 건에는 두지 않는다: 그 뒤로는 환불 «건» 이 진짜이고,
+                여기서 금액을 바꿔도 넘어간 건은 안 바뀐다. 바꿀 수 없는 값 옆에 조회
+                버튼을 두면 «눌렀는데 반영이 안 된다» 가 된다. */}
+          {!t.refund_id && row('', <CsRefundFetch
+            orderRef={t.order_item_code || t.order_id || ''}
+            current={edit.refund_amount}
+            onPick={n=>setE('refund_amount', String(n))}/>, {paddingTop:0})}
           {row('결제수단', <input value={edit.refund_method} onChange={e=>setE('refund_method',e.target.value)}
             placeholder="신용카드 · 계좌이체 …" style={inp}/>)}
           {row('은행', <input value={edit.refund_bank} onChange={e=>setE('refund_bank',e.target.value)} style={inp}/>)}
