@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260903q_list_view_settings -->
+<!-- (2026-09-03) 티켓 목록에 **[⚙ 보기 설정]** 을 붙였다 — 칩마다 «어느 열을 어떤 차례로» 보여 줄지 고른다. ★★ **배선은 2026-09-01 에 이미 깔려 있었다**(colKeys 가 console_settings.cs_list_columns 를 «칩으로» 읽고, 모르는 열은 조용히 건너뛴다). 없던 것은 «고르는 화면» 뿐이라 그것만 만들었다 — 저장 구조·읽는 규칙은 한 줄도 안 건드렸다. ★★ **열 구성은 칩마다 따로다**(제니). 「공급사 미접수」는 공급사·채널을 봐야 하고 「정산 대기」는 금액을 봐야 한다 — 한 벌로 두면 어느 칩에서든 절반이 헛열이다. 그래서 패널 맨 위에 «지금 보고 있는 「…」 칩에만 적용됩니다» 를 반드시 적는다: 안 적으면 여기서 바꾼 것이 왜 다른 칩에 안 보이는지 알 수 없다. ★★ **master 만 연다.** 저장하는 곳이 console_settings 이고 그것은 «운영 기준» 이라 한 사람이 바꾸면 모두의 화면이 바뀐다. 칸 너비처럼 «취향» 인 값은 localStorage 에 두는데(칸 손잡이가 그렇다), 열 구성은 제니가 «기준» 으로 정한 값이다. 못 바꾸는 사람에게 버튼을 보여 주고 「권한이 없습니다」를 띄우느니 아예 안 보이는 편이 낫다. ★★ **차례는 손잡이(≡)를 잡고 끌어** 바꾼다 — CS 설정 카페24 탭과 같은 방식이고 그때 정한 규칙을 그대로 지켰다: 줄 «전체» 를 draggable 로 두지 않는다(글자를 고르려고 끌 때 줄이 딸려 움직인다 → 손잡이를 누른 줄만 armed), 놓을 자리는 색이 아니라 «선» 으로 알린다(색을 깔면 그 줄과 «자리를 바꾸는» 것처럼 보이는데 실제로는 앞뒤에 끼우는 것이다). ★ 켜면 «맨 뒤» 에 붙인다 — 가운데 끼우면 방금 켠 것이 어디 갔는지 못 찾는다. ★★★ **모르는 키는 지우지 않는다** — 다른 칩의 설정은 물론이고, 이 칩 안에 있던 «내가 모르는 열 이름» 까지 그대로 다시 담는다. 내가 모른다고 지우면 다음 판에서 그 열을 만들었을 때 설정이 사라져 있다(설정 화면 셋에서 정한 규칙과 같다). ★ 「등록·수정」 두 열은 고를 수 있는 열이 아니다 — 어느 칩에서 보든 늘 필요해 맨 앞에 고정으로 둔 것이라, 목록에 안 넣는 대신 패널 아래에 그 사실을 적었다. ★ [기본값으로] 는 저장까지 하지 않는다: 되돌려 «보고» 저장은 사람이 누른다. ⏳ 아직 안 한 것 — **열 «제목» 을 직접 끌어 옮기는 것**(설계에 있던 나머지 절반). 지금은 패널 안에서만 차례를 바꾼다. 표 머리글을 끌면 공유 설정이 «지나가다» 바뀔 수 있어, 그건 되돌리기·저장 줄을 함께 두고 따로 만들 일이다. ★ dev 전용. -->
 <!-- v20260903p_tip_if_clipped -->
 <!-- (2026-09-03) 표의 칸에 «그 칸의 값» 을 그대로 달아 두던 툴팁 다섯을 «잘렸을 때만» 뜨게 바꿨다(제니: 「남긴 5곳도 동일한 값이 툴팁으로 뜨네, 길어서 전체가 안 보일 때만 뜨게 해 줘」). 짧은 값에서는 **화면에 이미 다 보이는 것이 한 번 더 뜨는** 셈이라 알려 주는 것이 없으면서 훑는 내내 성가시다. 바꾼 곳: 비용 비교 «메모» · 환불 목록 «주문번호»·«상품명» · 발송 이력 «상품명»·«옵션». 겸해 앞서 상품 정보 목록 상품명에 인라인으로 넣었던 같은 코드를 공용 헬퍼(tipIfClipped)로 합쳐 여섯 곳이 한 가지 방법을 쓰게 했다 — 같은 일을 두 벌로 두면 한쪽만 손보게 된다. ★★ 잘림은 CSS(ellipsis·overflow)가 정하는 것이라 코드가 미리 알 수 없다 → 마우스가 올라온 «그 자리에서» 재서 title 을 붙이거나 뗀다. ★ **가로·세로를 모두 본다**: nowrap 칸은 가로로 잘리고 줄바꿈되는 칸은 세로로 잘리는데, 한쪽만 보면 후자에서 영영 안 뜬다. ★ +1 은 소수점 반올림 여유다. ★ 칸이 아예 안 잘리는 구조(overflow 를 안 숨긴 칸 — 환불 목록의 주문번호가 그렇다)면 툴팁은 이제 영영 안 뜬다. 그게 맞다: 그 자리는 값이 원래 다 보인다. ★ 안내를 담은 툴팁 셋은 그대로 뒀다 — «제외» 뱃지의 제외 사유 · MASTER 안내 · 문구 켜기/끄기 설명. 값을 되풀이하는 것이 아니라 화면에 없는 것을 말해 준다. ★ dev 전용. -->
 <!-- v20260903o_wide_area_tips -->
@@ -17463,6 +17465,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   // ★ 처음 보는 화면은 «전체» 다(제니). 「내 티켓」으로 열면 남이 만든 건이 안 보여
   //   「티켓이 없네」로 읽힌다 — 좁히는 것은 사람이 정할 일이다.
   const [chip,setChip]     = useState('all');
+  const [colOpen,setColOpen] = useState(false);   // [⚙ 보기 설정] 패널 (2026-09-03)
   const [q,setQ]           = useState('');
   const [settings,setSettings] = useState(null);
   const isMaster = role==='master';
@@ -17586,6 +17589,8 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
     return CS_COLS_FIXED.concat(
       keys.filter(k=>CS_COLS[k] && CS_COLS_FIXED.indexOf(k)<0));  // 모르는 열은 건너뛴다
   },[settings,chip]);
+  // [⚙ 보기 설정] 이 «어느 칩의 설정인가» 를 적을 때 쓴다.
+  const chipLabel = (CS_CHIPS.find(c=>c.id===chip) || {}).label || chip;
 
   // ★ 담당자·공급사는 «지금 목록에 있는 값» 에서 뽑는다. 사람이 든 목록을 따로 두면
   //   그만두거나 새로 온 사람이 생길 때마다 두 곳을 고쳐야 한다.
@@ -17721,6 +17726,26 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
             ★★ 자리는 필터 줄 오른쪽 «끝» 이다(제니) — 아래 표의 오른쪽 끝과 맞춰
               선이 하나 서게 한다. 칩 옆에 두면 칩으로 읽히고, 머리글에 두면
               목록을 보는 눈에서 멀다. */}
+        {/* ★ [⚙ 보기 설정] 은 master 만 본다 — 저장하는 곳이 «운영 기준»(console_settings)
+            이라 한 사람이 바꾸면 모두의 화면이 바뀐다. 못 바꾸는 사람에게 버튼을
+            보여 주고 «권한이 없습니다» 를 띄우는 것보다, 아예 안 보이는 편이 낫다.
+            ★ 자리는 [+ 티켓 등록] «왼쪽» 이다 — 주 동작이 오른쪽 끝을 지킨다. */}
+        {isMaster && (
+          <div style={{position:'relative'}}>
+            <button onClick={()=>setColOpen(o=>!o)}
+              style={{padding:'6px 11px',borderRadius:8,fontSize:12,fontFamily:'inherit',
+                cursor:'pointer',whiteSpace:'nowrap',
+                background: colOpen ? 'rgba(246,173,9,.10)' : 'transparent',
+                border:'1px solid '+(colOpen ? '#F6AD09' : 'var(--border)'),
+                color: colOpen ? '#F6AD09' : 'var(--sub)'}}>⚙ 보기 설정</button>
+            {colOpen && (
+              <CsColumnSettings chip={chip} chipLabel={chipLabel}
+                settings={settings} setSettings={setSettings}
+                currentUserEmail={currentUserEmail}
+                onClose={()=>setColOpen(false)}/>
+            )}
+          </div>
+        )}
         <button onClick={onNew}
           style={{padding:'6px 14px',background:'var(--primary)',border:'none',borderRadius:8,
             color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
@@ -22097,6 +22122,158 @@ const csTd = {padding:'10px 12px',color:'var(--text)',verticalAlign:'middle'};
 // 누르면 정렬되는 머리글.
 // ★★ 화살표 자리를 «늘» 비워 둔다(visibility 로 숨긴다). 누를 때마다 화살표가 생겼다
 //   사라지면 열 폭이 흔들려서 표 전체가 덜컹인다.
+// ── 목록 [⚙ 보기 설정] — 칩마다 «어느 열을 어떤 차례로» (제니 2026-09-03) ──────
+// ★★ 열 구성은 «칩마다» 따로다(제니). 「공급사 미접수」는 공급사·채널을 봐야 하고
+//   「정산 대기」는 금액을 봐야 한다 — 한 벌로 두면 어느 칩에서든 절반이 헛열이다.
+//   배선은 2026-09-01 에 이미 깔려 있었다(colKeys 가 cs_list_columns 를 칩으로 읽는다).
+//   없던 것은 «고르는 화면» 뿐이라, 여기서는 그것만 만든다.
+//
+// ★★ master 만 연다. 저장하는 곳이 console_settings 이고 그것은 «운영 기준» 이라
+//   한 사람이 바꾸면 모두의 화면이 바뀐다. 칸 너비처럼 «취향» 인 값은 localStorage 로
+//   두는데(칸 손잡이가 그렇다), 열 구성은 제니가 «기준» 으로 정한 값이다.
+//
+// ★★ 차례는 손잡이(≡)를 «잡고 끌어» 바꾼다 — CS 설정의 카페24 탭과 같은 방식이다.
+//   줄 전체를 draggable 로 두지 않는다(글자를 고르려고 끌 때 줄이 딸려 움직인다):
+//   손잡이를 누른 줄만 열어 준다(armed). 놓을 자리는 색이 아니라 «선» 으로 알린다 —
+//   색을 깔면 그 줄과 «자리를 바꾸는» 것처럼 보이는데 실제로는 앞뒤에 끼우는 것이다.
+function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEmail, onClose}){
+  const saved = (settings && settings.cs_list_columns) || {};
+  const initial = Array.isArray(saved[chip]) ? saved[chip]
+                : Array.isArray(saved['_default']) ? saved['_default']
+                : CS_COLS_FALLBACK;
+  // 화면이 아는 열만 다룬다. 고정 열은 목록에 안 넣는다 — 끄지도 옮기지도 못한다.
+  const known = (arr)=> arr.filter(k=>CS_COLS[k] && CS_COLS_FIXED.indexOf(k)<0);
+  const [order,setOrder] = useState(()=>known(initial));
+  const [busy,setBusy]   = useState(false);
+  const [armed,setArmed] = useState(null);
+  const [drag,setDrag]   = useState(null);
+  const [over,setOver]   = useState(null);
+  const endDrag = ()=>{ setArmed(null); setDrag(null); setOver(null); };
+
+  const pool = Object.keys(CS_COLS).filter(k=>CS_COLS_FIXED.indexOf(k)<0);
+  const off  = pool.filter(k=>order.indexOf(k)<0);
+  // ★ 켜면 «맨 뒤» 에 붙인다. 가운데 끼우면 방금 켠 것이 어디 갔는지 못 찾는다.
+  const toggle = (k)=> setOrder(p=> p.indexOf(k)>=0 ? p.filter(x=>x!==k) : p.concat([k]));
+
+  const dropOn = (targetId)=>{
+    if(!drag || drag===targetId){ endDrag(); return; }
+    setOrder(p=>{
+      const rest = p.filter(x=>x!==drag);
+      const at = rest.indexOf(targetId);
+      if(at<0) return p;
+      const from = p.indexOf(drag), to = p.indexOf(targetId);
+      const idx = from < to ? at+1 : at;   // 아래로 옮기면 그 줄 «뒤», 위로면 «앞»
+      return rest.slice(0,idx).concat([drag], rest.slice(idx));
+    });
+    endDrag();
+  };
+
+  const save = async ()=>{
+    // ★★ «모르는 키는 지우지 않는다» — 이 칩 말고 다른 칩의 설정, 그리고 이 칩 안에
+    //   있던 «내가 모르는 열 이름» 을 그대로 다시 담는다. 내가 모른다고 지우면
+    //   다음 판에서 그 열을 만들었을 때 설정이 사라져 있다(설정 화면 셋의 규칙과 같다).
+    const mineOld = Array.isArray(saved[chip]) ? saved[chip] : [];
+    const unknown = mineOld.filter(k=>!CS_COLS[k]);
+    const out = {...saved, [chip]: order.concat(unknown)};
+    setBusy(true);
+    const ok = await csSaveSetting('cs_list_columns', out, currentUserEmail);
+    setBusy(false);
+    if(!ok) return;
+    setSettings(p=>({...(p||{}), cs_list_columns: out}));
+    toast('「'+chipLabel+'」 칩의 열 구성을 저장했습니다.','ok');
+    onClose();
+  };
+
+  const chipRow = (k, on)=>{
+    const isOver = over===k && drag && drag!==k;
+    return (
+      <div key={k}
+        onDragOver={on ? (e)=>{ if(drag && drag!==k){ e.preventDefault(); setOver(k); } } : undefined}
+        onDragLeave={on ? ()=>setOver(o=>o===k?null:o) : undefined}
+        onDrop={on ? (e)=>{ e.preventDefault(); dropOn(k); } : undefined}
+        style={{display:'flex',alignItems:'center',gap:7,padding:'5px 7px',borderRadius:6,
+          background: drag===k ? 'rgba(120,170,255,.10)' : 'transparent',
+          borderTop:'2px solid '+(isOver ? 'var(--accent)' : 'transparent')}}>
+        {on ? (
+          <span title="끌어서 차례를 바꿉니다"
+            draggable={armed===k}
+            onMouseDown={()=>setArmed(k)} onMouseUp={()=>setArmed(null)}
+            onDragStart={(e)=>{ setDrag(k); try{ e.dataTransfer.effectAllowed='move';
+              e.dataTransfer.setData('text/plain',k); }catch(_e){} }}
+            onDragEnd={endDrag}
+            style={{cursor:'grab',color:'var(--sub)',opacity:.6,fontSize:12,
+              padding:'0 2px',userSelect:'none',lineHeight:1}}>≡</span>
+        ) : <span style={{width:12}}></span>}
+        <label style={{display:'flex',alignItems:'center',gap:6,flex:1,minWidth:0,cursor:'pointer'}}>
+          <input type="checkbox" checked={on} onChange={()=>toggle(k)}
+            style={{width:13,height:13,accentColor:'#2A478D',cursor:'pointer'}}/>
+          <span style={{fontSize:11.5,color:on?'var(--text)':'var(--sub)',
+            overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{CS_COLS[k].label}</span>
+        </label>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {/* 바깥을 누르면 닫는다. 패널만 두면 다른 곳을 눌러도 안 닫힌다. */}
+      <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:2400}}></div>
+      <div style={{position:'absolute',top:'calc(100% + 6px)',right:0,zIndex:2401,
+        width:260,background:'var(--surface)',border:'1px solid var(--border)',
+        borderRadius:10,boxShadow:'0 10px 28px rgba(0,0,0,.45)',padding:'12px 13px'}}>
+        <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:3}}>
+          보기 설정</div>
+        {/* ★ «어느 칩의 설정인가» 를 반드시 적는다 — 칩마다 따로 저장되므로, 안 적으면
+            여기서 바꾼 것이 왜 다른 칩에 안 보이는지 알 수 없다. */}
+        <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.65,marginBottom:9}}>
+          지금 보고 있는 <b style={{color:'var(--accent)'}}>「{chipLabel}」</b> 칩에만
+          적용됩니다. 칩마다 보는 목적이 다릅니다.
+        </div>
+
+        <div style={{maxHeight:280,overflowY:'auto',margin:'0 -3px'}}>
+          <div style={{fontSize:9.5,color:'var(--sub)',letterSpacing:'.06em',
+            padding:'0 7px 3px'}}>보이는 열 · 끌어서 차례</div>
+          {order.length===0 ? (
+            <div style={{fontSize:10.5,color:'var(--sub)',padding:'6px 7px'}}>
+              고른 열이 없습니다 — 아래에서 켜 주세요.</div>
+          ) : order.map(k=>chipRow(k,true))}
+          {off.length>0 && (
+            <>
+              <div style={{fontSize:9.5,color:'var(--sub)',letterSpacing:'.06em',
+                padding:'9px 7px 3px',borderTop:'1px solid var(--border)',marginTop:6}}>안 보이는 열</div>
+              {off.map(k=>chipRow(k,false))}
+            </>
+          )}
+        </div>
+
+        {/* ★ 「등록·수정」은 고를 수 있는 열이 아니다 — 어느 칩에서 보든 늘 필요해서
+            맨 앞에 고정으로 둔 것이다. 목록에 안 넣는 대신 여기서 밝힌다. */}
+        <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.6,marginTop:9,
+          paddingTop:8,borderTop:'1px solid var(--border)'}}>
+          맨 앞 <b>등록 · 수정</b> 두 열은 늘 보입니다.
+        </div>
+
+        <div style={{display:'flex',gap:6,marginTop:10,alignItems:'center'}}>
+          <button onClick={()=>setOrder(known(CS_COLS_FALLBACK))} disabled={busy}
+            style={{padding:'5px 9px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
+              cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+              color:'var(--sub)'}}>기본값으로</button>
+          <div style={{flex:1}}></div>
+          <button onClick={onClose} disabled={busy}
+            style={{padding:'5px 10px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
+              cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+              color:'var(--sub)'}}>닫기</button>
+          <button onClick={save} disabled={busy}
+            style={{padding:'5px 12px',borderRadius:6,fontSize:10.5,fontWeight:600,
+              fontFamily:'inherit',border:'none',color:'#fff',
+              background: busy?'var(--border)':'var(--primary)',
+              cursor: busy?'default':'pointer'}}>{busy?'저장 중…':'저장'}</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function CsSortTh({k, w, label, sortable=true, sort, onClick}){
   const on = sort && sort.key===k;
   return (
