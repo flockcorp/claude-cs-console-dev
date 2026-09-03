@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260903p_tip_if_clipped -->
+<!-- (2026-09-03) 표의 칸에 «그 칸의 값» 을 그대로 달아 두던 툴팁 다섯을 «잘렸을 때만» 뜨게 바꿨다(제니: 「남긴 5곳도 동일한 값이 툴팁으로 뜨네, 길어서 전체가 안 보일 때만 뜨게 해 줘」). 짧은 값에서는 **화면에 이미 다 보이는 것이 한 번 더 뜨는** 셈이라 알려 주는 것이 없으면서 훑는 내내 성가시다. 바꾼 곳: 비용 비교 «메모» · 환불 목록 «주문번호»·«상품명» · 발송 이력 «상품명»·«옵션». 겸해 앞서 상품 정보 목록 상품명에 인라인으로 넣었던 같은 코드를 공용 헬퍼(tipIfClipped)로 합쳐 여섯 곳이 한 가지 방법을 쓰게 했다 — 같은 일을 두 벌로 두면 한쪽만 손보게 된다. ★★ 잘림은 CSS(ellipsis·overflow)가 정하는 것이라 코드가 미리 알 수 없다 → 마우스가 올라온 «그 자리에서» 재서 title 을 붙이거나 뗀다. ★ **가로·세로를 모두 본다**: nowrap 칸은 가로로 잘리고 줄바꿈되는 칸은 세로로 잘리는데, 한쪽만 보면 후자에서 영영 안 뜬다. ★ +1 은 소수점 반올림 여유다. ★ 칸이 아예 안 잘리는 구조(overflow 를 안 숨긴 칸 — 환불 목록의 주문번호가 그렇다)면 툴팁은 이제 영영 안 뜬다. 그게 맞다: 그 자리는 값이 원래 다 보인다. ★ 안내를 담은 툴팁 셋은 그대로 뒀다 — «제외» 뱃지의 제외 사유 · MASTER 안내 · 문구 켜기/끄기 설명. 값을 되풀이하는 것이 아니라 화면에 없는 것을 말해 준다. ★ dev 전용. -->
 <!-- v20260903o_wide_area_tips -->
 <!-- (2026-09-03) CS 티켓 목록에서 «줄 전체» 와 «제목칸 전체» 에 붙어 있던 툴팁 둘을 뺐다 — 「티켓 열기」·「눌러서 정렬」(제니 제보: 이건 전에는 안 뜨던 것이다). ★★★ 제니 말이 맞았고 내가 앞서 «문구는 그대로다» 라고 한 답이 부정확했다. 이력을 보니 두 문구는 2026-09-01 에 들어왔지만 «붙어 있던 자리» 가 그 뒤에 바뀌었다: 「티켓 열기」는 처음에 티켓 «번호» 글자(6px 남짓)에만 붙어 있었는데, 09-02 에 «줄 아무 데나 눌러도 열리게» 고치면서 그 title 이 <tr> 로 따라 올라갔다. 「눌러서 정렬」도 제목칸 전체에 붙어 있었다. 그러면 목록을 훑기만 해도 줄마다·칸마다 툴팁이 떠서, 쓰는 사람에게는 «없던 것이 새로 생긴» 것과 똑같다. ★★★ **여기서 얻을 것: 툴팁을 옮길 때는 «얼마나 넓은 곳에 붙는가» 가 함께 바뀐다.** 작은 글자에 붙어 있던 말이 줄·칸 전체로 가면 같은 문구라도 성격이 달라지고, **문자열만 대조하면 이 변화가 안 보인다** — 어제 툴팁을 되돌리며 「작업 직전과 같다」고 말한 근거가 문자열 대조뿐이었던 것이 그래서 모자랐다. ★ 뺀 이유는 자리만이 아니다: 줄을 누를 수 있다는 것은 cursor:pointer 와 hover 색이 이미 말하고, 제목칸이 정렬된다는 것은 ▲▼ 화살표가 말한다 — 같은 말을 툴팁으로 한 번 더 할 이유가 없다. ★ 넓은 영역에 붙은 툴팁을 전수로 훑어 7곳을 찾았는데, 나머지 5곳은 성격이 다르다: 표의 칸이 «제 값» 을 보여 주는 것(메모·주문번호·상품명·옵션 스냅샷)이라 값이 길어 잘릴 때 전체를 보게 해 준다. 그건 오래전부터 있던 것이고 «안내» 가 아니라 «값» 이라 그대로 둔다. ★ dev 전용. -->
 <!-- v20260903n_tooltip_rollback -->
@@ -2410,6 +2412,29 @@ function imgToBase64(file){
   });
 }
 
+// ── 값이 «잘렸을 때만» 전체를 툴팁으로 (제니 2026-09-03) ────────────────────
+// 「같은 값이 그대로 또 뜨네, 길어서 전체가 안 보일 때만 뜨게 해 줘」.
+// 표의 칸에 그 칸의 값을 그대로 title 로 달아 두면, 짧은 값에서는 «화면에 이미 다
+// 보이는 것» 이 한 번 더 뜬다 — 알려 주는 것이 없으면서 훑는 내내 성가시다.
+//
+// ★★ 잘림은 CSS(ellipsis·overflow)가 정하는 것이라 코드가 미리 알 수 없다.
+//   → 마우스가 올라온 «그 자리에서» 재서 title 을 붙이거나 뗀다.
+// ★ 가로·세로를 모두 본다: nowrap 칸은 가로로 잘리고, 줄바꿈되는 칸은 세로로 잘린다.
+//   한쪽만 보면 후자에서 영영 안 뜬다.
+// ★ +1 은 소수점 반올림 여유다(잘리지 않았는데 1px 차이로 잘린 것처럼 잡힌다).
+// ★ 칸이 아예 안 잘리는 구조(overflow 를 안 숨긴 칸)면 툴팁은 영영 안 뜬다 —
+//   그 자리는 원래 값이 다 보이므로 그게 맞다.
+//
+// 쓰는 법:  <td {...tipIfClipped(r.product_name)} style={…}>{r.product_name}</td>
+const tipIfClipped = (text)=>({
+  onMouseEnter:(e)=>{
+    const el = e.currentTarget;
+    const clipped = el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+    if(clipped) el.title = (text==null ? '' : String(text));
+    else el.removeAttribute('title');
+  },
+});
+
 // ── 공급사 «소통 채널» 색표 ────────────────────────────────────────────────
 // ★★ 2026-09-03 에 모듈 자리로 올렸다. 그전에는 똑같은 표가 두 컴포넌트 안에
 //   각각 있었고(상품 관리·공급사 관리), CS 티켓 화면이 세 번째로 필요해졌다.
@@ -4132,13 +4157,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                       <Cafe24Tags p={p}/>
                     </td>
                     <td style={{cursor:'pointer',color:'var(--primary)',textDecoration:'underline',textDecorationStyle:'dotted',maxWidth:280,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} onClick={()=>{setDetailProd(p);setDetailMode('basic');}}
-                      /* ★★ 이름이 너무 길어 «잘렸을 때» 만 전체를 보여 준다(제니 2026-09-03).
-                         짧은 이름에도 띄워서 성가셨다. 잘림은 CSS(ellipsis)가 정하는 것이라
-                         코드가 미리 알 수 없다 — 마우스가 올라온 «그 자리에서» 재서
-                         title 을 붙이거나 둔다. +1 은 소수점 반올림 여유다. */
-                      onMouseEnter={e=>{ const el=e.currentTarget;
-                        if(el.scrollWidth > el.clientWidth + 1) el.title = p.product_name || '';
-                        else el.removeAttribute('title'); }}>{p.product_name}</td>
+                      /* ★ 이름이 길어 잘렸을 때만 전체를 보여 준다 — 공용 헬퍼를 쓴다. */
+                      {...tipIfClipped(p.product_name)}>{p.product_name}</td>
 
                     <td style={{fontSize:11,color:'#1a3060'}}>
                       <div style={{fontWeight:500}}>{p.shipping_method||'-'}</div>
@@ -6348,7 +6368,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
                       <td style={{padding:'6px'}}>{r.cond||'-'}</td>
                       <td style={{padding:'6px',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{r.fee==null?'-':r.fee.toLocaleString()}</td>
                       <td style={{padding:'6px',textAlign:'right',fontVariantNumeric:'tabular-nums'}}>{r.threshold==null?'-':r.threshold.toLocaleString()}</td>
-                      <td style={{padding:'6px',color:'#5F7195',maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.memo||''}>{r.memo||'-'}</td>
+                      <td style={{padding:'6px',color:'#5F7195',maxWidth:300,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} {...tipIfClipped(r.memo||'')}>{r.memo||'-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -8901,8 +8921,8 @@ function RefundManagementPage({ currentUserEmail }) {
                     <td style={{...td,fontFamily:'monospace',fontSize:11}}>{r.account_number||'—'}</td>
                     <td style={td}>{r.account_holder||'—'}</td>
                     <td style={td}>{r.customer_name||'—'}</td>
-                    <td style={{...td,fontFamily:'monospace',fontSize:11}} title={r.order_id}>{r.order_id}</td>
-                    <td style={{...td,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}} title={r.product_name}>{r.product_name||'—'}</td>
+                    <td style={{...td,fontFamily:'monospace',fontSize:11}} {...tipIfClipped(r.order_id)}>{r.order_id}</td>
+                    <td style={{...td,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis'}} {...tipIfClipped(r.product_name)}>{r.product_name||'—'}</td>
                     <td style={td}>{r.supplier_name||'—'}</td>
                     <td style={{...td,textAlign:'center'}}>
                       <div style={{display:'flex',gap:4,justifyContent:'center',alignItems:'center',flexWrap:'wrap'}}>
@@ -13090,8 +13110,8 @@ function DelayHistoryTab(){
                         ) : null}
                       </td>
                       <td style={{padding:'12px 14px',color:'var(--text)',fontFamily:'monospace',fontSize:11}}>{fmtIsoLocal(r.sent_at)}</td>
-                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.product_name_snapshot}>{r.product_name_snapshot||'-'}</td>
-                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={r.option_text_snapshot}>{r.option_text_snapshot||<span style={{color:'var(--sub)',fontStyle:'italic'}}>단일 옵션</span>}</td>
+                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} {...tipIfClipped(r.product_name_snapshot)}>{r.product_name_snapshot||'-'}</td>
+                      <td style={{padding:'12px 8px',color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} {...tipIfClipped(r.option_text_snapshot)}>{r.option_text_snapshot||<span style={{color:'var(--sub)',fontStyle:'italic'}}>단일 옵션</span>}</td>
                       <td style={{padding:'12px 8px',color:'var(--text)'}}>{r.supplier_name||'-'}</td>
                       <td style={{padding:'12px 8px',color:'var(--text)',fontFamily:'monospace',fontSize:11}}>{r.order_id||'-'}</td>
                       <td style={{padding:'12px 8px',color:'var(--text)'}} onClick={e=>{e.stopPropagation(); toggleUnmask(r.id);}}>
