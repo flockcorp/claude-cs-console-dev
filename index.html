@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904e_colmin_sortmark_rightedge -->
+<!-- (2026-09-04) 앞 판(d)에 대한 제니 피드백 넷. ①**열의 최소 폭을 «머리글이 … 로 줄지 않는» 값으로 잡았다**(csColMinW · 라벨 글자 수로 잰다). ★★ 값이 접히는 것은 괜찮다 — 표는 값을 담는 자리다. 하지만 **머리글이 줄면 그 열이 무엇인지 자체를 잃는다**: 「품목별 주문번호」가 「품목별 주…」가 되면 옆의 「주문번호」와 구별이 안 된다. ★ 저장해 둔 폭이 이 최소보다 좁아도 최소가 이긴다(최소는 나중에 올라갈 수 있다). ②**정렬 화살표를 «정렬 중인 열» 에만 그린다**(제니: 「번잡스러워 보인다」). ★★★ 그전에 스물몇 열에 회색 삼각형을 늘 세워 둔 데는 이유가 있었다 — 화살표가 생겼다 사라지면 열 폭이 흔들려 표가 덜컹였다. **그 이유는 같은 날 폭을 tableLayout:'fixed' 로 옮기면서 사라졌다.** 폭이 내용과 무관해졌으므로 이제 «지금 무엇으로 정렬 중인가» 라는 신호 하나만 남긴다. 누를 수 있다는 것은 마우스를 올렸을 때 흐리게 뜨는 화살표가 말한다. **낡은 대비책이 남아 원래 보여 줄 것을 가리고 있던 자리다.** ★ 화살표 자리(14px)는 최소 폭에 그대로 세어 둔다 — 켠 순간 머리글이 줄면 «켰더니 이름이 사라지는» 셈이 된다. ③**맨 오른쪽 열이 화면 밖으로 밀리던 것**(제니). 그 열 뒤에는 남는 폭을 먹는 빈 열뿐이라 끄는 만큼 표가 그대로 넓어졌다 → **늘릴 수 있는 상한을 «지금 남아 있는 폭» 까지**로 두어 오른쪽 끝 라인을 넘지 못하게 했다(좁히는 쪽은 그대로 자유). 이미 가로 스크롤 중이면 남는 폭이 0이라 더는 못 늘린다 — 그때는 앞의 열을 좁히면 된다. ④**「17분 전」을 되살렸다**(제니). ★ 줄 «수» 는 그대로 두고 **시각 자리에 넣는다** — 한 줄이 더 붙으면 그 줄만 키가 달라져 여러 건을 세로로 훑을 때 눈이 걸린다. 색을 줘서(accent) «지금 벌어지고 있는 일» 임을 표시하고, 정확한 시각은 마우스를 올리면 뜬다(잃는 것이 아니라 한 겹 뒤로 간다). ★ 겸해 **목록 맨 앞 «고르는 체크박스» 자리를 상수로 못 박아 뒀다**(CS_SEL_W · 아직 안 만들었다) — 여러 건을 골라 공급사에 한 번에 접수하는 일괄 편집 바와 한 몸이라 체크박스만 먼저 두면 눌러도 아무 일이 없다. 그 열은 [보기 설정] 에 넣지 않는다: 값을 보여 주는 열이 아니라 «고르는 장치» 이고, 끌 수 있게 두면 일괄 편집으로 가는 길이 화면에서 사라진다. -->
 <!-- v20260904d_abs_width_stack_date_tone -->
 <!-- (2026-09-04) 앞 판(c)을 제니가 화면에서 보고 짚은 셋. ①🔴 **열 너비가 «절대» 가 아니라 «상대» 로 움직였다**(제니: 「한 열을 조정하면 앞쪽 너비도 같이 바뀐다」). 원인은 표에 준 minWidth:'100%' 다 — 열 폭의 합이 화면보다 좁으면 **fixed 레이아웃이 남는 폭을 모든 열에 «비례로» 나눠 준다.** px 로 잡아 놓고도 상대 너비로 움직인 것이다. ★★★ 고친 법: **맨 뒤에 폭 없는 빈 열(spacer)을 하나 두어 남는 폭을 그 열이 «혼자» 먹게 한다.** 표는 width:'100%' + minWidth:열 폭의 합. 그러면 앞의 열들은 준 값 그대로 서고, 합이 화면보다 넓으면 예전처럼 가로로 구른다. **«폭을 px 로 줬으니 고정이다» 는 fixed 레이아웃에서 참이 아니다 — 남는 폭이 어디로 가는지까지 정해야 고정이다.** ②**등록·수정 날짜를 «날짜 / 시간» 두 줄로 쌓았다**(제니). 한 줄로 「09-03 15:21」을 두면 열이 늘 그만큼 넓어야 하는데, 쌓으면 폭이 반으로 줄어 그 자리를 내용이 긴 열에 넘길 수 있다. ★★ **해가 바뀌면 연도 줄이 하나 더 붙는다**(「2026 / 09-03 / 15:21」) — 올해 것에까지 연도를 적으면 스물몇 줄 내내 같은 글자가 반복돼 정작 다른 두 줄을 읽는 데 방해가 된다. ★★ **열의 최소 폭을 «세 줄이 다 들어가는» 값으로 못 박았다**(CS_COLS 의 minw · 열마다 따로) — 연도가 붙기 시작하는 날 열이 흔들리지 않게 처음부터 그 자리를 세어 둔다. 저장해 둔 폭이 그보다 좁아도 최소를 지킨다(최소를 나중에 올릴 수 있으므로). ★ 그전의 「17분 전」(csAgo)은 뺐다 — 상대 표기를 잃는 대신 모든 줄이 같은 모양이 됐다. 목록은 한 건을 읽는 자리가 아니라 여러 건을 세로로 훑는 자리다. ③**[저장] 버튼의 상태색이 빠져 있었다**(제니 지적). 앞 판에서 밝은 판 밖으로 빼면서 light 를 뗐는데, 상태색이 light 일 때만 걸려 있어 남색 하나로 돌아갔다. ★★★ **버튼이 뜻을 지고 있으면 그 뜻은 «놓인 자리» 와 상관없이 유지돼야 한다** — 어두운 바탕에서도 같은 CS_TONE_SOLID 를 쓴다(흰 글자를 얹으려고 명도를 낮춘 값이라 어두운 화면에서도 도드라진다). ★★ 다만 **«못 누를 때» 옅게 하는 방향은 판에 따라 반대다** — 밝은 판에서는 파스텔로 «밝히고»(CS_TONE_SOFT), 어두운 판에서는 «가라앉힌다»(CS_TONE_DIM, 이번에 새로 뒀다). 한쪽 표를 두 곳에 쓰면 못 누르는 버튼이 화면에서 가장 밝은 조각이 된다. 두 쪽을 가르는 선도 같은 이유로 방향이 반대다. -->
 <!-- v20260904c_col_resize_detail_template -->
@@ -707,6 +709,10 @@
     .cs-colgrip::after{content:'';position:absolute;top:6px;bottom:6px;right:3px;width:1px;
       background:transparent}
     .cs-colgrip:hover::after{background:#7FA8E8}
+    /* 정렬 화살표는 «정렬 중인 열» 에만 선다. 나머지는 마우스를 올린 열에서만
+       흐리게 떠 «여기를 누르면 정렬된다» 를 알린다(자리는 늘 세어 둔다). */
+    .cs-sortmark{visibility:hidden}
+    .cs-th:hover .cs-sortmark{visibility:visible;color:#6E82A8}
     @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
     @keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
     @media (max-width:640px){ #toastHost{left:12px;right:12px;bottom:12px;max-width:none} }
@@ -17219,6 +17225,31 @@ const CS_COLS_HEAD = ['id','created','touched'];
 // 열 너비 — «내 화면에만» 남는 값이라 localStorage 다(console_settings 는 운영 기준).
 const CS_COLW_KEY = 'cs_list_colw_v1';
 const CS_COLW_MIN = 44;
+// ★★ 목록 맨 앞에 «고르는 체크박스» 가 들어올 자리다(제니 2026-09-04 · 아직 안 만들었다).
+//   여러 건을 골라 공급사에 한 번에 접수하는 «일괄 편집 바» 와 한 몸이라, 체크박스만
+//   먼저 두면 눌러도 아무 일이 없다 — 그때 함께 만든다.
+//   ★ 이 열은 [보기 설정] 에 넣지 않는다. 값을 보여 주는 열이 아니라 «고르는 장치» 이고,
+//     끌 수 있게 두면 일괄 편집으로 가는 길이 화면에서 사라진다.
+//   ★ 자리를 지금 못 박아 두는 이유: 폭이 34px 늘어나면 오른쪽 끝이 그만큼 밀리는데,
+//     그때 가서 열 폭을 다시 잡게 하면 사람이 맞춰 둔 폭이 한 번 흐트러진다.
+const CS_SEL_W = 34;
+// ★★ 열의 최소 폭은 «머리글이 … 로 줄지 않는» 값이다(제니 2026-09-04).
+//   좁혀서 값이 접히는 것은 괜찮다 — 표는 값을 담는 자리니까. 하지만 **머리글이
+//   줄면 그 열이 무엇인지 자체를 잃는다.** 「품목별 주문번호」가 「품목별 주…」가 되면
+//   옆의 「주문번호」와 구별이 안 된다.
+// ★ 글자 수로 잰다: 한글 10px · 그 밖 6px(머리글은 10px) + letterSpacing .06em.
+//   여기에 좌우 여백(12+12) · 정렬 화살표 자리(14) · 손잡이(7) · 여유(2).
+//   ★ 화살표는 정렬 중일 때만 그리지만 자리는 세어 둔다 — 정렬을 켠 순간
+//     머리글이 줄면 «켰더니 이름이 사라지는» 셈이 된다.
+// ★ 내용 쪽 최소(CS_COLS 의 minw · 날짜 세 줄 같은 것)와 큰 쪽을 쓴다.
+function csColMinW(k){
+  const c = CS_COLS[k] || {};
+  let w = 0;
+  String(c.label||'').split('').forEach(ch=>{
+    w += (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(ch) ? 10 : 6) + 0.6;
+  });
+  return Math.max(c.minw||0, CS_COLW_MIN, Math.ceil(w) + 24 + 14 + 7 + 2);
+}
 const CS_COLS_FALLBACK = ['id','created','touched','stage','cs_type','direction',
   'product','option','supplier','orderer','assignee','recheck'];
 
@@ -17318,6 +17349,14 @@ function csStackParts(v){
 function CsStackDate({at}){
   const s = csStackParts(at);
   if(!s) return <span style={{color:'var(--sub)'}}>—</span>;
+  // ★★ 한 시간 안쪽이면 아랫줄을 «17분 전» 으로 바꾼다(제니 2026-09-04 — 되살려 달라).
+  //   방금 손댄 건을 목록에서 바로 알아보는 것이 그 표기의 쓸모다.
+  //   ★ 줄 «수» 는 그대로 둔다 — 시각을 지우고 그 자리에 넣는다. 한 줄이 더 붙으면
+  //     그 줄만 키가 달라져, 여러 건을 세로로 훑을 때 눈이 걸린다.
+  //   ★ 색을 준다(accent): 상대 표기는 «지금 벌어지고 있는 일» 이라는 신호다.
+  //   ★ 정확한 시각은 마우스를 올리면 뜬다 — 잃는 것이 아니라 한 겹 뒤로 간다.
+  const m = Math.floor((Date.now() - new Date(at).getTime())/60000);
+  const rel = (m>=0 && m<60) ? (m<1 ? '방금' : m+'분 전') : null;
   // ★ 고정폭 글꼴 + tabular-nums — 줄마다 숫자가 같은 자리에 서야 세로로 훑힌다.
   //   ★ monospace 만 적으면 윈도우 크롬이 Courier New 를 고른다(MONO 상수를 쓴다).
   return (
@@ -17326,7 +17365,8 @@ function CsStackDate({at}){
         fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',color:'var(--sub)'}}>
       {s.year && <span style={{display:'block',opacity:.8}}>{s.year}</span>}
       <span style={{display:'block',color:'var(--text)'}}>{s.md}</span>
-      <span style={{display:'block'}}>{s.hm}</span>
+      <span style={{display:'block',color: rel?'var(--accent)':'var(--sub)'}}>
+        {rel || s.hm}</span>
     </span>
   );
 }
@@ -17720,11 +17760,13 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   const [colW,setColW] = useState(()=>{
     try{ return JSON.parse(localStorage.getItem(CS_COLW_KEY)||'{}') || {}; }catch(_e){ return {}; }
   });
+  // 표를 감싼 칸 — 맨 오른쪽 열이 «화면 오른쪽 끝» 을 넘지 않게 재는 데 쓴다.
+  const wrapRef = useRef(null);
   // ★ 저장해 둔 값이 그 열의 최소보다 작아도 최소를 지킨다 — 최소를 나중에 올리면
-  //   («연도 줄이 붙는다» 처럼) 예전에 저장한 폭이 그보다 좁을 수 있다.
+  //   («연도 줄이 붙는다»·«머리글 기준» 처럼) 예전에 저장한 폭이 그보다 좁을 수 있다.
   const widthOf = (k)=>{
     const c = CS_COLS[k] || {};
-    return Math.max(colW[k] || c.w || 110, c.minw || 0);
+    return Math.max(colW[k] || c.w || 110, csColMinW(k));
   };
   const putColW = (next)=>{
     setColW(next);
@@ -17734,15 +17776,26 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   const startResize = (k, e, reset)=>{
     e.preventDefault(); e.stopPropagation();
     if(reset){ const n={...colW}; delete n[k]; putColW(n); return; }
-    // ★ 열마다 «더는 못 좁히는» 값이 다르다(CS_COLS 의 minw) — 날짜 열은 «연도 /
-    //   날짜 / 시간» 세 줄이 들어가야 하고, 그보다 좁히면 숫자가 접혀 모양이 깨진다.
-    const minw = (CS_COLS[k] && CS_COLS[k].minw) || CS_COLW_MIN;
+    // ★ 열마다 «더는 못 좁히는» 값이 다르다(csColMinW) — 머리글이 … 로 줄지 않는
+    //   폭, 그리고 날짜처럼 내용이 요구하는 폭 중 큰 쪽이다.
+    const minw = csColMinW(k);
+    // ★★ **맨 오른쪽 열은 오른쪽 끝 라인을 넘지 못한다**(제니 2026-09-04:
+    //   「우측으로 밀면 화면 밖까지 밀려」). 그 열 뒤에는 남는 폭을 먹는 빈 열뿐이라,
+    //   끄는 만큼 표가 그대로 넓어져 오른쪽 경계가 화면 밖으로 나갔다.
+    //   → 늘릴 수 있는 상한을 «지금 남아 있는 폭» 까지로 둔다. 좁히는 쪽은 그대로 자유다.
+    //   ★ 이미 표가 화면보다 넓으면(가로 스크롤 중) 남는 폭이 0이라 더는 못 늘린다 —
+    //     그때 넓히고 싶으면 앞의 열을 좁히면 된다.
+    let maxw = Infinity;
+    if(colKeys[colKeys.length-1]===k && wrapRef.current){
+      const total = colKeys.reduce((s,x)=>s+widthOf(x),0);
+      maxw = widthOf(k) + Math.max(0, wrapRef.current.clientWidth - total);
+    }
     const x0 = e.clientX, w0 = widthOf(k);
     // ★ 마지막 값을 지역 변수로 들고 있다가 놓을 때 저장한다 — setState 안에서
     //   localStorage 를 쓰면 updater 가 두 번 불릴 때 같이 두 번 쓰인다.
     let last = null;
     const move = (ev)=>{
-      last = Math.max(minw, Math.round(w0 + (ev.clientX - x0)));
+      last = Math.min(maxw, Math.max(minw, Math.round(w0 + (ev.clientX - x0))));
       setColW(p=>({...p, [k]:last}));
     };
     const up = ()=>{
@@ -18069,7 +18122,8 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
           </div>
         </div>
       ) : (
-        <div style={{overflowX:'auto',background:'var(--card)',border:'1px solid var(--border)',borderRadius:12}}>
+        <div ref={wrapRef}
+          style={{overflowX:'auto',background:'var(--card)',border:'1px solid var(--border)',borderRadius:12}}>
           {/* ★★ tableLayout:'fixed' + colgroup — 폭을 «내가» 정하려면 이 둘이 필요하다.
                 자동 레이아웃에서 width 는 브라우저에 대한 «제안» 일 뿐이라, 끌어서
                 좁혀도 내용이 길면 도로 벌어진다.
@@ -22482,8 +22536,15 @@ const csTd = {padding:'10px 12px',color:'var(--text)',verticalAlign:'middle',
   overflowWrap:'anywhere'};
 
 // 누르면 정렬되는 머리글.
-// ★★ 화살표 자리를 «늘» 비워 둔다(visibility 로 숨긴다). 누를 때마다 화살표가 생겼다
-//   사라지면 열 폭이 흔들려서 표 전체가 덜컹인다.
+// ★★ 2026-09-04 이전에는 화살표 자리를 «늘» 비워 뒀다(visibility 로 숨김) — 누를 때마다
+//   화살표가 생겼다 사라지면 열 폭이 흔들려 표가 덜컹였기 때문이다.
+//   ★★★ **그 이유는 이제 없다.** 같은 날 열 폭을 tableLayout:'fixed' + colgroup 으로
+//     옮기면서 폭이 내용과 무관해졌다. 그래서 화살표를 «정렬 중인 열에만» 그린다 —
+//     스물몇 열에 회색 삼각형이 줄줄이 서 있으면 «지금 무엇으로 정렬 중인가» 라는
+//     정작 필요한 신호가 그 속에 묻힌다(제니: 「번잡스러워 보인다」).
+//     누를 수 있다는 것은 마우스를 올렸을 때 흐리게 뜨는 화살표가 말해 준다.
+//   ★ 자리(14px)는 최소 폭 계산에 그대로 세어 둔다 — 정렬을 켠 순간 머리글이
+//     «…» 로 줄면 «켰더니 이름이 사라지는» 셈이 된다.
 // ── 목록 [⚙ 보기 설정] — 칩마다 «어느 열을 어떤 차례로» (제니 2026-09-03) ──────
 // ★★ 열 구성은 «칩마다» 따로다(제니). 「공급사 미접수」는 공급사·채널을 봐야 하고
 //   「정산 대기」는 금액을 봐야 한다 — 한 벌로 두면 어느 칩에서든 절반이 헛열이다.
@@ -22705,13 +22766,16 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
 function CsSortTh({k, w, label, sortable=true, sort, onClick, align, onResize}){
   const on = sort && sort.key===k;
   return (
-    <th style={{...csTh(w), cursor: sortable?'pointer':'default',
+    <th className={sortable?'cs-th':undefined}
+      style={{...csTh(w), cursor: sortable?'pointer':'default',
         color: on ? 'var(--accent)' : 'var(--sub)', userSelect:'none',
         ...(align ? {textAlign:align} : null)}}
       onClick={sortable ? ()=>onClick(k) : undefined}>
       {label}
-      <span style={{marginLeft:4, visibility: on?'visible':'hidden'}}>
-        {on && sort.dir==='desc' ? '▼' : '▲'}</span>
+      {sortable && (
+        <span className={on?undefined:'cs-sortmark'} style={{marginLeft:4}}>
+          {on ? (sort.dir==='desc' ? '▼' : '▲') : '▲'}</span>
+      )}
       {/* ── 폭 손잡이 (제니 2026-09-04) ────────────────────────────────
           ★★ 머리글 «경계» 를 잡고 끈다. 열마다 담는 값의 길이가 크게 달라서
             (계좌번호 한 줄 vs 주소 두 줄) 한 벌의 기본 폭으로는 늘 어딘가가
