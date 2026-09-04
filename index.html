@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904zb_note_table_lines -->
+<!-- (2026-09-04) **이력 표의 선을 밝게**(제니: 「표 라인이 어두워서 안 보인다」). var(--border)(#1e3060)는 이 어두운 바탕에서 거의 안 보여 **표가 «줄글 덩어리» 로 읽혔다** — 같은 날 칩·필터·검색칸 테두리에서 겪은 것과 **같은 원인이 또 나왔다**(그때는 CS_LINE 을 따로 두어 고쳤는데, 이 표는 그 뒤에 만든 것이라 옛 색을 그대로 물려받았다). ★★ 여기서 남길 것: **«묻히는 테두리» 를 한 번 고쳤으면 그 뒤에 만드는 조각에도 같은 값을 써야 한다** — 고친 것은 그 자리뿐이고, 다음에 새로 그리는 선은 다시 기본값에서 출발한다. ★ 겸해 머리글 줄에 옅은 파랑을 깔고 글자를 accent 로 올렸다 — 선 말고도 «이 줄이 이름» 이라는 것을 알리는 장치가 하나 더 있어야 표가 한눈에 표로 읽힌다. -->
 <!-- v20260904za_new_note_table -->
 <!-- (2026-09-04) **등록 화면의 쌓인 이력도 «표» 로 그린다**(제니: 「상세에서는 표로 들어가는데 등록에서는 안 된다」). 원인은 **등록 화면이 쌓인 줄을 제 코드로 그리고 있었던 것** — 상세에는 CsNoteBody(탭으로 나뉜 줄을 표로 그리는 렌더러)를 붙였는데 등록은 옛 pre-wrap 그대로였다. ★★★ **같은 값을 두 화면이 각자 그리면 이런 어긋남이 반드시 생긴다** — 한쪽을 고치는 날 다른 쪽은 그대로 남고, 그 사실은 «두 화면을 나란히 본 사람» 만 안다. 그리는 법은 한 곳에 둔다. ★ 오늘만 세 번째다: 접수 문안의 형식(건별/일괄) · 이력의 «누가» · 이 렌더러. **두 화면이 같은 것을 보여 준다면 «같은 함수» 로 그려야 한다.** -->
 <!-- v20260904z_messenger_template -->
@@ -17614,7 +17616,11 @@ function CsNoteBody({text}){
     if(last && last.tab===tab) last.lines.push(ln);
     else blocks.push({tab, lines:[ln]});
   });
-  const td = {border:'1px solid var(--border)',padding:'4px 7px',
+  // ★★ 표 선은 «칸을 나누는» 것이 일이라 눈에 보여야 한다(제니 2026-09-04).
+  //   var(--border)(#1e3060)는 이 어두운 바탕에서 거의 안 보여 표가 «줄글 덩어리» 로
+  //   읽혔다 — 09-04 에 칩·필터 테두리에서 겪은 것과 같은 원인이다.
+  //   ★ 머리글 줄은 배경을 한 겹 깔아 «이 줄이 이름» 이라는 것을 선 말고도 알린다.
+  const td = {border:'1px solid #4A6AAE',padding:'4px 7px',
     verticalAlign:'top',whiteSpace:'pre-wrap',overflowWrap:'anywhere'};
   return (
     <div style={{...base,whiteSpace:'normal'}}>
@@ -17630,8 +17636,9 @@ function CsNoteBody({text}){
           <div key={bi} style={{overflowX:'auto',margin:'6px 0'}}>
             <table style={{borderCollapse:'collapse',fontSize:11.5}}>
               <thead><tr>{head.map((c,i)=>(
-                <th key={i} style={{...td,textAlign:'left',color:'var(--sub)',
-                  background:'rgba(255,255,255,.04)',whiteSpace:'nowrap'}}>{c}</th>
+                <th key={i} style={{...td,textAlign:'left',color:'var(--accent)',
+                  fontWeight:700,background:'rgba(120,170,255,.14)',
+                  whiteSpace:'nowrap'}}>{c}</th>
               ))}</tr></thead>
               <tbody>{body.map((r,ri)=>(
                 <tr key={ri}>{r.map((c,i)=><td key={i} style={td}>{c}</td>)}</tr>
