@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- v20260904m_bulk_bar_red -->
+<!-- (2026-09-04) **일괄 편집 바를 붉은 계열로**(제니: 「배경이랑 목록이 색이 비슷비슷해서 눈에 안 띈다」 · 「눈에 띄어야 할 부분을 잘 구분해 달라」). ★★★ **이 콘솔은 화면 전체가 남색 한 계열이라, 남색 판 위의 남색 바는 아무리 밝혀도 «화면의 일부» 로 읽힌다.** 눈에 띄게 하려면 밝기가 아니라 **색상(hue) 자체를 바꿔야** 한다 — 여기만 붉은 띠가 서면 스크롤 중에도 «지금 뭔가 골라져 있다» 가 한눈에 들어온다. **앞으로 «눈에 띄어야 하는 것» 은 명도가 아니라 계열로 가른다.** ★★ 뜻도 맞는다: 이 바는 **되돌릴 수 없는 일**(여러 건을 한 번에 바꾼다)을 하는 자리라 «주의» 색이 제 뜻이다. **색을 눈에 띄라고만 고르면 다음에 그 색이 필요한 자리에서 쓸 것이 없어진다** — 눈에 띄는 것과 뜻이 맞는 것이 같은 색일 때만 쓴다. ★★★ **붉은 판 위에서는 그 안의 모든 조각을 다시 봐야 한다** — 남색 판에 맞춰 둔 테두리(CS_LINE)와 파란 버튼은 붉은 바탕에서 탁해진다. 테두리는 흰색 계열로, 입력칸은 흰 바탕에 어두운 글자로, **주 동작(적용)은 «흰 판에 붉은 글자»** 로 뒤집었다(이 바에서 눌러야 할 것이 하나라는 것이 한눈에 보인다). ★ 이것은 09-03 «밝은 판», 09-04 «그 판 밖으로» 와 **같은 함정이다 — 판이 바뀔 때마다 만난다.** ★ **고른 줄의 표시도 바와 같은 계열**로 바꿨다(옅은 붉은 칠 · 체크 색). 바는 붉은데 줄은 파랗게 깔리면 둘이 다른 일처럼 보인다. -->
+<!-- v20260904l_paging_toolbar -->
+<!-- (2026-09-04) **목록에 쪽 나누기**와 **오른쪽 도구 줄 재배치**(제니). ①한 쪽에 **30 · 50 · 100 · 200개**(기본 30). 그전에는 걸러진 것을 «전부» 한 화면에 쏟았다. ★ 한 쪽에 몇 건인지는 열 너비와 같은 «취향» 이라 localStorage 다 — 사람마다 화면 높이가 다르다. ★ 다만 **칩별로 두지 않는다**(열 구성·너비와 다른 점이다): 한 쪽에 몇 건을 볼지는 «내가 한 번에 훑는 양» 이라 보는 대상이 바뀌어도 잘 안 바뀐다. ②**오른쪽 두 줄을 짝지었다** — 윗줄 «검색칸 / + 티켓 등록», 아랫줄 «페이지 보기 / ⚙ 보기 설정». 윗줄은 «무엇을 찾고 무엇을 만드나», 아랫줄은 «어떻게 보여 주나» 다. **한 줄에 성격이 다른 것이 섞이면 어느 것이 무엇을 바꾸는지 매번 읽어야 한다.** ③★★★ **쪽을 나누면 «고른 건» 의 뜻이 달라진다** — 일괄 편집이 세는 «보이는 것» 을 걸러진 목록 전체가 아니라 **지금 쪽** 으로 좁혔다. 안 그러면 30건을 보며 [전체 선택] 을 눌렀는데 **다음 쪽에 있는 100건까지 바뀐다.** 고른 것을 지우지는 않는다(그 쪽으로 돌아오면 그대로다). ★ 조건(칩·검색·필터·정렬·쪽 크기)이 바뀌면 첫 쪽으로 돌아간다 — 3쪽을 보다가 필터를 좁히면 결과가 한 쪽뿐일 수 있고, 그때 3쪽에 머물면 «아무것도 없는 화면» 이 된다. ★ 쪽을 넘기면 표 «머리» 로 올려 준다: 이동 버튼이 표 아래에 있어서 누르고 나면 새 목록의 맨 아래를 보고 있게 된다. ★ 아래 줄에 「몇 번째–몇 번째 / 조건에 맞는 건 / 전체」 셋을 다 적는다 — 쪽을 나누면 **«지금 보는 것이 전부가 아니다» 를 화면이 말해 줘야 한다.** ★ 한 쪽뿐이면 이동 단추를 아예 안 그린다(늘 있으면 «더 있나» 하고 눌러 보게 된다). -->
 <!-- v20260904k_bulk_bar_one_line -->
 <!-- (2026-09-04) **일괄 편집 바를 한 줄로 모았다**(제니: 「바꾸기 버튼, 선택 영역, 적용 버튼의 이동 경로가 너무 좌우로 왔다갔다 한다」). 앞 판은 바꾸기 버튼이 «오른쪽», 고르는 칸이 «다음 줄 왼쪽 끝», 적용 버튼이 다시 «오른쪽 끝» 이라 **오른쪽 → 왼쪽 → 오른쪽** 으로 눈이 지그재그를 그렸다. ★★★ 고친 방향: **줄을 늘리지 않고 «그 줄을 바꾼다».** [담당자 바꾸기] 를 누르면 그 줄이 통째로 «고르는 줄» 이 되고, 고르는 칸도 눌렀던 버튼과 같은 «오른쪽» 에 선다 — 눈이 세로로만 움직인다. ★★ **왼쪽은 «지금 무엇을 몇 건에 하려는가» 를 말하는 자리로 고정한다.** 그 자리까지 버튼으로 바뀌면 읽던 문장이 사라진다: 고르기 전에는 「N건 고름 · 이 화면에 보이는 건만 셉니다」, 누른 뒤에는 「N건 · 담당자를 고르세요」 로 바뀐다. ★ 「비우고 적용하면 지웁니다」 같은 안내도 그 왼쪽 줄로 옮겼다 — **눌러야 할 것들 사이에 읽어야 할 것이 끼면 손이 멈춘다.** ★ 리체크의 [+1일/+3일/+7일] 을 날짜칸 «앞» 에 두고 고른 값에 색을 준다: 대개 그 셋 중 하나를 누르고 날짜칸은 그 결과를 확인하거나 다른 날을 집을 때만 쓴다. ★ 고르는 칸에 autoFocus — 버튼을 누른 다음 손이 가야 할 곳이 하나뿐이다. -->
 <!-- v20260904j_bulk_edit -->
@@ -17245,6 +17249,9 @@ const CS_COLW_MIN = 44;
 //     끌 수 있게 두면 일괄 편집으로 가는 길이 화면에서 사라진다.
 //   ★ 폭의 합을 셀 때 이 칸을 «반드시» 더한다 — 빠뜨리면 그만큼 오른쪽 끝이 밀린다.
 const CS_SEL_W = 34;
+// 한 쪽에 몇 건 — 첫 값이 기본이다.
+const CS_PAGE_SIZES = [30,50,100,200];
+const CS_PAGESIZE_KEY = 'cs_list_pagesize';
 // ★★ 열의 최소 폭은 «머리글이 … 로 줄지 않는» 값이다(제니 2026-09-04).
 //   좁혀서 값이 접히는 것은 괜찮다 — 표는 값을 담는 자리니까. 하지만 **머리글이
 //   줄면 그 열이 무엇인지 자체를 잃는다.** 「품목별 주문번호」가 「품목별 주…」가 되면
@@ -17795,6 +17802,15 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   //   일괄은 «상시» 가 아니라 «필요할 때» 쓰는 것이라, 사이드바에 메뉴로 두지 않고
   //   목록에서 여러 건을 골랐을 때만 바가 나타나게 한다 — 메뉴에 있으면 «저게 정식
   //   절차인가» 로 읽혀 새로 오는 사람이 다시 엑셀로 간다.
+  // ── 한 쪽에 몇 건 (제니 2026-09-04) ──────────────────────────────────
+  // ★ 열 너비와 같은 «취향» 이라 localStorage 다 — 사람마다 화면 높이가 다르다.
+  //   ★ 칩별로 두지 않는다: 한 쪽에 몇 건을 볼지는 «내가 한 번에 훑는 양» 이라
+  //     보는 대상이 바뀌어도 잘 안 바뀐다(열 구성과 다른 점이다).
+  const [pageSize,setPageSize] = useState(()=>{
+    const n = parseInt(localStorage.getItem(CS_PAGESIZE_KEY),10);
+    return CS_PAGE_SIZES.indexOf(n)>=0 ? n : CS_PAGE_SIZES[0];
+  });
+  const [page,setPage] = useState(1);
   const [picked,setPicked] = useState({});        // id -> true
   const [bulkBusy,setBulkBusy] = useState(false);
   const [bulkOpen,setBulkOpen] = useState(null);  // 'assignee' | 'stage' | 'recheck'
@@ -18009,18 +18025,34 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   },[settings,chip]);
   // [⚙ 보기 설정] 이 «어느 칩의 설정인가» 를 적을 때 쓴다.
   const chipLabel = (CS_CHIPS.find(c=>c.id===chip) || {}).label || chip;
+  // ── 쪽 나누기 (제니 2026-09-04) ─────────────────────────────────────
+  // ★ 조건이 바뀌면 «첫 쪽» 으로 돌아간다 — 3쪽을 보다가 필터를 좁히면 결과가 한 쪽뿐일
+  //   수 있고, 그때 3쪽에 머물면 «아무것도 없는 화면» 이 된다.
+  useEffect(()=>{ setPage(1); },[chip,q,flt,sort,pageSize]);
+  // ★ 쪽을 넘기면 표 «머리» 로 올려 준다 — 이동 버튼이 표 아래에 있어서, 누르고 나면
+  //   새 목록의 맨 아래를 보고 있게 된다. 첫 줄부터 읽으려고 매번 손으로 올려야 한다.
+  const goPage = (n)=>{
+    setPage(n);
+    const el = wrapRef.current;
+    if(el && el.scrollIntoView) el.scrollIntoView({block:'start', behavior:'smooth'});
+  };
+  const pageCount = Math.max(1, Math.ceil(list.length / pageSize));
+  const pageSafe  = Math.min(page, pageCount);
+  const pageList  = useMemo(()=>
+    list.slice((pageSafe-1)*pageSize, pageSafe*pageSize), [list,pageSafe,pageSize]);
+
   // ── 고른 건 ────────────────────────────────────────────────────────
-  // ★★ **지금 «보이는» 목록 안에서만 센다.** 칩이나 필터를 옮기면 화면에서 사라진 건이
-  //   골라진 채로 남는데, 그 상태에서 일괄로 바꾸면 **보이지도 않는 티켓이 바뀐다.**
-  //   고른 것을 «지우지는» 않는다(돌아오면 그대로 있다) — 다만 세지도, 바꾸지도 않는다.
+  // ★★ **지금 «화면에 보이는» 것만 센다** — 칩·필터로 걸러진 것뿐 아니라 **다른 쪽에 있는
+  //   건도 세지 않는다**(2026-09-04 쪽 나누기와 함께). 그 상태로 일괄 적용하면
+  //   **보이지도 않는 티켓이 바뀐다.** 고른 것을 «지우지는» 않는다(돌아오면 그대로 있다).
   const pickedIds = useMemo(()=>
-    (list||[]).filter(t=>picked[t.id]).map(t=>t.id), [list,picked]);
-  const allPicked = list.length>0 && pickedIds.length===list.length;
+    (pageList||[]).filter(t=>picked[t.id]).map(t=>t.id), [pageList,picked]);
+  const allPicked = pageList.length>0 && pickedIds.length===pageList.length;
   const toggleAll = ()=>{
     const next = {...picked};
-    // ★ «보이는 것만» 이다(설정 화면 [전체 선택] 과 같은 규칙). 500건을 통째로 고르는
+    // ★ «보이는 것만» 이다(설정 화면 [전체 선택] 과 같은 규칙). 몇백 건을 통째로 고르는
     //   버튼은 실수 한 번의 값이 너무 크다.
-    list.forEach(t=>{ if(allPicked) delete next[t.id]; else next[t.id]=true; });
+    pageList.forEach(t=>{ if(allPicked) delete next[t.id]; else next[t.id]=true; });
     setPicked(next);
   };
   // 칩을 옮기면 바를 닫는다 — 열린 채로 두면 «지금 무엇이 골라져 있나» 가 어긋나 보인다.
@@ -18138,40 +18170,14 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
           style={{flex:'1 1 380px',minWidth:320,maxWidth:520,fontSize:12,padding:'6px 10px',
             background:'var(--bg)',border:'1px solid '+CS_LINE,color:'var(--text)',
             borderRadius:6,fontFamily:'inherit'}}/>
-        {/* ★★ 자리는 «검색칸 오른쪽» 이다(제니 2026-09-04). 여기에 「아직 만드는 중」
-              자리표시가 서 있었고, 나는 그것을 못 보고 필터 줄에 버튼을 새로 만들었다 —
-              한 기능의 입구가 두 곳에 생겼다. **없는 줄 알고 새로 만들기 전에 «그 자리에
-              이미 무엇이 서 있었나» 를 볼 것.** 이번 판에서 두 번째로 밟은 함정이다
-              (열 [보기 설정] 배선도 이미 깔려 있었다).
-            ★ 모양은 새로 만든 쪽을 쓴다(제니) — 자리표시의 노란 알약은 «누를 수 없는 것»
-              으로 읽히던 옷이다. 진짜 버튼은 칩(알약)과 달라 보여야 한다: 칩은 «지금
-              무엇을 보고 있나» 를 말하는 표시이고 이것은 «누르면 창이 열리는» 버튼이다.
-            ★★ 테두리만 두른 투명 버튼은 이 바탕에서 묻힌다(제니 2026-09-04) —
-              연한 하늘색으로 «채우고» 글자를 어둡게 뒤집는다. 어두운 판에서 대비를
-              가장 크게 얻는 방법이고, 09-03 에 [목록으로] 버튼에서 이미 쓴 방식이다.
-              ★ 칩의 «고른 상태»(var(--accent) 채움)와 같은 줄에 서므로 색만으로는
-                갈라지지 않는다 → 모양으로 가른다: 칩은 알약(16), 이 버튼은 8 라운드에
-                ⚙ 가 붙는다. 색도 한 톤 짙은 하늘색을 써 칩보다 앞으로 나오게 했다.
-            ★ 패널은 이 버튼에 매달려 뜬다(position:relative). 줄 오른쪽 끝이라
-              right:0 로 열면 화면 밖으로 나가지 않는다. */}
-        {isMaster && (
-          <div style={{position:'relative',flexShrink:0}}>
-            <button onClick={()=>setColOpen(o=>!o)}
-              style={{padding:'6px 11px',borderRadius:8,fontSize:12,fontFamily:'inherit',
-                cursor:'pointer',whiteSpace:'nowrap',fontWeight:600,
-                background: colOpen ? '#8FC2FF' : '#B8D9FF',
-                border:'1px solid '+(colOpen ? '#5B8DEF' : '#B8D9FF'),
-                color:'#12203c'}}>⚙ 보기 설정</button>
-            {colOpen && (
-              <CsColumnSettings chip={chip} chipLabel={chipLabel}
-                settings={settings} setSettings={setSettings}
-                currentUserEmail={currentUserEmail}
-                widthsChanged={widthsChanged}
-                onResetWidths={()=>putColW({})}
-                onClose={()=>setColOpen(false)}/>
-            )}
-          </div>
-        )}
+        {/* ★★ 오른쪽 두 줄은 «검색칸 / + 티켓 등록» · «페이지 보기 / 보기 설정» 으로
+              짝지어 둔다(제니 2026-09-04). 윗줄은 «무엇을 찾고 무엇을 만드나»,
+              아랫줄은 «어떻게 보여 주나» — 성격이 같은 것끼리 한 줄에 선다. */}
+        <button onClick={onNew}
+          style={{padding:'6px 14px',background:'var(--primary)',border:'none',borderRadius:8,
+            color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
+            whiteSpace:'nowrap',flexShrink:0}}>
+          + 티켓 등록</button>
       </div>
 
       {/* ── 필터 ────────────────────────────────────────────────────────
@@ -18217,13 +18223,47 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
             ★★ 자리는 필터 줄 오른쪽 «끝» 이다(제니) — 아래 표의 오른쪽 끝과 맞춰
               선이 하나 서게 한다. 칩 옆에 두면 칩으로 읽히고, 머리글에 두면
               목록을 보는 눈에서 멀다. */}
-        {/* ★ [⚙ 보기 설정] 은 여기 있다가 «검색칸 오른쪽» 으로 옮겼다(제니 2026-09-04) —
-            그 자리에 자리표시가 이미 서 있었다. 위 칩 줄 끝을 볼 것. */}
-        <button onClick={onNew}
-          style={{padding:'6px 14px',background:'var(--primary)',border:'none',borderRadius:8,
-            color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
-            whiteSpace:'nowrap'}}>
-          + 티켓 등록</button>
+        {/* ── 페이지 보기 / 보기 설정 (제니 2026-09-04) ────────────────────
+            ★★ 윗줄(검색 · 등록)과 짝을 이루는 아랫줄이다 — 이쪽은 «어떻게 보여 주나» 만
+              모았다. 한 줄에 성격이 다른 것이 섞이면 «어느 것이 무엇을 바꾸는지» 를
+              매번 읽어야 한다.
+            ★ 한 쪽에 몇 건인지는 열 너비와 같은 «취향» 이라 이 브라우저에만 남는다. */}
+        <span style={{fontSize:11,color:'var(--sub)',whiteSpace:'nowrap'}}>페이지 보기</span>
+        <select value={pageSize}
+          onChange={e=>{ const n = parseInt(e.target.value,10);
+            setPageSize(n);
+            try{ localStorage.setItem(CS_PAGESIZE_KEY, String(n)); }catch(_e){} }}
+          style={{fontSize:11,padding:'4px 7px',background:'var(--bg)',
+            border:'1px solid '+CS_LINE,color:'var(--text)',borderRadius:6,
+            fontFamily:'inherit',flexShrink:0}}>
+          {CS_PAGE_SIZES.map(n=><option key={n} value={n}>{n}개</option>)}
+        </select>
+        {/* ★★ [⚙ 보기 설정] 은 master 만 본다 — 저장하는 곳이 «운영 기준»(console_settings)
+              이라 한 사람이 바꾸면 모두의 화면이 바뀐다. 못 바꾸는 사람에게 버튼을
+              보여 주고 «권한이 없습니다» 를 띄우느니 아예 안 보이는 편이 낫다.
+            ★★ 테두리만 두른 투명 버튼은 이 바탕에서 묻힌다(제니 2026-09-04) —
+              연한 하늘색으로 «채우고» 글자를 어둡게 뒤집는다. 어두운 판에서 대비를
+              가장 크게 얻는 방법이고, 09-03 에 [목록으로] 버튼에서 이미 쓴 방식이다.
+            ★ 패널은 이 버튼에 매달려 뜬다(position:relative). 줄 오른쪽 끝이라
+              right:0 로 열면 화면 밖으로 나가지 않는다. */}
+        {isMaster && (
+          <div style={{position:'relative',flexShrink:0}}>
+            <button onClick={()=>setColOpen(o=>!o)}
+              style={{padding:'5px 11px',borderRadius:8,fontSize:11.5,fontFamily:'inherit',
+                cursor:'pointer',whiteSpace:'nowrap',fontWeight:600,
+                background: colOpen ? '#8FC2FF' : '#B8D9FF',
+                border:'1px solid '+(colOpen ? '#5B8DEF' : '#B8D9FF'),
+                color:'#12203c'}}>⚙ 보기 설정</button>
+            {colOpen && (
+              <CsColumnSettings chip={chip} chipLabel={chipLabel}
+                settings={settings} setSettings={setSettings}
+                currentUserEmail={currentUserEmail}
+                widthsChanged={widthsChanged}
+                onResetWidths={()=>putColW({})}
+                onClose={()=>setColOpen(false)}/>
+            )}
+          </div>
+        )}
       </div>
 
       {rows===null ? (
@@ -18258,14 +18298,25 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                 누른 자리에서 그대로 이어지므로 눈이 세로로만 움직인다.
             ★ 왼쪽은 «지금 무엇을 몇 건에 하려는가» 를 말하는 자리로 고정한다 —
               그 자리가 버튼으로 바뀌면 읽던 문장이 사라진다. */}
+        {/* ★★★ **붉은 계열이다**(제니 2026-09-04: 「배경이랑 목록이 색이 비슷비슷해서
+              눈에 안 띈다」). 이 콘솔은 화면 전체가 남색 한 계열이라, **남색 판 위의
+              남색 바는 아무리 밝혀도 «화면의 일부» 로 읽힌다.** 눈에 띄게 하려면 밝기가
+              아니라 **색상(hue) 자체를 바꿔야** 한다 — 여기만 붉은 띠가 서면 스크롤
+              중에도 «지금 뭔가 골라져 있다» 가 한눈에 들어온다.
+            ★★ 뜻도 맞는다: 이것은 **되돌릴 수 없는 일**(서른 건을 한 번에 바꾼다)을
+              하는 자리라 «주의» 색이 제 뜻이다. 색을 눈에 띄라고만 고르면 다음에
+              그 색이 필요한 자리에서 쓸 것이 없어진다.
+            ★★★ **붉은 판 위에서는 그 안의 모든 조각을 다시 봐야 한다** — 남색 판에
+              맞춰 둔 테두리(CS_LINE)·파란 버튼은 붉은 바탕에서 탁해진다.
+              (09-03 밝은 판, 09-04 그 판 밖으로 — 같은 함정을 판이 바뀔 때마다 만난다.) */}
         {pickedIds.length>0 && (
           <div style={{position:'sticky',top:0,zIndex:120,marginBottom:8,
-            background:'#1E2B4E',border:'1px solid #5478BE',borderRadius:10,
-            boxShadow:'0 8px 24px rgba(0,0,0,.45)',padding:'9px 12px',
+            background:'#7E2620',border:'2px solid #F87171',borderRadius:10,
+            boxShadow:'0 8px 24px rgba(0,0,0,.5)',padding:'9px 12px',
             display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-            <span style={{fontSize:12,fontWeight:700,color:'var(--accent)',whiteSpace:'nowrap'}}>
+            <span style={{fontSize:12.5,fontWeight:700,color:'#fff',whiteSpace:'nowrap'}}>
               {pickedIds.length}건</span>
-            <span style={{fontSize:10.5,color:'var(--sub)'}}>
+            <span style={{fontSize:10.5,color:'#F7CFCB'}}>
               {bulkOpen
                 ? ({assignee:'담당자를 고르세요', stage:'상태를 고르세요',
                     recheck:'리체크 날짜 — 비우고 적용하면 지웁니다'}[bulkOpen])
@@ -18278,17 +18329,19 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                 onClose={()=>setBulkOpen(null)}/>
             ) : (
               <>
+                {/* ★ 붉은 판 위에서는 테두리를 «흰색 계열» 로 둔다 — 남색 판용
+                    CS_LINE 을 그대로 쓰면 붉은 바탕에서 탁해져 경계가 사라진다. */}
                 {[['assignee','담당자'],['stage','상태'],['recheck','리체크 날짜']].map(([id,label])=>(
                   <button key={id} disabled={bulkBusy}
                     onClick={()=>setBulkOpen(id)}
                     style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                      cursor:'pointer',whiteSpace:'nowrap',background:'transparent',
-                      border:'1px solid '+CS_LINE,color:'var(--text)'}}>{label} 바꾸기</button>
+                      cursor:'pointer',whiteSpace:'nowrap',background:'rgba(255,255,255,.10)',
+                      border:'1px solid rgba(255,255,255,.55)',color:'#fff'}}>{label} 바꾸기</button>
                 ))}
                 <button onClick={()=>setPicked({})} disabled={bulkBusy}
                   style={{padding:'5px 10px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
                     cursor:'pointer',background:'transparent',
-                    border:'1px solid rgba(255,255,255,.22)',color:'var(--sub)'}}>선택 해제</button>
+                    border:'1px solid rgba(255,255,255,.3)',color:'#F7CFCB'}}>선택 해제</button>
               </>
             )}
           </div>
@@ -18338,7 +18391,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
               </tr>
             </thead>
             <tbody>
-              {list.map(t=>(
+              {pageList.map(t=>(
                 /* ★★ 줄 어디를 눌러도 열린다(제니). 번호만 누르게 두면 «눌리는 곳» 이
                      6px 폭이라, 알고도 두어 번 빗나간다. 번호는 그대로 링크처럼
                      보이게 둔다 — 어디를 눌러야 하는지 알려 주는 표시로 남는다.
@@ -18353,16 +18406,20 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                 <tr key={t.id} onClick={()=>goTicket(t.id)}
                   className="cs-row"
                   style={{borderTop:'1px solid var(--border)',cursor:'pointer',
-                    background: picked[t.id] ? 'rgba(120,170,255,.10)' : undefined}}>
+                    background: picked[t.id] ? 'rgba(248,113,113,.13)' : undefined}}>
                   {/* ★★ **줄 아무 데나 누르면 티켓이 열리는 화면이다** — 체크박스를 누를
                       때 그 클릭이 위로 올라가면 «고르려다 티켓이 열린다». 칸 전체를
                       눌러도 골라지게 하고, 그 칸에서 클릭을 멈춘다. */}
+                  {/* ★ 고른 줄의 표시도 바와 «같은 계열» 이다 — 바는 붉은데 줄은 파랗게
+                      깔리면 둘이 다른 일처럼 보인다. */}
                   <td onClick={e=>{ e.stopPropagation();
                       setPicked(p=>{ const n={...p};
                         if(n[t.id]) delete n[t.id]; else n[t.id]=true; return n; }); }}
                     style={{...csTd,padding:'10px 0',textAlign:'center'}}>
                     <input type="checkbox" checked={!!picked[t.id]} readOnly
-                      style={{width:13,height:13,accentColor:'#5B8DEF',cursor:'pointer'}}/>
+                      style={{width:13,height:13,
+                        accentColor: picked[t.id] ? '#F87171' : '#5B8DEF',
+                        cursor:'pointer'}}/>
                   </td>
                   {/* ★ 수량·금액 열은 머리글과 값이 «함께» 오른쪽으로 붙어야 한다 —
                        한쪽만 옮기면 그 열만 어긋나 보인다. */}
@@ -18380,11 +18437,39 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
         </>
       )}
 
-      <div style={{marginTop:12,fontSize:11,color:'var(--sub)'}}>
-        {rows!==null && <span>{list.length}건 표시 · 전체 {(rows||[]).length}건</span>}
+      <div style={{marginTop:12,fontSize:11,color:'var(--sub)',
+        display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+        {/* ★ 「몇 번째부터 몇 번째까지 / 조건에 맞는 건 / 전체」 셋을 다 적는다 —
+            쪽을 나누면 «지금 보는 것이 전부가 아니다» 를 화면이 말해 줘야 한다. */}
+        {rows!==null && (
+          <span>{list.length===0 ? '0건'
+            : ((pageSafe-1)*pageSize+1)+'–'+Math.min(pageSafe*pageSize, list.length)
+              +' / '+list.length+'건'}
+            <span style={{opacity:.7}}> · 전체 {(rows||[]).length}건</span></span>
+        )}
         {/* ★ 검색 중에는 칩을 무시한다 — 말없이 그러면 「왜 칩과 안 맞지」가 된다. */}
-        {q.trim() && <span style={{marginLeft:8,color:'var(--accent)'}}>
+        {q.trim() && <span style={{color:'var(--accent)'}}>
           🔎 칩과 상관없이 전체에서 찾았습니다</span>}
+        <div style={{flex:1}}></div>
+        {/* ── 쪽 이동 ──────────────────────────────────────────────────
+            ★ 한 쪽뿐이면 아예 안 그린다 — 늘 그려 두면 «더 있나» 하고 눌러 보게 된다.
+            ★ 첫 쪽·끝 쪽에서 그 방향 버튼은 흐려진다(누를 수 없다는 것이 보여야 한다). */}
+        {pageCount>1 && (
+          <span style={{display:'flex',alignItems:'center',gap:6}}>
+            <button onClick={()=>goPage(Math.max(1,pageSafe-1))} disabled={pageSafe<=1}
+              style={{padding:'3px 9px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                background:'transparent',border:'1px solid '+CS_LINE,
+                color: pageSafe<=1 ? '#4A5878' : 'var(--sub)',
+                cursor: pageSafe<=1 ? 'default' : 'pointer'}}>◀</button>
+            <span style={{fontVariantNumeric:'tabular-nums',color:'var(--text)'}}>
+              {pageSafe} / {pageCount}</span>
+            <button onClick={()=>goPage(Math.min(pageCount,pageSafe+1))} disabled={pageSafe>=pageCount}
+              style={{padding:'3px 9px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                background:'transparent',border:'1px solid '+CS_LINE,
+                color: pageSafe>=pageCount ? '#4A5878' : 'var(--sub)',
+                cursor: pageSafe>=pageCount ? 'default' : 'pointer'}}>▶</button>
+          </span>
+        )}
       </div>
     </div>
   );
@@ -23066,8 +23151,14 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
   const [v,setV] = useState('');
   useEffect(()=>{ setV(''); },[what]);
   // ★ 바 «안» 의 오른쪽 조각들이다 — 줄을 따로 만들지 않는다(눈이 좌우로 튄다).
-  const inp = {fontSize:12,padding:'5px 9px',background:'var(--bg)',
-    border:'1px solid '+CS_LINE,color:'var(--text)',borderRadius:6,fontFamily:'inherit'};
+  // ★★ 이 조각들은 «붉은 판 위» 에 선다(2026-09-04). 남색 화면용 색을 그대로 쓰면
+  //   바탕에 탁하게 잠긴다 — 칸은 흰 바탕에 어두운 글자로, 테두리는 흰색 계열로.
+  const inp = {fontSize:12,padding:'5px 9px',background:'#FFF3F1',
+    border:'1px solid rgba(255,255,255,.75)',color:'#3A1512',borderRadius:6,
+    fontFamily:'inherit',colorScheme:'light'};
+  const ghost = {padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+    cursor:'pointer',whiteSpace:'nowrap',background:'rgba(255,255,255,.10)',
+    border:'1px solid rgba(255,255,255,.55)',color:'#fff'};
 
   const run = ()=>{
     if(!v && what!=='recheck') return;
@@ -23116,11 +23207,10 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
               눌러야 할 것들 사이에 읽어야 할 것이 끼어 손이 멈춘다. */}
           {[1,3,7].map(n=>(
             <button key={n} onClick={()=>setV(csPlusKst(n))}
-              style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-                cursor:'pointer',whiteSpace:'nowrap',
-                background: v===csPlusKst(n) ? 'rgba(120,170,255,.16)' : 'transparent',
-                border:'1px solid '+(v===csPlusKst(n) ? '#8FC2FF' : CS_LINE),
-                color: v===csPlusKst(n) ? 'var(--accent)' : 'var(--sub)'}}>+{n}일</button>
+              style={{...ghost,
+                background: v===csPlusKst(n) ? '#fff' : 'rgba(255,255,255,.10)',
+                color:      v===csPlusKst(n) ? '#7E2620' : '#fff',
+                fontWeight: v===csPlusKst(n) ? 700 : 400}}>+{n}일</button>
           ))}
           <input type="date" value={v} onChange={e=>setV(e.target.value)} style={inp}/>
         </>
@@ -23128,12 +23218,16 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
       <button onClick={onClose} disabled={busy}
         style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
           cursor:'pointer',background:'transparent',
-          border:'1px solid rgba(255,255,255,.22)',color:'var(--sub)'}}>취소</button>
+          border:'1px solid rgba(255,255,255,.3)',color:'#F7CFCB'}}>취소</button>
+      {/* ★★ 주 동작은 «흰 판에 붉은 글자» 다 — 붉은 바탕에서 가장 크게 뒤집히는 대비이고,
+          이 바에서 눌러야 할 것이 이것 하나라는 것이 한눈에 보인다.
+          ★ 못 누를 때도 «옅게» 만 한다(뜻은 유지) — opacity 로 눕히면 획까지 흐려져
+            «로딩 중» 으로 읽힌다. */}
       <button onClick={run} disabled={busy || (!v && what!=='recheck')}
         style={{padding:'5px 13px',borderRadius:6,fontSize:11,fontWeight:700,
           fontFamily:'inherit',border:'none',
-          color: (busy || (!v && what!=='recheck')) ? '#93A0BA' : '#fff',
-          background: (busy || (!v && what!=='recheck')) ? '#38425A' : '#3A63C4',
+          color: (busy || (!v && what!=='recheck')) ? '#B08A86' : '#7E2620',
+          background: (busy || (!v && what!=='recheck')) ? 'rgba(255,255,255,.28)' : '#fff',
           cursor: (busy || (!v && what!=='recheck')) ? 'default' : 'pointer'}}>
         {busy ? '바꾸는 중…' : count+'건에 적용'}</button>
     </>
