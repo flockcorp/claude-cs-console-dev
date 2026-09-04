@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904i_required_wired -->
+<!-- (2026-09-04) **«필수(required)» 설정을 화면에 이었다** — 「큰 것 셋」의 1번. ★★★ 설정 화면(칸·권한 탭)은 09-02 에 만들었고 **DB 트리거도 이 설정의 «권한(edit)» 을 이미 읽고 있었는데, «필수» 만 아무 데도 안 닿고 있었다.** 등록 화면은 코드에 박힌 셋(접수 경로·유형·수량)만 봤다 — 설정에서 「주문자 연락처 = 만들 때」로 바꿔도 화면이 안 읽으니 아무 일도 안 일어난다. **고를 수 있는데 아무 일도 하지 않는 설정은 없는 설정보다 나쁘다: 사람은 걸어 뒀다고 믿는다.** ①등록 화면의 필수를 `cs_field_rules` 의 "create" 로 만든다. ★★ 칸마다 «값이 어디에 있는지» 가 다르다 — 품목이 들고 온 것(카페24) · 품목별로 사람이 채우는 것 · 티켓 하나에 한 번 적는 것. 그 자리를 한 표(filledIn)에 모았다: 여기가 어긋나면 «채웠는데 필수라고 한다» 가 된다. ★ 여러 품목을 한 번에 등록하므로 «고른 품목 전부» 에 값이 있어야 한다. ★ 품목을 아직 안 골랐으면 딸린 칸을 줄줄이 세우지 않고 「품목 선택」 한 줄만 — 정작 먼저 할 일이 그 속에 묻힌다. ②상세의 「종결」 제출에 "close" 필수를 건다(방향·담당자·비용 부담). ★ **「철회」에는 안 건다** — 없던 일이 된 건이라 방향도 부담도 없는 것이 정상이고, 거기까지 막으면 잘못 만든 티켓을 닫을 길이 없어진다. ★ 필수를 «만들 때/종결할 때» 로 나눠 둔 이유가 여기서 쓰인다(매뉴얼: 「해결 상태로 제출할 때 필수 필드가 입력되어야 한다」) — 접수 시점에 방향·부담을 다 알 수 없고, 그때 걸면 사람이 «-» 를 채워 넣는다. ③★★★ **폐기된 칸이 필수로 남아 있던 것을 찾아 뺐다** — 「종결 사유(close_reason)」는 09-01 에 «단계» 가 그 일을 넘겨받으며 안 쓰는 칸이 됐는데(철회는 stage='withdrawn'), 씨앗 설정에는 「종결할 때 필수」로 남아 있었다. **그대로 이었으면 채울 자리가 없는 칸이 필수가 되어 종결이 영영 막힌다.** 화면 목록(CS_FIELD_DEFS)에서 빼고, 씨앗 SQL 과 dev DB 에서도 뺐다(sql/cs_field_rules_close_reason.sql · dev 적용 완료 · 운영은 티켓 승격 때). **여기서 남길 것: 칸을 폐기할 때 «그 칸을 가리키는 설정» 까지 함께 봐야 한다 — 칸은 안 쓰면 그만이지만 설정은 남아 있다가 그것을 «쓰기 시작한» 날 터진다.** ★ 설정을 못 읽으면 씨앗과 «같은» 기본으로 돈다 — 폴백을 「필수 없음」으로 두면 조회가 한 번 실패한 사이에 빈 티켓이 들어온다(막는 것은 DB, 돕는 것은 화면이라는 분담은 그대로다). -->
 <!-- v20260904h_memo_clamp3 -->
 <!-- (2026-09-04) **메모 열을 세 줄까지 접어서 보여 준다**(제니) — 그전에는 한 줄로 자르고 «…» + 툴팁이었다. ★★ **한 줄로 잘라 두면 메모를 읽으려고 매번 마우스를 올려야 한다** — 목록에서 메모를 보는 이유는 «열어 보지 않고 아는 것» 인데 그 목적을 잃는다. 열 폭에 맞춰 접고(줄바꿈) 세 줄까지 보여 준 뒤, 세 줄로도 모자랄 때만 «…» 다. ★★★ **툴팁은 «정말 잘렸을 때만» 붙인다.** 다 보이는 메모에까지 붙이면 마우스가 지나갈 때마다 화면에 이미 있는 말이 또 뜬다 — 2026-09-03 에 title 툴팁 110곳을 공용 풍선으로 갈았다가 통째로 되돌린 그 문제(«없던 툴팁이 생긴 것처럼 보인다»)와 같은 계열이다. ★ 잘렸는지는 «재서» 안다(scrollHeight > clientHeight). 글자 수로 어림하면 열 폭을 끌어 바꾸는 순간 어긋난다 — 폭이 바뀌면 다시 그려지고 그때 다시 잰다. -->
 <!-- v20260904g_colw_per_chip -->
@@ -18334,7 +18336,15 @@ const CS_FIELD_DEFS = [
   {g:'주소', id:'pickup_address1', label:'회수 주소'},
   {g:'마무리', id:'direction',     label:'방향'},
   {g:'마무리', id:'assignee',      label:'담당자'},
-  {g:'마무리', id:'close_reason',  label:'종결 사유'},
+  // ★★★ 「종결 사유(close_reason)」는 여기서 뺐다(2026-09-04). 2026-09-01 에 단계가
+  //   그 일을 넘겨받으면서 «안 쓰는 칸» 이 됐는데(철회는 이제 stage='withdrawn' 이다),
+  //   씨앗 설정에는 «종결할 때 필수» 로 남아 있었다. 필수를 화면에 잇는 순간
+  //   **채울 자리가 없는 칸이 필수가 되어 종결이 영영 막힌다.**
+  //   ★ 여기서 빼면 화면은 이 칸을 아예 안 본다(설정에 남아 있어도 무시하고,
+  //     설정 화면은 «모르는 칸» 노란 줄로 보여 준 뒤 저장할 때 그대로 다시 담는다).
+  //   ★ 겸해 씨앗 SQL 과 dev·운영 설정에서도 뺀다(sql/cs_field_rules_close_reason.sql).
+  //   ★★ 여기서 남길 것: **칸을 폐기할 때 «그 칸을 가리키는 설정» 까지 함께 봐야 한다.**
+  //     칸은 안 쓰면 그만이지만 설정은 남아서 다음에 그 설정을 «쓰기 시작한» 날 터진다.
   {g:'마무리', id:'memo',          label:'메모'},
   // ★★ 돈이 오가는 칸이다. 여기 «고칠 수 있는 사람» 을 넓히면 화면만이 아니라
   //   DB 트리거의 자물쇠도 함께 풀린다(트리거가 이 설정을 읽어 판정한다).
@@ -18351,6 +18361,44 @@ const CS_REQ_OPTS = [
   {v:'close',  label:'종결할 때', hint:'협의하며 정해지는 값'},
   {v:false,    label:'없음',     hint:'없어도 된다'},
 ];
+
+// ── «필수» 를 화면이 실제로 쓴다 (제니 2026-09-04) ─────────────────────────
+// ★★★ 설정 화면은 2026-09-02 에 만들었고 DB 트리거도 이 설정의 «권한(edit)» 을 읽는데,
+//   **«필수(required)» 만 아무 데도 안 닿고 있었다** — 등록 화면은 코드에 박힌 목록
+//   (접수 경로·유형·수량)만 봤다. 설정에서 「주문자 연락처 = 만들 때」로 바꿔도
+//   화면이 안 읽으니 아무 일도 안 일어난다.
+//   **고를 수 있는데 아무 일도 안 하는 설정은, 없는 설정보다 나쁘다** — 사람은
+//   걸어 뒀다고 믿는다.
+// ★★ 필수는 «막는» 규칙이 아니라 «돕는» 규칙이라 DB 가 아니라 화면이 본다(트리거 주석에
+//   그렇게 적혀 있다). 이관 스크립트처럼 정당하게 비운 채 넣어야 하는 경우가 있다 —
+//   과거 티켓 212건에는 수량이 없다.
+// ★ 설정을 못 읽으면 씨앗과 «같은» 기본으로 돈다. 여기서 폴백을 «필수 없음» 으로 두면
+//   설정 조회가 한 번 실패한 사이에 빈 티켓이 들어온다.
+const CS_REQ_FALLBACK = {
+  create:['intake_path','order_item_code','cs_type','cs_qty','supplier_name',
+          'orderer_name','orderer_phone'],
+  close: ['direction','assignee','cost_bearer'],   // close_reason 은 폐기된 칸이라 뺐다
+};
+function csRequiredIds(rules, when){
+  if(!rules) return CS_REQ_FALLBACK[when] || [];
+  return CS_FIELD_DEFS.filter(f=>(rules[f.id]||{}).required === when).map(f=>f.id);
+}
+function csFieldLabel(id){
+  const f = CS_FIELD_DEFS.find(x=>x.id===id);
+  return f ? f.label : id;
+}
+// 설정을 한 번 읽어 둔다. null = 못 읽었다(그때는 위 폴백으로 돈다).
+function useCsFieldRules(){
+  const [rules,setRules] = useState(null);
+  useEffect(()=>{ let alive = true;
+    (async()=>{
+      const r = await csLoadSetting('cs_field_rules');
+      if(alive) setRules((r && r.value) || null);
+    })();
+    return ()=>{ alive = false; };
+  },[]);
+  return rules;
+}
 
 // ── 카페24에서 끌어올 주문 정보 (카페24 연동 탭) ───────────────────────────
 // ★ 값 이름은 2026-08-31·09-01 실측으로 확인된 것만 올린다(주문 품목 조회 + 주문 머리).
@@ -20506,6 +20554,8 @@ function CsRefundFetch({orderRef, current, onPick}){
 //   ★ 공급사가 다르면 함께 못 고른다 — 접수는 «공급사 단위» 로 나가기 때문이다.
 function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   const isMaster = role==='master';
+  // 「무엇이 언제 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
+  const fieldRules = useCsFieldRules();
   const [raw,setRaw]       = useState('');
   const [busy,setBusy]     = useState(false);
   const [msg,setMsg]       = useState(null);
@@ -20741,11 +20791,38 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   };
 
   const qtyOf = (code)=> (itemF[code]||{}).cs_qty ?? '1';
+  // ── 필수 — 설정(cs_field_rules)의 「만들 때」를 그대로 읽는다 (2026-09-04) ──
+  // ★★ 그전에는 접수 경로·유형·수량 셋이 코드에 박혀 있었다. 설정 화면에서 무엇을
+  //   골라도 화면이 안 봤으므로, 걸어 둔 줄 알고 안 걸린 칸이 있었다.
+  // ★★ 칸마다 «값이 어디에 있는지» 가 다르다 — 품목이 들고 온 것(it) · 품목별로
+  //   사람이 채우는 것(itemF) · 티켓 하나에 한 번 적는 것(f). 그 자리를 한 표에
+  //   모아 둔다. **여기가 어긋나면 «채웠는데 필수라고 한다» 가 된다.**
+  // ★ 여러 품목을 한 번에 등록하므로 «고른 품목 전부» 에 값이 있어야 한다 —
+  //   하나라도 비면 그 티켓이 빈 채로 만들어진다.
+  const filledIn = (id)=>{
+    const every = (fn)=> chosen.length>0 && chosen.every(fn);
+    const g = (i)=> itemF[i.code] || {};
+    switch(id){
+      case 'order_item_code': return chosen.length>0;
+      case 'cs_qty':          return every(i=>parseInt(qtyOf(i.code),10)>0);
+      case 'supplier_name':   return every(i=>String(i.supplier_name||'').trim());
+      case 'orderer_name':    return every(i=>String(i.customer_name||'').trim());
+      case 'orderer_phone':   return every(i=>String(i.customer_phone||'').trim());
+      case 'receiver_name':   return every(i=>String(g(i).receiver_name||'').trim());
+      case 'receiver_phone':  return every(i=>String(g(i).receiver_phone||'').trim());
+      case 'ship_address1':   return every(i=>String(g(i).ship_address1||'').trim());
+      case 'assignee':        return true;      // 만드는 사람이 곧 담당자다
+      default:                return !!String(f[id]||'').trim();
+    }
+  };
   const missing = [];
-  if(!chosen.length)  missing.push('품목 선택');
-  if(!f.intake_path)  missing.push('접수 경로');
-  if(!f.cs_type)      missing.push('유형');
-  if(chosen.some(i=>!(parseInt(qtyOf(i.code),10)>0))) missing.push('CS 접수 수량');
+  if(!chosen.length) missing.push('품목 선택');
+  csRequiredIds(fieldRules,'create').forEach(id=>{
+    // 품목을 아직 안 골랐으면 «품목 선택» 한 줄로 족하다 — 딸린 칸을 줄줄이 세우면
+    // 정작 먼저 할 일이 그 속에 묻힌다.
+    if(id==='order_item_code' || !chosen.length) return;
+    if(!filledIn(id)) missing.push(csFieldLabel(id));
+  });
   // ★ 화면에서 이미 되돌리지만 여기서도 본다 — 화면만 믿으면 나중에 다른 길로
   //   값이 들어왔을 때 조용히 지나간다.
   if(chosen.some(i=>{ const m = parseInt((itemF[i.code]||{}).order_qty,10);
@@ -21515,6 +21592,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 //   두 번째가 이 화면이 급했던 이유다 — **새로 만들 일이 아니라 그 건에 이력을
 //   더할 일** 인 경우의 길이 없었다.
 function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
+  // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
+  const fieldRules = useCsFieldRules();
   const [t,setT]         = useState(null);
   const [events,setEvents] = useState(null);
   const [busy,setBusy]   = useState(false);
@@ -21740,6 +21819,23 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
       if(!String(edit.refund_account||'').trim()) miss.push('계좌번호');
       if(miss.length){
         toast('환불 대기로 넘기려면 '+miss.join(' · ')+' 을(를) 넣어 주세요.','warn');
+        return false;
+      }
+    }
+    // ── 「종결」로 제출할 때의 필수 (설정 cs_field_rules 의 "close") ─────────
+    // ★★ 필수를 «만들 때» 가 아니라 «종결할 때» 로 나눠 둔 이유가 여기서 쓰인다
+    //   (매뉴얼: 「해결 상태로 제출할 때 필수 필드가 입력되어야 한다」). 접수 시점에
+    //   방향·비용 부담을 다 알 수는 없다 — 그때 걸면 사람이 «-» 를 채워 넣는다.
+    // ★ 「철회(withdrawn)」에는 안 건다. 없던 일이 된 건이라 방향도 부담도 없는 것이
+    //   정상이고, 거기까지 막으면 잘못 만든 티켓을 닫을 길이 없어진다.
+    // ★ 값은 지금 화면에서 고친 것(edit)을 먼저 보고, 화면에 없는 칸은 저장된 값(t)을 본다.
+    if(st==='closed'){
+      const miss = csRequiredIds(fieldRules,'close').filter(id=>{
+        const v = (edit && edit[id]!==undefined) ? edit[id] : t[id];
+        return !String(v==null?'':v).trim();
+      }).map(csFieldLabel);
+      if(miss.length){
+        toast('종결하려면 '+miss.join(' · ')+' 을(를) 넣어 주세요.','warn');
         return false;
       }
     }
