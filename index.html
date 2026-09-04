@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904b_cols_all_selectable_memo -->
+<!-- (2026-09-04) 같은 날 두 번째 판 — 제니 피드백 다섯. ①**[보기 설정] 버튼을 연한 하늘색으로 «채웠다»**(#B8D9FF · 글자는 어둡게). 테두리만 두른 투명 버튼은 이 바탕에서 묻힌다 — 어두운 판에서 대비를 가장 크게 얻는 방법은 밝게 채우고 글자를 뒤집는 것이다. ★ 칩의 «고른 상태» 도 밝은 하늘색 채움이라 색만으로는 안 갈라진다 → 모양으로 가른다(칩은 알약 16, 이 버튼은 8 라운드 + ⚙). ②**CS 관리 화면의 «꺼진» 테두리를 밝혔다**(CS_LINE #3E5DA0) — 칩·필터 단추·검색칸·날짜칸·빠른 버튼. var(--border)(#1e3060)는 바탕(#0d1628)과 명도가 거의 같아 경계가 통째로 묻혔다. ★★ **전역 --border 는 안 건드렸다** — 그 변수는 콘솔 열몇 화면이 함께 쓰고 표 줄·카드처럼 «묻혀도 되는» 자리에도 걸려 있다. 여기서 밝힌 것은 «누를 수 있는 것의 경계» 뿐이다. ③**목록에 있는 값은 하나도 빠짐없이 [보기 설정] 안에 있다**(제니). 고정 열이던 **번호·등록·수정을 고를 수 있게 풀었고**, 표에서 따로 그리던 「번호」 하드코딩도 걷어냈다. ★ 패널에서는 «등록된 날짜/수정된 날짜»(plabel), 목록 머리글은 «등록/수정» — 고르는 자리와 보는 자리의 셈이 다르다. ④**중복을 합쳤다**: 「갱신」은 「수정」과 같은 값을 다르게 그리던 것이라 없앴고, 「유형 · 방향」 한 열은 «유형»·«방향» 두 열로 나눴고, 「상품 · 옵션」은 «상품명» 으로 좁혔다(옵션은 제 열이 있다). 「주문자」가 괄호로 물고 있던 수령인도 뺐다(«수령인» 열이 따로 있다). ★★ **한 열이 두 값을 물고 있으면 «한쪽만 끄기» 가 안 된다** — 켜고 끄는 화면을 만든 이상 열은 값 하나를 가리켜야 한다. ⚠ 다만 「주문자」만 켠 목록에서는 «다른 사람에게 간 주문» 이 눈에 안 띈다(그게 중요한 칩에서는 「수령인」을 함께 켠다). ★★★ **없앤 열을 그냥 버리지 않는다 — CS_COL_ALIAS 가 갈음한다**(typedir → 유형·방향, updated → 수정). 설정에 남은 옛 키를 버리면 그 칩의 열이 «조용히» 사라진다. 09-01 에 칩 id 가 어긋나 설정이 말없이 무시된 적이 있어, 같은 조용함을 여기서도 만들지 않는다. ★ 같은 함수(csExpandCols)를 목록과 패널이 함께 쓴다 — 두 곳에서 따로 펴면 «패널엔 켜져 있는데 목록엔 없는 열» 이 생긴다. ★ 09-04 이전 설정에는 번호·등록·수정이 아예 안 담겨 있으므로, 셋이 하나도 없으면 옛 설정으로 보고 앞에 붙인다(한계는 그 함수 주석에 적었다). ⑤**«메모» 를 상세에서도 보고 고친다**(제니 확인). 그전에는 저장은 되는데 **상세에 그리는 자리가 아예 없었다** — 쓰기만 되고 읽히지 않는 칸은 없는 칸과 같다. ★★ 그리고 **메모를 이력 첫 줄로 «대신» 넣던 것을 없앴다**: 이력을 한 줄이라도 적었으면 안 들어가고 안 적었으면 들어가서, «메모가 이력에 있는 티켓» 과 «아무 데도 없는 티켓» 이 섞여 있었다. **같은 값이 티켓마다 다른 자리에 있으면 나중에 어디를 봐야 할지 알 수 없다.** 이제 이력에는 「접수」 한 줄만 남고, 메모를 고치면 값 변경으로 «메모 : 옛 -> 새» 한 줄이 남는다. ★ 상세의 메모 자리는 «이력 다음 · 저장 직전» 으로 등록 화면과 같은 차례지만, 등록은 밝은 판 «밖» 이고 상세는 «안» 이다 — 상세는 저장 버튼이 그 판 안에 있어서, 밖에 두면 적는 칸이 저장 버튼 아래로 내려간다. -->
 <!-- v20260904a_view_settings_place_contrast_cols -->
 <!-- (2026-09-04) [⚙ 보기 설정] 에 대한 제니 피드백 셋. ①**자리를 «검색칸 오른쪽» 으로 되돌렸다** — 거기 「아직 만드는 중입니다」 자리표시(노란 알약)가 이미 서 있었는데 그것을 못 보고 필터 줄에 버튼을 새로 만들어, 한 기능의 입구가 두 곳에 생겼다. ★★ **없는 줄 알고 새로 만들기 전에 «그 자리에 이미 무엇이 서 있었나» 를 볼 것** — 이 기능에서만 두 번째다(열을 읽는 배선도 09-01에 이미 깔려 있었다). 모양은 새로 만든 쪽을 쓴다(제니): 자리표시의 노란 알약은 «누를 수 없는 것» 으로 읽히던 옷이고, 칩과 같은 알약이면 «지금 무엇을 보고 있나» 표시로 읽힌다 — 이것은 누르면 창이 열리는 버튼이다. ②**패널이 바탕과 갈라져 보이게 했다** — var(--surface)(#111e38)가 화면 바탕(#0d1628)과 명도가 거의 같아 «떠 있는 창» 이 아니라 «화면에 뚫린 구멍» 처럼 보였다. 배경 #1E2B4E · 테두리 #5478BE · 짙은 그림자, **셋을 같이 준다**: 테두리만 밝히면 선 하나만 떠 있고 안은 여전히 바탕이라 창으로 안 읽히고, 배경만 올리면 어디까지가 창인지 모른다. ★★ **판을 밝히면 그 «안» 의 조각을 전부 다시 봐야 한다**(09-03에 밟은 함정) — 구분선·버튼 테두리(var(--border)는 이 판 위에서 사라진다)·체크박스 색(#2A478D는 켜졌는지가 안 읽힌다)·[저장] 버튼(var(--primary)가 판에 잠긴다)을 함께 고쳤다. ③**고를 수 있는 열을 «티켓 ① 영역의 값 전부» 로 넓혔다**(7 → 29). 칩마다 보는 목적이 다르다는 것이 이 기능의 전제인데 고를 열이 일곱뿐이면 그 전제가 안 채워진다 — 「정산 대기」는 정산 세 칸을, 「환불 대기」는 금액·계좌를 훑어야 한다. 등록 화면 ②에서 적는 «메모» 도 넣었다(제니). ★★ 열이 스물몇이 되면 한 줄로 늘어놓은 목록에서는 아는 이름도 못 찾는다 → **«안 보이는 열» 을 ① 영역의 뎁스 이름으로 묶었다**(주문·고객·주소·분류·환불·정산·메모). 상세에서 본 자리를 패널에서 그대로 찾게 하려는 것이다. **«보이는 열» 은 안 묶는다** — 그쪽은 차례 자체가 뜻이라, 묶으면 끌어 옮길 수 있는 범위가 묶음 안으로 좁아 보인다. ★★ **계좌번호만 가려서 그린다**(csMaskAcct) — 상세는 한 건을 열어 보는 자리지만 목록은 여러 건이 깔린 채 오래 떠 있는 자리다(이력에 가린 값을 적기로 한 것과 같은 계열). 연락처는 안 가린다: 전화를 걸려고 보는 값이라 가리면 쓸모가 없다 — 환불 목록을 안 가리기로 한 판단과 같다. ★ 수량·금액은 머리글과 값을 «함께» 오른쪽으로 붙인다(align) — 한쪽만 옮기면 그 열만 어긋나 보인다. 빈 값의 정렬값은 0이 아니라 -1이다: 0으로 두면 «안 적은 건» 과 «0원인 건» 이 한 덩어리로 섞여 정렬이 거짓말을 한다. ★ 저장 구조·읽는 규칙(colKeys · 모르는 키는 지우지 않는다)은 한 줄도 안 건드렸다. ★ dev 전용. -->
 <!-- (2026-09-03) 티켓 목록에 **[⚙ 보기 설정]** 을 붙였다 — 칩마다 «어느 열을 어떤 차례로» 보여 줄지 고른다. ★★ **배선은 2026-09-01 에 이미 깔려 있었다**(colKeys 가 console_settings.cs_list_columns 를 «칩으로» 읽고, 모르는 열은 조용히 건너뛴다). 없던 것은 «고르는 화면» 뿐이라 그것만 만들었다 — 저장 구조·읽는 규칙은 한 줄도 안 건드렸다. ★★ **열 구성은 칩마다 따로다**(제니). 「공급사 미접수」는 공급사·채널을 봐야 하고 「정산 대기」는 금액을 봐야 한다 — 한 벌로 두면 어느 칩에서든 절반이 헛열이다. 그래서 패널 맨 위에 «지금 보고 있는 「…」 칩에만 적용됩니다» 를 반드시 적는다: 안 적으면 여기서 바꾼 것이 왜 다른 칩에 안 보이는지 알 수 없다. ★★ **master 만 연다.** 저장하는 곳이 console_settings 이고 그것은 «운영 기준» 이라 한 사람이 바꾸면 모두의 화면이 바뀐다. 칸 너비처럼 «취향» 인 값은 localStorage 에 두는데(칸 손잡이가 그렇다), 열 구성은 제니가 «기준» 으로 정한 값이다. 못 바꾸는 사람에게 버튼을 보여 주고 「권한이 없습니다」를 띄우느니 아예 안 보이는 편이 낫다. ★★ **차례는 손잡이(≡)를 잡고 끌어** 바꾼다 — CS 설정 카페24 탭과 같은 방식이고 그때 정한 규칙을 그대로 지켰다: 줄 «전체» 를 draggable 로 두지 않는다(글자를 고르려고 끌 때 줄이 딸려 움직인다 → 손잡이를 누른 줄만 armed), 놓을 자리는 색이 아니라 «선» 으로 알린다(색을 깔면 그 줄과 «자리를 바꾸는» 것처럼 보이는데 실제로는 앞뒤에 끼우는 것이다). ★ 켜면 «맨 뒤» 에 붙인다 — 가운데 끼우면 방금 켠 것이 어디 갔는지 못 찾는다. ★★★ **모르는 키는 지우지 않는다** — 다른 칩의 설정은 물론이고, 이 칩 안에 있던 «내가 모르는 열 이름» 까지 그대로 다시 담는다. 내가 모른다고 지우면 다음 판에서 그 열을 만들었을 때 설정이 사라져 있다(설정 화면 셋에서 정한 규칙과 같다). ★ 「등록·수정」 두 열은 고를 수 있는 열이 아니다 — 어느 칩에서 보든 늘 필요해 맨 앞에 고정으로 둔 것이라, 목록에 안 넣는 대신 패널 아래에 그 사실을 적었다. ★ [기본값으로] 는 저장까지 하지 않는다: 되돌려 «보고» 저장은 사람이 누른다. ⏳ 아직 안 한 것 — **열 «제목» 을 직접 끌어 옮기는 것**(설계에 있던 나머지 절반). 지금은 패널 안에서만 차례를 바꾼다. 표 머리글을 끌면 공유 설정이 «지나가다» 바뀔 수 있어, 그건 되돌리기·저장 줄을 함께 두고 따로 만들 일이다. ★ dev 전용. -->
@@ -17037,33 +17039,28 @@ function csAddrText(z,a1,a2){
 const CS_COLS = {
   stage:     {label:'상태',  g:'티켓',  w:96,  cell:(t)=><CsStagePill stage={t.stage}/>,
               sv:(t)=>CS_STAGE_ORDER[t.stage] ?? 99},
-  typedir:   {label:'유형 · 방향', g:'분류', w:112, cell:(t)=><span>{t.cs_type||'—'}{t.direction?' · '+t.direction:''}</span>,
-              sv:(t)=>(t.cs_type||'')+' '+(t.direction||'')},
-  // ★ 옵션은 «아랫줄» 로 내린다(제니 2026-09-02). 「／」로 이어 붙이면 상품명이 길 때
-  //   옵션이 그 뒤에 묻히고, 열 폭이 좁아 어디까지가 상품명인지도 흐려진다.
-  //   줄을 바꾸면 구분 기호가 필요 없어진다 — 줄바꿈 자체가 구분이다.
-  product:   {label:'상품 · 옵션', g:'주문', w:240, cell:(t)=>(
-                <span style={{display:'block',lineHeight:1.45}}>
-                  <span style={{display:'block'}}>{t.product_name||'—'}</span>
-                  {t.option_name && (
-                    <span style={{display:'block',color:'var(--sub)'}}>{t.option_name}</span>
-                  )}
-                </span>), sv:(t)=>t.product_name||''},
+  /* 「유형 · 방향」 한 열이었던 typedir 는 없앴다(제니 2026-09-04) — 아래 «유형»·«방향»
+     두 열과 같은 값이라 켜고 끄는 화면에서는 중복이다. 설정에 남은 옛 키는
+     CS_COL_ALIAS 가 두 열로 갈아 준다(조용히 사라지지 않게). */
+  // ★★ 「상품 · 옵션」 한 열이었던 것을 «상품명» 으로 좁혔다(제니 2026-09-04).
+  //   옵션은 이제 제 열(option)이 있어 한 열이 둘을 겸하면 중복이다 — 켜고 끄는
+  //   화면을 만든 이상, 한 열이 두 값을 물고 있으면 «옵션만 끄기» 를 할 수가 없다.
+  product:   {label:'상품명', g:'주문', w:240,
+              cell:(t)=><span>{t.product_name||'—'}</span>, sv:(t)=>t.product_name||''},
   supplier:  {label:'공급사', g:'주문', w:110, cell:(t)=><span style={{color:'var(--sub)'}}>{t.supplier_name||'—'}</span>,
               sv:(t)=>t.supplier_name||''},
-  orderer:   {label:'주문자', g:'고객', w:130, cell:(t)=>(
-                <span>{t.orderer_name||'—'}
-                  {t.receiver_name && t.receiver_name!==t.orderer_name &&
-                    <span style={{color:'var(--sub)'}}> ({t.receiver_name})</span>}
-                </span>), sv:(t)=>t.orderer_name||''},
+  // ★ 수령인이 다를 때 괄호로 함께 보여 주던 것을 뺐다(제니 2026-09-04 — 중복은 합친다).
+  //   「수령인」 이 제 열로 있으니, 한 열이 두 사람을 물고 있으면 «수령인만 끄기» 가 안 된다.
+  //   ⚠ 대신 이 열만 켠 목록에서는 «다른 사람에게 간 주문» 이 눈에 안 띈다 — 그게 중요한
+  //     칩에서는 「수령인」 열을 함께 켠다.
+  orderer:   {label:'주문자', g:'고객', w:130,
+              cell:(t)=><span>{t.orderer_name||'—'}</span>, sv:(t)=>t.orderer_name||''},
   intake:    {label:'경로', g:'분류', w:60,  cell:(t)=><span style={{color:'var(--sub)'}}>{t.intake_path||'—'}</span>,
               sv:(t)=>t.intake_path||''},
   assignee:  {label:'담당', g:'티켓', w:130, cell:(t)=><span style={{color:'var(--sub)'}}>{csShortUser(t.assignee)}</span>,
               sv:(t)=>t.assignee||''},
   recheck:   {label:'리체크', g:'분류', w:100, cell:(t)=><CsRecheck at={t.recheck_at} stage={t.stage}/>,
               sv:(t)=>t.recheck_at||''},
-  updated:   {label:'갱신', g:'티켓', w:88,  cell:(t)=><span style={{color:'var(--sub)'}}>{csDate(t.updated_at)}</span>,
-              sv:(t)=>t.updated_at||''},
 
   // ── ① «주문» ────────────────────────────────────────────────────────
   // ★ 주문번호 둘은 고정폭 글꼴로 그린다 — 숫자·하이픈이 줄마다 같은 자리에 서야
@@ -17175,10 +17172,22 @@ const CS_COLS = {
   // ★★ 제니 요청 — «언제 만들었나 · 언제 손댔나» 를 제일 왼쪽에 고정으로 둔다.
   //   [보기 설정] 이 아직 없어서 설정으로 못 고르기도 하고, 이 둘은 어느 칩에서 보든
   //   늘 필요한 값이라 «고를 수 있는 열» 이 아니라 «항상 있는 열» 로 둔다.
-  created:   {label:'등록', g:'티켓', w:96,  cell:(t)=><span style={{color:'var(--sub)',
+  // ★★ 번호·등록·수정 셋은 «늘 보이는 고정 열» 이었는데 고를 수 있게 풀었다
+  //   (제니 2026-09-04). 목록에 있는 값은 하나도 빠짐없이 이 표에 있어야
+  //   [보기 설정] 이 «목록 그대로» 를 다룬다고 말할 수 있다.
+  // ★ 목록 머리글은 짧게(등록·수정), 패널에서는 무슨 날짜인지 밝힌다(plabel) —
+  //   머리글은 폭이 곧 비용이지만 패널은 골라야 하니 이름이 분명해야 한다.
+  id:        {label:'번호', plabel:'티켓 번호', g:'티켓', w:56,
+              cell:(t)=><span style={{fontFamily:MONO,color:'var(--accent)',
+                  textDecoration:'underline',textUnderlineOffset:3,
+                  textDecorationColor:'rgba(210,229,255,.35)'}}>#{t.id}</span>,
+              sv:(t)=>t.id},
+  created:   {label:'등록', plabel:'등록된 날짜', g:'티켓', w:96,
+              cell:(t)=><span style={{color:'var(--sub)',
                 fontVariantNumeric:'tabular-nums'}}>{csAgo(t.created_at)}</span>,
               sv:(t)=>t.created_at||''},
-  touched:   {label:'수정', g:'티켓', w:96,  cell:(t)=><span style={{color:'var(--sub)',
+  touched:   {label:'수정', plabel:'수정된 날짜', g:'티켓', w:96,
+              cell:(t)=><span style={{color:'var(--sub)',
                 fontVariantNumeric:'tabular-nums'}}>{csAgo(t.updated_at)}</span>,
               sv:(t)=>t.updated_at||''},
 };
@@ -17186,10 +17195,33 @@ const CS_COLS = {
 // ★ 티켓 ① 영역의 뎁스 차례와 같게 둔다 — 상세를 위에서 아래로 읽은 순서 그대로다.
 // ★ 여기 없는 묶음이 CS_COLS 에 생기면 맨 뒤에 그대로 붙는다(조용히 사라지지 않게).
 const CS_COL_GROUPS = ['티켓','주문','고객','주소','분류','환불','정산','메모'];
-// ★ 어느 칩에서든 앞에 붙는 열. 설정(cs_list_columns)이 이 둘을 또 담고 있어도
-//   두 번 그리지 않게 아래에서 걸러낸다.
-const CS_COLS_FIXED = ['created','touched'];
-const CS_COLS_FALLBACK = ['stage','typedir','product','supplier','orderer','assignee','recheck'];
+// ★★ 없앤 열을 «무엇으로 갈음하는가». 설정에 남아 있는 옛 키를 그냥 버리면
+//   그 칩의 열이 조용히 사라진다 — 09-01 에 칩 id 가 어긋나 설정이 말없이
+//   무시된 적이 있어, 같은 «조용함» 을 여기서도 만들지 않는다.
+//   · typedir(유형 · 방향) → 유형 · 방향 두 열로 나눴다(제니: 중복은 합치고 나눌 것은 나눈다)
+//   · updated(갱신)        → touched(수정)와 같은 값을 다르게 그리던 것이라 없앴다
+const CS_COL_ALIAS = {typedir:['cs_type','direction'], updated:['touched']};
+// 09-04 이전 설정에는 이 셋이 «고정 열» 이라 아예 담겨 있지 않다.
+const CS_COLS_HEAD = ['id','created','touched'];
+const CS_COLS_FALLBACK = ['id','created','touched','stage','cs_type','direction',
+  'product','option','supplier','orderer','assignee','recheck'];
+
+// 설정에 적힌 열 목록을 «지금 화면이 아는 열» 로 편다.
+// ★ 세 가지를 한 자리에서 한다: ①없앤 열을 갈음한다 ②모르는 열은 건너뛴다
+//   ③번호·등록·수정이 하나도 없으면 09-04 이전 설정으로 보고 앞에 붙인다.
+// ⚠ 한계: 사람이 그 셋을 «일부러 다 끄고» 저장하면 다음에 열 때 되살아난다.
+//   셋을 전부 끄는 목록은 번호도 날짜도 없는 목록이라 실제로는 안 만들 것으로 보고
+//   이 쪽(옛 설정을 살리는 쪽)을 택했다 — 반대로 두면 09-03 에 저장해 둔 칩에서
+//   등록·수정이 «말없이» 사라진다.
+function csExpandCols(keys){
+  const out = [];
+  (keys||[]).forEach(k=>{
+    (CS_COL_ALIAS[k] || [k]).forEach(x=>{
+      if(CS_COLS[x] && out.indexOf(x)<0) out.push(x);
+    });
+  });
+  return CS_COLS_HEAD.some(k=>out.indexOf(k)>=0) ? out : CS_COLS_HEAD.concat(out);
+}
 
 // 이메일에서 앞부분만 — 목록에서 전체 주소는 자리만 먹는다.
 // 이력에 적을 «가린 값».
@@ -17251,8 +17283,14 @@ function csAgo(v){
 // ★ colorScheme 을 주지 않는다 — 달력 아이콘을 흰색으로 만드는 일은 전역 CSS 가
 //   이미 하고 있다(invert). 여기서 colorScheme:'dark' 를 주면 아이콘이 이미 밝게
 //   그려진 위에 뒤집기가 한 번 더 걸려 «검게» 된다(제니 제보 2026-09-02).
+// ★★ CS 관리 화면의 «꺼져 있는» 테두리 색(제니 2026-09-04). var(--border)(#1e3060)는
+//   화면 바탕(#0d1628)과 명도가 거의 같아, 칩·필터·검색칸의 경계가 통째로 묻혔다.
+//   ★ 전역 --border 를 바꾸지 않는다 — 그 변수는 콘솔 열몇 화면이 함께 쓰고, 표 줄·
+//     카드 테두리처럼 «묻혀도 되는» 자리에도 걸려 있다. 여기서 말하는 것은 «누를 수
+//     있는 것의 경계» 다. 그것만 밝힌다.
+const CS_LINE = '#3E5DA0';
 const csDateInp = {fontSize:11,padding:'4px 7px',background:'var(--bg)',
-  border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+  border:'1px solid '+CS_LINE,color:'var(--text)',borderRadius:6,
   fontFamily:'inherit'};
 // 오늘에서 n 일 옮긴 날(KST). 음수면 과거다.
 function csPlusKst(n){
@@ -17695,7 +17733,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
         .some(k=>String(t[k]||'').toLowerCase().includes(s)));
     }
     if(sort){
-      const col = sort.key==='id' ? {sv:(t)=>t.id} : CS_COLS[sort.key];
+      const col = CS_COLS[sort.key];
       if(col && col.sv){
         const sign = sort.dir==='asc' ? 1 : -1;
         // ★ 빈 값은 «어느 쪽으로 정렬하든» 늘 아래로 보낸다. 오름차순에서 빈 칸이
@@ -17716,9 +17754,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   // 열 구성은 «칩마다» 다르다 — 칩마다 보는 목적이 다르기 때문이다.
   const colKeys = useMemo(()=>{
     const conf = (settings && settings.cs_list_columns) || {};
-    const keys = conf[chip] || conf['_default'] || CS_COLS_FALLBACK;
-    return CS_COLS_FIXED.concat(
-      keys.filter(k=>CS_COLS[k] && CS_COLS_FIXED.indexOf(k)<0));  // 모르는 열은 건너뛴다
+    return csExpandCols(conf[chip] || conf['_default'] || CS_COLS_FALLBACK);
   },[settings,chip]);
   // [⚙ 보기 설정] 이 «어느 칩의 설정인가» 를 적을 때 쓴다.
   const chipLabel = (CS_CHIPS.find(c=>c.id===chip) || {}).label || chip;
@@ -17792,7 +17828,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                  → 밝은 회백색 알약으로 바꾼다. 어두운 바탕에서 가장 또렷하고,
                    파랑과 겹치지 않으며, 필터 단추의 옅은 파랑과도 안 헷갈린다. */
             style={{padding:'5px 12px',borderRadius:16,cursor:'pointer',fontSize:12,
-              border:'1px solid '+(chip===c.id?'var(--accent)':'var(--border)'),
+              border:'1px solid '+(chip===c.id?'var(--accent)':CS_LINE),
               background: chip===c.id?'var(--accent)':'transparent',
               color: chip===c.id?'#12203c':'var(--sub)',
               fontWeight: chip===c.id?700:400, whiteSpace:'nowrap', userSelect:'none'}}>
@@ -17804,7 +17840,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
         <input value={q} onChange={e=>setQ(e.target.value)}
           placeholder="주문번호 · 고객명 · 연락처 · 공급사 · 옛 티켓번호"
           style={{flex:'1 1 380px',minWidth:320,maxWidth:520,fontSize:12,padding:'6px 10px',
-            background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',
+            background:'var(--bg)',border:'1px solid '+CS_LINE,color:'var(--text)',
             borderRadius:6,fontFamily:'inherit'}}/>
         {/* ★★ 자리는 «검색칸 오른쪽» 이다(제니 2026-09-04). 여기에 「아직 만드는 중」
               자리표시가 서 있었고, 나는 그것을 못 보고 필터 줄에 버튼을 새로 만들었다 —
@@ -17814,16 +17850,22 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
             ★ 모양은 새로 만든 쪽을 쓴다(제니) — 자리표시의 노란 알약은 «누를 수 없는 것»
               으로 읽히던 옷이다. 진짜 버튼은 칩(알약)과 달라 보여야 한다: 칩은 «지금
               무엇을 보고 있나» 를 말하는 표시이고 이것은 «누르면 창이 열리는» 버튼이다.
+            ★★ 테두리만 두른 투명 버튼은 이 바탕에서 묻힌다(제니 2026-09-04) —
+              연한 하늘색으로 «채우고» 글자를 어둡게 뒤집는다. 어두운 판에서 대비를
+              가장 크게 얻는 방법이고, 09-03 에 [목록으로] 버튼에서 이미 쓴 방식이다.
+              ★ 칩의 «고른 상태»(var(--accent) 채움)와 같은 줄에 서므로 색만으로는
+                갈라지지 않는다 → 모양으로 가른다: 칩은 알약(16), 이 버튼은 8 라운드에
+                ⚙ 가 붙는다. 색도 한 톤 짙은 하늘색을 써 칩보다 앞으로 나오게 했다.
             ★ 패널은 이 버튼에 매달려 뜬다(position:relative). 줄 오른쪽 끝이라
               right:0 로 열면 화면 밖으로 나가지 않는다. */}
         {isMaster && (
           <div style={{position:'relative',flexShrink:0}}>
             <button onClick={()=>setColOpen(o=>!o)}
               style={{padding:'6px 11px',borderRadius:8,fontSize:12,fontFamily:'inherit',
-                cursor:'pointer',whiteSpace:'nowrap',
-                background: colOpen ? 'rgba(246,173,9,.10)' : 'transparent',
-                border:'1px solid '+(colOpen ? '#F6AD09' : 'var(--border)'),
-                color: colOpen ? '#F6AD09' : 'var(--sub)'}}>⚙ 보기 설정</button>
+                cursor:'pointer',whiteSpace:'nowrap',fontWeight:600,
+                background: colOpen ? '#8FC2FF' : '#B8D9FF',
+                border:'1px solid '+(colOpen ? '#5B8DEF' : '#B8D9FF'),
+                color:'#12203c'}}>⚙ 보기 설정</button>
             {colOpen && (
               <CsColumnSettings chip={chip} chipLabel={chipLabel}
                 settings={settings} setSettings={setSettings}
@@ -17861,7 +17903,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
           <button key={lb} onClick={()=>{ const t=csTodayKst();
               setFlt(p=>({...p, from:csPlusKst(-n), to:t})); }}
             style={{padding:'4px 9px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-              cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+              cursor:'pointer',background:'transparent',border:'1px solid '+CS_LINE,
               color:'var(--sub)'}}>{lb}</button>
         ))}
         {fltOn ? (
@@ -17904,7 +17946,9 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:820}}>
             <thead>
               <tr>
-                <CsSortTh k="id" w={56} label="번호" sort={sort} onClick={clickSort}/>
+                {/* ★ 「번호」도 이제 고를 수 있는 열이라 여기서 따로 그리지 않는다
+                    (제니 2026-09-04). 목록에 있는 값은 하나도 빠짐없이 [보기 설정]
+                    안에 있어야 한다. */}
                 {colKeys.map(k=>(
                   <CsSortTh key={k} k={k} w={CS_COLS[k].w} label={CS_COLS[k].label}
                     align={CS_COLS[k].align}
@@ -17928,11 +17972,6 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                 <tr key={t.id} onClick={()=>goTicket(t.id)}
                   className="cs-row"
                   style={{borderTop:'1px solid var(--border)',cursor:'pointer'}}>
-                  <td style={csTd}>
-                    <span style={{fontFamily:'monospace',color:'var(--accent)',
-                        textDecoration:'underline',textUnderlineOffset:3,
-                        textDecorationColor:'rgba(210,229,255,.35)'}}>#{t.id}</span>
-                  </td>
                   {/* ★ 수량·금액 열은 머리글과 값이 «함께» 오른쪽으로 붙어야 한다 —
                        한쪽만 옮기면 그 열만 어긋나 보인다. */}
                   {colKeys.map(k=>(
@@ -19561,7 +19600,7 @@ function CsMulti({label, options, value, onChange, width}){
       <button onClick={()=>setOpen(o=>!o)}
         style={{padding:'5px 10px',borderRadius:7,fontSize:12,fontFamily:'inherit',
           cursor:'pointer',whiteSpace:'nowrap',
-          border:'1px solid '+(on?'var(--primary)':'var(--border)'),
+          border:'1px solid '+(on?'var(--primary)':CS_LINE),
           background: on?'rgba(120,170,255,.12)':'transparent',
           color: on?'var(--accent)':'var(--sub)', fontWeight:on?600:400}}>
         {label}{on && <span style={{marginLeft:5,fontFamily:'monospace'}}>{value.length}</span>}
@@ -20514,7 +20553,13 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     }
     // ★★ 이력은 «메인에만» 쌓는다. 양쪽에 복사하면 같은 사건이 두 번 찍힌다
     //   (환불 이력에서 이미 겪은 함정이다). 서브 화면은 메인의 이력을 함께 읽는다.
-    const evs = (notes.length ? notes : [{side:'고객', text:f.memo||'접수'}]).map(n=>({
+    // ★★ 메모를 이력 첫 줄로 «대신» 넣던 것을 없앴다(제니 2026-09-04).
+    //   이력을 한 줄이라도 적었으면 메모는 안 들어가고, 안 적었으면 들어갔다 —
+    //   그래서 «메모가 이력에 있는 티켓» 과 «아무 데도 없는 티켓» 이 섞여 있었다.
+    //   같은 값이 티켓마다 다른 자리에 있으면 나중에 어디를 봐야 할지 알 수 없다.
+    //   ★ 메모는 이제 제 칸에서 보이고 상세에서 고칠 수도 있다 — 여기서는 이력에
+    //     「접수」 한 줄만 남긴다(사건이 시작된 시각이 이력에 있어야 한다).
+    const evs = (notes.length ? notes : [{side:'고객', text:'접수'}]).map(n=>({
       ticket_id: mrow.id, side:n.side, action:'기록', actor:currentUserEmail,
       // ★ 사진만 남긴 줄은 note 를 «빈 문자열» 이 아니라 null 로 둔다 — 빈 문자열은
       //   «적었는데 비었다» 로 읽히고, 나중에 세면 한 종류로 잡힌다.
@@ -21239,6 +21284,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     cs_qty: r.cs_qty==null ? '' : String(r.cs_qty),
     pickup_zipcode: r.pickup_zipcode||'', pickup_address1: r.pickup_address1||'',
     pickup_address2: r.pickup_address2||'',
+    // ★★ 등록 화면에서 적은 «메모» 를 상세에서도 보고 고친다(제니 2026-09-04).
+    //   그전에는 저장은 되는데 상세에 그리는 자리가 없어, 적어 둔 것을 다시 볼 길이
+    //   없었다. **쓰기만 되고 읽히지 않는 칸은 없는 칸과 같다.**
+    memo: r.memo||'',
   });
 
   const isMaster = role==='master';
@@ -21332,6 +21381,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
       changes.push('정산 상품금액 : '+money0(t.settle_fee)+' -> '+money0(money(edit.settle_fee)));
     if(money(edit.settle_shipping_fee) !== t.settle_shipping_fee)
       changes.push('정산 배송료 : '+money0(t.settle_shipping_fee)+' -> '+money0(money(edit.settle_shipping_fee)));
+    // ★ 메모는 사람이 적은 말이라 가리지 않고 그대로 적는다(개인정보 칸이 아니다).
+    if(String(edit.memo||'') !== String(t.memo||''))
+      changes.push('메모 : '+(t.memo||'—')+' -> '+(edit.memo||'—'));
   }
 
   // ★★ 1단의 «저장» 과 2단의 «남기기» 를 하나로 합쳤다(제니 2026-09-01).
@@ -21471,6 +21523,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         cost_bearer: edit.cost_bearer || null,
         settle_fee: money(edit.settle_fee),
         settle_shipping_fee: money(edit.settle_shipping_fee),
+        memo: edit.memo || null,
         updated_by: currentUserEmail,
       };
       const {error} = await sb.from('cs_tickets').update(row).eq('id', ticketId);
@@ -22118,6 +22171,26 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft} light/>
             <CsPhotoAttach photos={photos} setPhotos={setPhotos} light disabled={busy}/>
 
+            {/* ── 메모 ─────────────────────────────────────────────────────
+                ★★ 등록 화면에서 적은 메모를 여기서 보고 고친다(제니 2026-09-04).
+                  그전에는 상세에 그리는 자리가 아예 없어, 적어 둔 것을 다시 볼 길이
+                  없었다 — 쓰기만 되고 읽히지 않는 칸은 없는 칸과 같다.
+                ★★ 자리는 «이력 다음 · 저장 직전» 으로 등록 화면과 같은 차례다. 다만
+                  등록 화면은 이 판 «밖» 인데 여기는 «안» 이다 — 상세는 저장 버튼이
+                  이 판 안에 있어서, 판 밖에 두면 메모가 저장 버튼 «아래» 로 내려간다.
+                  적는 칸이 저장 버튼 아래에 있으면 적기 전에 저장하게 된다.
+                ★ 이 판은 밝은 판이라 칸 색도 판의 것(CS_WRITE)을 쓴다 — 어두운 화면용
+                  inp 를 그대로 두면 밝은 바탕에 밝은 칸이 잠긴다(09-03에 밟은 함정).
+                ★ 이력이 아니라 «티켓의 값» 이다: 저장하면 이력에는 «메모 : 옛 -> 새»
+                  한 줄이 값 변경으로 남는다. */}
+            <div style={{marginTop:10}}>
+              <label style={{fontSize:10,color:CS_WRITE.sub,marginBottom:3,display:'block'}}>
+                메모 - 특이사항을 간단하게 메모해주세요.</label>
+              <input value={edit.memo} onChange={e=>setE('memo',e.target.value)}
+                style={{...inp,background:CS_WRITE.field,
+                  border:'1px solid '+CS_WRITE.fieldBd,color:CS_WRITE.text}}/>
+            </div>
+
             {/* 1단에서 바꾼 것을 여기 모아 보여 준다 — 저장 버튼 바로 위가 «누르면
                 무슨 일이 일어나나» 를 읽는 자리다. ★ 한 항목이 한 줄이다(제니). */}
             {/* ★ 이 알림도 밝은 판 «안» 이라 밝은 노랑으로 바꾼다. 어두운 화면용
@@ -22281,8 +22354,10 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
   const initial = Array.isArray(saved[chip]) ? saved[chip]
                 : Array.isArray(saved['_default']) ? saved['_default']
                 : CS_COLS_FALLBACK;
-  // 화면이 아는 열만 다룬다. 고정 열은 목록에 안 넣는다 — 끄지도 옮기지도 못한다.
-  const known = (arr)=> arr.filter(k=>CS_COLS[k] && CS_COLS_FIXED.indexOf(k)<0);
+  // ★ 목록이 쓰는 것과 «같은 함수» 로 편다(csExpandCols) — 옛 키 갈음도, 번호·등록·
+  //   수정을 되살리는 것도 한 곳에서 한다. 두 곳에서 따로 펴면 패널에 켜져 있는데
+  //   목록에는 없는 열이 생긴다.
+  const known = (arr)=> csExpandCols(arr);
   const [order,setOrder] = useState(()=>known(initial));
   const [busy,setBusy]   = useState(false);
   const [armed,setArmed] = useState(null);
@@ -22290,7 +22365,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
   const [over,setOver]   = useState(null);
   const endDrag = ()=>{ setArmed(null); setDrag(null); setOver(null); };
 
-  const pool = Object.keys(CS_COLS).filter(k=>CS_COLS_FIXED.indexOf(k)<0);
+  const pool = Object.keys(CS_COLS);
   const off  = pool.filter(k=>order.indexOf(k)<0);
   // ★★ «안 보이는 열» 만 묶어서 보여 준다 — 티켓 ① 영역의 뎁스 이름 그대로다
   //   (제니 2026-09-04에 열이 일곱에서 스물몇 개로 늘었다). 한 줄로 늘어놓으면
@@ -22325,8 +22400,10 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
     // ★★ «모르는 키는 지우지 않는다» — 이 칩 말고 다른 칩의 설정, 그리고 이 칩 안에
     //   있던 «내가 모르는 열 이름» 을 그대로 다시 담는다. 내가 모른다고 지우면
     //   다음 판에서 그 열을 만들었을 때 설정이 사라져 있다(설정 화면 셋의 규칙과 같다).
+    // ★ 다만 «없앤 열»(CS_COL_ALIAS)은 다시 담지 않는다 — 그건 모르는 키가 아니라
+    //   이미 다른 열로 갈음한 키다. 그대로 담으면 저장할 때마다 되살아난다.
     const mineOld = Array.isArray(saved[chip]) ? saved[chip] : [];
-    const unknown = mineOld.filter(k=>!CS_COLS[k]);
+    const unknown = mineOld.filter(k=>!CS_COLS[k] && !CS_COL_ALIAS[k]);
     const out = {...saved, [chip]: order.concat(unknown)};
     setBusy(true);
     const ok = await csSaveSetting('cs_list_columns', out, currentUserEmail);
@@ -22362,8 +22439,11 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
               밝은 남색 판 위에서 «켜졌는지» 가 안 읽힌다. 한 단계 밝은 파랑으로. */}
           <input type="checkbox" checked={on} onChange={()=>toggle(k)}
             style={{width:13,height:13,accentColor:'#5B8DEF',cursor:'pointer'}}/>
+          {/* ★ 패널에서는 «무엇인지 분명한 이름»(plabel)을, 목록 머리글에서는 짧은
+              이름을 쓴다 — 고르는 자리와 보는 자리의 셈이 다르다. */}
           <span style={{fontSize:11.5,color:on?'var(--text)':'var(--sub)',
-            overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{CS_COLS[k].label}</span>
+            overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            {CS_COLS[k].plabel || CS_COLS[k].label}</span>
         </label>
       </div>
     );
@@ -22419,11 +22499,14 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
           )}
         </div>
 
-        {/* ★ 「등록·수정」은 고를 수 있는 열이 아니다 — 어느 칩에서 보든 늘 필요해서
-            맨 앞에 고정으로 둔 것이다. 목록에 안 넣는 대신 여기서 밝힌다. */}
+        {/* ★ 고정 열은 이제 없다(제니 2026-09-04). 다만 「티켓 번호」를 끄면 어디를
+            눌러야 열리는지 알려 주던 표시가 사라지므로, 끈 그때 그 자리에서 알린다 —
+            «끄고 나서 알아채는» 것이 아니라 «끄기 전에 아는» 편이 낫다. */}
         <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.6,marginTop:9,
           paddingTop:8,borderTop:'1px solid rgba(255,255,255,.14)'}}>
-          맨 앞 <b>등록 · 수정</b> 두 열은 늘 보입니다.
+          {order.indexOf('id')<0
+            ? <span style={{color:'#F6AD09'}}>「티켓 번호」를 껐습니다 — 줄 아무 데나 누르면 열리는 것은 그대로입니다.</span>
+            : '줄 아무 데나 누르면 티켓이 열립니다.'}
         </div>
 
         <div style={{display:'flex',gap:6,marginTop:10,alignItems:'center'}}>
