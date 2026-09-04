@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904y_draft_side_star_fix -->
+<!-- (2026-09-04) 접수 문안 피드백 넷(제니). ①🔴 **별을 켜도 「접수 사유」가 비어 나갔다 — 버그였다.** 원인은 **이력이 «메인 티켓에» 쌓인다**는 묶음 설계다: 내가 `ticket_id === t.id` 로만 걸러서 **서브 티켓에서는 고객 이력이 한 줄도 안 잡혔다.** → 묶음의 메인 id 도 함께 본다(일괄 화면의 이력 조회에도 메인 번호를 넣었다). ★★ 같은 사건을 겪는 묶음이라 메인에 적힌 고객의 말이 서브의 접수 사유이기도 하다. **«어디에 쌓이는가» 를 정해 놓고 «어디서 읽는가» 를 그 규칙에 맞추지 않으면 조용히 빈 값이 나간다.** ②★★★ **이력의 «누가» 를 «공급사» → «원룸만들기» 로 고쳤다**(제니). **«공급사» 는 공급사에서 «회신이 왔을 때» 고르는 값**이고, 접수 문안은 «우리가 보내는 말» 이다. 나는 «공급사에 보내는 글이니 공급사» 로 읽었는데, **이력의 «누가» 는 «누구에게» 가 아니라 «누가 한 말인가» 다.** ③문안 뒤에 **빈 줄 하나**를 남긴다 — 문안 다음에 한마디 덧붙이는 일이 흔한데, 커서가 표 끝에 붙어 있으면 거기서 줄을 만들어야 한다. ④**별 자리를 «작성 날짜 왼쪽» 으로** 옮기고 꺼진 상태도 또렷하게 그린다(제니). 오른쪽 끝에 띄워 뒀더니 [지우기] 와 자리를 다투고 줄마다 높이도 달라 어디 있는지 찾아야 했다 — 줄 «안» 에 서면 날짜·작성자와 한 덩어리로 읽힌다. ★ 꺼진 별을 옅은 회색으로 눕혀 두니 **누를 수 있는 것인 줄도 몰랐다**: 빈 별(☆)을 또렷한 색으로 그리고 켜지면 «채운 별» 로 바뀐다 — **모양이 달라져야 켜짐이 한눈에 보인다**(색만 바꾸면 «조금 진한 별» 이 된다). -->
 <!-- v20260904x_draft_cols_star -->
 <!-- (2026-09-04) **접수 문안 표 개편 + 「접수 사유」 별표**(제니). ①표 항목을 여덟으로: **유형 · 방향 / 품목별 주문번호 / 주문자명(수령자명) / 연락처 / 상품명 / 수량(주문/CS) / 접수 사유 / 운송장.** ★★ **되물을 일이 없게 «한 칸에 짝지어» 넣는다** — 주문자와 수령자는 다를 수 있으므로 한 칸에(다를 때만 괄호), 주문 수량과 CS 접수 수량은 «몇 개 중 몇 개» 라 붙어 있어야 뜻이 살고, 유형과 방향은 «무슨 일이 있었고 무엇을 해 달라» 라 한 덩어리다. ★ 메신저용 줄글도 «같은 값·같은 차례» 로 폈다 — 두 형식을 나란히 놓고 봐도 같은 글로 읽혀야 한다. ②★★★ **「접수 사유」는 고객이 한 말이다** — 이력에서 side='고객' 인 줄을 가져온다. 여럿이면 상세의 그 줄 오른쪽 **별(★)** 을 켜서 고르고, **아무것도 안 켜면 «가장 이른» 한 줄**이 간다(처음 신청한 내용이 곧 접수 사유다). ★★★ **표시는 «티켓» 이 기억한다**(`cs_tickets.intake_event_ids` · dev 적용 완료) — 이력 표는 append-only 이고 트리거가 «본문 가리기 말고는 아무것도 못 바꾸게» 막고 있어, 거기 칸을 더하면 **그 자물쇠를 풀어야** 했다. 고르는 쪽이 기억하면 이력은 한 글자도 안 바뀐다. ★ 별은 «고객» 줄에만 둔다(우리가 한 말이나 시스템 기록은 접수 사유가 아니다). ★ 누르는 즉시 저장한다 — 고르자마자 문안 버튼을 누르는 값이라 [저장] 을 한 번 더 받게 할 일이 아니다. 저장이 실패하면 별을 되돌린다: **켜진 줄 알고 보내면 엉뚱한 사유가 나간다.** ③**이력에서 «탭으로 나뉜 줄» 을 표로 그린다**(제니: 「메일인데 표가 안 생긴다」). ★★ 이력 칸은 순수 텍스트라 표를 담을 수 없다. 고른 답은 **글은 탭 그대로 두고 보여 줄 때만 표로 그리는 것** — ①이력은 append-only 라 저장된 글자를 바꾸는 것이 위험하고 ②탭 구분은 «긁어서 메일에 붙이면 열이 살아나는» 형식이라 그대로 두는 값어치가 있다. 저장은 그대로, 읽을 때만 표. ★ 표로 볼 조건은 «탭이 든 줄이 둘 이상 이어질 때» 다 — 한 줄짜리는 그냥 탭이 든 문장일 수 있다. ★ 운송장은 카페24 스냅샷의 tracking_no 다 — 접수 시점에 없으면 빈칸이고, 그것이 정상이다. -->
 <!-- v20260904w_draft_rules_menu -->
@@ -21837,8 +21839,14 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     const evs = notes.filter(n=>n.side==='고객' && n.text)
                       .map((n,i)=>({id:'n'+i, ticket_id:'new', side:'고객', note:n.text}));
                     const d = csDraftFor(supChannel, list, evs);
-                    setDraft(x=> x.trim() ? (x.replace(/\s+$/,'')+'\n\n'+d.text) : d.text);
-                    setSide('공급사');
+                    // ★ 뒤에 빈 줄 하나를 남긴다(제니) — 문안 다음에 한마디 덧붙이는
+                    //   일이 흔한데, 커서가 표 끝에 붙어 있으면 거기서 줄을 만들어야 한다.
+                    setDraft(x=> (x.trim() ? (x.replace(/\s+$/,'')+'\n\n') : '')+d.text+'\n');
+                    // ★★★ «우리가 보내는 말» 이므로 «원룸만들기» 다(제니 2026-09-04).
+                    //   «공급사» 는 공급사에서 «회신이 왔을 때» 고르는 값이다 —
+                    //   나는 «공급사에 보내는 글이니 공급사» 로 잘못 읽었다.
+                    //   **이력의 «누가» 는 «누구에게» 가 아니라 «누가 한 말인가» 다.**
+                    setSide('원룸만들기');
                     const ok = await csDraftCopy(d);
                     toast(ok ? '접수 문안을 넣고 복사했습니다 — 확인하고 [남기기] 하세요.'
                              : '접수 문안을 넣었습니다. 복사는 직접 해 주세요.',
@@ -22856,10 +22864,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               border: '1px solid '+(plain ? 'transparent' : c.bd)}}>
               <div style={{width:3,borderRadius:2,flex:'0 0 auto',alignSelf:'stretch',
                 background: rail, opacity: isEdit?.6:1}}></div>
-              {/* ★ 별(★)이 오른쪽 위에 떠야 하므로 이 칸이 기준점이 된다. */}
-              <div style={{flex:1,minWidth:0,position:'relative'}}>
-                <div style={{display:'flex',gap:7,alignItems:'baseline',flexWrap:'wrap',
-                  paddingRight:18}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:'flex',gap:7,alignItems:'baseline',flexWrap:'wrap'}}>
                   {isEdit ? (
                     /* ★ 뱃지 자체가 여는 손잡이다. 옆에 [펼치기] 를 따로 두면
                          작은 글씨 옆에 작은 버튼이 하나 더 붙어 둘 다 안 눌린다. */
@@ -22893,6 +22899,31 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                       그전에는 그 줄을 만든 워크플로 이름(workflow)이 그대로 찍혀서,
                       읽는 사람에게는 «누구지?» 인 이름이 사람 자리에 앉아 있었다.
                       누가 적었느냐는 이미 왼쪽 «시스템» 뱃지가 말하므로 같은 말을 쓴다. */}
+                  {/* ── 접수 사유로 쓸 줄 고르기 (제니 2026-09-04) ─────────────────
+                      ★★★ 공급사 접수 문안의 「접수 사유」 칸에는 **고객이 한 말**이 간다.
+                        고객 이력이 여럿이면 어느 것을 보낼지 사람이 골라야 한다 — 여기서
+                        별(★)을 켠 줄이 그 자리에 들어간다.
+                      ★★ **이력은 한 글자도 안 바뀐다** — 표시는 «티켓» 이 기억한다
+                        (cs_tickets.intake_event_ids). 이력 표는 append-only 라
+                        거기 칸을 더하면 그 자물쇠를 풀어야 했다.
+                      ★ 자리는 «작성 날짜 왼쪽» 이다(제니) — 오른쪽 끝에 띄워 뒀더니
+                        [지우기] 와 자리를 다투고 줄마다 높이도 달라 어디 있는지 찾아야 했다.
+                        줄 안에 서면 날짜·작성자와 한 덩어리로 읽힌다.
+                      ★★ **꺼진 별도 «보여야» 한다**(제니) — 옅은 회색으로 눕혀 두니
+                        누를 수 있는 것인 줄도 몰랐다. 빈 별(☆)을 또렷한 색으로 그리고,
+                        켜지면 «채운 별» 로 바뀐다: 모양이 달라져야 켜짐이 한눈에 보인다.
+                      ★ 「고객」 줄에만 둔다 — 우리가 한 말이나 시스템 기록은 접수 사유가
+                        아니고, 모든 줄에 별을 달면 무엇을 고르는 것인지 흐려진다. */}
+                  {!isEdit && e.side==='고객' && e.note && (
+                    <button onClick={()=>toggleIntake(e.id)} disabled={busy}
+                      title={intakeIds.indexOf(e.id)>=0
+                        ? '접수 사유로 보냅니다 — 누르면 뺍니다'
+                        : '이 줄을 공급사 접수 사유로 보냅니다 (아무것도 안 고르면 맨 첫 줄이 갑니다)'}
+                      style={{background:'transparent',border:'none',cursor:'pointer',
+                        padding:'0 1px',lineHeight:1,fontSize:13,
+                        color: intakeIds.indexOf(e.id)>=0 ? '#F6AD09' : '#9FB6DC'}}>
+                      {intakeIds.indexOf(e.id)>=0 ? '★' : '☆'}</button>
+                  )}
                   <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>
                     {String(e.created_at).slice(5,16).replace('T',' ')}{' '}
                     {e.side==='시스템' ? '시스템' : csShortUser(e.actor)}</span>
@@ -22923,17 +22954,6 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                       아니고, 모든 줄에 별을 달면 무엇을 고르는 것인지 흐려진다.
                     ★ 아무것도 안 켜면 «가장 이른 고객 이력» 이 들어간다 — 처음 신청한
                       내용이 곧 접수 사유이기 때문이다. 그 규칙을 툴팁에 적어 둔다. */}
-                {!isEdit && e.side==='고객' && e.note && (
-                  <button onClick={()=>toggleIntake(e.id)} disabled={busy}
-                    title={intakeIds.indexOf(e.id)>=0
-                      ? '접수 사유로 보냅니다 — 누르면 뺍니다'
-                      : '이 줄을 공급사 접수 사유로 보냅니다 (아무것도 안 고르면 맨 첫 줄이 갑니다)'}
-                    style={{position:'absolute',right:6,top:22,background:'transparent',
-                      border:'none',cursor:'pointer',padding:'0 2px',lineHeight:1,
-                      fontSize:12,color: intakeIds.indexOf(e.id)>=0 ? '#F6AD09' : 'var(--sub)',
-                      opacity: intakeIds.indexOf(e.id)>=0 ? 1 : .45}}>
-                    {intakeIds.indexOf(e.id)>=0 ? '★' : '☆'}</button>
-                )}
                 {e.note && (isEdit ? (openEdits[e.id] && (
                   <div style={{marginTop:3}}>
                     {String(e.note).split('\n').map((line,k)=>(
@@ -23036,8 +23056,14 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                   onClick={async ()=>{
                     const d = csDraftFor(supChannel,
                       [{...t, cs_qty: parseInt(edit.cs_qty,10) || t.cs_qty}], events);
-                    setDraft(x=> x.trim() ? (x.replace(/\s+$/,'')+'\n\n'+d.text) : d.text);
-                    setSide('공급사');
+                    // ★ 뒤에 빈 줄 하나를 남긴다(제니) — 문안 다음에 한마디 덧붙이는
+                    //   일이 흔한데, 커서가 표 끝에 붙어 있으면 거기서 줄을 만들어야 한다.
+                    setDraft(x=> (x.trim() ? (x.replace(/\s+$/,'')+'\n\n') : '')+d.text+'\n');
+                    // ★★★ «우리가 보내는 말» 이므로 «원룸만들기» 다(제니 2026-09-04).
+                    //   «공급사» 는 공급사에서 «회신이 왔을 때» 고르는 값이다 —
+                    //   나는 «공급사에 보내는 글이니 공급사» 로 잘못 읽었다.
+                    //   **이력의 «누가» 는 «누구에게» 가 아니라 «누가 한 말인가» 다.**
+                    setSide('원룸만들기');
                     const ok = await csDraftCopy(d);
                     toast(ok ? '접수 문안을 넣고 복사했습니다 — 확인하고 [저장] 하세요.'
                              : '접수 문안을 넣었습니다. 복사는 직접 해 주세요.',
@@ -23486,7 +23512,12 @@ const CS_DRAFT_COLS = ['유형 · 방향','품목별 주문번호','주문자명
 //   처음 신청한 내용이 곧 접수 사유이기 때문이다. 여러 줄이 쌓인 티켓에서 무엇을
 //   보낼지는 사람이 별로 고른다.
 function csIntakeReason(t, events){
-  const mine = (events||[]).filter(e=>e.ticket_id===t.id && e.side==='고객' && e.note);
+  // ★★★ **이력은 «메인 티켓에» 쌓인다**(묶음 설계). 그래서 ticket_id 를 «그 티켓» 으로만
+  //   거르면 **서브 티켓에서는 고객 이력이 한 줄도 안 잡힌다** — 별을 켜 놓고도
+  //   접수 사유가 비어 나갔다(제니 제보 2026-09-04). 묶음의 메인 id 도 함께 본다.
+  //   ★ 같은 사건을 겪는 묶음이라 메인에 적힌 고객의 말이 서브의 접수 사유이기도 하다.
+  const mine = (events||[]).filter(e=> e.side==='고객' && e.note &&
+    (e.ticket_id==null || e.ticket_id===t.id || e.ticket_id===t.main_ticket_id));
   if(!mine.length) return '';
   const picked = Array.isArray(t.intake_event_ids) ? t.intake_event_ids : [];
   const on = mine.filter(e=>picked.indexOf(e.id)>=0);
@@ -23644,9 +23675,13 @@ function CsSupplierDraftPage({ids, currentUserEmail, onBack, goTicket}){
     // ★ 「접수 사유」는 고객이 한 말이라 이력에서 가져온다 — 여기서 한 번에 읽는다
     //   (표를 그릴 때마다 티켓별로 물으면 건수만큼 조회가 늘어난다).
     if(list.length){
+      // ★ 묶음이면 이력이 «메인» 에 쌓인다 — 메인 번호도 함께 물어야 서브 티켓의
+      //   접수 사유가 빈 채로 나가지 않는다.
+      const ids2 = Array.from(new Set(
+        list.map(t=>t.id).concat(list.map(t=>t.main_ticket_id).filter(Boolean))));
       const {data:ev} = await sb.from('cs_ticket_events')
         .select('id,ticket_id,side,note')
-        .in('ticket_id', list.map(t=>t.id)).eq('side','고객')
+        .in('ticket_id', ids2).eq('side','고객')
         .order('created_at',{ascending:true});
       setEvents(ev||[]);
     } else setEvents([]);
