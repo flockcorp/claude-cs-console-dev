@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- v20260904zf_toast_light -->
+<!-- (2026-09-04) **우측 하단 알림(토스트)을 «밝은 판» 으로**(제니: 「배경이 콘솔 배경과 동일해서 눈에 안 띈다」). var(--card) 는 화면의 카드와 **같은 색**이라, 떠 있는 알림이 «화면의 일부» 로 읽혔다. ★★★ 어두운 화면에서 눈에 띄게 하는 가장 확실한 방법은 **밝게 «채우고» 글자를 어둡게 뒤집는 것**이다 — 09-03 [목록으로]·09-04 [보기 설정] 버튼이 이미 쓰는 방식이고 이 콘솔에서 되풀이해 확인된 규칙이다. ★★ **판이 밝아지면 그 안의 조각을 전부 다시 봐야 한다** — 글자색·닫기 버튼·그림자를 함께 잡았고, **종류를 알리는 왼쪽 띠도 «밝은 판 위에 얹는 색» 으로** 바꿨다(어두운 화면용 밝은 색을 흰 바탕에 그으면 흐릿해진다 — CS_TONE_SOLID 와 같은 값을 쓴다). ★ 오늘만 네 번째로 만난 같은 문제다(칩·필터 테두리 → 일괄 편집 바 → 이력 표 선 → 토스트). **«묻힌다» 는 말이 나오면 먼저 볼 것은 그 조각의 «색이 바탕과 같은 계열인가» 다.** -->
+<!-- v20260904ze_actor_names -->
+<!-- (2026-09-04) **이력·담당자를 «이름» 으로 보여 준다**(제니). ★★★ **저장값은 그대로 이메일이다 — 보여 줄 때만 바꾼다.** ①이메일은 «누구인가» 를 가리키는 안정된 키이고 이름은 «표시» 다: 이름을 고치면 **지난 이력까지 함께 새 이름으로 읽히는 것이 옳다**(저장해 버리면 옛 줄은 옛 이름으로 굳는다) ②이력은 append-only 라 이미 쌓인 값을 고칠 수도 없다. ★★ 지도는 `console_user_names()` 함수가 준다(dev 적용 완료). **뷰가 아니라 security definer 함수인 이유**: 필요한 것은 «남의 이름» 인데 console_users 의 정책은 «자기 행만» 이고, 뷰로 열면 RLS 를 우회해야 하는데 **뷰에는 RLS 를 걸 수 없어 콘솔에 등록되지 않은 계정도 사내 이메일·이름을 통째로 받아 간다**(2026-08-12 에 «가입만 하면 master» 를 막은 것과 같은 계열). → 함수 맨 앞에서 «부른 사람이 콘솔 등록자인가» 를 보고, 아니면 0행이다. 돌려주는 것은 넷뿐이고(user_id·email·label·console_role) 연락처는 예전처럼 «자기 것만» 이다. ★★ **지도가 없으면 예전처럼 이메일 앞부분**이다 — 비워 두면 «누가 했는지 모르는» 이력이 되고 그게 이름이 없는 것보다 나쁘다. 조회가 실패해도 콘솔은 멀쩡히 돈다. ★ 모듈 변수에 둔 이유: csShortUser 는 화면 열몇 곳이 부르는 함수라 인자를 하나 더 받게 하면 그 열몇 곳을 다 고쳐야 하고, **한 곳이라도 빠지면 «여기만 이메일» 이 된다.** 로그인마다 한 번만 읽는다. ★ **차단 화면 문구를 «미사용» 에 맞췄다** — 계정 관리에서 [미사용] 으로 바꾸면 그 사람이 보는 화면이 거기다. **화면과 버튼이 다른 말을 쓰면 본인도 관리자도 «내가 무슨 상태인지» 를 헷갈린다.** 「계정과 비밀번호는 그대로입니다」를 적어 둔 것은, 그 사람이 비밀번호를 잘못 아는 줄 알고 계속 시도하는 일을 막기 위해서다. ★ **콘솔 계정 박스에 폭 상한(980px)** 을 뒀다(제니) — 칩으로 갈라 폭이 자유로워지자 이번에는 화면 끝까지 늘어나 «표 한 줄이 지나치게 먼» 화면이 됐다. 입력칸도 «담는 값만큼» 으로 잡았다(이메일은 길고 이름은 짧다). -->
 <!-- v20260904zd_account_chips_delete -->
 <!-- (2026-09-04) 계정 화면과 공급사 검색줄을 다듬었다(제니). ①★★★ **계정 정보·설정을 «칩» 으로 갈랐다** — 알림 · 콘솔 계정 · 메뉴별 설정. 카드가 다섯이 되면서 이분할로도 오른쪽이 길어져 **계정 표에 가로 스크롤이 생겼다**(제니 제보). **칸을 더 쪼개는 대신 «성격이 다른 것을 다른 화면으로» 보낸다** — 그래야 계정 표처럼 «넓어야 하는» 것이 폭을 다 쓴다. 가르는 기준은 2026-08-31에 정한 것과 같은 «성격» 이다. ★ 기본은 «알림» 이다(이 화면에 들어오는 주된 이유가 「확인이 필요합니다」다). 칩에 알림 건수를 붙여, 다른 칩을 보고 있어도 «지금 몇 건» 인지 보인다. ②**「콘솔에서 빼기」를 「미사용」으로**(제니) — 하는 일이 «그 사람을 이제 안 쓴다» 이지 «어딘가에서 빼낸다» 가 아니다. ③★★★ **「삭제」를 따로 만들었다** — 처음에는 «되돌릴 수 없어서» 일부러 안 만들었는데, 제니가 「미사용은 남겨 두되 삭제도」로 정했다. 안전장치 셋: ①화면이 두 번 묻는다(무엇을 잃는지 적은 안내 + **이메일을 직접 입력**) ②엣지 함수가 «번호와 이메일이 같은 계정을 가리키는지» 다시 본다 — **화면은 언제나 고칠 수 있으므로** 함수가 스스로 확인해야 «다른 사람을 지웠다» 가 안 생긴다 ③자기 자신은 못 지운다. ★ 안내에 «미사용과 무엇이 다른가» 를 적는다: 로그인조차 못 하게 되고, 같은 이메일로 다시 만들면 «다른 계정» 이 되어 알림 설정 같은 값을 새로 넣어야 한다. 남긴 이력은 그대로다(이메일로 적혀 있다). ★ 콘솔 등록을 «먼저» 지운다 — auth 만 지우고 실패하면 «주인 없는 줄» 이 남아 목록에 이메일도 모르는 계정으로 뜬다. ★ 버튼 색도 갈랐다(미사용=중립 · 삭제=붉은) — 같은 옷이면 손이 미끄러진 자리가 곧 사고가 된다. ④**공급사 관리 검색줄** — 필터 드롭박스가 «불필요하게 길었다»(제니). 2026-08-31에 검색창을 220px 로 묶고 드롭박스를 auto 로 뒀는데, **auto 는 남는 폭을 나눠 가진다.** → 드롭박스는 max-content(가장 긴 옵션 기준)로 고정하고 **남는 폭은 검색칸이 다 먹는다** — 남는 자리를 «아무 데나» 주는 것보다 찾는 칸에 주는 편이 낫다. ⏳ **다음: 이력의 처리자를 «이름» 으로**(제니 요청) — console_users 에 email 칸과 «전원 읽기» 정책이 필요해 SQL 이 따라붙는다. -->
 <!-- v20260904zc_account_admin -->
@@ -735,21 +739,29 @@
        브라우저 기본 alert 을 대신한다. 창을 닫지 않아도 작업을 이어갈 수 있다. */
     #toastHost{position:fixed;right:20px;bottom:20px;z-index:3000;display:flex;flex-direction:column;
       gap:8px;align-items:flex-end;pointer-events:none;max-width:min(420px,calc(100vw - 40px))}
+    /* ★★★ 알림은 «밝은 판» 이다(제니 2026-09-04: 「배경이 콘솔 배경과 동일해서
+       눈에 안 띈다」). var(--card) 는 화면의 카드와 «같은 색» 이라, 떠 있는 알림이
+       화면의 일부로 읽혔다. 어두운 화면에서 눈에 띄게 하는 가장 확실한 방법은
+       밝게 «채우고» 글자를 어둡게 뒤집는 것이다(09-03 [목록으로]·09-04 [보기 설정]
+       버튼이 이미 쓰는 방식이고, 이 콘솔에서 되풀이해 확인된 규칙이다).
+       ★★ 판이 밝아지면 그 안의 조각을 전부 다시 봐야 한다 — 글자·닫기 버튼·그림자.
+       ★ 종류를 알리는 왼쪽 띠도 «밝은 판 위에 얹는 색» 으로 바꾼다: 어두운 화면용
+         밝은 색(var(--red) 등)을 흰 바탕에 그으면 흐릿해진다(CS_TONE_SOLID 와 같은 값). */
     .toast{pointer-events:auto;display:flex;gap:10px;align-items:flex-start;width:100%;
-      background:var(--card);border:1px solid var(--border);border-left:3px solid var(--sub);
-      border-radius:8px;padding:12px 12px 12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.35);
-      color:var(--text);font-size:13px;line-height:1.5;white-space:pre-line;word-break:break-word;
+      background:#EDF2FA;border:1px solid #BFD0EA;border-left:4px solid #5A6A88;
+      border-radius:8px;padding:12px 12px 12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.5);
+      color:#16233F;font-size:13px;line-height:1.5;white-space:pre-line;word-break:break-word;
       animation:toastIn .18s ease-out}
     .toast.is-out{animation:toastOut .16s ease-in forwards}
-    .toast.t-error{border-left-color:var(--red)}
-    .toast.t-warn{border-left-color:var(--yellow)}
-    .toast.t-success{border-left-color:var(--green)}
-    .toast.t-info{border-left-color:var(--accent)}
+    .toast.t-error{border-left-color:#B03A2E}
+    .toast.t-warn{border-left-color:#B4700A}
+    .toast.t-success{border-left-color:#0E8F6E}
+    .toast.t-info{border-left-color:#2A478D}
     .toast-icon{flex:none;font-size:14px;line-height:1.4}
     .toast-body{flex:1;min-width:0}
-    .toast-close{flex:none;background:none;border:none;color:var(--sub);cursor:pointer;
+    .toast-close{flex:none;background:none;border:none;color:#5A6A88;cursor:pointer;
       font-size:14px;line-height:1;padding:2px 4px;border-radius:4px;font-family:inherit}
-    .toast-close:hover{background:var(--hover);color:var(--text)}
+    .toast-close:hover{background:rgba(22,35,63,.10);color:#16233F}
     /* 목록 줄 — 어디를 눌러도 열린다. 손이 올라간 줄을 밝혀 «이 줄이 열린다» 를 보여 준다. */
     .cs-row:hover{background:rgba(120,170,255,.07)}
     /* 열 너비 손잡이 — 평소엔 안 보이고 마우스를 올리면 선이 선다.
@@ -17375,7 +17387,29 @@ function csMaskAddr(v){
   const restLen = p.slice(2).join(' ').length;
   return p[0]+' '+p[1]+' '+'○'.repeat(Math.min(restLen,8));
 }
-function csShortUser(v){ return v ? String(v).split('@')[0] : '—'; }
+// ── 이력·담당자를 «이름» 으로 보여 준다 (제니 2026-09-04) ────────────────────
+// ★★★ **저장값은 그대로 이메일이다 — 보여 줄 때만 이름으로 바꾼다.**
+//   ①이메일은 «누구인가» 를 가리키는 안정된 키이고 이름은 «표시» 다. 이름을 고치면
+//     지난 이력까지 함께 새 이름으로 읽히는 것이 옳다(저장해 버리면 옛 줄은 옛 이름).
+//   ②이력은 append-only 라 이미 쌓인 값을 고칠 수도 없다.
+// ★★ 지도가 아직 안 왔거나 이름이 없는 계정이면 **예전처럼 이메일 앞부분** 이다 —
+//   비워 두면 «누가 했는지 모르는» 이력이 되고, 그것이 이름이 없는 것보다 나쁘다.
+// ★ 모듈 변수에 둔다: csShortUser 는 화면 열몇 곳이 부르는 함수라 인자를 하나 더
+//   받게 하면 그 열몇 곳을 전부 고쳐야 하고, 한 곳이라도 빠지면 «여기만 이메일» 이 된다.
+let CS_USER_NAMES = {};   // 이메일(소문자) -> 이름
+async function csLoadUserNames(){
+  const {data,error} = await sb.rpc('console_user_names');
+  // ★ 실패해도 조용히 넘어간다 — 이름이 «없어서» 이메일로 보이는 것은 화면이
+  //   멈추는 것보다 훨씬 가볍다(콘솔에 갓 들어온 계정은 0행이 정상이다).
+  if(error){ console.error('[이름 지도] 실패:', error); return; }
+  const map = {};
+  (data||[]).forEach(r=>{ if(r.email && r.label) map[String(r.email).toLowerCase()] = r.label; });
+  CS_USER_NAMES = map;
+}
+function csShortUser(v){
+  if(!v) return '—';
+  return CS_USER_NAMES[String(v).toLowerCase()] || String(v).split('@')[0];
+}
 function csDate(v){ return v ? String(v).slice(5,10) : '—'; }
 // «09-01 18:16» — 날짜만으로는 같은 날 여러 번 손댄 것이 구분되지 않는다.
 function csStamp(v){
@@ -24158,8 +24192,16 @@ function NotRegisteredPage({email}){
   return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100vh',padding:'40px 20px',textAlign:'center'}}>
       <div style={{fontSize:48,marginBottom:16,opacity:.5}}>🔒</div>
-      <div style={{fontSize:18,fontWeight:600,color:'var(--text)',marginBottom:8}}>사용 권한이 없는 계정입니다.</div>
-      <div style={{fontSize:13,color:'var(--sub)',marginBottom:20}}>{email} 은 이 콘솔에 등록되어 있지 않습니다. 관리자에게 문의하세요.</div>
+      {/* ★★ 문구를 «미사용» 에 맞췄다(제니 2026-09-04). 계정 관리에서 [미사용] 으로
+          바꾸면 그 사람이 보는 화면이 여기다 — 화면과 버튼이 다른 말을 쓰면
+          «내가 무슨 상태인지» 를 본인도 관리자도 헷갈린다.
+          ★ «등록되어 있지 않다» 는 처음 들어온 사람에게도 맞는 말이지만, 지금은
+            대부분 «쓰다가 미사용으로 바뀐» 경우다. 두 경우를 한 문장에 담는다. */}
+      <div style={{fontSize:18,fontWeight:600,color:'var(--text)',marginBottom:8}}>지금은 콘솔을 쓸 수 없는 계정입니다.</div>
+      <div style={{fontSize:13,color:'var(--sub)',marginBottom:20,lineHeight:1.8}}>
+        {email} 은 <b style={{color:'var(--text)'}}>미사용</b> 상태이거나 아직 등록되지 않았습니다.
+        <br/>다시 쓰시려면 관리자에게 요청해 주세요. <b style={{color:'var(--text)'}}>계정과 비밀번호는 그대로입니다.</b>
+      </div>
       <button className="btn-primary" onClick={()=>sb.auth.signOut()}>로그아웃</button>
     </div>
   );
@@ -24539,7 +24581,11 @@ function CsAccountAdmin({session, card, head}){
     color: kind==='go' ? '#fff' : kind==='bad' ? 'var(--red)' : 'var(--sub)'});
 
   return (
-    <div style={card}>
+    // ★★ 폭에 상한을 둔다(제니 2026-09-04). 칩으로 갈라 폭이 자유로워지자 이번에는
+    //   박스가 화면 끝까지 늘어나 «표 한 줄이 지나치게 먼» 화면이 됐다.
+    //   **필요한 만큼만 넓다** — 열이 다섯이라 980px 이면 가로 스크롤이 안 생기고,
+    //   그보다 넓으면 이메일과 버튼 사이가 텅 빈 채로 눈이 건너뛰어야 한다.
+    <div style={{...card, maxWidth:980}}>
       <div style={head}>콘솔 계정</div>
       <div style={{padding:'14px 20px'}}>
         <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7,marginBottom:12}}>
@@ -24555,7 +24601,11 @@ function CsAccountAdmin({session, card, head}){
         ) : (
           <div style={{border:'1px solid var(--border)',borderRadius:8,padding:'12px 13px',
             marginBottom:12,background:'var(--bg)'}}>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+            {/* ★ 입력칸도 «담는 값만큼» 이다 — 1fr 로 두면 이메일 칸이 화면 절반이
+                된다. 이메일은 길고 이름은 짧으니 폭도 그렇게 나눈다. */}
+            <div style={{display:'grid',
+              gridTemplateColumns:'minmax(200px,260px) minmax(140px,180px)',
+              gap:8,marginBottom:8,justifyContent:'start'}}>
               <input value={f.email} onChange={e=>setF(p=>({...p,email:e.target.value}))}
                 placeholder="이메일" autoComplete="off" style={inp}/>
               <input value={f.label} onChange={e=>setF(p=>({...p,label:e.target.value}))}
@@ -25209,6 +25259,12 @@ function App() {
         setMeLoading(false);
       })
       .catch(err=>{ if(!alive) return; console.error('[콘솔 권한 조회] 실패:',err); setMeError(err); setMe(null); setMeLoading(false); });
+    // ★★ 이력·담당자를 «이름» 으로 보여 주기 위한 지도(제니 2026-09-04).
+    //   ★ 로그인마다 «한 번만» 읽는다 — 사람 수가 늘 일이 드물고, 화면을 옮길 때마다
+    //     다시 읽으면 이력이 있는 화면을 열 때마다 조회가 하나씩 붙는다.
+    //   ★ 권한 조회와 «따로» 둔다: 이름을 못 읽어도 콘솔은 멀쩡히 돌아야 한다
+    //     (그때는 예전처럼 이메일 앞부분으로 보인다).
+    csLoadUserNames();
     return()=>{ alive=false; };
   },[session?.user?.id,meRetry]);
   if(loading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--sub)'}}>로딩 중...</div>;
