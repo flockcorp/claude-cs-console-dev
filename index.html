@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904r_bulk_btn_contrast -->
+<!-- (2026-09-04) **일괄 편집 바 «안» 의 버튼을 판과 다른 계열로**(제니: 「버튼 자체가 배너랑 동일한 색상인데, 나는 배너 «안에서» 색이 구분되었으면 하던 거야」). ★★★ 앞 판에서 나는 붉은 판 위에 «판보다 밝은 붉은» 을 얹었다 — **밝기만 다르니 한 덩어리로 읽혔다.** 바로 앞 판에서 «남색 화면에서 눈에 띄려면 밝기가 아니라 색상 계열을 바꿔야 한다» 를 배워 놓고, **판 «안» 에서 같은 문제를 만났을 때 그 논리를 적용하지 못했다.** 규칙은 화면 전체에만 적용되는 것이 아니다 — 어떤 판 위에 무엇을 얹든 같다. ①[…바꾸기] 셋 = 밝은 하늘색(#B8D9FF · 콘솔에서 이미 «누르는 것» 의 색) ②[선택 해제]·[취소] = 어두운 남색(#33406B · 되돌리는 자리라 무게를 낮춘다) ③[N건에 적용] = 흰 판에 붉은 글자 — **이 바에서 유일하게 붉은 글자라 주 동작인 것이 색만으로 갈린다.** 셋 다 붉은 판과 계열이 다르고 서로도 밝기·채도로 갈린다. ★ 고르는 칸도 흰 바탕 · 하늘색 테두리로 맞췄다(살구빛이던 것을 걷어냈다 — 판과 같은 계열이었다). -->
 <!-- v20260904q_recheck_tight -->
 <!-- (2026-09-04) **리체크 열의 «· N일» 간격을 좁히고 기본 폭도 줄였다**(제니: 「간격이 길다 · 열 너비 불필요하게 크게 가지 않게」). ★★ 원인은 **고정폭 글꼴에서 공백 하나가 «글자 하나» 폭**이라는 것이다 — 「09-02」와 「2일」 사이를 공백-가운뎃점-공백으로 띄우니 글자 두 칸(13px)이 그냥 날아갔다. 공백 문자를 걷어내고 margin 1px 로 바꿨다: **같은 «떨어져 있음» 인데 폭은 6분의 1이다.** ★ 그래서 기본 폭도 100 → 88 로 줄일 수 있었다. **남는 자리는 내용이 긴 열(상품명·주소·메모)이 써야 한다** — 표에서 한 열이 넓다는 것은 다른 열이 그만큼 좁다는 뜻이다. ★★ 여기서 남길 것: **고정폭 글꼴을 쓴 칸에서는 «보기 좋으라고 넣은 공백» 의 값이 비싸다.** 여백은 글자가 아니라 margin·padding 으로 준다 — 그래야 글꼴이 바뀌어도 폭이 흔들리지 않는다. -->
 <!-- v20260904p_bulk_btn_fill -->
@@ -18356,27 +18358,30 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                 onClose={()=>setBulkOpen(null)}/>
             ) : (
               <>
-                {/* ★★ 바 안의 버튼은 «무게» 가 셋으로 갈린다(제니 2026-09-04 — 배경색
-                    요청). 옅은 반투명 칠은 이 붉은 판에서도 테두리만 겨우 보여
-                    «누를 수 있는 것» 으로 안 읽혔다.
-                      ① 바꾸기 셋  — 판보다 «밝은» 붉은으로 채운다(떠 보인다)
-                      ② 선택 해제  — 판보다 «어둡게»(가라앉는다). 되돌리는 동작이라
-                                     주 동작 옆에서 무게를 낮춘다
-                      ③ [N건에 적용] — 흰 판에 붉은 글자(가장 크게 뒤집힌 대비)
-                    ★ 셋이 «밝기 순» 으로 서니 색을 읽지 않아도 무엇이 주 동작인지 보인다.
+                {/* ★★★ **버튼은 판과 «다른 계열» 이어야 한다**(제니 2026-09-04:
+                    「버튼 자체가 배너랑 동일한 색상인데, 배너 «안에서» 색이 구분되었으면」).
+                    앞 판에서 나는 붉은 판 위에 «판보다 밝은 붉은» 을 얹었다 — 밝기만
+                    다르니 한 덩어리로 읽혔다. **판을 눈에 띄게 할 때 계열로 갈랐던
+                    그 논리가 판 «안» 에서도 똑같이 필요하다.**
+                      ① 바꾸기 셋  — 밝은 하늘색(콘솔에서 이미 «누르는 것» 의 색)
+                      ② 선택 해제·취소 — 어두운 남색(되돌리는 자리라 무게를 낮춘다)
+                      ③ [N건에 적용] — 흰 판에 붉은 글자. 이 바에서 «유일하게 붉은
+                                       글자» 라 주 동작인 것이 색만으로 갈린다
+                    ★ 셋 다 붉은 판과 계열이 다르고, 서로도 밝기·채도로 갈린다.
                     ★ 반투명 대신 «불투명 색» 을 쓴다 — rgba 는 뒤 색에 섞여 판이
                       바뀔 때마다 다시 재야 한다(09-03·09-04 에 되풀이해 밟은 자리다). */}
                 {[['assignee','담당자'],['stage','상태'],['recheck','리체크 날짜']].map(([id,label])=>(
                   <button key={id} disabled={bulkBusy}
                     onClick={()=>setBulkOpen(id)}
                     style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                      cursor:'pointer',whiteSpace:'nowrap',background:'#A5392F',
-                      border:'1px solid #D9756B',color:'#fff',fontWeight:600}}>{label} 바꾸기</button>
+                      cursor:'pointer',whiteSpace:'nowrap',background:'#B8D9FF',
+                      border:'1px solid #B8D9FF',color:'#12203c',
+                      fontWeight:600}}>{label} 바꾸기</button>
                 ))}
                 <button onClick={()=>setPicked({})} disabled={bulkBusy}
                   style={{padding:'5px 10px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                    cursor:'pointer',background:'#5C1A15',
-                    border:'1px solid #8E453E',color:'#F0BDB7'}}>선택 해제</button>
+                    cursor:'pointer',background:'#33406B',
+                    border:'1px solid #55659A',color:'#D7E0F5'}}>선택 해제</button>
               </>
             )}
           </div>
@@ -23191,14 +23196,14 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
   // ★ 바 «안» 의 오른쪽 조각들이다 — 줄을 따로 만들지 않는다(눈이 좌우로 튄다).
   // ★★ 이 조각들은 «붉은 판 위» 에 선다(2026-09-04). 남색 화면용 색을 그대로 쓰면
   //   바탕에 탁하게 잠긴다 — 칸은 흰 바탕에 어두운 글자로, 테두리는 흰색 계열로.
-  const inp = {fontSize:12,padding:'5px 9px',background:'#FFF3F1',
-    border:'1px solid rgba(255,255,255,.75)',color:'#3A1512',borderRadius:6,
+  const inp = {fontSize:12,padding:'5px 9px',background:'#fff',
+    border:'1px solid #B8D9FF',color:'#12203c',borderRadius:6,
     fontFamily:'inherit',colorScheme:'light'};
   // ★ 바 바깥 줄의 [바꾸기] 버튼과 «같은 옷» 이다 — 누른 자리에서 이어지는 조각이라
   //   모양이 달라지면 «다른 버튼이 나타난» 것으로 읽힌다.
   const ghost = {padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-    cursor:'pointer',whiteSpace:'nowrap',background:'#A5392F',
-    border:'1px solid #D9756B',color:'#fff'};
+    cursor:'pointer',whiteSpace:'nowrap',background:'#B8D9FF',
+    border:'1px solid #B8D9FF',color:'#12203c'};
 
   const run = ()=>{
     if(!v && what!=='recheck') return;
@@ -23248,18 +23253,19 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
           {[1,3,7].map(n=>(
             <button key={n} onClick={()=>setV(csPlusKst(n))}
               style={{...ghost,
-                background: v===csPlusKst(n) ? '#F7CFCB' : '#A5392F',
-                color:      v===csPlusKst(n) ? '#7E2620' : '#fff',
+                background: v===csPlusKst(n) ? '#4F7FD6' : '#B8D9FF',
+                color:      v===csPlusKst(n) ? '#fff' : '#12203c',
+                border:'1px solid '+(v===csPlusKst(n) ? '#4F7FD6' : '#B8D9FF'),
                 fontWeight: v===csPlusKst(n) ? 700 : 400}}>+{n}일</button>
           ))}
           <input type="date" value={v} onChange={e=>setV(e.target.value)} style={inp}/>
         </>
       )}
-      {/* ★ [취소] 는 [선택 해제] 와 같은 무게다 — 둘 다 «되돌리는» 자리라 판보다 어둡게. */}
+      {/* ★ [취소] 는 [선택 해제] 와 «같은 옷» 이다 — 둘 다 되돌리는 자리다. */}
       <button onClick={onClose} disabled={busy}
         style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-          cursor:'pointer',background:'#5C1A15',
-          border:'1px solid #8E453E',color:'#F0BDB7'}}>취소</button>
+          cursor:'pointer',background:'#33406B',
+          border:'1px solid #55659A',color:'#D7E0F5'}}>취소</button>
       {/* ★★ 주 동작은 «흰 판에 붉은 글자» 다 — 붉은 바탕에서 가장 크게 뒤집히는 대비이고,
           이 바에서 눌러야 할 것이 이것 하나라는 것이 한눈에 보인다.
           ★ 못 누를 때도 «옅게» 만 한다(뜻은 유지) — opacity 로 눕히면 획까지 흐려져
