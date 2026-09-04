@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904s_bulk_supplier_send -->
+<!-- (2026-09-04) **일괄 «공급사 접수 표시»** — 목록에서 여러 건을 골라 「공급사에 보냈다」를 한 번에 기록한다. ★★★ **콘솔이 공급사에게 보내는 것이 아니다.** 메일·네이트온·카카오톡은 사람이 그 창구에서 직접 보내고 여기서는 «보냈다» 를 적기만 한다 — 그래서 바에 「공급사에 보낸 것을 «기록»합니다 — 실제 발송은 창구에서 직접」을 적고, 확인 창에도 「※ 실제 발송은 콘솔이 하지 않습니다. …보내신 뒤에 누르세요」를 넣었다. **이 말이 없으면 버튼이 «누르면 나가는» 것으로 읽히고, 아무도 안 보낸 건이 접수된 것으로 남는다 — 이 화면에서 가장 나쁜 사고다.** ★★ **채널은 공급사마다 정해진 값이라 건마다 다르다**(suppliers.channel) — 한 번의 update 로는 못 쓰고 공급사별로 묶어 돌린다. 고를 것이 없으므로 고르는 칸 대신 «메일 3 · 카카오톡 1 · 채널 모름 1» 처럼 **어떻게 갈리는지를 누르기 전에** 보여 준다. 그날만 다른 창구로 보냈을 수 있어 덮어쓸 길은 남겼다(기본은 «공급사 기준»). ★★ **단계는 «접수 전»(티켓 등록)인 건만 «진행중» 으로 옮긴다** — 이미 진행중·확인 대기·완료인 건까지 내리면 앞서 간 건을 뒤로 되돌리는 셈이다. 몇 건이 옮겨지는지도 확인 창에 적는다. ★★ **이미 접수 표시된 건이 섞여 있으면 반드시 알린다** — 다시 찍으면 앞의 시각이 사라지고, 그러면 «공급사가 며칠째 답이 없나»(회신 대기 4일) 를 세는 기준이 오늘로 당겨진다. ★ 채널을 모르는 공급사는 시각만 적고 채널은 비운다(건너뛰지 않는다 — 접수한 것은 사실이다). 그 건수를 끝에 토스트로 알린다. ★ 이력은 건마다 한 줄(공급사 접수 · 상태 변경 · 「목록에서 N건 함께 표시」). -->
 <!-- v20260904r_bulk_btn_contrast -->
 <!-- (2026-09-04) **일괄 편집 바 «안» 의 버튼을 판과 다른 계열로**(제니: 「버튼 자체가 배너랑 동일한 색상인데, 나는 배너 «안에서» 색이 구분되었으면 하던 거야」). ★★★ 앞 판에서 나는 붉은 판 위에 «판보다 밝은 붉은» 을 얹었다 — **밝기만 다르니 한 덩어리로 읽혔다.** 바로 앞 판에서 «남색 화면에서 눈에 띄려면 밝기가 아니라 색상 계열을 바꿔야 한다» 를 배워 놓고, **판 «안» 에서 같은 문제를 만났을 때 그 논리를 적용하지 못했다.** 규칙은 화면 전체에만 적용되는 것이 아니다 — 어떤 판 위에 무엇을 얹든 같다. ①[…바꾸기] 셋 = 밝은 하늘색(#B8D9FF · 콘솔에서 이미 «누르는 것» 의 색) ②[선택 해제]·[취소] = 어두운 남색(#33406B · 되돌리는 자리라 무게를 낮춘다) ③[N건에 적용] = 흰 판에 붉은 글자 — **이 바에서 유일하게 붉은 글자라 주 동작인 것이 색만으로 갈린다.** 셋 다 붉은 판과 계열이 다르고 서로도 밝기·채도로 갈린다. ★ 고르는 칸도 흰 바탕 · 하늘색 테두리로 맞췄다(살구빛이던 것을 걷어냈다 — 판과 같은 계열이었다). -->
 <!-- v20260904q_recheck_tight -->
@@ -18111,6 +18113,76 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
     load();
   };
 
+  // ── 공급사 «접수 표시» 일괄 (제니 2026-09-04) ───────────────────────
+  // ★★★ **콘솔이 공급사에게 보내는 것이 아니다.** 메일·네이트온·카카오톡은 사람이
+  //   그 창구에서 직접 보내고, 여기서는 «보냈다» 를 기록만 한다. 화면에도 그렇게
+  //   적는다 — 안 그러면 이 버튼이 «누르면 공급사로 나가는» 것으로 읽히고,
+  //   **아무도 안 보낸 건이 접수된 것으로 남는다.** 그게 이 화면에서 가장 나쁜 사고다.
+  // ★★ 채널은 «공급사마다 정해진 것» 이라 건마다 값이 다르다 — 한 번의 update 로는
+  //   못 쓴다. 공급사별로 묶어 돌린다(보통 한두 곳이다).
+  // ★★ **단계는 «접수 전» 인 건만 옮긴다.** 이미 진행중·확인 대기·완료인 건까지
+  //   «진행중» 으로 내리면 앞서 간 건을 뒤로 되돌리는 셈이다.
+  const [supMap,setSupMap] = useState({});   // 공급사명 -> 채널 코드
+  useEffect(()=>{
+    const names = Array.from(new Set((pageList||[])
+      .filter(t=>picked[t.id]).map(t=>t.supplier_name).filter(Boolean)));
+    if(!names.length) return;
+    const miss = names.filter(n=>supMap[n]===undefined);
+    if(!miss.length) return;
+    let alive = true;
+    (async()=>{
+      const {data} = await sb.from('suppliers').select('name,channel').in('name', miss);
+      if(!alive) return;
+      const next = {...supMap};
+      // ★ 조회에 안 잡힌 이름도 «봤다» 로 남긴다(null) — 안 그러면 매번 다시 묻는다.
+      miss.forEach(n=>{ next[n] = null; });
+      (data||[]).forEach(r=>{ next[r.name] = r.channel || null; });
+      setSupMap(next);
+    })();
+    return ()=>{ alive = false; };
+  },[picked,pageList]);
+
+  const applySupplierSend = async (forceChannel)=>{
+    if(!pickedIds.length) return;
+    const rowsPicked = pageList.filter(t=>picked[t.id]);
+    const now = new Date().toISOString();
+    setBulkBusy(true);
+    // (채널, 단계를 옮길지) 로 묶는다 — 묶음마다 update 한 번.
+    const groups = {};
+    rowsPicked.forEach(t=>{
+      const code = forceChannel || supMap[t.supplier_name] || null;
+      const label = (SUP_CHANNELS[code] && code!=='none') ? SUP_CHANNELS[code].label : null;
+      const bump = (t.stage==='received');   // 접수 전인 건만 진행중으로
+      const key = (label||'-')+'|'+bump;
+      (groups[key] = groups[key] || {label, bump, ids:[]}).ids.push(t.id);
+    });
+    let done = 0, noCh = 0;
+    for(const k of Object.keys(groups)){
+      const g = groups[k];
+      const patch = {supplier_sent_at: now, updated_by: currentUserEmail};
+      if(g.label) patch.supplier_channel = g.label; else noCh += g.ids.length;
+      if(g.bump)  patch.stage = 'awaiting';
+      const {error} = await sb.from('cs_tickets').update(patch).in('id', g.ids);
+      if(sbFail('공급사 접수 표시', error, {write:true})){ setBulkBusy(false); return; }
+      const evs = g.ids.map(id=>({
+        ticket_id:id, side:'원룸만들기', action:'수정', actor:currentUserEmail,
+        note: '공급사 접수 : -> ' + (g.label || '채널 미설정') + ' · ' + csStamp(now)
+              + (g.bump ? '\n상태 : 티켓 등록 -> 진행중' : '')
+              + '\n(목록에서 '+pickedIds.length+'건 함께 표시)',
+        stage_after: g.bump ? 'awaiting' : null,
+      }));
+      const {error:e2} = await sb.from('cs_ticket_events').insert(evs);
+      if(e2) console.error('[일괄 이력] 실패:', e2);
+      done += g.ids.length;
+    }
+    setBulkBusy(false); setBulkOpen(null);
+    toast(done+'건을 공급사 접수로 표시했습니다.'
+      + (noCh ? ' 채널을 모르는 '+noCh+'건은 시각만 적었습니다.' : ''),
+      noCh ? 'warn' : 'ok');
+    setPicked({});
+    load();
+  };
+
   // 지금 이 칩의 폭이 «코드 기본» 과 다른가 — [너비 되돌리기] 를 보일지 정한다.
   // ★ colKeys 뒤에 둔다(선언 순서) — 검사가 잡아 준 자리다.
   const widthsChanged = colKeys.some(k=>
@@ -18348,13 +18420,18 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
             <span style={{fontSize:10.5,color:'#F7CFCB'}}>
               {bulkOpen
                 ? ({assignee:'담당자를 고르세요', stage:'상태를 고르세요',
-                    recheck:'리체크 날짜 — 비우고 적용하면 지웁니다'}[bulkOpen])
+                    recheck:'리체크 날짜 — 비우고 적용하면 지웁니다',
+                    /* ★★★ «보내는» 것이 아니라 «보냈다고 적는» 것임을 여기서 못 박는다. */
+                    supplier:'공급사에 보낸 것을 «기록»합니다 — 실제 발송은 창구에서 직접'
+                   }[bulkOpen])
                 : '고름 · 이 화면에 보이는 건만 셉니다'}</span>
             <div style={{flex:1}}></div>
             {bulkOpen ? (
               <CsBulkPanel what={bulkOpen} count={pickedIds.length} busy={bulkBusy}
                 optAssignee={optAssignee} currentUserEmail={currentUserEmail}
                 isMaster={isMaster} onApply={applyBulk}
+                picked={pageList.filter(t=>picked[t.id])} supMap={supMap}
+                onSupplierSend={applySupplierSend}
                 onClose={()=>setBulkOpen(null)}/>
             ) : (
               <>
@@ -18370,6 +18447,13 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                     ★ 셋 다 붉은 판과 계열이 다르고, 서로도 밝기·채도로 갈린다.
                     ★ 반투명 대신 «불투명 색» 을 쓴다 — rgba 는 뒤 색에 섞여 판이
                       바뀔 때마다 다시 재야 한다(09-03·09-04 에 되풀이해 밟은 자리다). */}
+                {/* ★ [공급사 접수 표시] 는 «바꾸기» 가 아니라 다른 일이라 이름도 다르다 —
+                    한 줄에 「…바꾸기」만 넷이 서면 무엇이 다른지 안 읽힌다. */}
+                <button disabled={bulkBusy} onClick={()=>setBulkOpen('supplier')}
+                  style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+                    cursor:'pointer',whiteSpace:'nowrap',background:'#B8D9FF',
+                    border:'1px solid #B8D9FF',color:'#12203c',
+                    fontWeight:600}}>공급사 접수 표시</button>
                 {[['assignee','담당자'],['stage','상태'],['recheck','리체크 날짜']].map(([id,label])=>(
                   <button key={id} disabled={bulkBusy}
                     onClick={()=>setBulkOpen(id)}
@@ -23190,7 +23274,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
 //   함께 열어야 하는데(계정 화면과 한 몸이다), 그 전까지는 이 편이 정직하다 —
 //   있지도 않은 사람을 고르게 하는 것보다 낫다.
 function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster,
-                      onApply, onClose}){
+                      onApply, picked, supMap, onSupplierSend, onClose}){
   const [v,setV] = useState('');
   useEffect(()=>{ setV(''); },[what]);
   // ★ 바 «안» 의 오른쪽 조각들이다 — 줄을 따로 만들지 않는다(눈이 좌우로 튄다).
@@ -23205,7 +23289,39 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
     cursor:'pointer',whiteSpace:'nowrap',background:'#B8D9FF',
     border:'1px solid #B8D9FF',color:'#12203c'};
 
+  // ── 공급사 접수 표시 — «무엇이 일어나는지» 를 미리 세어 보여 준다 ──────────
+  // ★★ 일괄은 누르고 나서야 결과를 아는 것이 가장 나쁘다. 채널이 어떻게 갈리는지,
+  //   모르는 것이 몇 건인지, 상태가 몇 건 옮겨지는지를 «누르기 전에» 적는다.
+  const supStat = useMemo(()=>{
+    if(what!=='supplier') return null;
+    const byCh = {}; let unknown = 0, bump = 0, already = 0;
+    (picked||[]).forEach(t=>{
+      const code = supMap[t.supplier_name];
+      if(code && SUP_CHANNELS[code] && code!=='none'){
+        byCh[SUP_CHANNELS[code].label] = (byCh[SUP_CHANNELS[code].label]||0)+1;
+      } else unknown++;
+      if(t.stage==='received') bump++;
+      if(t.supplier_sent_at) already++;
+    });
+    return {byCh, unknown, bump, already};
+  },[what,picked,supMap]);
+
+  const runSupplier = ()=>{
+    if(!supStat) return;
+    const parts = Object.keys(supStat.byCh).map(k=>k+' '+supStat.byCh[k]+'건');
+    if(supStat.unknown) parts.push('채널 모름 '+supStat.unknown+'건');
+    // ★★ «이미 표시된 건» 을 반드시 알린다 — 다시 찍으면 앞의 시각이 사라지고,
+    //   그러면 «공급사가 며칠째 답이 없나» 를 세는 기준이 오늘로 당겨진다.
+    if(!confirm(count+'건을 «공급사에 접수했다» 고 기록합니다.\n\n'
+      + parts.join(' · ')
+      + (supStat.bump ? '\n상태 '+supStat.bump+'건이 «진행중» 으로 바뀝니다.' : '')
+      + (supStat.already ? '\n⚠ 이미 접수 표시된 '+supStat.already+'건이 있습니다 — 시각이 오늘로 새로 찍힙니다.' : '')
+      + '\n\n※ 실제 발송은 콘솔이 하지 않습니다. 메일·네이트온·카카오톡으로 보내신 뒤에 누르세요.\n\n진행할까요?')) return;
+    onSupplierSend(v || null);   // v 가 있으면 «그 채널로 보냈다» 로 덮어쓴다
+  };
+
   const run = ()=>{
+    if(what==='supplier') return runSupplier();
     if(!v && what!=='recheck') return;
     let patch = null, line = '';
     if(what==='assignee'){ patch = {assignee:v}; line = '담당자 : -> '+csShortUser(v); }
@@ -23261,6 +23377,24 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
           <input type="date" value={v} onChange={e=>setV(e.target.value)} style={inp}/>
         </>
       )}
+      {what==='supplier' && supStat && (
+        <>
+          {/* ★ 채널은 «공급사마다 정해진 것» 이라 고를 것이 없다 — 그래서 고르는 칸
+              대신 «이렇게 갈립니다» 를 보여 준다. 다만 그날만 다른 창구로 보냈을 수
+              있어 덮어쓸 길은 남긴다(기본은 «공급사 기준»). */}
+          <span style={{fontSize:11,color:'#fff',whiteSpace:'nowrap'}}>
+            {Object.keys(supStat.byCh).map(k=>k+' '+supStat.byCh[k]).join(' · ') || '—'}
+            {supStat.unknown>0 && <span style={{color:'#FFD9D5'}}>
+              {' · 채널 모름 '+supStat.unknown}</span>}
+          </span>
+          <select value={v} onChange={e=>setV(e.target.value)} style={inp}>
+            <option value="">공급사 기준</option>
+            {['email','nateon','kakao'].map(c=>(
+              <option key={c} value={c}>{SUP_CHANNELS[c].label}로 보냈음</option>
+            ))}
+          </select>
+        </>
+      )}
       {/* ★ [취소] 는 [선택 해제] 와 «같은 옷» 이다 — 둘 다 되돌리는 자리다. */}
       <button onClick={onClose} disabled={busy}
         style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
@@ -23270,13 +23404,19 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
           이 바에서 눌러야 할 것이 이것 하나라는 것이 한눈에 보인다.
           ★ 못 누를 때도 «옅게» 만 한다(뜻은 유지) — opacity 로 눕히면 획까지 흐려져
             «로딩 중» 으로 읽힌다. */}
-      <button onClick={run} disabled={busy || (!v && what!=='recheck')}
-        style={{padding:'5px 13px',borderRadius:6,fontSize:11,fontWeight:700,
-          fontFamily:'inherit',border:'none',
-          color: (busy || (!v && what!=='recheck')) ? '#B08A86' : '#7E2620',
-          background: (busy || (!v && what!=='recheck')) ? 'rgba(255,255,255,.28)' : '#fff',
-          cursor: (busy || (!v && what!=='recheck')) ? 'default' : 'pointer'}}>
-        {busy ? '바꾸는 중…' : count+'건에 적용'}</button>
+      {(()=>{ // ★ 공급사 접수는 고를 것이 없으므로 «값이 비어도» 누를 수 있다.
+        const off = busy || (!v && what!=='recheck' && what!=='supplier');
+        return (
+          <button onClick={run} disabled={off}
+            style={{padding:'5px 13px',borderRadius:6,fontSize:11,fontWeight:700,
+              fontFamily:'inherit',border:'none',
+              color: off ? '#B08A86' : '#7E2620',
+              background: off ? 'rgba(255,255,255,.28)' : '#fff',
+              cursor: off ? 'default' : 'pointer'}}>
+            {busy ? '적용 중…'
+                  : (what==='supplier' ? count+'건 접수 표시' : count+'건에 적용')}</button>
+        );
+      })()}
     </>
   );
 }
