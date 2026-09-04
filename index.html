@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904h_memo_clamp3 -->
+<!-- (2026-09-04) **메모 열을 세 줄까지 접어서 보여 준다**(제니) — 그전에는 한 줄로 자르고 «…» + 툴팁이었다. ★★ **한 줄로 잘라 두면 메모를 읽으려고 매번 마우스를 올려야 한다** — 목록에서 메모를 보는 이유는 «열어 보지 않고 아는 것» 인데 그 목적을 잃는다. 열 폭에 맞춰 접고(줄바꿈) 세 줄까지 보여 준 뒤, 세 줄로도 모자랄 때만 «…» 다. ★★★ **툴팁은 «정말 잘렸을 때만» 붙인다.** 다 보이는 메모에까지 붙이면 마우스가 지나갈 때마다 화면에 이미 있는 말이 또 뜬다 — 2026-09-03 에 title 툴팁 110곳을 공용 풍선으로 갈았다가 통째로 되돌린 그 문제(«없던 툴팁이 생긴 것처럼 보인다»)와 같은 계열이다. ★ 잘렸는지는 «재서» 안다(scrollHeight > clientHeight). 글자 수로 어림하면 열 폭을 끌어 바꾸는 순간 어긋난다 — 폭이 바뀌면 다시 그려지고 그때 다시 잰다. -->
 <!-- v20260904g_colw_per_chip -->
 <!-- (2026-09-04) **열 너비도 칩마다 따로 기억한다**(제니: 「전체 칩에서 설정한 대로 다른 칩에서도 너비가 보인다, 한쪽에서 수정하면 다른 쪽도 수정된다」). ★★★ 앞 판에서 나는 «열 키» 하나로 전역에 두면서 「같은 상품명 열을 칩마다 다른 폭으로 볼 일은 드물다」고 적어 뒀는데 틀렸다 — **어느 열을 «보여 줄지» 가 칩마다 다른 이상 «얼마나 넓게» 도 칩마다여야 한다.** 「공급사 미접수」에서 넓힌 상품명이 「정산 대기」에서도 넓으면, 칩을 옮길 때마다 폭을 다시 잡게 된다. 열 구성과 너비는 **같은 것을 둘로 나눠 정하는 일**이라 저장 단위가 어긋나면 반드시 한쪽이 다른 쪽을 무너뜨린다. 구조는 { "<칩 id>": {열키: 폭} } 이고 저장 자리는 그대로 localStorage 다(«기준» 이 아니라 «취향» 이라는 판단은 안 바뀐다 — 바뀐 것은 «무엇마다» 기억하느냐뿐이다). ★ 옛 값(칩 구분 없던 것)은 버리지 않고 `_default` 로 옮긴다: 아직 손대지 않은 칩은 그 값을 그대로 쓰고, 한 번 손댄 칩은 그때부터 제 값만 본다. ★ 그래서 «이 칩에 표가 있으면 그것만 본다» — 없을 때만 _default 를 본다. 안 그러면 [너비 되돌리기] 를 눌러 빈 표가 남았을 때 옛 값으로 되살아나 «되돌린 것이 아니게» 된다. ★ 처음 끌 때는 _default 를 바탕으로 시작한다 — 안 그러면 한 열을 끄는 순간 나머지 열이 코드 기본으로 «툭» 돌아간다. ★★ **`npm run check` 가 이번 판을 한 번 살렸다** — widthsChanged 를 colKeys 보다 «위» 에 선언해 두었는데, 문법은 정상이라 눈으로는 안 잡히고 실행하면 그 화면이 통째로 죽는 자리였다. -->
 <!-- v20260904f_rightedge_all_cols -->
@@ -17182,16 +17184,11 @@ const CS_COLS = {
               sv:(t)=>t.settle_shipping_fee==null?-1:Number(t.settle_shipping_fee)},
 
   // ── 등록 화면 ②에서 적는 «메모» (제니 2026-09-04) ────────────────────
-  // ★ 한 줄에 가두고 넘치면 … 로 줄인다. 마우스를 올리면 전문이 뜬다 — 메모가 길다고
-  //   그 줄만 두 배로 높아지면 목록을 훑는 눈이 거기서 걸린다.
+  // ★ 세 줄까지 접어서 보여 주고, 그래도 넘칠 때만 «…» + 툴팁이다(CsClamp3).
+  //   한 줄로 잘라 두면 메모를 읽으려고 매번 마우스를 올려야 하는데, 목록에서
+  //   메모를 보는 이유가 «열어 보지 않고 아는 것» 이라 그 목적을 잃는다.
   memo:      {label:'메모', g:'메모', w:220,
-              /* ★ 폭을 고정값으로 묶지 않는다 — 열 너비를 끌어 바꿀 수 있으니
-                   «그 칸만큼» 만 쓰고 넘치면 … 로 줄인다. */
-              cell:(t)=><span title={t.memo||undefined}
-                style={{display:'block',overflow:'hidden',
-                  textOverflow:'ellipsis',whiteSpace:'nowrap',
-                  color:t.memo?'var(--text)':'var(--sub)'}}>{t.memo||'—'}</span>,
-              sv:(t)=>t.memo||''},
+              cell:(t)=><CsClamp3 text={t.memo}/>, sv:(t)=>t.memo||''},
   // ★★ 제니 요청 — «언제 만들었나 · 언제 손댔나» 를 제일 왼쪽에 고정으로 둔다.
   //   [보기 설정] 이 아직 없어서 설정으로 못 고르기도 하고, 이 둘은 어느 칩에서 보든
   //   늘 필요한 값이라 «고를 수 있는 열» 이 아니라 «항상 있는 열» 로 둔다.
@@ -17357,6 +17354,30 @@ function csStackParts(v){
   return {year: y===nowY ? null : String(y),
           md: p2(k.getUTCMonth()+1)+'-'+p2(k.getUTCDate()),
           hm: p2(k.getUTCHours())+':'+p2(k.getUTCMinutes())};
+}
+// ── 세 줄까지 보여 주고 넘칠 때만 툴팁 (제니 2026-09-04) ──────────────
+// ★★ 한 줄로 잘라 «…» 만 남기면 메모를 읽으려고 매번 마우스를 올려야 한다 —
+//   목록에서 메모를 보는 이유는 «열어 보지 않고 아는 것» 인데 그 목적을 잃는다.
+//   → 열 폭에 맞춰 접고 세 줄까지 보여 준다. 세 줄로도 모자랄 때만 «…» 다.
+// ★★★ **툴팁은 «정말 잘렸을 때만» 붙인다.** 다 보이는 메모에까지 붙이면 마우스가
+//   지나갈 때마다 화면에 이미 있는 말이 또 뜬다 — 09-03 에 툴팁을 통째로 되돌린
+//   그 문제(«없던 툴팁이 생긴 것처럼 보인다»)와 같은 계열이다.
+// ★ 잘렸는지는 «재서» 안다(scrollHeight > clientHeight). 글자 수로 어림하면 열 폭을
+//   끌어 바꾸는 순간 어긋난다 — 폭이 바뀌면 다시 그려지고, 그때 다시 잰다.
+function CsClamp3({text}){
+  const ref = useRef(null);
+  const [over,setOver] = useState(false);
+  useEffect(()=>{
+    const el = ref.current;
+    if(el) setOver(el.scrollHeight > el.clientHeight + 1);
+  });
+  if(!text) return <span style={{color:'var(--sub)'}}>—</span>;
+  return (
+    <span ref={ref} title={over ? text : undefined}
+      style={{display:'-webkit-box', WebkitLineClamp:3, WebkitBoxOrient:'vertical',
+        overflow:'hidden', whiteSpace:'normal', overflowWrap:'anywhere',
+        lineHeight:1.45, color:'var(--text)'}}>{text}</span>
+  );
 }
 function CsStackDate({at}){
   const s = csStackParts(at);
