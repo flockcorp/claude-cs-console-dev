@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904c_col_resize_detail_template -->
+<!-- (2026-09-04) 같은 날 세 번째 판. ①**상세의 [취소]·[저장]·메모를 밝은 판 «밖» 으로 뺐다**(제니) — 등록 화면과 같은 틀을 갖게. ★★ **판이 가리키는 것은 «이력에 남길 한 줄» 이다** — 누구 말인지 고르고, 적고, 기호를 넣고, 사진을 붙이는 데까지. 메모는 이력이 아니라 티켓의 값이고 [저장]은 이 판만이 아니라 ①에서 고친 것까지 함께 다룬다. 그것들이 판 안에 있으면 판의 뜻이 흐려진다. ★★★ **판 밖으로 나온 조각은 색을 되돌려야 한다** — 밝은 판 안에서 쓰라고 밝게 만들어 둔 색(CS_WRITE 입력칸 · 「바꾼 것」 알림의 밝은 노랑 #FDEBD0)을 그대로 들고 나오면 어두운 바탕에 흰 종이 조각이 떠 버린다. 09-03 에 밟은 함정의 «반대 방향» 이고, 나오는 쪽도 똑같이 다시 봐야 한다. CsStageSubmit 의 light 도 뗐다. ②**목록에 열 너비 조절을 붙였다**(제니) — 머리글 «경계» 를 잡고 끈다. 열마다 담는 값의 길이가 크게 달라(계좌번호 한 줄 vs 주소 두 줄) 한 벌의 기본 폭으로는 늘 어딘가가 좁거나 헐렁하다. ★★ **tableLayout:'fixed' + colgroup 이 필요하다** — 자동 레이아웃에서 width 는 브라우저에 대한 «제안» 일 뿐이라, 끌어서 좁혀도 내용이 길면 도로 벌어진다. 표 전체 폭은 열 폭의 «합» 이고, 화면보다 좁으면 minWidth:'100%' 가 받치고 넓으면 바깥이 가로로 구른다. 겸해 셀에 overflowWrap:'anywhere'(좁혀도 값이 열을 안 넘게) · 머리글에 말줄임을 줬다. ★★ **손잡이는 정렬 클릭과 겹치는 자리다** — 머리글은 이미 «누르면 정렬» 이라 stopPropagation 을 하지 않으면 폭을 바꿨을 뿐인데 정렬까지 바뀐다. 두 번 누르면 그 열만 기본 폭. ★ 선은 평소에 숨기고 마우스를 올릴 때만 세운다 — 늘 그어 두면 표에 세로줄이 스물몇 개 생겨 값보다 선이 먼저 읽힌다. ★★★ **너비는 localStorage 다 — console_settings 에 넣지 않는다.** 그 표는 «운영 기준» 이라 한 사람이 바꾸면 모두의 화면이 바뀐다. **어느 열을 보여 줄지는 기준이고, 얼마나 넓게 볼지는 취향이다**(사람마다 화면 크기부터 다르다). 티켓 상세의 칸 손잡이에서 이미 그은 경계를 그대로 지켰다. 그래서 [보기 설정] 패널 맨 아래에 그 차이를 적어 뒀다 — 한 패널에 있으면서 저장 방식도 다르므로(너비는 끄는 즉시 남는다) 말해 두지 않으면 [저장]을 눌러야 하는 줄 안다. ★ 열 «키» 로 기억한다(칩별이 아니라) — 칩별로 두면 칩을 옮길 때마다 폭이 널뛴다. -->
 <!-- v20260904b_cols_all_selectable_memo -->
 <!-- (2026-09-04) 같은 날 두 번째 판 — 제니 피드백 다섯. ①**[보기 설정] 버튼을 연한 하늘색으로 «채웠다»**(#B8D9FF · 글자는 어둡게). 테두리만 두른 투명 버튼은 이 바탕에서 묻힌다 — 어두운 판에서 대비를 가장 크게 얻는 방법은 밝게 채우고 글자를 뒤집는 것이다. ★ 칩의 «고른 상태» 도 밝은 하늘색 채움이라 색만으로는 안 갈라진다 → 모양으로 가른다(칩은 알약 16, 이 버튼은 8 라운드 + ⚙). ②**CS 관리 화면의 «꺼진» 테두리를 밝혔다**(CS_LINE #3E5DA0) — 칩·필터 단추·검색칸·날짜칸·빠른 버튼. var(--border)(#1e3060)는 바탕(#0d1628)과 명도가 거의 같아 경계가 통째로 묻혔다. ★★ **전역 --border 는 안 건드렸다** — 그 변수는 콘솔 열몇 화면이 함께 쓰고 표 줄·카드처럼 «묻혀도 되는» 자리에도 걸려 있다. 여기서 밝힌 것은 «누를 수 있는 것의 경계» 뿐이다. ③**목록에 있는 값은 하나도 빠짐없이 [보기 설정] 안에 있다**(제니). 고정 열이던 **번호·등록·수정을 고를 수 있게 풀었고**, 표에서 따로 그리던 「번호」 하드코딩도 걷어냈다. ★ 패널에서는 «등록된 날짜/수정된 날짜»(plabel), 목록 머리글은 «등록/수정» — 고르는 자리와 보는 자리의 셈이 다르다. ④**중복을 합쳤다**: 「갱신」은 「수정」과 같은 값을 다르게 그리던 것이라 없앴고, 「유형 · 방향」 한 열은 «유형»·«방향» 두 열로 나눴고, 「상품 · 옵션」은 «상품명» 으로 좁혔다(옵션은 제 열이 있다). 「주문자」가 괄호로 물고 있던 수령인도 뺐다(«수령인» 열이 따로 있다). ★★ **한 열이 두 값을 물고 있으면 «한쪽만 끄기» 가 안 된다** — 켜고 끄는 화면을 만든 이상 열은 값 하나를 가리켜야 한다. ⚠ 다만 「주문자」만 켠 목록에서는 «다른 사람에게 간 주문» 이 눈에 안 띈다(그게 중요한 칩에서는 「수령인」을 함께 켠다). ★★★ **없앤 열을 그냥 버리지 않는다 — CS_COL_ALIAS 가 갈음한다**(typedir → 유형·방향, updated → 수정). 설정에 남은 옛 키를 버리면 그 칩의 열이 «조용히» 사라진다. 09-01 에 칩 id 가 어긋나 설정이 말없이 무시된 적이 있어, 같은 조용함을 여기서도 만들지 않는다. ★ 같은 함수(csExpandCols)를 목록과 패널이 함께 쓴다 — 두 곳에서 따로 펴면 «패널엔 켜져 있는데 목록엔 없는 열» 이 생긴다. ★ 09-04 이전 설정에는 번호·등록·수정이 아예 안 담겨 있으므로, 셋이 하나도 없으면 옛 설정으로 보고 앞에 붙인다(한계는 그 함수 주석에 적었다). ⑤**«메모» 를 상세에서도 보고 고친다**(제니 확인). 그전에는 저장은 되는데 **상세에 그리는 자리가 아예 없었다** — 쓰기만 되고 읽히지 않는 칸은 없는 칸과 같다. ★★ 그리고 **메모를 이력 첫 줄로 «대신» 넣던 것을 없앴다**: 이력을 한 줄이라도 적었으면 안 들어가고 안 적었으면 들어가서, «메모가 이력에 있는 티켓» 과 «아무 데도 없는 티켓» 이 섞여 있었다. **같은 값이 티켓마다 다른 자리에 있으면 나중에 어디를 봐야 할지 알 수 없다.** 이제 이력에는 「접수」 한 줄만 남고, 메모를 고치면 값 변경으로 «메모 : 옛 -> 새» 한 줄이 남는다. ★ 상세의 메모 자리는 «이력 다음 · 저장 직전» 으로 등록 화면과 같은 차례지만, 등록은 밝은 판 «밖» 이고 상세는 «안» 이다 — 상세는 저장 버튼이 그 판 안에 있어서, 밖에 두면 적는 칸이 저장 버튼 아래로 내려간다. -->
 <!-- v20260904a_view_settings_place_contrast_cols -->
@@ -698,6 +700,11 @@
     .toast-close:hover{background:var(--hover);color:var(--text)}
     /* 목록 줄 — 어디를 눌러도 열린다. 손이 올라간 줄을 밝혀 «이 줄이 열린다» 를 보여 준다. */
     .cs-row:hover{background:rgba(120,170,255,.07)}
+    /* 열 너비 손잡이 — 평소엔 안 보이고 마우스를 올리면 선이 선다.
+       ★ 늘 그어 두면 표에 세로줄이 스물몇 개 생겨 값보다 선이 먼저 읽힌다. */
+    .cs-colgrip::after{content:'';position:absolute;top:6px;bottom:6px;right:3px;width:1px;
+      background:transparent}
+    .cs-colgrip:hover::after{background:#7FA8E8}
     @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
     @keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
     @media (max-width:640px){ #toastHost{left:12px;right:12px;bottom:12px;max-width:none} }
@@ -17164,8 +17171,10 @@ const CS_COLS = {
   // ★ 한 줄에 가두고 넘치면 … 로 줄인다. 마우스를 올리면 전문이 뜬다 — 메모가 길다고
   //   그 줄만 두 배로 높아지면 목록을 훑는 눈이 거기서 걸린다.
   memo:      {label:'메모', g:'메모', w:220,
+              /* ★ 폭을 고정값으로 묶지 않는다 — 열 너비를 끌어 바꿀 수 있으니
+                   «그 칸만큼» 만 쓰고 넘치면 … 로 줄인다. */
               cell:(t)=><span title={t.memo||undefined}
-                style={{display:'block',maxWidth:220,overflow:'hidden',
+                style={{display:'block',overflow:'hidden',
                   textOverflow:'ellipsis',whiteSpace:'nowrap',
                   color:t.memo?'var(--text)':'var(--sub)'}}>{t.memo||'—'}</span>,
               sv:(t)=>t.memo||''},
@@ -17203,6 +17212,9 @@ const CS_COL_GROUPS = ['티켓','주문','고객','주소','분류','환불','�
 const CS_COL_ALIAS = {typedir:['cs_type','direction'], updated:['touched']};
 // 09-04 이전 설정에는 이 셋이 «고정 열» 이라 아예 담겨 있지 않다.
 const CS_COLS_HEAD = ['id','created','touched'];
+// 열 너비 — «내 화면에만» 남는 값이라 localStorage 다(console_settings 는 운영 기준).
+const CS_COLW_KEY = 'cs_list_colw_v1';
+const CS_COLW_MIN = 44;
 const CS_COLS_FALLBACK = ['id','created','touched','stage','cs_type','direction',
   'product','option','supplier','orderer','assignee','recheck'];
 
@@ -17635,6 +17647,48 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   //   「티켓이 없네」로 읽힌다 — 좁히는 것은 사람이 정할 일이다.
   const [chip,setChip]     = useState('all');
   const [colOpen,setColOpen] = useState(false);   // [⚙ 보기 설정] 패널 (2026-09-03)
+  // ── 열 너비 (제니 2026-09-04) ────────────────────────────────────────
+  // ★★ **너비는 localStorage 다 — console_settings 에 넣지 않는다.** 그 표는 «운영
+  //   기준» 이라 한 사람이 바꾸면 모두의 화면이 바뀐다. 어느 열을 보여 줄지는 기준이지만
+  //   그 열을 얼마나 넓게 볼지는 취향이고, 사람마다 화면 크기부터 다르다.
+  //   티켓 상세의 칸 손잡이에서 이미 그은 경계를 여기서도 그대로 지킨다.
+  // ★ 열 «키» 로 기억한다(칩별이 아니라). 같은 상품명 열을 칩마다 다른 폭으로 보고
+  //   싶을 일은 드물고, 칩별로 두면 칩을 옮길 때마다 폭이 널뛴다.
+  const [colW,setColW] = useState(()=>{
+    try{ return JSON.parse(localStorage.getItem(CS_COLW_KEY)||'{}') || {}; }catch(_e){ return {}; }
+  });
+  const widthOf = (k)=> colW[k] || (CS_COLS[k] ? CS_COLS[k].w : 110);
+  const putColW = (next)=>{
+    setColW(next);
+    try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(next)); }catch(_e){}
+  };
+  // ★ 두 번 누르면 그 열만 기본 폭으로 되돌린다(세 번째 인자).
+  const startResize = (k, e, reset)=>{
+    e.preventDefault(); e.stopPropagation();
+    if(reset){ const n={...colW}; delete n[k]; putColW(n); return; }
+    const x0 = e.clientX, w0 = widthOf(k);
+    // ★ 마지막 값을 지역 변수로 들고 있다가 놓을 때 저장한다 — setState 안에서
+    //   localStorage 를 쓰면 updater 가 두 번 불릴 때 같이 두 번 쓰인다.
+    let last = null;
+    const move = (ev)=>{
+      last = Math.max(CS_COLW_MIN, Math.round(w0 + (ev.clientX - x0)));
+      setColW(p=>({...p, [k]:last}));
+    };
+    const up = ()=>{
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      document.body.style.userSelect = '';
+      if(last!=null){
+        // ★ 저장은 화면 state 가 아니라 «방금 끈 값» 으로 만든다(경합을 안 탄다).
+        const n = {...colW, [k]:last};
+        try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(n)); }catch(_e){}
+      }
+    };
+    // ★ 끄는 동안 글자가 선택되면 표가 파랗게 물든다.
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  };
   const [q,setQ]           = useState('');
   const [settings,setSettings] = useState(null);
   const isMaster = role==='master';
@@ -17870,6 +17924,8 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
               <CsColumnSettings chip={chip} chipLabel={chipLabel}
                 settings={settings} setSettings={setSettings}
                 currentUserEmail={currentUserEmail}
+                widthsChanged={Object.keys(colW).length>0}
+                onResetWidths={()=>putColW({})}
                 onClose={()=>setColOpen(false)}/>
             )}
           </div>
@@ -17943,15 +17999,24 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
         </div>
       ) : (
         <div style={{overflowX:'auto',background:'var(--card)',border:'1px solid var(--border)',borderRadius:12}}>
-          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,minWidth:820}}>
+          {/* ★★ tableLayout:'fixed' + colgroup — 폭을 «내가» 정하려면 이 둘이 필요하다.
+                자동 레이아웃에서 width 는 브라우저에 대한 «제안» 일 뿐이라, 끌어서
+                좁혀도 내용이 길면 도로 벌어진다.
+              ★ 표 전체 폭은 열 폭의 «합» 이다. 합이 화면보다 좁으면 minWidth:'100%' 가
+                받쳐 주고, 넓으면 바깥 div 가 가로로 구른다(이미 overflowX:'auto'). */}
+          <table style={{borderCollapse:'collapse',fontSize:12,tableLayout:'fixed',
+            width: colKeys.reduce((s,k)=>s+widthOf(k),0), minWidth:'100%'}}>
+            <colgroup>
+              {colKeys.map(k=><col key={k} style={{width:widthOf(k)}}/>)}
+            </colgroup>
             <thead>
               <tr>
                 {/* ★ 「번호」도 이제 고를 수 있는 열이라 여기서 따로 그리지 않는다
                     (제니 2026-09-04). 목록에 있는 값은 하나도 빠짐없이 [보기 설정]
                     안에 있어야 한다. */}
                 {colKeys.map(k=>(
-                  <CsSortTh key={k} k={k} w={CS_COLS[k].w} label={CS_COLS[k].label}
-                    align={CS_COLS[k].align}
+                  <CsSortTh key={k} k={k} w={widthOf(k)} label={CS_COLS[k].label}
+                    align={CS_COLS[k].align} onResize={startResize}
                     sortable={!!CS_COLS[k].sv} sort={sort} onClick={clickSort}/>
                 ))}
               </tr>
@@ -22170,70 +22235,66 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 border:'1px solid '+CS_WRITE.fieldBd,color:CS_WRITE.text,colorScheme:'light'}}/>
             <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft} light/>
             <CsPhotoAttach photos={photos} setPhotos={setPhotos} light disabled={busy}/>
+          </div>
+          {/* ↑ 밝은 판은 «사진 첨부까지» 다(제니 2026-09-04).
+              ★★ 판이 가리키는 것은 «이력에 남길 한 줄» 이다 — 누구 말인지 고르고,
+                적고, 기호를 넣고, 사진을 붙이는 데까지. 메모는 이력이 아니라 티켓의
+                값이고, [취소]·[저장]은 이 판만이 아니라 ① 에서 고친 것까지 함께
+                다룬다. 그것들이 판 «안» 에 있으면 판의 뜻이 흐려진다.
+              ★★ 등록 화면이 이미 그 모양이었다 — 두 화면은 기본 틀이 같아야 한다(제니).
+                차례도 같다: 이력 판 → 메모 → (바꾼 것) → 취소 · 저장.
+              ★★★ **판 밖으로 나온 조각은 색을 되돌려야 한다.** 밝은 판 안에서 쓰라고
+                밝게 만들어 둔 색(CS_WRITE · 밝은 노랑 알림)을 그대로 들고 나오면
+                어두운 바탕에서 흰 칸이 떠 버린다. 09-03 에 그 반대 방향(어두운 색을
+                밝은 판에 그대로 둔 것)으로 밟았던 함정이고, 나오는 쪽도 같다. */}
 
-            {/* ── 메모 ─────────────────────────────────────────────────────
-                ★★ 등록 화면에서 적은 메모를 여기서 보고 고친다(제니 2026-09-04).
-                  그전에는 상세에 그리는 자리가 아예 없어, 적어 둔 것을 다시 볼 길이
-                  없었다 — 쓰기만 되고 읽히지 않는 칸은 없는 칸과 같다.
-                ★★ 자리는 «이력 다음 · 저장 직전» 으로 등록 화면과 같은 차례다. 다만
-                  등록 화면은 이 판 «밖» 인데 여기는 «안» 이다 — 상세는 저장 버튼이
-                  이 판 안에 있어서, 판 밖에 두면 메모가 저장 버튼 «아래» 로 내려간다.
-                  적는 칸이 저장 버튼 아래에 있으면 적기 전에 저장하게 된다.
-                ★ 이 판은 밝은 판이라 칸 색도 판의 것(CS_WRITE)을 쓴다 — 어두운 화면용
-                  inp 를 그대로 두면 밝은 바탕에 밝은 칸이 잠긴다(09-03에 밟은 함정).
-                ★ 이력이 아니라 «티켓의 값» 이다: 저장하면 이력에는 «메모 : 옛 -> 새»
-                  한 줄이 값 변경으로 남는다. */}
-            <div style={{marginTop:10}}>
-              <label style={{fontSize:10,color:CS_WRITE.sub,marginBottom:3,display:'block'}}>
-                메모 - 특이사항을 간단하게 메모해주세요.</label>
-              <input value={edit.memo} onChange={e=>setE('memo',e.target.value)}
-                style={{...inp,background:CS_WRITE.field,
-                  border:'1px solid '+CS_WRITE.fieldBd,color:CS_WRITE.text}}/>
+          {/* ── 메모 ───────────────────────────────────────────────────────
+              ★★ 등록 화면에서 적은 메모를 여기서 보고 고친다(제니 2026-09-04).
+                그전에는 상세에 그리는 자리가 아예 없어, 적어 둔 것을 다시 볼 길이
+                없었다 — 쓰기만 되고 읽히지 않는 칸은 없는 칸과 같다.
+              ★ 이력이 아니라 «티켓의 값» 이다: 저장하면 이력에는 «메모 : 옛 -> 새»
+                한 줄이 값 변경으로 남는다. 라벨·자리·옷 모두 등록 화면 그대로다. */}
+          <div style={{marginTop:12}}>
+            <label style={lbl}>메모 - 특이사항을 간단하게 메모해주세요.</label>
+            <input value={edit.memo} onChange={e=>setE('memo',e.target.value)} style={inp}/>
+          </div>
+
+          {/* 1단에서 바꾼 것을 여기 모아 보여 준다 — 저장 버튼 바로 위가 «누르면
+              무슨 일이 일어나나» 를 읽는 자리다. ★ 한 항목이 한 줄이다(제니).
+              ★ 판 밖으로 나왔으니 색도 어두운 화면용으로 되돌린다(밝은 노랑 #FDEBD0 은
+                어두운 바탕에서 종이 조각처럼 떠 보인다). */}
+          {changes.length>0 && (
+            <div style={{marginTop:10,padding:'8px 10px',borderRadius:6,
+              background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.35)'}}>
+              <div style={{fontSize:10,fontWeight:700,color:'#F6AD09',marginBottom:5}}>
+                티켓 정보에서 바꾼 것</div>
+              {changes.map((c,i)=>(
+                <div key={i} style={{fontSize:11,color:'var(--text)',lineHeight:1.75}}>{c}</div>
+              ))}
             </div>
+          )}
 
-            {/* 1단에서 바꾼 것을 여기 모아 보여 준다 — 저장 버튼 바로 위가 «누르면
-                무슨 일이 일어나나» 를 읽는 자리다. ★ 한 항목이 한 줄이다(제니). */}
-            {/* ★ 이 알림도 밝은 판 «안» 이라 밝은 노랑으로 바꾼다. 어두운 화면용
-                rgba(246,173,9,.08) 은 밝은 바탕 위에서 거의 안 보인다. */}
-            {changes.length>0 && (
-              <div style={{marginTop:9,padding:'8px 10px',borderRadius:6,
-                background:'#FDEBD0',border:'1px solid #F0BE72'}}>
-                <div style={{fontSize:10,fontWeight:700,color:'#93500A',marginBottom:5}}>
-                  티켓 정보에서 바꾼 것</div>
-                {changes.map((c,i)=>(
-                  <div key={i} style={{fontSize:11,color:'#3A2E00',lineHeight:1.75}}>{c}</div>
-                ))}
-              </div>
-            )}
-
-            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:9,flexWrap:'wrap'}}>
-              {/* ★★ 단계를 여기 둔다(제니 지적으로 바로잡음). 그전에는 1단에 있고 「무슨 일」이
-                  몰래 바꿨는데, 그러면 «상태 변경» 과 «단순 이력» 이 한 드롭박스에 섞여 보인다.
-                  실무는 «이력을 남기며 단계를 옮기는» 일이다 — 젠데스크의 「티켓 상태 제출」이
-                  그 모양이었다. 그래서 단계 칸을 저장 버튼 «옆» 에 보이게 두고,
-                  「무슨 일」은 그 값을 «제안» 만 한다. 바뀌는 것이 눈에 보이면 몰래가 아니다. */}
-              <div style={{flex:1}}></div>
-              {/* ★ «되돌리기»(화면만 되돌림) 대신 «취소»(저장하지 않고 목록으로) 다(제니).
-                  고치던 것을 물리는 이유는 대개 «이 티켓이 아니었다» 이지 «이 값만 물리자» 가
-                  아니다 — 그때 필요한 것은 목록으로 나가는 길이다. */}
-              <button onClick={onBack} disabled={busy}
-                style={{padding:'6px 14px',background:CS_WRITE.field,
-                  border:'1px solid '+CS_WRITE.btnBd,
-                  borderRadius:6,color:CS_WRITE.sub,fontSize:11,cursor:'pointer',
-                  fontFamily:'inherit'}}>취소</button>
-              {/* ★★ 저장 버튼이 곧 «어느 단계로 보내는가» 다(제니 · 젠데스크 방식).
-                  단계를 고르는 목록이 버튼 안에 들어와서 화면에 드롭박스가 하나만 남는다. */}
-              <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty} light
-                onSave={()=>saveAll()}
-                onPick={id=>{ setE('stage', id); saveAll(id); }}
-                options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
+          {/* ★ 등록 화면과 «같은 줄» 이다 — 왼쪽에 지금 상태를 알리는 말, 오른쪽에
+              [취소]와 [저장]. 등록 쪽은 그 자리에 「아직 필요합니다 …」를 적는다. */}
+          <div style={{display:'flex',alignItems:'center',gap:10,marginTop:16,flexWrap:'wrap'}}>
+            <div style={{flex:1,fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
+              {!isMaster && <>환불·정산·종결은 master 가 확인해서 처리합니다.
+                내 일이 끝나면 <b>«CS 완료»</b> 로 넘기세요.</>}
             </div>
-            {!isMaster && (
-              <div style={{fontSize:10,color:CS_WRITE.sub,marginTop:7,lineHeight:1.6}}>
-                환불·정산·종결은 master 가 확인해서 처리합니다.
-                내 일이 끝나면 <b>«CS 완료»</b> 로 넘기세요.
-              </div>
-            )}
+            {/* ★ «되돌리기»(화면만 되돌림) 대신 «취소»(저장하지 않고 목록으로) 다(제니).
+                고치던 것을 물리는 이유는 대개 «이 티켓이 아니었다» 이지 «이 값만 물리자» 가
+                아니다 — 그때 필요한 것은 목록으로 나가는 길이다. */}
+            <button onClick={onBack} disabled={busy}
+              style={{padding:'8px 16px',background:'transparent',
+                border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',
+                fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>취소</button>
+            {/* ★★ 저장 버튼이 곧 «어느 단계로 보내는가» 다(제니 · 젠데스크 방식).
+                단계를 고르는 목록이 버튼 안에 들어와서 화면에 드롭박스가 하나만 남는다.
+                ★ light 를 뗐다 — 이제 어두운 바탕 위에 선다(등록 화면과 같다). */}
+            <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
+              onSave={()=>saveAll()}
+              onPick={id=>{ setE('stage', id); saveAll(id); }}
+              options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
           </div>
         </div>
 
@@ -22327,10 +22388,16 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   );
 }
 
+// ★ 머리글은 한 줄로 두되(nowrap) 열보다 길면 «…» 로 줄인다 — tableLayout:fixed 에서
+//   nowrap 인 글자가 열 폭을 넘으면 옆 칸 위로 삐져나온다.
 const csTh = (w)=>({textAlign:'left',fontSize:10,fontWeight:600,color:'var(--sub)',
   letterSpacing:'.06em',textTransform:'uppercase',padding:'10px 12px',
-  borderBottom:'1px solid var(--border)',whiteSpace:'nowrap',width:w});
-const csTd = {padding:'10px 12px',color:'var(--text)',verticalAlign:'middle'};
+  borderBottom:'1px solid var(--border)',whiteSpace:'nowrap',width:w,
+  overflow:'hidden',textOverflow:'ellipsis',position:'relative'});
+// ★ 폭을 좁히면 긴 값이 열을 넘지 않고 «접혀야» 한다. 주소·상품명처럼 띄어쓰기가 없는
+//   긴 토막(주문번호 등)도 접히도록 anywhere 를 쓴다.
+const csTd = {padding:'10px 12px',color:'var(--text)',verticalAlign:'middle',
+  overflowWrap:'anywhere'};
 
 // 누르면 정렬되는 머리글.
 // ★★ 화살표 자리를 «늘» 비워 둔다(visibility 로 숨긴다). 누를 때마다 화살표가 생겼다
@@ -22349,7 +22416,8 @@ const csTd = {padding:'10px 12px',color:'var(--text)',verticalAlign:'middle'};
 //   줄 전체를 draggable 로 두지 않는다(글자를 고르려고 끌 때 줄이 딸려 움직인다):
 //   손잡이를 누른 줄만 열어 준다(armed). 놓을 자리는 색이 아니라 «선» 으로 알린다 —
 //   색을 깔면 그 줄과 «자리를 바꾸는» 것처럼 보이는데 실제로는 앞뒤에 끼우는 것이다.
-function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEmail, onClose}){
+function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEmail,
+                           widthsChanged, onResetWidths, onClose}){
   const saved = (settings && settings.cs_list_columns) || {};
   const initial = Array.isArray(saved[chip]) ? saved[chip]
                 : Array.isArray(saved['_default']) ? saved['_default']
@@ -22509,6 +22577,24 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
             : '줄 아무 데나 누르면 티켓이 열립니다.'}
         </div>
 
+        {/* ── 열 너비 (제니 2026-09-04) ────────────────────────────────────
+            ★★ 여기 있는 다른 값과 «성격이 다르다» 는 것을 적어 둔다. 위쪽 열 구성은
+              저장하면 모두의 화면이 바뀌는 «운영 기준» 이고, 너비는 이 브라우저에만
+              남는 «취향» 이다. 한 패널에 있으면서 저장 단추도 다르므로(너비는 끄는
+              즉시 남는다) 말해 두지 않으면 [저장] 을 눌러야 하는 줄 안다. */}
+        <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.6,marginTop:8,
+          paddingTop:8,borderTop:'1px solid rgba(255,255,255,.14)',
+          display:'flex',alignItems:'center',gap:8}}>
+          <span style={{flex:1}}>열 너비는 <b>머리글 경계를 끌어</b> 바꿉니다
+            (두 번 누르면 그 열만 기본값). 너비는 <b>내 화면에만</b> 남습니다.</span>
+          {widthsChanged && (
+            <button onClick={onResetWidths}
+              style={{padding:'4px 8px',borderRadius:6,fontSize:10,fontFamily:'inherit',
+                cursor:'pointer',background:'transparent',whiteSpace:'nowrap',
+                border:'1px solid rgba(255,255,255,.22)',color:'var(--sub)'}}>너비 되돌리기</button>
+          )}
+        </div>
+
         <div style={{display:'flex',gap:6,marginTop:10,alignItems:'center'}}>
           <button onClick={()=>setOrder(known(CS_COLS_FALLBACK))} disabled={busy}
             style={{padding:'5px 9px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
@@ -22534,7 +22620,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
   );
 }
 
-function CsSortTh({k, w, label, sortable=true, sort, onClick, align}){
+function CsSortTh({k, w, label, sortable=true, sort, onClick, align, onResize}){
   const on = sort && sort.key===k;
   return (
     <th style={{...csTh(w), cursor: sortable?'pointer':'default',
@@ -22544,6 +22630,23 @@ function CsSortTh({k, w, label, sortable=true, sort, onClick, align}){
       {label}
       <span style={{marginLeft:4, visibility: on?'visible':'hidden'}}>
         {on && sort.dir==='desc' ? '▼' : '▲'}</span>
+      {/* ── 폭 손잡이 (제니 2026-09-04) ────────────────────────────────
+          ★★ 머리글 «경계» 를 잡고 끈다. 열마다 담는 값의 길이가 크게 달라서
+            (계좌번호 한 줄 vs 주소 두 줄) 한 벌의 기본 폭으로는 늘 어딘가가
+            좁거나 헐렁하다.
+          ★★ **정렬 클릭과 겹치지 않게 stopPropagation 한다** — 머리글은 이미
+            «누르면 정렬» 인 자리다. 손잡이를 눌렀을 뿐인데 정렬까지 바뀌면
+            무엇이 무엇을 한 건지 알 수 없다.
+          ★ 자리는 칸 안쪽 오른쪽 끝이고, 평소엔 안 보이다가 마우스를 올리면
+            선이 밝아진다 — 늘 선을 그어 두면 표에 세로줄이 스물몇 개 생긴다. */}
+      {onResize && (
+        <span onMouseDown={e=>onResize(k,e)} onClick={e=>e.stopPropagation()}
+          title="끌어서 열 너비를 바꿉니다 (두 번 누르면 기본값)"
+          onDoubleClick={e=>{ e.stopPropagation(); onResize(k,e,true); }}
+          className="cs-colgrip"
+          style={{position:'absolute',top:0,right:0,bottom:0,width:7,
+            cursor:'col-resize',userSelect:'none'}}></span>
+      )}
     </th>
   );
 }
