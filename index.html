@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904d_abs_width_stack_date_tone -->
+<!-- (2026-09-04) 앞 판(c)을 제니가 화면에서 보고 짚은 셋. ①🔴 **열 너비가 «절대» 가 아니라 «상대» 로 움직였다**(제니: 「한 열을 조정하면 앞쪽 너비도 같이 바뀐다」). 원인은 표에 준 minWidth:'100%' 다 — 열 폭의 합이 화면보다 좁으면 **fixed 레이아웃이 남는 폭을 모든 열에 «비례로» 나눠 준다.** px 로 잡아 놓고도 상대 너비로 움직인 것이다. ★★★ 고친 법: **맨 뒤에 폭 없는 빈 열(spacer)을 하나 두어 남는 폭을 그 열이 «혼자» 먹게 한다.** 표는 width:'100%' + minWidth:열 폭의 합. 그러면 앞의 열들은 준 값 그대로 서고, 합이 화면보다 넓으면 예전처럼 가로로 구른다. **«폭을 px 로 줬으니 고정이다» 는 fixed 레이아웃에서 참이 아니다 — 남는 폭이 어디로 가는지까지 정해야 고정이다.** ②**등록·수정 날짜를 «날짜 / 시간» 두 줄로 쌓았다**(제니). 한 줄로 「09-03 15:21」을 두면 열이 늘 그만큼 넓어야 하는데, 쌓으면 폭이 반으로 줄어 그 자리를 내용이 긴 열에 넘길 수 있다. ★★ **해가 바뀌면 연도 줄이 하나 더 붙는다**(「2026 / 09-03 / 15:21」) — 올해 것에까지 연도를 적으면 스물몇 줄 내내 같은 글자가 반복돼 정작 다른 두 줄을 읽는 데 방해가 된다. ★★ **열의 최소 폭을 «세 줄이 다 들어가는» 값으로 못 박았다**(CS_COLS 의 minw · 열마다 따로) — 연도가 붙기 시작하는 날 열이 흔들리지 않게 처음부터 그 자리를 세어 둔다. 저장해 둔 폭이 그보다 좁아도 최소를 지킨다(최소를 나중에 올릴 수 있으므로). ★ 그전의 「17분 전」(csAgo)은 뺐다 — 상대 표기를 잃는 대신 모든 줄이 같은 모양이 됐다. 목록은 한 건을 읽는 자리가 아니라 여러 건을 세로로 훑는 자리다. ③**[저장] 버튼의 상태색이 빠져 있었다**(제니 지적). 앞 판에서 밝은 판 밖으로 빼면서 light 를 뗐는데, 상태색이 light 일 때만 걸려 있어 남색 하나로 돌아갔다. ★★★ **버튼이 뜻을 지고 있으면 그 뜻은 «놓인 자리» 와 상관없이 유지돼야 한다** — 어두운 바탕에서도 같은 CS_TONE_SOLID 를 쓴다(흰 글자를 얹으려고 명도를 낮춘 값이라 어두운 화면에서도 도드라진다). ★★ 다만 **«못 누를 때» 옅게 하는 방향은 판에 따라 반대다** — 밝은 판에서는 파스텔로 «밝히고»(CS_TONE_SOFT), 어두운 판에서는 «가라앉힌다»(CS_TONE_DIM, 이번에 새로 뒀다). 한쪽 표를 두 곳에 쓰면 못 누르는 버튼이 화면에서 가장 밝은 조각이 된다. 두 쪽을 가르는 선도 같은 이유로 방향이 반대다. -->
 <!-- v20260904c_col_resize_detail_template -->
 <!-- (2026-09-04) 같은 날 세 번째 판. ①**상세의 [취소]·[저장]·메모를 밝은 판 «밖» 으로 뺐다**(제니) — 등록 화면과 같은 틀을 갖게. ★★ **판이 가리키는 것은 «이력에 남길 한 줄» 이다** — 누구 말인지 고르고, 적고, 기호를 넣고, 사진을 붙이는 데까지. 메모는 이력이 아니라 티켓의 값이고 [저장]은 이 판만이 아니라 ①에서 고친 것까지 함께 다룬다. 그것들이 판 안에 있으면 판의 뜻이 흐려진다. ★★★ **판 밖으로 나온 조각은 색을 되돌려야 한다** — 밝은 판 안에서 쓰라고 밝게 만들어 둔 색(CS_WRITE 입력칸 · 「바꾼 것」 알림의 밝은 노랑 #FDEBD0)을 그대로 들고 나오면 어두운 바탕에 흰 종이 조각이 떠 버린다. 09-03 에 밟은 함정의 «반대 방향» 이고, 나오는 쪽도 똑같이 다시 봐야 한다. CsStageSubmit 의 light 도 뗐다. ②**목록에 열 너비 조절을 붙였다**(제니) — 머리글 «경계» 를 잡고 끈다. 열마다 담는 값의 길이가 크게 달라(계좌번호 한 줄 vs 주소 두 줄) 한 벌의 기본 폭으로는 늘 어딘가가 좁거나 헐렁하다. ★★ **tableLayout:'fixed' + colgroup 이 필요하다** — 자동 레이아웃에서 width 는 브라우저에 대한 «제안» 일 뿐이라, 끌어서 좁혀도 내용이 길면 도로 벌어진다. 표 전체 폭은 열 폭의 «합» 이고, 화면보다 좁으면 minWidth:'100%' 가 받치고 넓으면 바깥이 가로로 구른다. 겸해 셀에 overflowWrap:'anywhere'(좁혀도 값이 열을 안 넘게) · 머리글에 말줄임을 줬다. ★★ **손잡이는 정렬 클릭과 겹치는 자리다** — 머리글은 이미 «누르면 정렬» 이라 stopPropagation 을 하지 않으면 폭을 바꿨을 뿐인데 정렬까지 바뀐다. 두 번 누르면 그 열만 기본 폭. ★ 선은 평소에 숨기고 마우스를 올릴 때만 세운다 — 늘 그어 두면 표에 세로줄이 스물몇 개 생겨 값보다 선이 먼저 읽힌다. ★★★ **너비는 localStorage 다 — console_settings 에 넣지 않는다.** 그 표는 «운영 기준» 이라 한 사람이 바꾸면 모두의 화면이 바뀐다. **어느 열을 보여 줄지는 기준이고, 얼마나 넓게 볼지는 취향이다**(사람마다 화면 크기부터 다르다). 티켓 상세의 칸 손잡이에서 이미 그은 경계를 그대로 지켰다. 그래서 [보기 설정] 패널 맨 아래에 그 차이를 적어 뒀다 — 한 패널에 있으면서 저장 방식도 다르므로(너비는 끄는 즉시 남는다) 말해 두지 않으면 [저장]을 눌러야 하는 줄 안다. ★ 열 «키» 로 기억한다(칩별이 아니라) — 칩별로 두면 칩을 옮길 때마다 폭이 널뛴다. -->
 <!-- v20260904b_cols_all_selectable_memo -->
@@ -17191,14 +17193,16 @@ const CS_COLS = {
                   textDecoration:'underline',textUnderlineOffset:3,
                   textDecorationColor:'rgba(210,229,255,.35)'}}>#{t.id}</span>,
               sv:(t)=>t.id},
-  created:   {label:'등록', plabel:'등록된 날짜', g:'티켓', w:96,
-              cell:(t)=><span style={{color:'var(--sub)',
-                fontVariantNumeric:'tabular-nums'}}>{csAgo(t.created_at)}</span>,
-              sv:(t)=>t.created_at||''},
-  touched:   {label:'수정', plabel:'수정된 날짜', g:'티켓', w:96,
-              cell:(t)=><span style={{color:'var(--sub)',
-                fontVariantNumeric:'tabular-nums'}}>{csAgo(t.updated_at)}</span>,
-              sv:(t)=>t.updated_at||''},
+  // ★★ 날짜는 «날짜 / 시간» 두 줄이다(제니 2026-09-04) — 지난해 건이면 연도 줄이
+  //   하나 더 붙는다. w 와 minw 를 «세 줄이 다 들어가는» 값으로 잡아, 연도가 붙는
+  //   날에도 열이 흔들리지 않고 그 아래로는 못 좁히게 한다.
+  //   ★ 그전에는 csAgo 로 「17분 전」을 쓰다가 한 시간이 지나면 「09-03 15:21」 한 줄이
+  //     됐다. 상대 표기를 잃는 대신 **모든 줄이 같은 모양**이 됐다 — 목록은 한 건을
+  //     읽는 자리가 아니라 여러 건을 세로로 훑는 자리다.
+  created:   {label:'등록', plabel:'등록된 날짜', g:'티켓', w:64, minw:58,
+              cell:(t)=><CsStackDate at={t.created_at}/>, sv:(t)=>t.created_at||''},
+  touched:   {label:'수정', plabel:'수정된 날짜', g:'티켓', w:64, minw:58,
+              cell:(t)=><CsStackDate at={t.updated_at}/>, sv:(t)=>t.updated_at||''},
 };
 // [보기 설정] 에서 «안 보이는 열» 을 이 차례로 묶어 보여 준다.
 // ★ 티켓 ① 영역의 뎁스 차례와 같게 둔다 — 상세를 위에서 아래로 읽은 순서 그대로다.
@@ -17290,6 +17294,41 @@ function csAgo(v){
   if(m < 1)  return '방금';
   if(m < 60) return m+'분 전';
   return csStamp(v);
+}
+// ── 목록의 날짜 열 — «날짜 / 시간» 을 줄로 쌓는다 (제니 2026-09-04) ──────
+// ★★ 한 줄로 「09-03 15:21」 을 두면 열이 늘 그만큼 넓어야 한다. 줄로 쌓으면 열이
+//   반으로 좁아지고, 그러면 옆의 «내용이 긴 열» 에 그 폭을 넘겨줄 수 있다.
+// ★★ **해가 바뀌면 연도 줄이 하나 더 붙는다**(제니). 올해 것에까지 「2026」을 적으면
+//   스물몇 줄 내내 같은 글자가 반복돼 정작 다른 두 줄을 읽는 데 방해가 된다 —
+//   티켓이 쌓여 지난해 건이 섞이기 시작하면 그때 그 줄만 연도를 단다.
+// ★ 폭은 «세 줄이 다 들어가는» 값으로 잡는다(CS_COLS 의 minw) — 연도가 붙는 날
+//   열이 흔들리지 않게, 처음부터 그 자리를 세어 둔다.
+function csStackParts(v){
+  if(!v) return null;
+  const d = new Date(v);
+  if(isNaN(d)) return null;
+  const k  = new Date(d.getTime() + 9*3600*1000);       // KST 로 읽는다
+  const p2 = (n)=> String(n).padStart(2,'0');
+  const nowY = new Date(Date.now() + 9*3600*1000).getUTCFullYear();
+  const y = k.getUTCFullYear();
+  return {year: y===nowY ? null : String(y),
+          md: p2(k.getUTCMonth()+1)+'-'+p2(k.getUTCDate()),
+          hm: p2(k.getUTCHours())+':'+p2(k.getUTCMinutes())};
+}
+function CsStackDate({at}){
+  const s = csStackParts(at);
+  if(!s) return <span style={{color:'var(--sub)'}}>—</span>;
+  // ★ 고정폭 글꼴 + tabular-nums — 줄마다 숫자가 같은 자리에 서야 세로로 훑힌다.
+  //   ★ monospace 만 적으면 윈도우 크롬이 Courier New 를 고른다(MONO 상수를 쓴다).
+  return (
+    <span title={(s.year? s.year+'-':'')+s.md+' '+s.hm}
+      style={{display:'block',fontFamily:MONO,fontSize:11,lineHeight:1.35,
+        fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',color:'var(--sub)'}}>
+      {s.year && <span style={{display:'block',opacity:.8}}>{s.year}</span>}
+      <span style={{display:'block',color:'var(--text)'}}>{s.md}</span>
+      <span style={{display:'block'}}>{s.hm}</span>
+    </span>
+  );
 }
 // 날짜 입력칸 — 어두운 바탕에서 기본 달력 아이콘이 안 보여 colorScheme 을 준다.
 // ★ colorScheme 을 주지 않는다 — 달력 아이콘을 흰색으로 만드는 일은 전역 CSS 가
@@ -17499,6 +17538,18 @@ const CS_TONE_SOFT = {
   red:   {bg:'#EFCFCB', fg:'#8E5B54'},
   gray:  {bg:'#D3D8E2', fg:'#6B7488'},
 };
+// ★★ 어두운 바탕에서 «못 누르는» 상태의 같은 색(2026-09-04). 위 SOFT 는 밝은 판
+//   위에서 쓰라고 만든 파스텔이라, 어두운 화면에 그대로 두면 «못 누르는 버튼» 이
+//   화면에서 가장 밝은 조각이 된다. 뜻(색 계열)은 그대로 두고 «가라앉힌» 값이다.
+// ★ opacity 로 눕히지 않는 것은 여기서도 같다 — 바탕·글자 색을 따로 준다.
+const CS_TONE_DIM = {
+  accent:{bg:'#22355F', fg:'#8FA3CC'},
+  sky:   {bg:'#194E6E', fg:'#84B6D4'},
+  yellow:{bg:'#6B4712', fg:'#D3AC6A'},
+  green: {bg:'#0E5647', fg:'#77C4B0'},
+  red:   {bg:'#6B2B24', fg:'#D19A93'},
+  gray:  {bg:'#38425A', fg:'#93A0BA'},
+};
 // 받침이 있으면 «으로», 없거나 ㄹ 받침이면 «로». 「접수됨으로」·「회신 대기로」.
 // ★ 버튼 글자는 사람이 매번 읽는 자리라 조사가 틀리면 눈에 걸린다.
 function csRo(word){
@@ -17540,14 +17591,23 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
   //   채움에 쓸 수 있게 명도를 낮춘 값이다(CS_TONE_SOLID) — 흰 글자가 또렷이 얹힌다.
   //   ★ 어두운 화면에서는 예전 그대로 남색이다. 어두운 바탕에 진한 채움을 얹으면
   //     오히려 묻히고, 거기서는 이미 버튼이 충분히 도드라진다.
+  // ★★ 2026-09-04: 밝은 판 밖으로 나오면서 이 색이 통째로 빠졌었다(제니 지적) —
+  //   light 일 때만 상태색을 쓰고 아니면 남색 하나였기 때문이다. **버튼이 뜻을 지고
+  //   있으면 그 뜻은 놓인 자리와 상관없이 유지돼야 한다.** 어두운 바탕에서도 같은
+  //   상태색을 쓴다: CS_TONE_SOLID 는 흰 글자를 얹으려고 명도를 낮춘 값이라 어두운
+  //   화면에서도 충분히 도드라진다(접수 색은 원래 쓰던 남색 그대로다).
   const tone = CS_GROUP_TONE[cur.group];
-  const fill = light ? (CS_TONE_SOLID[tone] || 'var(--primary)') : 'var(--primary)';
+  const fill = CS_TONE_SOLID[tone] || 'var(--primary)';
   // ★ 못 누를 때도 «같은 색» 을 옅게 쓴다(제니 2026-09-03). 중립 회색으로 눕히면
   //   저장할 것이 없는 동안 버튼이 «어느 상태로 보내는지» 를 말하지 못하고,
   //   색을 가진 화살표와 서로 다른 버튼처럼 보인다.
-  const soft = CS_TONE_SOFT[tone] || CS_TONE_SOFT.gray;
-  const bg   = on ? fill : (light ? soft.bg : 'var(--border)');
-  const fg   = on ? '#fff' : (light ? soft.fg : '#fff');
+  //   ★ 옅게 하는 방향은 판에 따라 반대다 — 밝은 판에서는 파스텔로 «밝히고»,
+  //     어두운 판에서는 «가라앉힌다». 한쪽 표를 두 곳에 쓰면 못 누르는 버튼이
+  //     화면에서 가장 밝은 조각이 된다.
+  const dull = (light ? CS_TONE_SOFT : CS_TONE_DIM)[tone]
+             || (light ? CS_TONE_SOFT : CS_TONE_DIM).gray;
+  const bg   = on ? fill : dull.bg;
+  const fg   = on ? '#fff' : dull.fg;
   return (
     <div ref={ref} style={{position:'relative',display:'flex',
       // ★ 밝은 판 위에서는 버튼이 판과 같은 평면에 있어 경계가 흐리다. 옅은 그림자로
@@ -17565,7 +17625,10 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
       <button onClick={()=>setOpen(o=>!o)} disabled={busy} title="다른 상태로 저장하기"
         style={{padding:'8px 10px',borderRadius:'0 6px 6px 0',fontSize:11,
           fontFamily:'inherit',border:'none', color: fg,
-          borderLeft:'1px solid '+(on?'rgba(255,255,255,.22)':'rgba(22,35,63,.12)'),
+          /* ★ 두 쪽을 가르는 선도 판에 따라 방향이 다르다 — 밝은 판에서는 어둡게,
+               어두운 판에서는 밝게. 한쪽 값을 두 곳에 쓰면 한 곳에서 선이 사라진다. */
+          borderLeft:'1px solid '+(on ? 'rgba(255,255,255,.22)'
+                                      : (light ? 'rgba(22,35,63,.12)' : 'rgba(255,255,255,.14)')),
           background: bg,
           cursor: busy?'default':'pointer'}}>{open?'∨':'∧'}</button>
       {open && pos && (
@@ -17657,7 +17720,12 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   const [colW,setColW] = useState(()=>{
     try{ return JSON.parse(localStorage.getItem(CS_COLW_KEY)||'{}') || {}; }catch(_e){ return {}; }
   });
-  const widthOf = (k)=> colW[k] || (CS_COLS[k] ? CS_COLS[k].w : 110);
+  // ★ 저장해 둔 값이 그 열의 최소보다 작아도 최소를 지킨다 — 최소를 나중에 올리면
+  //   («연도 줄이 붙는다» 처럼) 예전에 저장한 폭이 그보다 좁을 수 있다.
+  const widthOf = (k)=>{
+    const c = CS_COLS[k] || {};
+    return Math.max(colW[k] || c.w || 110, c.minw || 0);
+  };
   const putColW = (next)=>{
     setColW(next);
     try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(next)); }catch(_e){}
@@ -17666,12 +17734,15 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   const startResize = (k, e, reset)=>{
     e.preventDefault(); e.stopPropagation();
     if(reset){ const n={...colW}; delete n[k]; putColW(n); return; }
+    // ★ 열마다 «더는 못 좁히는» 값이 다르다(CS_COLS 의 minw) — 날짜 열은 «연도 /
+    //   날짜 / 시간» 세 줄이 들어가야 하고, 그보다 좁히면 숫자가 접혀 모양이 깨진다.
+    const minw = (CS_COLS[k] && CS_COLS[k].minw) || CS_COLW_MIN;
     const x0 = e.clientX, w0 = widthOf(k);
     // ★ 마지막 값을 지역 변수로 들고 있다가 놓을 때 저장한다 — setState 안에서
     //   localStorage 를 쓰면 updater 가 두 번 불릴 때 같이 두 번 쓰인다.
     let last = null;
     const move = (ev)=>{
-      last = Math.max(CS_COLW_MIN, Math.round(w0 + (ev.clientX - x0)));
+      last = Math.max(minw, Math.round(w0 + (ev.clientX - x0)));
       setColW(p=>({...p, [k]:last}));
     };
     const up = ()=>{
@@ -18002,12 +18073,20 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
           {/* ★★ tableLayout:'fixed' + colgroup — 폭을 «내가» 정하려면 이 둘이 필요하다.
                 자동 레이아웃에서 width 는 브라우저에 대한 «제안» 일 뿐이라, 끌어서
                 좁혀도 내용이 길면 도로 벌어진다.
-              ★ 표 전체 폭은 열 폭의 «합» 이다. 합이 화면보다 좁으면 minWidth:'100%' 가
-                받쳐 주고, 넓으면 바깥 div 가 가로로 구른다(이미 overflowX:'auto'). */}
+              ★★★ **남는 폭을 먹는 빈 열이 반드시 있어야 한다**(제니 제보 2026-09-04:
+                「한 열을 조정하면 앞쪽 너비도 같이 바뀐다」). 처음엔 표에
+                minWidth:'100%' 를 줬는데, 열 폭의 합이 화면보다 좁으면 fixed 레이아웃이
+                **남는 폭을 모든 열에 «비례로» 나눠 준다** — 그래서 한 열을 좁히면
+                나머지가 조금씩 넓어졌다. 폭을 px 로 잡아 놓고도 «상대 너비» 로 움직인 것이다.
+                → 맨 뒤에 폭 없는 열(spacer)을 하나 두어 남는 폭을 **그 열이 혼자** 먹게 한다.
+                  그러면 앞의 열들은 준 값 그대로 선다.
+              ★ minWidth 는 열 폭의 «합» 이다 — 합이 화면보다 넓으면 바깥 div 가
+                가로로 구른다(이미 overflowX:'auto'). */}
           <table style={{borderCollapse:'collapse',fontSize:12,tableLayout:'fixed',
-            width: colKeys.reduce((s,k)=>s+widthOf(k),0), minWidth:'100%'}}>
+            width:'100%', minWidth: colKeys.reduce((s,k)=>s+widthOf(k),0)}}>
             <colgroup>
               {colKeys.map(k=><col key={k} style={{width:widthOf(k)}}/>)}
+              <col/>
             </colgroup>
             <thead>
               <tr>
@@ -18019,6 +18098,8 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                     align={CS_COLS[k].align} onResize={startResize}
                     sortable={!!CS_COLS[k].sv} sort={sort} onClick={clickSort}/>
                 ))}
+                {/* 남는 폭을 먹는 빈 열 — 위 주석 참고. 누르는 것도 끄는 것도 없다. */}
+                <th style={{borderBottom:'1px solid var(--border)',padding:0}}></th>
               </tr>
             </thead>
             <tbody>
@@ -18044,6 +18125,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                         ? {...csTd, textAlign:CS_COLS[k].align} : csTd}>
                       {CS_COLS[k].cell(t)}</td>
                   ))}
+                  <td style={{padding:0}}></td>
                 </tr>
               ))}
             </tbody>
