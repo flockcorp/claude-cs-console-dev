@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904zc_account_admin -->
+<!-- (2026-09-04) **콘솔 계정 관리**(계정 정보·설정 화면 · master 전용). 「큰 것 셋」의 2번이고, 2026-08-24부터 미뤄 둔 «공용 계정 2개 분리» 의 앞단이다 — **공용 계정을 여러 사람이 쓰면 변경 이력에 «누가» 가 절반만 남는다.** 사람마다 계정을 주려면 계정을 만들 길이 있어야 하는데, 그동안은 Supabase 대시보드에 직접 들어가 만들고 console_users 에 손으로 한 줄 넣어야 했다. ★★★ **센 키가 필요한 일과 아닌 일을 갈랐다.** 계정 «만들기» 와 «비밀번호 바꾸기» 는 auth.admin 이 하는 일이라 **service_role 키**를 요구하는데 이 파일은 «공개 저장소» 다 — 키를 화면에 두면 아무나 남의 비밀번호를 바꾼다. → 엣지 함수 `console-user-admin`(dev 배포 완료)이 그 둘만 맡고, **이름·권한 바꾸기와 콘솔 등록 해제는 화면이 직접** 한다(console_users 는 master 정책으로 이미 열려 있다). 갈라 두면 «어디를 조심해야 하는지» 가 분명해진다. ★★★ **함수는 맨 앞에서 두 가지를 반드시 확인한다**: ①부른 사람이 로그인한 사람인가 — Authorization 토큰을 «실제로» 검증한다(헤더에 이메일을 적어 보내게 두면 그 줄을 고쳐 아무나 master 가 된다) ②그 사람이 master 인가 — console_users 를 service_role 로 다시 읽는다. **화면이 보내 준 권한은 믿지 않는다: 화면은 언제나 고칠 수 있다.** ★★ **«계정 삭제» 는 만들지 않았다.** 되돌릴 수 없고 그 사람이 남긴 이력·티켓이 가리키는 대상이 사라진다 — 콘솔 입장을 막는 일은 console_users 에서 그 줄을 지우는 것(«콘솔에서 빼기»)으로 충분하다. 로그인은 되지만 들어오지 못한다. ★★ **console_users 에 없는 auth 계정도 목록에 보여 준다**(「콘솔 미등록」 표) — 안 보이면 «있는데 못 들어오는» 계정이 있다는 사실조차 모른다. ★★ **자기 권한은 못 내리고 자기 자신은 못 뺀다** — master 가 자신을 crew 로 바꾸면 이 화면으로 돌아올 길이 사라진다(방을 나가며 문을 잠그는 셈). ★ 비밀번호는 «만들어 주고 전해 주는» 값이라 가리지 않는다 — 가려 두면 옮겨 적다가 틀리고, 그러면 그 사람이 못 들어온다. ★ 확인 메일을 안 기다린다(email_confirm) — 콘솔은 «가입» 이 없고 master 가 만들어 주는 곳이라, 메일 확인을 걸면 그 메일함이 없는 공용 계정은 영영 못 들어온다. ★ 비번 초기화는 대상 이메일을 확인 창에 적어 «누구를» 바꾸는지 보이게 하고 한 번 더 묻는다 — 누른 순간 그 사람은 옛 비밀번호로 못 들어온다. ⏳ 운영은 함수 배포와 화면 승격을 티켓과 함께. -->
 <!-- v20260904zb_note_table_lines -->
 <!-- (2026-09-04) **이력 표의 선을 밝게**(제니: 「표 라인이 어두워서 안 보인다」). var(--border)(#1e3060)는 이 어두운 바탕에서 거의 안 보여 **표가 «줄글 덩어리» 로 읽혔다** — 같은 날 칩·필터·검색칸 테두리에서 겪은 것과 **같은 원인이 또 나왔다**(그때는 CS_LINE 을 따로 두어 고쳤는데, 이 표는 그 뒤에 만든 것이라 옛 색을 그대로 물려받았다). ★★ 여기서 남길 것: **«묻히는 테두리» 를 한 번 고쳤으면 그 뒤에 만드는 조각에도 같은 값을 써야 한다** — 고친 것은 그 자리뿐이고, 다음에 새로 그리는 선은 다시 기본값에서 출발한다. ★ 겸해 머리글 줄에 옅은 파랑을 깔고 글자를 accent 로 올렸다 — 선 말고도 «이 줄이 이름» 이라는 것을 알리는 장치가 하나 더 있어야 표가 한눈에 표로 읽힌다. -->
 <!-- v20260904za_new_note_table -->
@@ -24403,6 +24405,241 @@ async function loadAlerts(){
 //   «읽기 전용 한 줄» 로만 남기고 편집기는 ④에만 둔다 — 두 곳에서 고칠 수 있으면
 //   언젠가 서로 다른 말을 하게 된다.
 // ═══════════════════════════════════════════════════════════════════════════
+// ── 콘솔 계정 관리 (master 전용 · 제니 2026-09-04) ──────────────────────────
+// ★★★ **계정 «만들기» 와 «비밀번호 바꾸기» 는 화면이 직접 못 한다.** 그 둘은
+//   Supabase auth.admin 이 하는 일이고 service_role 키를 요구하는데, 이 파일은
+//   «공개 저장소» 다 — 키를 여기 두면 아무나 남의 비밀번호를 바꿀 수 있다.
+//   → 엣지 함수 `console-user-admin` 이 대신한다. 화면은 «무엇을 해 달라» 만 보낸다.
+// ★★ 반대로 **이름·권한 바꾸기와 콘솔 등록 해제는 화면이 직접 한다** —
+//   console_users 는 master 정책(console_users_master)으로 이미 열려 있다.
+//   센 키가 필요한 일과 아닌 일을 갈라 두면, «어디를 조심해야 하는지» 가 분명해진다.
+// ★★★ **왜 이 화면이 필요했나**: 공용 계정 둘(주문·상담)을 여러 사람이 쓰고 있어
+//   변경 이력에 «누가» 가 절반만 남는다(2026-08-24 부터 미뤄 둔 일). 사람마다 계정을
+//   주려면 계정을 만들 길이 있어야 하는데, 그동안은 Supabase 대시보드에 직접 들어가
+//   만들고 console_users 에 손으로 한 줄 넣어야 했다.
+function CsAccountAdmin({session, card, head}){
+  const [list,setList] = useState(null);
+  const [err,setErr]   = useState('');
+  const [busy,setBusy] = useState(false);
+  const [open,setOpen] = useState(false);          // 계정 추가 폼
+  const [f,setF] = useState({email:'',password:'',label:'',console_role:'crew'});
+  const [resetId,setResetId] = useState(null);
+  const [resetPw,setResetPw] = useState('');
+
+  // ★ 함수를 부를 때 «내 토큰» 을 함께 보낸다 — 함수가 그것으로 «부른 사람이
+  //   master 인가» 를 스스로 확인한다. 화면이 «나 master 야» 라고 말하는 것은
+  //   증거가 아니다(그 줄은 누구나 고칠 수 있다).
+  const call = async (payload)=>{
+    const {data:{session:s}} = await sb.auth.getSession();
+    const token = s && s.access_token;
+    if(!token) return {ok:false, error:'로그인 정보가 없습니다. 새로고침 해 주세요.'};
+    try{
+      const r = await fetch(SUPABASE_URL+'/functions/v1/console-user-admin', {
+        method:'POST',
+        headers:{'Content-Type':'application/json', Authorization:'Bearer '+token},
+        body: JSON.stringify(payload),
+      });
+      return await r.json();
+    }catch(e){ return {ok:false, error:String((e&&e.message)||e)}; }
+  };
+
+  const load = async ()=>{
+    setErr('');
+    const r = await call({action:'list'});
+    if(!r.ok){ setErr(r.error||'계정 목록을 읽지 못했습니다.'); setList([]); return; }
+    setList(r.list||[]);
+  };
+  useEffect(()=>{ load(); },[]);
+
+  const create = async ()=>{
+    if(!f.email.trim() || f.password.length<8){
+      toast('이메일과 8자 이상 비밀번호가 필요합니다.','warn'); return;
+    }
+    setBusy(true);
+    const r = await call({action:'create', ...f});
+    setBusy(false);
+    if(!r.ok){ toast(r.error||'계정을 만들지 못했습니다.','error'); return; }
+    toast(f.email+' 계정을 만들었습니다.','ok');
+    setF({email:'',password:'',label:'',console_role:'crew'}); setOpen(false);
+    load();
+  };
+
+  const doReset = async (u)=>{
+    if(resetPw.length<8){ toast('비밀번호는 8자 이상이어야 합니다.','warn'); return; }
+    // ★★ 되돌릴 수 없는 일이라 한 번 더 묻는다 — 누른 순간 그 사람은 옛 비밀번호로
+    //   못 들어온다. 대상 이메일을 확인 창에 적어 «누구를» 바꾸는지 보이게 한다.
+    if(!window.confirm(u.email+' 의 비밀번호를 바꿉니다.\n\n그 사람은 옛 비밀번호로는 들어올 수 없습니다.\n새 비밀번호를 직접 전해 주세요.\n\n진행할까요?')) return;
+    setBusy(true);
+    const r = await call({action:'reset', user_id:u.user_id, password:resetPw});
+    setBusy(false);
+    if(!r.ok){ toast(r.error||'비밀번호를 바꾸지 못했습니다.','error'); return; }
+    toast(u.email+' 의 비밀번호를 바꿨습니다.','ok');
+    setResetId(null); setResetPw('');
+  };
+
+  // ★ 이름·권한은 console_users 라 화면이 직접 쓴다(master 정책).
+  const patch = async (u, col, val)=>{
+    const {error} = await sb.from('console_users').update({[col]:val}).eq('user_id',u.user_id);
+    if(sbFail('계정 정보 수정', error, {write:true})) return;
+    setList(p=>p.map(x=>x.user_id===u.user_id ? {...x,[col]:val} : x));
+  };
+  // ★★ «콘솔에서 빼기» 는 auth 계정을 지우지 않는다 — 로그인은 되지만 입장이 막힌다.
+  //   진짜 삭제는 되돌릴 수 없고, 그 사람이 남긴 이력·티켓이 가리키는 대상이 사라진다.
+  const unregister = async (u)=>{
+    if(u.user_id===session.user.id){ toast('자기 자신은 뺄 수 없습니다.','warn'); return; }
+    if(!window.confirm(u.email+' 을(를) 콘솔에서 뺍니다.\n\n로그인은 되지만 콘솔에는 들어오지 못합니다.\n(계정 자체는 지우지 않습니다 — 남긴 이력이 그대로 이어집니다.)\n\n진행할까요?')) return;
+    const {error} = await sb.from('console_users').delete().eq('user_id',u.user_id);
+    if(sbFail('콘솔 등록 해제', error, {write:true})) return;
+    toast(u.email+' 을(를) 콘솔에서 뺐습니다.','ok');
+    load();
+  };
+
+  const inp = {padding:'7px 9px',background:'var(--bg)',border:'1px solid var(--border)',
+    borderRadius:6,color:'var(--text)',fontSize:12,fontFamily:'inherit',outline:'none'};
+  const btn = (kind)=>({padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+    cursor:'pointer',whiteSpace:'nowrap',
+    background: kind==='go' ? 'var(--primary)' : 'transparent',
+    border:'1px solid '+(kind==='go' ? 'var(--primary)'
+      : kind==='bad' ? 'rgba(248,113,113,.5)' : 'var(--border)'),
+    color: kind==='go' ? '#fff' : kind==='bad' ? 'var(--red)' : 'var(--sub)'});
+
+  return (
+    <div style={card}>
+      <div style={head}>콘솔 계정</div>
+      <div style={{padding:'14px 20px'}}>
+        <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7,marginBottom:12}}>
+          콘솔에 들어올 수 있는 계정입니다. <b>가입은 없습니다</b> — 여기서 만들어 주세요.
+          {/* ★★ 왜 이 화면을 만들었는지 한 줄로 적어 둔다 — 공용 계정을 나누는 것이
+              변경 이력에 «누가» 를 남기는 유일한 길이다(2026-08-24부터 미뤄 둔 일). */}
+          <br/>공용 계정을 여러 사람이 쓰면 <b>변경 이력에 «누가» 가 안 남습니다.</b>
+        </div>
+
+        {!open ? (
+          <button onClick={()=>setOpen(true)} style={{...btn('go'),padding:'7px 13px',fontSize:12,
+            fontWeight:700,marginBottom:12}}>+ 계정 추가</button>
+        ) : (
+          <div style={{border:'1px solid var(--border)',borderRadius:8,padding:'12px 13px',
+            marginBottom:12,background:'var(--bg)'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+              <input value={f.email} onChange={e=>setF(p=>({...p,email:e.target.value}))}
+                placeholder="이메일" autoComplete="off" style={inp}/>
+              <input value={f.label} onChange={e=>setF(p=>({...p,label:e.target.value}))}
+                placeholder="이름 (예: 사무엘)" style={inp}/>
+              {/* ★ 비밀번호는 «만들어 주고 전해 주는» 값이라 가리지 않는다 —
+                  가려 두면 옮겨 적다가 틀리고, 그러면 그 사람이 못 들어온다. */}
+              <input value={f.password} onChange={e=>setF(p=>({...p,password:e.target.value}))}
+                placeholder="비밀번호 (8자 이상)" autoComplete="new-password" style={inp}/>
+              <select value={f.console_role}
+                onChange={e=>setF(p=>({...p,console_role:e.target.value}))} style={inp}>
+                <option value="crew">crew — 상담원</option>
+                <option value="manager">manager — 관리자</option>
+                <option value="master">master — 전체 권한</option>
+              </select>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:10.5,color:'var(--sub)',flex:1,lineHeight:1.6}}>
+                만들면 바로 들어올 수 있습니다(확인 메일 없음). 비밀번호는 직접 전해 주세요.
+              </span>
+              <button onClick={()=>{ setOpen(false);
+                setF({email:'',password:'',label:'',console_role:'crew'}); }}
+                disabled={busy} style={btn()}>취소</button>
+              <button onClick={create} disabled={busy}
+                style={{...btn('go'),fontWeight:700}}>{busy?'만드는 중…':'계정 만들기'}</button>
+            </div>
+          </div>
+        )}
+
+        {err && <div style={{fontSize:11.5,color:'var(--red)',marginBottom:10}}>{err}</div>}
+        {list===null ? (
+          <div style={{fontSize:12,color:'var(--sub)'}}>불러오는 중…</div>
+        ) : list.length===0 ? (
+          <div style={{fontSize:12,color:'var(--sub)'}}>계정이 없습니다.</div>
+        ) : (
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse',fontSize:11.5}}>
+              <thead><tr>
+                {['이메일','이름','권한','마지막 로그인',''].map((c,i)=>(
+                  <th key={i} style={{textAlign:'left',padding:'6px 8px',color:'var(--sub)',
+                    borderBottom:'1px solid var(--border)',whiteSpace:'nowrap',
+                    fontSize:10.5,fontWeight:700}}>{c}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {list.map(u=>(
+                  <React.Fragment key={u.user_id}>
+                    <tr style={{borderBottom:'1px solid var(--border)'}}>
+                      <td style={{padding:'7px 8px',fontFamily:MONO,fontSize:11,
+                        color: u.registered ? 'var(--text)' : 'var(--sub)'}}>
+                        {u.email}
+                        {/* ★★ console_users 에 없는 auth 계정도 보여 준다 — 안 보이면
+                            «있는데 못 들어오는» 계정이 있다는 사실조차 모른다. */}
+                        {!u.registered && <span style={{color:'#F6AD09',marginLeft:6,
+                          fontFamily:'inherit'}}>콘솔 미등록</span>}
+                        {u.user_id===session.user.id && <span style={{color:'var(--accent)',
+                          marginLeft:6,fontFamily:'inherit'}}>나</span>}
+                      </td>
+                      <td style={{padding:'7px 8px'}}>
+                        {u.registered ? (
+                          <input defaultValue={u.label||''} placeholder="이름"
+                            onBlur={e=>{ const v=e.target.value.trim();
+                              if(v!==(u.label||'')) patch(u,'label',v||null); }}
+                            style={{...inp,padding:'4px 7px',width:110,fontSize:11}}/>
+                        ) : <span style={{color:'var(--sub)'}}>—</span>}
+                      </td>
+                      <td style={{padding:'7px 8px'}}>
+                        {u.registered ? (
+                          /* ★ 자기 권한은 못 내린다 — master 가 자신을 crew 로 바꾸면
+                               이 화면으로 돌아올 길이 사라진다(방을 나가며 문을 잠그는 셈). */
+                          <select value={u.console_role||''} disabled={u.user_id===session.user.id}
+                            title={u.user_id===session.user.id?'자기 권한은 바꿀 수 없습니다':undefined}
+                            onChange={e=>patch(u,'console_role',e.target.value)}
+                            style={{...inp,padding:'4px 7px',fontSize:11,
+                              opacity:u.user_id===session.user.id?.6:1}}>
+                            <option value="crew">crew</option>
+                            <option value="manager">manager</option>
+                            <option value="master">master</option>
+                          </select>
+                        ) : <span style={{color:'var(--sub)'}}>—</span>}
+                      </td>
+                      <td style={{padding:'7px 8px',color:'var(--sub)',fontFamily:MONO,
+                        fontSize:10.5,whiteSpace:'nowrap'}}>
+                        {u.last_sign_in_at ? csStamp(u.last_sign_in_at) : '없음'}</td>
+                      <td style={{padding:'7px 8px',textAlign:'right',whiteSpace:'nowrap'}}>
+                        <button onClick={()=>{ setResetId(resetId===u.user_id?null:u.user_id);
+                          setResetPw(''); }} style={btn()}>비번 초기화</button>
+                        {u.registered && u.user_id!==session.user.id && (
+                          <button onClick={()=>unregister(u)}
+                            style={{...btn('bad'),marginLeft:5}}>콘솔에서 빼기</button>
+                        )}
+                      </td>
+                    </tr>
+                    {resetId===u.user_id && (
+                      <tr><td colSpan={5} style={{padding:'8px',background:'var(--bg)'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+                          <span style={{fontSize:11,color:'var(--sub)'}}>
+                            {u.email} 의 새 비밀번호</span>
+                          <input value={resetPw} onChange={e=>setResetPw(e.target.value)}
+                            placeholder="8자 이상" autoComplete="new-password"
+                            style={{...inp,padding:'5px 8px',width:180,fontSize:11.5}}/>
+                          <button onClick={()=>{ setResetId(null); setResetPw(''); }}
+                            disabled={busy} style={btn()}>취소</button>
+                          <button onClick={()=>doReset(u)} disabled={busy}
+                            style={{...btn('go'),fontWeight:700}}>
+                            {busy?'바꾸는 중…':'비밀번호 바꾸기'}</button>
+                        </div>
+                      </td></tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AccountPage({session,role,alerts,onGo}){
   const isMaster=role==='master';
   const [phone,setPhone]=useState('');
@@ -24682,6 +24919,12 @@ function AccountPage({session,role,alerts,onGo}){
           </div>
           </div>
           <div className="account-col">
+          {/* ── 콘솔 계정 (master 전용 · 2026-09-04) ────────────────────────
+              ★ 오른쪽 칸은 «숫자와 조작» 이다(2026-08-31에 정한 가르는 기준) —
+                계정을 만들고 권한을 바꾸는 것은 그쪽 성격이라 여기 둔다.
+              ★ 맨 위에 둔 이유: 이 화면에 master 가 들어오는 이유 중 하나가
+                «사람을 늘리거나 권한을 바꾸는» 일이고, 잔액·삭제보다 먼저 찾는다. */}
+          {isMaster && <CsAccountAdmin session={session} card={card} head={head}/>}
           {/* ── ② 문자·알림톡 잔액 ─────────────────────────────────────────────
               «보는 곳» 이다. 기준을 정하는 것은 아래 ④에 있다 — 같은 값을 두 곳에서
               고칠 수 있으면 언젠가 서로 다른 말을 하게 된다. 여기는 한 줄로 알려만 준다. */}
