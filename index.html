@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904zi_menu_roles_db -->
+<!-- (2026-09-04) **DB 권한이 콘솔 설정을 읽는다** — 「콘솔에서 설정한 대로 바로바로 반영되게」(제니). 앞 판에서 메뉴 권한을 설정으로 뺐지만 **DB 정책은 여전히 «master 만» 이라 박혀 있어**, 콘솔에서 manager 를 켜도 화면만 열리고 목록은 비어 보였다. ★★★ **«전체 열기» 로 풀지 않았다.** refunds 에는 계좌번호·예금주가 들어 있어 authenticated 전원에게 열면 **화면에서 안 보여도 API 로 직접 부르면 다 읽힌다** — 화면이 아니라 DB 가 막아야 하는 값이다. → 정책이 `console_menu_allows(menu)` 로 **콘솔 설정을 읽어** 판정한다(dev 적용 완료: refunds_by_menu · console_audit_log_by_menu). **콘솔에서 켜면 그 순간 DB 도 열린다.** ★★ 이 콘솔이 이미 쓰는 방식이다 — cs_tickets_guard 트리거가 cs_field_rules 를 읽어 칸 권한을 판정한다. **판정은 한 곳에서만**: 화면과 DB 가 갈리면 어느 쪽이 진짜인지 알 수 없다. ★ 설정이 없거나 그 메뉴 키가 없으면 «master 만» 이다(못 읽었다고 열리면 그게 사고다). 씨앗도 넣어 화면의 코드 기본과 값을 맞췄고, 사람이 한 번이라도 저장했으면 그 값은 건드리지 않는다. ★★ **정책 이름을 바꿔 달았다**(…_by_menu) — 옛 이름(refunds_master)을 그대로 두면 «master 만» 이라는 뜻의 이름과 실제 동작이 어긋난다. **정책 이름은 다음 사람이 읽는 설명이기도 하다.** ★ CS 설정(console_settings)은 정책을 안 건드렸다: 읽기는 이미 등록자 전원이고 쓰기는 master 다 — 그 메뉴를 manager 에게 열면 «보이지만 저장은 안 되는» 상태가 되는데 그것이 지금 화면의 전제이기도 하다. ★ 저장하면 **내 화면은 바로** 따라온다(App 이 설정을 다시 읽는다). 다른 사람은 다음에 콘솔을 열 때인데, **DB 는 그때그때 설정을 보므로 즉시 따라온다** — 화면이 늦는 것이지 «막혀 있는데 열린 것처럼 보이는» 일은 없다. -->
 <!-- v20260904zh_menu_roles -->
 <!-- (2026-09-04) **메뉴 권한을 설정으로 뺐다**(제니: 「환불 관리는 지금 manager 가 못 보지만 나중에는 열 수 있게」). ★★★ 그동안 «누가 어느 메뉴를 보나» 가 코드에 박혀 있었다(isMaster · isMaster||isManager) — 한 줄 바꾸려면 나를 불러야 했고, **설정이 화면에 없으면 그 설정은 사실상 코드에 박힌 것과 같다**(CS 설정 세 탭을 만든 이유와 같다). → `console_settings.menu_roles` 를 사이드바와 라우팅이 **같은 함수(csMenuAllows)** 로 읽는다: 두 곳에 따로 적으면 «메뉴는 보이는데 눌러도 안 열리는» 자리가 생긴다. 대상은 아홉(데이터 입력·상담원 분석·배송지연·디지털 상품 발송·환불 관리·비용 비교·변경 이력·인력 관리·CS 설정)이고, **여기 없는 메뉴는 전원**이다(cs_field_rules 의 edit 규칙과 같은 모양이라 읽는 법을 새로 배울 것이 없다). ★★★ **DB 권한(RLS)은 별개다 — 이것이 이 기능의 가장 큰 함정이다.** 메뉴를 열어도 그 표가 master 만 읽게 돼 있으면 **화면은 열리는데 목록이 비어 있다**: «열었는데 아무것도 없다» 가 «못 들어간다» 보다 나쁘다(사람은 고장으로 읽는다). → 그런 메뉴(환불·변경 이력·CS 설정)에 «⚠ DB» 표를 달고, 설정 화면에 「연 뒤에 그 권한 계정으로 직접 확인해 주세요」를 적었다. **화면과 DB 를 둘 다 열어야 실제로 열린 것이다.** ★★ **master 체크박스는 늘 켠 채 잠갔다** — 끄면 그 메뉴로 돌아올 사람이 아무도 없고, 이 설정 화면 자신도 그 목록 안에 있다(방을 나가며 문을 잠그는 셈). ★★ **설정을 못 읽으면 저장을 잠근다** — 못 읽은 화면에서 저장하면 멀쩡한 값이 통째로 덮인다(CS 설정 세 탭에서 정한 규칙). 그리고 못 읽었을 때는 «코드 기본» 으로 돈다: 못 읽었다고 다 열리면 그게 사고다. ★ 저장하면 그 계정이 «다시 로그인» 해야 반영된다(권한 설정은 로그인마다 한 번 읽는다) — 토스트에 그 말을 적었다. ★ 하단 「변경 이력」과 「인력 관리」가 한 조건으로 묶여 있던 것을 갈랐다: 설정으로 갈라 놓고 화면에서 묶으면 설정이 거짓말을 한다. -->
 <!-- v20260904zg_names_rerender -->
@@ -24783,7 +24785,7 @@ function CsAccountAdmin({session, card, head}){
 // ★★★ **DB 권한(RLS)은 별개다.** 메뉴를 열어도 그 표가 master 만 읽게 돼 있으면
 //   화면은 열리는데 목록이 비어 있다 — **«열었는데 아무것도 없다» 가 가장 나쁘다.**
 //   그런 메뉴에는 표를 달아 두고, 연 뒤에 그 권한 계정으로 «실제로» 확인하라고 적는다.
-function CsMenuRoles({currentUserEmail, card, head}){
+function CsMenuRoles({currentUserEmail, card, head, onSaved}){
   const ROLES = ['master','manager','crew'];
   const [cfg,setCfg]   = useState(undefined);   // undefined=아직/못 읽음
   const [draft,setDraft] = useState(null);
@@ -24825,7 +24827,12 @@ function CsMenuRoles({currentUserEmail, card, head}){
     setBusy(false);
     if(!ok) return;
     setCfg(out);
-    toast('메뉴 권한을 저장했습니다. 그 계정이 «다시 로그인» 해야 반영됩니다.','ok');
+    // ★ 내 화면은 «바로» 따라온다(App 이 설정을 다시 읽는다 — 제니: 「바로바로 반영되게」).
+    //   다른 사람은 그 계정이 다음에 콘솔을 열 때 반영된다: 권한 설정은 로그인마다
+    //   한 번 읽기 때문이다. **DB 권한은 그때그때 설정을 보므로 즉시 따라온다** —
+    //   화면이 늦게 따라오는 것이지 «막혀 있는데 열린 것처럼 보이는» 일은 없다.
+    if(onSaved) onSaved();
+    toast('메뉴 권한을 저장했습니다. 다른 계정은 다음에 콘솔을 열 때 반영됩니다.','ok');
   };
   const dirty = draft && CS_MENU_DEFS.some(d=>{
     const now = (cfg && Array.isArray(cfg[d.id])) ? cfg[d.id] : d.base;
@@ -24906,7 +24913,7 @@ function CsMenuRoles({currentUserEmail, card, head}){
   );
 }
 
-function AccountPage({session,role,alerts,onGo}){
+function AccountPage({session,role,alerts,onGo,onMenuSaved}){
   const isMaster=role==='master';
   // ★ 칩 — 성격이 다른 것을 다른 화면으로 보낸다(제니 2026-09-04). 기본은 «알림» 이다:
   //   이 화면에 들어오는 주된 이유가 「확인이 필요합니다」를 보는 것이다.
@@ -25087,7 +25094,8 @@ function AccountPage({session,role,alerts,onGo}){
             <CsAccountAdmin session={session} card={card} head={head}/>
             {/* ★ 계정 바로 아래에 둔다 — «누가 쓰나» 와 «무엇을 볼 수 있나» 는
                 한 자리에서 정하는 것이 자연스럽다(제니 2026-09-04). */}
-            <CsMenuRoles currentUserEmail={session.user.email} card={card} head={head}/>
+            <CsMenuRoles currentUserEmail={session.user.email} card={card} head={head}
+              onSaved={onMenuSaved}/>
           </div>
         )}
 
@@ -25764,7 +25772,10 @@ function App() {
         <PageErrorBoundary key={page} label={PAGE_LABELS[page]}>
         {page==='dashboard'&&<DashboardPage/>}
         {page==='entry'&&canMenu('entry')&&<EntryPage editDate={editDate} onSaved={afterSave}/>}
-        {page==='account'&&<AccountPage session={session} role={role} alerts={alerts} onGo={navigateTo}/>}
+        {page==='account'&&<AccountPage session={session} role={role} alerts={alerts} onGo={navigateTo}
+          /* ★ 메뉴 권한을 저장하면 «바로» 다시 읽는다 — 안 그러면 저장한 본인도
+               새로고침해야 자기 사이드바가 바뀐다(제니: 「바로바로 반영되게」). */
+          onMenuSaved={()=>csLoadSetting('menu_roles').then(r=>setMenuCfg((r&&r.value)||null))}/>}
         {page==='products'&&<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
         {page==='suppliers'&&<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
         {page==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
