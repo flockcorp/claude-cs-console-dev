@@ -24250,7 +24250,9 @@ const CS_MENU_DEFS = [
   {id:'costs',         label:'비용 비교 도구', base:['master']},
   {id:'auditLog',      label:'변경 이력',     base:['master'], rls:true},
   {id:'agents',        label:'인력 관리',     base:['master']},
-  {id:'csSettings',    label:'CS 설정',       base:['master'], rls:true},
+  // ★ 「CS 설정」만으로는 무엇인지 안 읽힌다(제니 물음) — 어느 메뉴 아래인지 적는다.
+  //   이 화면의 라벨은 «사이드바에서 찾을 이름» 이어야 한다.
+  {id:'csSettings',    label:'CS 관리 · 설정', base:['master'], rls:true},
 ];
 const CS_MENU_BASE = (()=>{ const m={}; CS_MENU_DEFS.forEach(d=>{ m[d.id]=d.base; }); return m; })();
 // 설정을 못 읽었으면 «코드 기본» 으로 돈다 — 못 읽었다고 다 열리면 그게 사고다.
