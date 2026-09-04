@@ -24241,18 +24241,21 @@ function RoleCheckFailedPage({email,error,onRetry}){
 //   화면은 열리는데 목록이 비어 있다 — «열었는데 아무것도 없다» 가 가장 나쁘다.
 //   그래서 설정 화면에 그 사실을 적어 두고, 연 뒤에는 그 권한 계정으로 실제로
 //   확인하라고 말한다. 화면과 DB 를 «둘 다» 열어야 실제로 열린 것이다.
+// ★★ **차례는 «사이드바에 선 순서» 다**(제니 2026-09-04). 설정 화면에서 메뉴를 찾을 때
+//   사람은 사이드바를 떠올리며 눈으로 훑는다 — 순서가 다르면 있는 것도 못 찾는다.
+//   대시보드 → 상품 관리 → CS 관리 → 환불 → 비용 비교 → (하단) 변경 이력 · 인력 관리.
+// ★ 「CS 설정」만으로는 무엇인지 안 읽혀서 «CS 관리 · 설정» 으로 적었다(제니 물음) —
+//   이 목록의 라벨은 «사이드바에서 찾을 이름» 이어야 한다.
 const CS_MENU_DEFS = [
-  {id:'entry',         label:'데이터 입력',   base:['master','manager']},
-  {id:'agentAnalysis', label:'상담원 분석',   base:['master']},
-  {id:'delays',        label:'배송지연 관리', base:['master','manager']},
+  {id:'entry',         label:'데이터 입력',      base:['master','manager']},
+  {id:'agentAnalysis', label:'상담원 분석',      base:['master']},
+  {id:'delays',        label:'배송지연 관리',    base:['master','manager']},
   {id:'autoDelivery',  label:'디지털 상품 발송', base:['master','manager']},
-  {id:'refunds',       label:'환불 관리',     base:['master'], rls:true},
-  {id:'costs',         label:'비용 비교 도구', base:['master']},
-  {id:'auditLog',      label:'변경 이력',     base:['master'], rls:true},
-  {id:'agents',        label:'인력 관리',     base:['master']},
-  // ★ 「CS 설정」만으로는 무엇인지 안 읽힌다(제니 물음) — 어느 메뉴 아래인지 적는다.
-  //   이 화면의 라벨은 «사이드바에서 찾을 이름» 이어야 한다.
-  {id:'csSettings',    label:'CS 관리 · 설정', base:['master'], rls:true},
+  {id:'csSettings',    label:'CS 관리 · 설정',   base:['master'], rls:true},
+  {id:'refunds',       label:'환불 관리',        base:['master'], rls:true},
+  {id:'costs',         label:'비용 비교 도구',   base:['master']},
+  {id:'auditLog',      label:'변경 이력',        base:['master'], rls:true},
+  {id:'agents',        label:'인력 관리',        base:['master']},
 ];
 const CS_MENU_BASE = (()=>{ const m={}; CS_MENU_DEFS.forEach(d=>{ m[d.id]=d.base; }); return m; })();
 // 설정을 못 읽었으면 «코드 기본» 으로 돈다 — 못 읽었다고 다 열리면 그게 사고다.
