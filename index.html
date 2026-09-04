@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904g_colw_per_chip -->
+<!-- (2026-09-04) **열 너비도 칩마다 따로 기억한다**(제니: 「전체 칩에서 설정한 대로 다른 칩에서도 너비가 보인다, 한쪽에서 수정하면 다른 쪽도 수정된다」). ★★★ 앞 판에서 나는 «열 키» 하나로 전역에 두면서 「같은 상품명 열을 칩마다 다른 폭으로 볼 일은 드물다」고 적어 뒀는데 틀렸다 — **어느 열을 «보여 줄지» 가 칩마다 다른 이상 «얼마나 넓게» 도 칩마다여야 한다.** 「공급사 미접수」에서 넓힌 상품명이 「정산 대기」에서도 넓으면, 칩을 옮길 때마다 폭을 다시 잡게 된다. 열 구성과 너비는 **같은 것을 둘로 나눠 정하는 일**이라 저장 단위가 어긋나면 반드시 한쪽이 다른 쪽을 무너뜨린다. 구조는 { "<칩 id>": {열키: 폭} } 이고 저장 자리는 그대로 localStorage 다(«기준» 이 아니라 «취향» 이라는 판단은 안 바뀐다 — 바뀐 것은 «무엇마다» 기억하느냐뿐이다). ★ 옛 값(칩 구분 없던 것)은 버리지 않고 `_default` 로 옮긴다: 아직 손대지 않은 칩은 그 값을 그대로 쓰고, 한 번 손댄 칩은 그때부터 제 값만 본다. ★ 그래서 «이 칩에 표가 있으면 그것만 본다» — 없을 때만 _default 를 본다. 안 그러면 [너비 되돌리기] 를 눌러 빈 표가 남았을 때 옛 값으로 되살아나 «되돌린 것이 아니게» 된다. ★ 처음 끌 때는 _default 를 바탕으로 시작한다 — 안 그러면 한 열을 끄는 순간 나머지 열이 코드 기본으로 «툭» 돌아간다. ★★ **`npm run check` 가 이번 판을 한 번 살렸다** — widthsChanged 를 colKeys 보다 «위» 에 선언해 두었는데, 문법은 정상이라 눈으로는 안 잡히고 실행하면 그 화면이 통째로 죽는 자리였다. -->
 <!-- v20260904f_rightedge_all_cols -->
 <!-- (2026-09-04) 앞 판(e)에 대한 제니 피드백 셋. ①🔴 **오른쪽 끝 라인이 아직도 밀렸다.** 앞 판에서 «맨 오른쪽 열» 에만 상한을 걸었는데 그것으로는 모자랐다 — **가운데 열을 넓혀도 폭의 «합» 이 커져 맨 오른쪽 열이 화면 밖으로 나간다.** 밀어내는 것은 마지막 열이 아니라 합이었다. → 상한(«지금 남아 있는 폭» 까지)을 **모든 열에** 건다. ★ 그래도 «상대 너비» 로 돌아가는 것이 아니다 — 다른 열은 한 픽셀도 안 움직이고, 움직이는 것은 남는 폭을 먹는 빈 열뿐이다. 좁히는 쪽은 자유고, 좁혀 여유가 생기면 그만큼 다시 늘어난다. ★ 열을 많이 켜서 «최소 폭의 합» 만으로 화면을 넘으면 그때는 가로로 구른다 — 그건 사람이 끌어서 만든 것이 아니라 켠 열이 많아서다. ★★ 여기서 남길 것: **어떤 조각이 넘치는지 볼 때 «그 조각» 만 보면 원인을 놓친다.** 넘친 것은 맨 오른쪽 열이지만 넘치게 한 것은 그 앞의 모든 열이었다. ②**한 시간 안쪽은 「17분 전」 한 줄만 그린다**(제니). 앞 판은 날짜 줄을 남기고 시각 자리에만 넣었는데, 「09-03 / 17분 전」은 **같은 것을 두 번 말한다** — 이 표기가 뜨는 것 자체가 «오늘, 방금» 이라는 뜻이라 날짜가 덧붙어 봐야 새로 알려 주는 것이 없다. 정확한 시각은 마우스를 올리면 뜬다. ③**주문자 연락처 글자색을 이름과 같게** 맞췄다(제니) — 한 사람의 두 조각인데 한쪽만 흐리면 연락처가 «곁다리 값» 으로 읽힌다. 전화를 거는 쪽은 오히려 이쪽이다. -->
 <!-- v20260904e_colmin_sortmark_rightedge -->
@@ -17227,7 +17229,13 @@ const CS_COL_ALIAS = {typedir:['cs_type','direction'], updated:['touched']};
 // 09-04 이전 설정에는 이 셋이 «고정 열» 이라 아예 담겨 있지 않다.
 const CS_COLS_HEAD = ['id','created','touched'];
 // 열 너비 — «내 화면에만» 남는 값이라 localStorage 다(console_settings 는 운영 기준).
-const CS_COLW_KEY = 'cs_list_colw_v1';
+// ★★ **칩마다 따로 기억한다**(제니 2026-09-04). 처음엔 «열 키» 하나로 전역에 뒀는데,
+//   어느 열을 «보여 줄지» 가 칩마다 다른 이상 «얼마나 넓게» 도 칩마다 달라야 한다 —
+//   「공급사 미접수」에서 넓힌 상품명이 「정산 대기」에서도 넓으면, 칩을 옮길 때마다
+//   폭을 다시 잡게 된다. 열 구성과 너비는 같은 것을 둘로 나눠 정하는 일이다.
+//   구조: { "<칩 id>": {열키: 폭}, "_default": {…} }
+const CS_COLW_KEY    = 'cs_list_colw_v2';
+const CS_COLW_KEY_V1 = 'cs_list_colw_v1';   // 열별(칩 구분 없음) — 첫 실행 때 _default 로 옮긴다
 const CS_COLW_MIN = 44;
 // ★★ 목록 맨 앞에 «고르는 체크박스» 가 들어올 자리다(제니 2026-09-04 · 아직 안 만들었다).
 //   여러 건을 골라 공급사에 한 번에 접수하는 «일괄 편집 바» 와 한 몸이라, 체크박스만
@@ -17763,27 +17771,44 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   //   기준» 이라 한 사람이 바꾸면 모두의 화면이 바뀐다. 어느 열을 보여 줄지는 기준이지만
   //   그 열을 얼마나 넓게 볼지는 취향이고, 사람마다 화면 크기부터 다르다.
   //   티켓 상세의 칸 손잡이에서 이미 그은 경계를 여기서도 그대로 지킨다.
-  // ★ 열 «키» 로 기억한다(칩별이 아니라). 같은 상품명 열을 칩마다 다른 폭으로 보고
-  //   싶을 일은 드물고, 칩별로 두면 칩을 옮길 때마다 폭이 널뛴다.
-  const [colW,setColW] = useState(()=>{
-    try{ return JSON.parse(localStorage.getItem(CS_COLW_KEY)||'{}') || {}; }catch(_e){ return {}; }
+  // ★★ **칩마다 따로 기억한다**(제니 2026-09-04 — 「한쪽에서 수정하면 다른 쪽도
+  //   수정된다」). 열 구성이 칩마다인 이상 너비도 칩마다여야 한다.
+  //   ★ 옛 값(칩 구분 없던 것)은 버리지 않고 `_default` 로 옮긴다 — 아직 손대지 않은
+  //     칩은 그 값을 그대로 쓰고, 한 번 손댄 칩은 그때부터 제 값만 본다.
+  const [colWAll,setColWAll] = useState(()=>{
+    try{
+      const v2 = JSON.parse(localStorage.getItem(CS_COLW_KEY)||'null');
+      if(v2 && typeof v2==='object') return v2;
+      const v1 = JSON.parse(localStorage.getItem(CS_COLW_KEY_V1)||'null');
+      return (v1 && typeof v1==='object' && Object.keys(v1).length) ? {_default:v1} : {};
+    }catch(_e){ return {}; }
   });
   // 표를 감싼 칸 — 맨 오른쪽 열이 «화면 오른쪽 끝» 을 넘지 않게 재는 데 쓴다.
   const wrapRef = useRef(null);
   // ★ 저장해 둔 값이 그 열의 최소보다 작아도 최소를 지킨다 — 최소를 나중에 올리면
   //   («연도 줄이 붙는다»·«머리글 기준» 처럼) 예전에 저장한 폭이 그보다 좁을 수 있다.
+  // ★★ 이 칩의 표가 «있으면» 그것만 본다. 없을 때만 _default(옛 값)를 본다 —
+  //   한 번 손댄 칩에서 «되돌리기» 를 누르면 빈 표가 남고, 그때 옛 값으로 되살아나면
+  //   되돌린 것이 아니게 된다.
   const widthOf = (k)=>{
     const c = CS_COLS[k] || {};
-    return Math.max(colW[k] || c.w || 110, csColMinW(k));
+    const mine = colWAll[chip] ? colWAll[chip][k] : (colWAll._default||{})[k];
+    return Math.max(mine || c.w || 110, csColMinW(k));
   };
-  const putColW = (next)=>{
-    setColW(next);
+  // 이 칩의 폭 표를 통째로 갈아 끼운다.
+  const putColW = (nextForChip)=>{
+    const next = {...colWAll, [chip]: nextForChip};
+    setColWAll(next);
     try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(next)); }catch(_e){}
   };
   // ★ 두 번 누르면 그 열만 기본 폭으로 되돌린다(세 번째 인자).
   const startResize = (k, e, reset)=>{
     e.preventDefault(); e.stopPropagation();
-    if(reset){ const n={...colW}; delete n[k]; putColW(n); return; }
+    // 두 번 누르면 «이 칩의» 그 열만 기본 폭으로.
+    if(reset){
+      const base = colWAll[chip] || colWAll._default || {};
+      const n = {...base}; delete n[k]; putColW(n); return;
+    }
     // ★ 열마다 «더는 못 좁히는» 값이 다르다(csColMinW) — 머리글이 … 로 줄지 않는
     //   폭, 그리고 날짜처럼 내용이 요구하는 폭 중 큰 쪽이다.
     const minw = csColMinW(k);
@@ -17808,7 +17833,9 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
     let last = null;
     const move = (ev)=>{
       last = Math.min(maxw, Math.max(minw, Math.round(w0 + (ev.clientX - x0))));
-      setColW(p=>({...p, [k]:last}));
+      // ★ 이 칩에 아직 표가 없으면 _default 를 바탕으로 시작한다 — 안 그러면 끄는
+      //   순간 나머지 열이 코드 기본으로 «툭» 돌아간다.
+      setColWAll(p=>({...p, [chip]: {...(p[chip] || p._default || {}), [k]:last}}));
     };
     const up = ()=>{
       document.removeEventListener('mousemove', move);
@@ -17816,7 +17843,8 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
       document.body.style.userSelect = '';
       if(last!=null){
         // ★ 저장은 화면 state 가 아니라 «방금 끈 값» 으로 만든다(경합을 안 탄다).
-        const n = {...colW, [k]:last};
+        const base = colWAll[chip] || colWAll._default || {};
+        const n = {...colWAll, [chip]: {...base, [k]:last}};
         try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(n)); }catch(_e){}
       }
     };
@@ -17948,6 +17976,10 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   },[settings,chip]);
   // [⚙ 보기 설정] 이 «어느 칩의 설정인가» 를 적을 때 쓴다.
   const chipLabel = (CS_CHIPS.find(c=>c.id===chip) || {}).label || chip;
+  // 지금 이 칩의 폭이 «코드 기본» 과 다른가 — [너비 되돌리기] 를 보일지 정한다.
+  // ★ colKeys 뒤에 둔다(선언 순서) — 검사가 잡아 준 자리다.
+  const widthsChanged = colKeys.some(k=>
+    widthOf(k) !== Math.max((CS_COLS[k]||{}).w || 110, csColMinW(k)));
 
   // ★ 담당자·공급사는 «지금 목록에 있는 값» 에서 뽑는다. 사람이 든 목록을 따로 두면
   //   그만두거나 새로 온 사람이 생길 때마다 두 곳을 고쳐야 한다.
@@ -18060,7 +18092,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
               <CsColumnSettings chip={chip} chipLabel={chipLabel}
                 settings={settings} setSettings={setSettings}
                 currentUserEmail={currentUserEmail}
-                widthsChanged={Object.keys(colW).length>0}
+                widthsChanged={widthsChanged}
                 onResetWidths={()=>putColW({})}
                 onClose={()=>setColOpen(false)}/>
             )}
@@ -22741,7 +22773,8 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
           paddingTop:8,borderTop:'1px solid rgba(255,255,255,.14)',
           display:'flex',alignItems:'center',gap:8}}>
           <span style={{flex:1}}>열 너비는 <b>머리글 경계를 끌어</b> 바꿉니다
-            (두 번 누르면 그 열만 기본값). 너비는 <b>내 화면에만</b> 남습니다.</span>
+            (두 번 누르면 그 열만 기본값). 너비도 <b>이 칩에만</b> 적용되고,
+            열 구성과 달리 <b>내 화면에만</b> 남습니다.</span>
           {widthsChanged && (
             <button onClick={onResetWidths}
               style={{padding:'4px 8px',borderRadius:6,fontSize:10,fontFamily:'inherit',
