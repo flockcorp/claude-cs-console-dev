@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904w_draft_rules_menu -->
+<!-- (2026-09-04) 접수 문안 두 길을 제니 규칙대로 다듬었다. ①★★★ **일괄 접수는 «티켓 등록» 상태에만 하는 일이다**(제니). 그래서 [📋 일괄 접수 문안] 버튼은 **«공급사 미접수» 칩에서만** 뜨고, 넘기는 것도 그 상태인 건만이며, 화면에서도 «티켓 등록» 이 아닌 건은 걸러낸다. **이미 진행중인 건이 표에 섞이면 그것까지 문안에 담겨 공급사에 두 번 접수된다.** ★ 쓸 일이 없는 자리에 버튼을 두면 «왜 여기선 안 되지» 를 «누른 뒤에» 알게 된다 — 안 보이는 편이 낫다. ②**사이드바 CS 관리 아래에 「공급사 접수」를 뒀다**(제니) — 누르면 지금 «티켓 등록» 인 건이 통째로 담긴 채 열린다. ★★ 08-31 초안에는 «사이드바에 두지 않는다» 고 적어 뒀었다(상시 절차로 읽힐까 봐). 그 뒤 제니가 **하루 두 번 정해진 시각의 일**이라고 정했다 — **전제가 바뀌면 결론도 바꾼다.** 목록에서 골라 들어오는 길과 메뉴로 들어오는 길이 같은 화면에 닿는다(번호를 안 받으면 스스로 대기 건을 읽는다). ③**머리말을 티켓 등록·상세와 같은 띠로** 맞췄다 — 같은 크기·같은 자리에서 멈추고(sticky) [목록으로] 도 «오른쪽 끝» 에 선다. **세 화면이 같은 머리를 이고 있어야 오가며 눈이 다시 자리를 찾지 않는다.** 겸해 `.section` 으로 감쌌다 — 이 클래스가 콘솔의 모든 화면에 같은 좌우 여백을 주는데 내가 맨 div 로 두어 이 화면만 사이드바에 붙어 있었다(제니 제보). ④★★★ **건별 문안도 «그 공급사의 창구» 가 형식을 정한다**(제니) — 메일이면 제목 + 빈 줄 + 표, 메신저면 줄글. 그전에는 건별이 늘 줄글이라, 메일로 접수하는 공급사에는 일괄로 보낸 것과 «모양이 다른» 글이 나갔다. 버튼 이름에 «(메일)/(메신저)» 를 적어 **누르기 전에** 무엇이 들어올지 보이게 했다. ★ 메일이면 클립보드에도 표째로 담는다(text/html + text/plain). ⑤**넣은 글에 맞춰 작성칸이 늘어난다** — 접수 문안은 여러 줄이라 세 줄짜리 칸에 넣으면 넣자마자 스크롤이 생겨 «무엇이 들어갔는지» 를 못 본다. 상한(420px)을 둔 이유는 칸이 화면을 다 먹으면 아래 저장 버튼에 손이 안 닿기 때문이다. ⑥[📋 공급사 접수 문안] 을 **특수문자 줄의 오른쪽 끝**으로 옮겼다(제니) — 아래에 또 두면 작성칸 위가 두 줄이 된다. ⏳ **메일 표의 항목 개편(주문자명(수령자명)·연락처·유형+방향·주문/CS 수량·접수 사유·운송장)과 «접수 사유로 쓸 고객 이력 별표» 는 다음 판이다** — 이력에 표시를 남길 칸이 하나 필요하다. -->
 <!-- v20260904v_draft_page_and_macro -->
 <!-- (2026-09-04) **접수 문안이 두 길로 갈렸다**(제니). ①**일괄** — [📋 일괄 접수 문안] 은 모달이 아니라 «화면» 이 됐다(`csDraft`). 하루 두 번 몰아 보낼 때 쓰는 자리라 여러 공급사를 오가며 표를 견주는데, 모달 폭으로는 모자라고 뒤의 목록이 비쳐 보이면 «어디까지 했나» 가 흐려진다(08-31 초안도 «화면 3» 이었다). ★ 화면이 «스스로 선다» — 넘겨받는 것은 티켓 번호 목록뿐이고 값은 화면이 다시 읽는다. 목록이 들고 있던 행을 물려받으면 여기서 상태를 바꾼 뒤 목록으로 돌아갔을 때 «바뀌기 전 값» 이 남아 두 화면이 서로 다른 말을 한다. ★ 자식 화면을 더했으니 `pageToParent` 에도 넣었다 — 없으면 그 화면을 보고 있는데 사이드바에서 부모가 접혀 «지금 보는 메뉴가 안 보이는» 상태가 된다(09-01 에 밟은 자리). ②★★★ **건별은 «매크로처럼»** (제니) — 티켓 등록·상세의 이력 작성칸에 [📋 공급사 접수 문안] 을 뒀다. 누르면 **일괄 화면과 같은 형식**의 글이 이력 칸에 들어가고 클립보드에도 담긴다. **두 자리에서 다른 글이 나가면 받는 공급사가 같은 회사에서 온 것인지도 헷갈린다.** ★★ **넣기만 하고 저장하지 않는다** — 사람이 읽어 보고 고친 뒤 [저장]/[남기기] 를 누른다. 공급사에 나가는 글이라 **보내기 전에 눈으로 볼 자리가 한 번은 있어야 한다.** ★ 이미 적어 둔 글이 있으면 지우지 않고 «아래에» 잇는다 — 사람이 친 글을 버튼 하나가 없애면 안 된다. ★ 넣으면서 «누가» 를 «공급사» 로 옮긴다(그 줄이 공급사와 오간 말이므로). ★★ **건별은 줄글 하나다** — 표는 여러 건을 나란히 놓을 때 값어치가 있고, 한 건짜리 표는 메일에 붙여도 오히려 읽기 나쁘다. 그래서 한 건일 때는 「1.」 번호도 안 붙인다(하나뿐인 목록은 목록이 아니고, 받는 쪽이 «나머지는 어디 갔나» 를 묻는다). ★ 등록 화면에서는 티켓이 아직 없으므로 고른 품목·수량으로 만든다 — 여럿 고르면 여러 줄이 된다(한 주문에서 두 품목이 문제인 경우가 흔하고 공급사도 한 번에 받아야 한다). ③일괄 화면에 **[보냈음 · 진행중으로]** 를 뒀다(제니) — 목록으로 돌아가 다시 고르게 하면 **어느 공급사까지 보냈는지를 사람이 외워야 한다.** 대상은 «지금 보고 있는 공급사» 뿐이고(한 번의 접수는 한 곳에 간다), 이미 넘어간 묶음에서는 «✓ 접수 완료» 로 바뀐다. ★ 왼쪽 공급사 목록에 **그 건들의 상태를 함께** 적는다(제니) — 어디까지 보냈는지가 안 보이면 같은 곳에 두 번 보내거나 한 곳을 통째로 빠뜨린다. 상태가 섞여 있으면 섞인 대로 적는다. ★ 「보낸 시각」은 비어 있는 건에만 찍고, 「티켓 등록」인 건만 «진행중» 으로 옮긴다(앞서 간 건을 되돌리지 않는다). ⏳ **문안 «형식» 은 제니가 알려 주는 것으로 바꿀 예정이다** — 지금은 08-31 초안의 형식이다. -->
 <!-- v20260904u_qty_center_tight -->
@@ -17549,7 +17551,9 @@ const CS_SYMBOLS = [
 //   화면이 통째로 다시 뜬다.
 // light: 이력을 «적는» 밝은 판 안에 있을 때(2026-09-03). 어두운 화면용 색을 그대로
 //   두면 밝은 바탕에 옅은 회색 글자가 되어 기호가 안 보인다.
-function CsSymbolBar({taRef, value, onChange, light}){
+// ★ 오른쪽 끝에 조각을 하나 받는다(right) — 특수문자 줄이 이미 한 줄을 쓰고 있어
+//   [공급사 접수 문안] 을 그 아래 또 두면 작성칸 위가 두 줄이 된다(제니 2026-09-04).
+function CsSymbolBar({taRef, value, onChange, light, right}){
   const put = (ch,caret)=>{
     const el = taRef && taRef.current;
     const v = String(value||'');
@@ -17575,6 +17579,7 @@ function CsSymbolBar({taRef, value, onChange, light}){
             border:'1px solid '+(light ? CS_WRITE.btnBd : 'var(--border)'),
             color: light ? CS_WRITE.text : 'var(--sub)',padding:0}}>{x.ch}</button>
       ))}
+      {right && <><div style={{flex:1}}></div>{right}</>}
     </div>
   );
 }
@@ -18429,11 +18434,21 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
                 {/* ★★ [공급사 접수 문안] 은 «바꾸는» 일이 아니라 «내용을 만드는» 일이라
                     이름도 자리도 다르다 — 한 줄에 「…바꾸기」만 넷이 서면 무엇이
                     다른지 안 읽힌다. 이것만 창을 연다(표가 바 안에 안 들어간다). */}
-                <button disabled={bulkBusy} onClick={()=>goDraft(pickedIds)}
-                  style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                    cursor:'pointer',whiteSpace:'nowrap',background:'#fff',
-                    border:'1px solid #fff',color:'#7E2620',
-                    fontWeight:700}}>📋 일괄 접수 문안</button>
+                {/* ★★★ **«공급사 미접수» 칩에서만 뜬다**(제니 2026-09-04). 일괄 접수는
+                    «티켓 등록» 상태인 건에만 하는 일이라, 다른 칩에서는 누를 일이
+                    아예 없다. **쓸 일이 없는 자리에 버튼을 두면 «왜 여기선 안 되지» 를
+                    누른 뒤에 알게 된다** — 안 보이는 편이 낫다.
+                    ★ 넘기는 것도 «티켓 등록» 인 건만이다: 칩이 이미 걸러 주지만,
+                      칩과 목록이 어긋날 자리(검색은 칩을 무시한다)가 있어 한 번 더 거른다. */}
+                {chip==='st:received' && (
+                  <button disabled={bulkBusy}
+                    onClick={()=>goDraft(pickedIds.filter(id=>
+                      (pageList.find(x=>x.id===id)||{}).stage==='received'))}
+                    style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+                      cursor:'pointer',whiteSpace:'nowrap',background:'#fff',
+                      border:'1px solid #fff',color:'#7E2620',
+                      fontWeight:700}}>📋 일괄 접수 문안</button>
+                )}
                 {[['assignee','담당자'],['stage','상태'],['recheck','리체크 날짜']].map(([id,label])=>(
                   <button key={id} disabled={bulkBusy}
                     onClick={()=>setBulkOpen(id)}
@@ -20953,6 +20968,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   const digits = (v)=> String(v||'').replace(/[^0-9]/g,'');
 
   const chosen = items.filter(i=>sel.indexOf(i.code)>=0);
+  // 접수 문안의 «형식» 을 정하는 값 — 고른 품목의 공급사 창구.
+  // ★ 한 주문의 품목들은 대개 한 공급사다(묶음 판정도 그 전제로 서 있다).
+  const supChannel = useSupplierChannel(chosen.length ? chosen[0].supplier_name : null);
+  // ★ 넣은 글이 한눈에 보이게 칸을 늘린다 — 글이 바뀔 때마다 다시 잰다.
+  useEffect(()=>{ csAutoGrow(noteRef.current); },[draft]);
   const head = chosen[0] || null;           // 공통 값(공급사·주문자)은 첫 품목에서 본다
 
   // ★★★ 수령인·배송지는 «주문» 의 값이다 — 품목마다 갖지 않는다(제니 2026-09-03).
@@ -21734,7 +21754,41 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               placeholder={CS_NOTE_HINT[side] || ''}
               style={{...inp,resize:'vertical',background:CS_WRITE.field,
                 border:'1px solid '+CS_WRITE.fieldBd,color:CS_WRITE.text,colorScheme:'light'}}/>
-            <CsSymbolBar taRef={noteRef} value={draft} onChange={setDraft} light/>
+            {/* ★ 상세 화면과 «같은 자리·같은 버튼» 이다(제니 2026-09-04) — 특수문자 줄의
+                오른쪽 끝. 여기서는 티켓이 아직 없으므로 고른 품목·수량으로 만든다.
+                ★ 고른 품목이 여럿이면 여러 줄이 된다 — 한 주문에서 두 품목이 문제인
+                  경우가 흔하고, 공급사도 그것을 한 번에 받아야 한다.
+                ★ 형식은 «그 공급사의 창구» 가 정한다(메일이면 제목+표). */}
+            <CsSymbolBar taRef={noteRef} value={draft} onChange={setDraft} light
+              right={
+                <button type="button" disabled={!chosen.length}
+                  title={chosen.length ? (supChannel==='email'
+                      ? '이 공급사는 메일 창구 — 제목+표로 넣습니다' : '메신저용 줄글로 넣습니다')
+                    : '품목을 먼저 고르세요'}
+                  onClick={async ()=>{
+                    const list = chosen.map(it=>({
+                      cs_type:f.cs_type, direction:f.direction,
+                      order_item_code:it.code, orderer_name:it.customer_name,
+                      receiver_name:(itemF[it.code]||{}).receiver_name,
+                      product_name:it.product_name,
+                      option_name:(itemF[it.code]||{}).option_name,
+                      cs_qty: parseInt((itemF[it.code]||{}).cs_qty ?? '1',10) || 1,
+                    }));
+                    const d = csDraftFor(supChannel, list);
+                    setDraft(x=> x.trim() ? (x.replace(/\s+$/,'')+'\n\n'+d.text) : d.text);
+                    setSide('공급사');
+                    const ok = await csDraftCopy(d);
+                    toast(ok ? '접수 문안을 넣고 복사했습니다 — 확인하고 [남기기] 하세요.'
+                             : '접수 문안을 넣었습니다. 복사는 직접 해 주세요.',
+                          ok ? 'ok' : 'warn');
+                  }}
+                  style={{padding:'4px 10px',borderRadius:5,fontSize:11,fontWeight:600,
+                    fontFamily:'inherit',cursor:chosen.length?'pointer':'default',
+                    background:CS_WRITE.field,border:'1px solid '+CS_WRITE.btnBd,
+                    color:chosen.length?CS_WRITE.text:'#9AA7BE',whiteSpace:'nowrap'}}>
+                  📋 공급사 접수 문안{chosen.length
+                    ? (supChannel==='email' ? ' (메일)' : ' (메신저)') : ''}</button>
+              }/>
             <CsPhotoAttach photos={photos} setPhotos={setPhotos} light/>
             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:7}}>
               <span style={{fontSize:10,color:CS_WRITE.sub}}>Ctrl+Enter 로도 남길 수 있습니다</span>
@@ -21748,29 +21802,6 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   품목·수량으로 만든다. **고른 품목이 여럿이면 여러 줄이 된다** —
                   한 주문에서 두 품목이 문제인 경우가 실제로 흔하고, 공급사도 그것을
                   한 번에 받아야 한다. */}
-              <button type="button" disabled={!chosen.length}
-                title={chosen.length ? undefined : '품목을 먼저 고르세요'}
-                onClick={async ()=>{
-                  const list = chosen.map(it=>({
-                    cs_type:f.cs_type, direction:f.direction,
-                    order_item_code:it.code, orderer_name:it.customer_name,
-                    receiver_name:(itemF[it.code]||{}).receiver_name,
-                    product_name:it.product_name,
-                    option_name:(itemF[it.code]||{}).option_name,
-                    cs_qty: parseInt((itemF[it.code]||{}).cs_qty ?? '1',10) || 1,
-                  }));
-                  const text = csDraftMessenger(list);
-                  setDraft(d=> d.trim() ? (d.replace(/\s+$/,'')+'\n\n'+text) : text);
-                  setSide('공급사');
-                  const ok = await csDraftToClipboard(text);
-                  toast(ok ? '접수 문안을 넣고 복사했습니다 — 확인하고 [남기기] 하세요.'
-                           : '접수 문안을 넣었습니다. 복사는 직접 해 주세요.',
-                        ok ? 'ok' : 'warn');
-                }}
-                style={{padding:'6px 12px',borderRadius:6,fontSize:11,fontWeight:600,
-                  fontFamily:'inherit',cursor:chosen.length?'pointer':'default',
-                  background:CS_WRITE.field,border:'1px solid '+CS_WRITE.btnBd,
-                  color:chosen.length?CS_WRITE.text:'#9AA7BE'}}>📋 공급사 접수 문안</button>
               <button onClick={addNote} disabled={!draft.trim() && !photos.length}
                 style={{padding:'6px 14px',borderRadius:6,fontSize:11,fontWeight:600,
                   fontFamily:'inherit',border:'none',
@@ -22103,6 +22134,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const csLines     = (text,style)=> csLinesOf(text, pq, style);
   const csHitCount  = (text)=> csHitLines(text, pq);
   const draftRef = useRef(null);
+  // 접수 문안의 «형식» 을 정하는 값 — 이 티켓 공급사의 창구(메일·네이트온·카카오톡).
+  const supChannel = useSupplierChannel(t && t.supplier_name);
+  // ★ 넣은 글이 한눈에 보이게 칸을 늘린다 — 글이 바뀔 때마다 다시 잰다.
+  useEffect(()=>{ csAutoGrow(draftRef.current); },[draft]);
   // ★★ 이력 두 가지를 탭으로 가른다(제니 2026-09-02) — ①사람이 적은 말(무슨 일이
   //   있었나) ②우리가 고친 값(무엇을 바꿨나). 한 목록에 섞여 있으면 통화 내용을
   //   찾을 때 값 변경 문구가 사이사이 끼어 읽힌다.
@@ -22873,35 +22908,43 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               placeholder={CS_NOTE_HINT[side] || ''}
               style={{...inp,resize:'vertical',background:CS_WRITE.field,
                 border:'1px solid '+CS_WRITE.fieldBd,color:CS_WRITE.text,colorScheme:'light'}}/>
-            <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft} light/>
             {/* ── 공급사 접수 문안 (제니 2026-09-04) ─────────────────────────
-                ★★★ 일괄 화면(공급사 접수 문안)과 «같은 형식» 을 이 자리에 넣는다 —
-                  제니가 말한 «매크로처럼» 이 그것이다. 실제 업무는 건별 실시간이라
-                  이쪽이 기본이고, 일괄 화면은 하루 두 번 몰아 보낼 때 쓴다.
+                ★★★ 일괄 화면과 «같은 형식» 을 이 자리에 넣는다 — 제니가 말한
+                  «매크로처럼» 이 그것이다. 실제 업무는 건별 실시간이라 이쪽이 기본이고,
+                  일괄 화면은 하루 두 번 몰아 보낼 때 쓴다.
+                ★★★ **형식은 그 공급사의 창구가 정한다** — 메일이면 제목 + 빈 줄 + 표,
+                  메신저면 줄글. 건별이라고 늘 줄글로 두면 메일로 접수하는 공급사에는
+                  일괄로 보낸 것과 «모양이 다른» 글이 나간다.
                 ★★ **넣기만 하고 저장하지 않는다.** 사람이 읽어 보고 고친 뒤 [저장] 을
                   누른다 — 공급사에 나가는 글이라 **보내기 전에 눈으로 볼 자리가**
                   **한 번은 있어야 한다.**
-                ★ 넣으면서 클립보드에도 담는다. 둘이 따로면 «넣고 나서 다시 긁는» 일이 생긴다.
+                ★ 넣으면서 클립보드에도 담는다(메일이면 표째로). 둘이 따로면 «넣고 나서
+                  다시 긁는» 일이 생긴다.
                 ★ 이미 적어 둔 글이 있으면 지우지 않고 «아래에» 잇는다 — 사람이 친 글을
-                  버튼 하나가 없애면 안 된다. */}
-            <div style={{display:'flex',alignItems:'center',gap:7,marginTop:8,flexWrap:'wrap'}}>
-              <button type="button" disabled={busy}
-                onClick={async ()=>{
-                  const text = csDraftMessenger([{...t, cs_qty: parseInt(edit.cs_qty,10) || t.cs_qty}]);
-                  setDraft(d=> d.trim() ? (d.replace(/\s+$/,'')+'\n\n'+text) : text);
-                  setSide('공급사');
-                  const ok = await csDraftToClipboard(text);
-                  toast(ok ? '접수 문안을 넣고 복사했습니다 — 확인하고 [저장] 하세요.'
-                           : '접수 문안을 넣었습니다. 복사는 직접 해 주세요.',
-                        ok ? 'ok' : 'warn');
-                }}
-                style={{padding:'5px 11px',borderRadius:6,fontSize:11,fontWeight:600,
-                  fontFamily:'inherit',cursor:'pointer',background:CS_WRITE.field,
-                  border:'1px solid '+CS_WRITE.btnBd,color:CS_WRITE.text}}>
-                📋 공급사 접수 문안</button>
-              <span style={{fontSize:10,color:CS_WRITE.sub}}>
-                넣고 복사합니다 — 보내는 것은 창구에서 직접</span>
-            </div>
+                  버튼 하나가 없애면 안 된다.
+                ★ 자리는 특수문자 줄의 «오른쪽 끝» 이다(제니) — 아래에 또 두면 작성칸
+                  위가 두 줄이 된다. */}
+            <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft} light
+              right={
+                <button type="button" disabled={busy}
+                  title={supChannel==='email' ? '이 공급사는 메일 창구 — 제목+표로 넣습니다'
+                                              : '메신저용 줄글로 넣습니다'}
+                  onClick={async ()=>{
+                    const d = csDraftFor(supChannel,
+                      [{...t, cs_qty: parseInt(edit.cs_qty,10) || t.cs_qty}]);
+                    setDraft(x=> x.trim() ? (x.replace(/\s+$/,'')+'\n\n'+d.text) : d.text);
+                    setSide('공급사');
+                    const ok = await csDraftCopy(d);
+                    toast(ok ? '접수 문안을 넣고 복사했습니다 — 확인하고 [저장] 하세요.'
+                             : '접수 문안을 넣었습니다. 복사는 직접 해 주세요.',
+                          ok ? 'ok' : 'warn');
+                  }}
+                  style={{padding:'4px 10px',borderRadius:5,fontSize:11,fontWeight:600,
+                    fontFamily:'inherit',cursor:'pointer',background:CS_WRITE.field,
+                    border:'1px solid '+CS_WRITE.btnBd,color:CS_WRITE.text,
+                    whiteSpace:'nowrap'}}>
+                  📋 공급사 접수 문안{supChannel==='email' ? ' (메일)' : ' (메신저)'}</button>
+              }/>
             <CsPhotoAttach photos={photos} setPhotos={setPhotos} light disabled={busy}/>
           </div>
           {/* ↑ 밝은 판은 «사진 첨부까지» 다(제니 2026-09-04).
@@ -23355,16 +23398,55 @@ function csDraftMessenger(rows){
 //   않는 이유는 **보내기 전에 한 번 눈으로 볼 자리가 있어야** 하기 때문이다 —
 //   공급사에 나가는 글이라 잘못 나가면 되돌릴 수 없다.
 // ★ 넣으면서 클립보드에도 담는다. 넣기와 복사가 따로면 «넣고 나서 다시 긁는» 일이 생긴다.
-async function csDraftToClipboard(text){
+// ★★★ **형식은 «그 공급사의 창구» 가 정한다**(제니 2026-09-04) — 건별도 일괄과 같다.
+//   메일이면 제목 + 빈 줄 + 표, 메신저면 줄글. 건별이라고 늘 줄글로 두면, 메일로
+//   접수하는 공급사에는 표 없이 나가 일괄로 보낸 것과 모양이 달라진다.
+//   ★ 창구를 모르면 메신저로 물러선다 — 표를 붙여 넣어 줄이 깨지는 쪽이 더 나쁘다.
+function csDraftFor(channelCode, list){
+  return (channelCode==='email')
+    ? {text: csDraftMailPlain(list), html: csDraftMailHtml(list), isMail:true}
+    : {text: csDraftMessenger(list), html: null, isMail:false};
+}
+async function csDraftCopy(d){
   try{
+    // 메일은 표째로 붙게 text/html 과 text/plain 을 «함께» 담는다.
+    if(d.html && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+      await navigator.clipboard.write([new window.ClipboardItem({
+        'text/html' : new Blob([d.html],{type:'text/html'}),
+        'text/plain': new Blob([d.text],{type:'text/plain'}),
+      })]);
+      return true;
+    }
     if(navigator.clipboard && navigator.clipboard.writeText){
-      await navigator.clipboard.writeText(text); return true;
+      await navigator.clipboard.writeText(d.text); return true;
     }
     const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
+    ta.value = d.text; document.body.appendChild(ta); ta.select();
     document.execCommand('copy'); document.body.removeChild(ta);
     return true;
   }catch(_e){ return false; }
+}
+// 티켓 하나의 공급사 창구를 읽어 둔다 — 문안의 형식이 이 값으로 갈린다.
+function useSupplierChannel(name){
+  const [code,setCode] = useState(null);
+  useEffect(()=>{
+    let alive = true;
+    if(!name){ setCode(null); return; }
+    (async()=>{
+      const {data} = await sb.from('suppliers').select('channel').eq('name',name).maybeSingle();
+      if(alive) setCode((data && data.channel) || null);
+    })();
+    return ()=>{ alive = false; };
+  },[name]);
+  return code;
+}
+// ★ 넣은 글이 «한눈에» 보이게 칸을 늘린다(제니 2026-09-04). 접수 문안은 여러 줄이라
+//   세 줄짜리 칸에 넣으면 넣자마자 스크롤이 생겨 «무엇이 들어갔는지» 를 못 본다.
+//   ★ 상한을 둔다 — 칸이 화면을 다 먹으면 아래의 저장 버튼에 손이 안 닿는다.
+function csAutoGrow(el, max){
+  if(!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight + 2, max || 420) + 'px';
 }
 // 메일용 — 붙여 넣는 곳이 표를 받아 주므로 HTML 로도 만든다.
 // ★ 클립보드에 text/html 과 text/plain 을 «함께» 담는다: 메일 창은 표로 받고,
@@ -23401,10 +23483,18 @@ function CsSupplierDraftPage({ids, currentUserEmail, onBack, goTicket}){
   const [supMap,setSupMap] = useState({});
   const [busy,setBusy]   = useState(false);
   const load = async ()=>{
-    if(!ids || !ids.length){ setRows([]); return; }
-    const {data,error} = await sb.from('cs_tickets').select('*').in('id', ids);
+    // ★★ 넘겨받은 번호가 없으면 «지금 접수 대기인 것 전부» 를 읽는다 — 사이드바
+    //   메뉴로 바로 들어온 경우다(제니 2026-09-04). 목록에서 고르는 길과 메뉴로
+    //   들어오는 길이 «같은 화면» 에 닿는다.
+    const q = sb.from('cs_tickets').select('*');
+    const {data,error} = (ids && ids.length)
+      ? await q.in('id', ids)
+      : await q.eq('stage','received').order('created_at',{ascending:true}).limit(300);
     if(sbFail('티켓 조회', error)){ setRows([]); return; }
-    const list = data||[];
+    // ★★★ **«티켓 등록» 이 아닌 건은 이 화면에 두지 않는다**(제니). 일괄 접수는
+    //   아직 안 보낸 건에만 하는 일이라, 이미 진행중인 건이 표에 섞여 있으면
+    //   **그것까지 문안에 담겨 공급사에 두 번 접수된다.**
+    const list = (data||[]).filter(t=>t.stage==='received');
     setRows(list);
     const names = Array.from(new Set(list.map(t=>t.supplier_name).filter(Boolean)));
     if(names.length){
@@ -23506,23 +23596,47 @@ function CsSupplierDraft({rows, supMap, busy, onSent, onBack, goTicket}){
 
   const pane = {background:'var(--card)',border:'1px solid var(--border)',borderRadius:9};
   const sentAll = cur && cur.list.every(t=>t.stage!=='received');
+  // ★ 보내고 나면 그 공급사가 목록에서 빠진다(접수 대기가 아니게 되므로) — 고른 자리가
+  //   범위를 벗어나면 맨 앞으로 되돌린다. 안 그러면 오른쪽이 빈 화면이 된다.
+  useEffect(()=>{ if(pick >= groups.length) setPick(0); },[groups.length]);
   return (
-    <div>
-      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
-        <button onClick={onBack}
-          style={{padding:'6px 13px',borderRadius:8,fontSize:12,fontWeight:600,
-            fontFamily:'inherit',cursor:'pointer',background:'var(--accent)',
-            border:'none',color:'#12203c'}}>← 목록으로</button>
-        <div style={{fontSize:17,fontWeight:700,color:'var(--text)'}}>공급사 접수 문안</div>
-        <div style={{fontSize:11.5,color:'var(--sub)'}}>
-          {rows.length}건 · 공급사 {groups.length}곳</div>
+    // ★ `.section` 으로 감싼다(제니 2026-09-04: 「콘솔 메뉴와 간격 틈이 없이 붙어 있다」)
+    //   — 이 클래스가 콘솔의 모든 화면에 같은 좌우 여백을 준다. 내가 맨 div 로 두어
+    //   이 화면만 사이드바에 붙어 있었다.
+    <div className="section" style={{contain:'inline-size'}}>
+      {/* ★★ 머리말은 티켓 등록·상세와 «같은 띠» 다(제니) — 같은 크기·같은 자리에서
+          멈추고(sticky), [목록으로] 도 그 화면들처럼 «오른쪽 끝» 에 선다.
+          세 화면이 같은 머리를 이고 있어야 오가며 눈이 다시 자리를 찾지 않는다. */}
+      <div style={{position:'sticky',top:0,zIndex:20,background:'var(--bg)',
+        margin:'-24px -32px 8px',padding:'18px 32px 12px',
+        borderBottom:'1px solid var(--border)',
+        display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:17,fontWeight:700,margin:0,color:'var(--text)'}}>
+          공급사 접수 문안</h1>
+        <span style={{fontSize:12,color:'var(--sub)'}}>
+          접수 대기 {rows.length}건 · 공급사 {groups.length}곳</span>
+        <div style={{flex:1}}></div>
+        <button onClick={onBack} style={{padding:'7px 16px',background:'var(--accent)',
+          border:'none',borderRadius:7,color:'#1A2240',fontSize:12,fontWeight:600,
+          cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
       {/* ★★★ 이 한 줄이 이 화면에서 가장 중요하다 — 콘솔은 «보내지 않는다». */}
-      <div style={{fontSize:11.5,color:'#F6AD09',lineHeight:1.7,margin:'8px 0 14px'}}>
+      <div style={{fontSize:11.5,color:'#F6AD09',lineHeight:1.7,margin:'2px 0 14px'}}>
         내용만 만듭니다 — <b>복사해서 메일·네이트온·카카오톡으로 직접 보내세요.</b>
-        보낸 뒤에 <b>[보냈음 · 진행중으로]</b> 를 누르면 그 공급사 건이 «진행중» 이 됩니다.
+        보낸 뒤에 <b>[보냈음 · 진행중으로]</b> 를 누르면 그 공급사 건이 «진행중» 이 되고
+        이 목록에서 빠집니다.
       </div>
 
+      {rows.length===0 ? (
+        <div style={{textAlign:'center',padding:'70px 24px',background:'var(--card)',
+          border:'1px dashed var(--border)',borderRadius:12,color:'var(--sub)'}}>
+          <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:6}}>
+            접수를 기다리는 티켓이 없습니다</div>
+          <div style={{fontSize:12,lineHeight:1.7}}>
+            상태가 <b>«티켓 등록»</b> 인 건만 여기 옵니다 — 이미 보낸 건은 «진행중» 입니다.
+          </div>
+        </div>
+      ) : (
       <div style={{display:'grid',gridTemplateColumns:'240px 1fr',gap:12}}>
           {/* 공급사 — 한 번의 접수는 한 곳에 간다 */}
           <div style={{...pane,padding:'8px 6px',alignSelf:'start'}}>
@@ -23650,6 +23764,7 @@ function CsSupplierDraft({rows, supMap, busy, onSent, onBack, goTicket}){
             </div>
           </div>
       </div>
+      )}
     </div>
   );
 }
@@ -24644,6 +24759,17 @@ function App() {
             <>
               <div className={`nav-child ${page==='csTickets'?'active':''}`} onClick={()=>navigateTo('csTickets')}>
                 티켓 목록
+              </div>
+              {/* ★★ 「공급사 접수」는 메뉴로도 연다(제니 2026-09-04) — 하루 두 번 몰아
+                     보내는 «정해진 시각의 일» 이라 그때는 목록에서 골라 들어오는 것보다
+                     메뉴로 바로 들어오는 편이 빠르다. 누르면 지금 «티켓 등록» 인 건이
+                     통째로 담긴 채 열린다.
+                  ★ 08-31 초안에서 «사이드바에 두지 않는다» 고 적었던 것은 이 기능이
+                     «상시 절차» 로 읽히는 것을 걱정해서였는데, 그 뒤 제니가 하루 두 번
+                     정해진 시각의 일이라고 정했다. **전제가 바뀌면 결론도 바꾼다.** */}
+              <div className={`nav-child ${page==='csDraft'?'active':''}`}
+                onClick={()=>{ setCsDraftIds([]); navigateTo('csDraft'); }}>
+                공급사 접수
               </div>
               {/* ★ 설정은 master 만 본다 — 여기서 정하는 것이 «남이 무엇을 볼 수 있나» 라,
                      상담원에게 메뉴가 보이면 그 자체로 잘못된 신호다. */}
