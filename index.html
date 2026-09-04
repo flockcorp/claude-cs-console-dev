@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260904j_bulk_edit -->
+<!-- (2026-09-04) **목록에서 여러 건을 골라 한 번에 바꾼다** — 체크박스 + 일괄 편집 바(제니가 자리를 요청해 둔 것). ★★ 공급사 접수는 «건별 실시간» 이 실제 업무이고 일괄은 «필요할 때» 쓰는 것이라(2026-09-01 제니 정정), **사이드바에 메뉴로 두지 않고 목록에서 여러 건을 골랐을 때만 바가 나타난다.** 메뉴에 있으면 «저게 정식 절차인가» 로 읽혀 새로 오는 사람이 다시 엑셀로 간다. ★★★ **줄 아무 데나 누르면 티켓이 열리는 화면이다** — 체크박스의 클릭이 위로 올라가면 «고르려다 티켓이 열린다». 칸 전체를 눌러도 골라지게 하고 그 칸에서 클릭을 멈춘다(stopPropagation). ★★ **«보이는 것만» 센다.** 칩이나 필터를 옮기면 화면에서 사라진 건이 골라진 채로 남는데, 그 상태로 일괄 적용하면 **보이지도 않는 티켓이 바뀐다.** 고른 것을 지우지는 않고(돌아오면 그대로다) 세지도 바꾸지도 않는다. 머리글 체크박스도 «이 화면에 보이는 것» 만 고른다 — 500건을 통째로 고르는 버튼은 실수 한 번의 값이 너무 크다. ★★★ **바꿀 수 있는 것은 셋뿐이다: 담당자 · 상태 · 리체크 날짜.** 돈이 오가는 칸(환불·정산)과 개인정보 칸은 일부러 뺐다 — 일괄로 바꿔서 이로운 값이 아니고, 그 칸들은 DB 트리거가 막고 있어 «화면에는 있는데 저장하면 실패» 가 될 자리다. ★★ **되돌리기가 없는 일이라 한 번 더 묻는다**(confirm) — 한 건을 잘못 고치는 것과 서른 건을 잘못 고치는 것은 무게가 다르다. 되돌리려면 서른 건을 하나씩 열어야 한다. ★★ **이력은 건마다 한 줄씩** 남긴다(묶어서 한 줄만 남기면 나중에 그 티켓 하나를 열었을 때 «왜 바뀌었는지» 가 없다). 모양은 상세 화면과 같다(side:'원룸만들기' · action:'수정') — 같은 일을 두 화면이 다른 모양으로 남기면 이력을 세로로 읽을 수 없다. ★ 바는 sticky 로 표 위에 붙인다: 목록을 내려가며 고르는데 바가 화면 밖으로 나가면 고르고 나서 다시 위로 올라가야 한다. 화면 아래 고정은 피했다 — 좌측 하단(종)·우측 하단(토스트)에 이미 다른 것이 붙어 있어 겹치면 둘 다 안 읽힌다. ★ 담당자 목록은 «지금 목록에 있는 사람 + 나» 다: console_users 를 읽으려면 정책을 함께 열어야 하는데(계정 화면과 한 몸), 그 전까지는 있지도 않은 사람을 고르게 하는 것보다 이 편이 정직하다. ★ 리체크는 «비우고 적용» 하면 지운다 — 걸어 뒀다가 무르는 일이 실제로 있다. ★ 고르는 칸(34px)도 폭의 합에 넣는다 — 빠뜨리면 그만큼 오른쪽 끝이 밀린다. -->
 <!-- v20260904i_required_wired -->
 <!-- (2026-09-04) **«필수(required)» 설정을 화면에 이었다** — 「큰 것 셋」의 1번. ★★★ 설정 화면(칸·권한 탭)은 09-02 에 만들었고 **DB 트리거도 이 설정의 «권한(edit)» 을 이미 읽고 있었는데, «필수» 만 아무 데도 안 닿고 있었다.** 등록 화면은 코드에 박힌 셋(접수 경로·유형·수량)만 봤다 — 설정에서 「주문자 연락처 = 만들 때」로 바꿔도 화면이 안 읽으니 아무 일도 안 일어난다. **고를 수 있는데 아무 일도 하지 않는 설정은 없는 설정보다 나쁘다: 사람은 걸어 뒀다고 믿는다.** ①등록 화면의 필수를 `cs_field_rules` 의 "create" 로 만든다. ★★ 칸마다 «값이 어디에 있는지» 가 다르다 — 품목이 들고 온 것(카페24) · 품목별로 사람이 채우는 것 · 티켓 하나에 한 번 적는 것. 그 자리를 한 표(filledIn)에 모았다: 여기가 어긋나면 «채웠는데 필수라고 한다» 가 된다. ★ 여러 품목을 한 번에 등록하므로 «고른 품목 전부» 에 값이 있어야 한다. ★ 품목을 아직 안 골랐으면 딸린 칸을 줄줄이 세우지 않고 「품목 선택」 한 줄만 — 정작 먼저 할 일이 그 속에 묻힌다. ②상세의 「종결」 제출에 "close" 필수를 건다(방향·담당자·비용 부담). ★ **「철회」에는 안 건다** — 없던 일이 된 건이라 방향도 부담도 없는 것이 정상이고, 거기까지 막으면 잘못 만든 티켓을 닫을 길이 없어진다. ★ 필수를 «만들 때/종결할 때» 로 나눠 둔 이유가 여기서 쓰인다(매뉴얼: 「해결 상태로 제출할 때 필수 필드가 입력되어야 한다」) — 접수 시점에 방향·부담을 다 알 수 없고, 그때 걸면 사람이 «-» 를 채워 넣는다. ③★★★ **폐기된 칸이 필수로 남아 있던 것을 찾아 뺐다** — 「종결 사유(close_reason)」는 09-01 에 «단계» 가 그 일을 넘겨받으며 안 쓰는 칸이 됐는데(철회는 stage='withdrawn'), 씨앗 설정에는 「종결할 때 필수」로 남아 있었다. **그대로 이었으면 채울 자리가 없는 칸이 필수가 되어 종결이 영영 막힌다.** 화면 목록(CS_FIELD_DEFS)에서 빼고, 씨앗 SQL 과 dev DB 에서도 뺐다(sql/cs_field_rules_close_reason.sql · dev 적용 완료 · 운영은 티켓 승격 때). **여기서 남길 것: 칸을 폐기할 때 «그 칸을 가리키는 설정» 까지 함께 봐야 한다 — 칸은 안 쓰면 그만이지만 설정은 남아 있다가 그것을 «쓰기 시작한» 날 터진다.** ★ 설정을 못 읽으면 씨앗과 «같은» 기본으로 돈다 — 폴백을 「필수 없음」으로 두면 조회가 한 번 실패한 사이에 빈 티켓이 들어온다(막는 것은 DB, 돕는 것은 화면이라는 분담은 그대로다). -->
 <!-- v20260904h_memo_clamp3 -->
@@ -17236,13 +17238,10 @@ const CS_COLS_HEAD = ['id','created','touched'];
 const CS_COLW_KEY    = 'cs_list_colw_v2';
 const CS_COLW_KEY_V1 = 'cs_list_colw_v1';   // 열별(칩 구분 없음) — 첫 실행 때 _default 로 옮긴다
 const CS_COLW_MIN = 44;
-// ★★ 목록 맨 앞에 «고르는 체크박스» 가 들어올 자리다(제니 2026-09-04 · 아직 안 만들었다).
-//   여러 건을 골라 공급사에 한 번에 접수하는 «일괄 편집 바» 와 한 몸이라, 체크박스만
-//   먼저 두면 눌러도 아무 일이 없다 — 그때 함께 만든다.
+// ★★ 목록 맨 앞 «고르는 체크박스» 칸의 폭(제니 2026-09-04).
 //   ★ 이 열은 [보기 설정] 에 넣지 않는다. 값을 보여 주는 열이 아니라 «고르는 장치» 이고,
 //     끌 수 있게 두면 일괄 편집으로 가는 길이 화면에서 사라진다.
-//   ★ 자리를 지금 못 박아 두는 이유: 폭이 34px 늘어나면 오른쪽 끝이 그만큼 밀리는데,
-//     그때 가서 열 폭을 다시 잡게 하면 사람이 맞춰 둔 폭이 한 번 흐트러진다.
+//   ★ 폭의 합을 셀 때 이 칸을 «반드시» 더한다 — 빠뜨리면 그만큼 오른쪽 끝이 밀린다.
 const CS_SEL_W = 34;
 // ★★ 열의 최소 폭은 «머리글이 … 로 줄지 않는» 값이다(제니 2026-09-04).
 //   좁혀서 값이 접히는 것은 괜찮다 — 표는 값을 담는 자리니까. 하지만 **머리글이
@@ -17789,6 +17788,14 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   //   「티켓이 없네」로 읽힌다 — 좁히는 것은 사람이 정할 일이다.
   const [chip,setChip]     = useState('all');
   const [colOpen,setColOpen] = useState(false);   // [⚙ 보기 설정] 패널 (2026-09-03)
+  // ── 여러 건 고르기 (제니 2026-09-04) ─────────────────────────────────
+  // ★★ 공급사 접수는 «건별 실시간» 이 실제 업무다(매뉴얼의 하루 2회 엑셀 일괄이 아니다).
+  //   일괄은 «상시» 가 아니라 «필요할 때» 쓰는 것이라, 사이드바에 메뉴로 두지 않고
+  //   목록에서 여러 건을 골랐을 때만 바가 나타나게 한다 — 메뉴에 있으면 «저게 정식
+  //   절차인가» 로 읽혀 새로 오는 사람이 다시 엑셀로 간다.
+  const [picked,setPicked] = useState({});        // id -> true
+  const [bulkBusy,setBulkBusy] = useState(false);
+  const [bulkOpen,setBulkOpen] = useState(null);  // 'assignee' | 'stage' | 'recheck'
   // ── 열 너비 (제니 2026-09-04) ────────────────────────────────────────
   // ★★ **너비는 localStorage 다 — console_settings 에 넣지 않는다.** 그 표는 «운영
   //   기준» 이라 한 사람이 바꾸면 모두의 화면이 바뀐다. 어느 열을 보여 줄지는 기준이지만
@@ -17847,7 +17854,8 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
     //     그건 사람이 끌어서 만든 것이 아니라 켠 열이 많아서다.
     let maxw = Infinity;
     if(wrapRef.current){
-      const total = colKeys.reduce((s,x)=>s+widthOf(x),0);
+      // ★ 고르는 칸도 폭을 차지한다 — 빼놓으면 그만큼 오른쪽 끝을 넘는다.
+      const total = CS_SEL_W + colKeys.reduce((s,x)=>s+widthOf(x),0);
       maxw = widthOf(k) + Math.max(0, wrapRef.current.clientWidth - total - 1);
     }
     const x0 = e.clientX, w0 = widthOf(k);
@@ -17999,6 +18007,47 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
   },[settings,chip]);
   // [⚙ 보기 설정] 이 «어느 칩의 설정인가» 를 적을 때 쓴다.
   const chipLabel = (CS_CHIPS.find(c=>c.id===chip) || {}).label || chip;
+  // ── 고른 건 ────────────────────────────────────────────────────────
+  // ★★ **지금 «보이는» 목록 안에서만 센다.** 칩이나 필터를 옮기면 화면에서 사라진 건이
+  //   골라진 채로 남는데, 그 상태에서 일괄로 바꾸면 **보이지도 않는 티켓이 바뀐다.**
+  //   고른 것을 «지우지는» 않는다(돌아오면 그대로 있다) — 다만 세지도, 바꾸지도 않는다.
+  const pickedIds = useMemo(()=>
+    (list||[]).filter(t=>picked[t.id]).map(t=>t.id), [list,picked]);
+  const allPicked = list.length>0 && pickedIds.length===list.length;
+  const toggleAll = ()=>{
+    const next = {...picked};
+    // ★ «보이는 것만» 이다(설정 화면 [전체 선택] 과 같은 규칙). 500건을 통째로 고르는
+    //   버튼은 실수 한 번의 값이 너무 크다.
+    list.forEach(t=>{ if(allPicked) delete next[t.id]; else next[t.id]=true; });
+    setPicked(next);
+  };
+  // 칩을 옮기면 바를 닫는다 — 열린 채로 두면 «지금 무엇이 골라져 있나» 가 어긋나 보인다.
+  useEffect(()=>{ setBulkOpen(null); },[chip]);
+
+  // ★★ 일괄 적용 — 한 번에 바꾸고, **이력은 건마다 한 줄씩** 남긴다.
+  //   묶어서 한 줄만 남기면 나중에 그 티켓 하나를 열었을 때 «왜 바뀌었는지» 가 없다.
+  // ★ 값 변경 이력의 모양은 상세 화면과 «같다»(side:'원룸만들기' · action:'수정').
+  //   같은 일을 두 화면이 다른 모양으로 남기면 이력을 세로로 읽을 수 없다.
+  const applyBulk = async (patch, lines)=>{
+    if(!pickedIds.length) return;
+    setBulkBusy(true);
+    const {error} = await sb.from('cs_tickets')
+      .update({...patch, updated_by:currentUserEmail}).in('id', pickedIds);
+    if(sbFail('일괄 수정', error, {write:true})){ setBulkBusy(false); return; }
+    const evs = pickedIds.map(id=>({
+      ticket_id:id, side:'원룸만들기', action:'수정', actor:currentUserEmail,
+      note: lines.join('\n')+'\n(목록에서 '+pickedIds.length+'건 함께 바꿈)',
+      stage_after: patch.stage || null,
+    }));
+    // ★ 이력이 실패해도 저장을 되돌리지 않는다(환불 이력에서 정한 원칙 그대로).
+    const {error:e2} = await sb.from('cs_ticket_events').insert(evs);
+    if(e2) console.error('[일괄 이력] 실패:', e2);
+    setBulkBusy(false); setBulkOpen(null);
+    toast(pickedIds.length+'건을 바꿨습니다.','ok');
+    setPicked({});
+    load();
+  };
+
   // 지금 이 칩의 폭이 «코드 기본» 과 다른가 — [너비 되돌리기] 를 보일지 정한다.
   // ★ colKeys 뒤에 둔다(선언 순서) — 검사가 잡아 준 자리다.
   const widthsChanged = colKeys.some(k=>
@@ -18189,6 +18238,50 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
           </div>
         </div>
       ) : (
+        <>
+        {/* ── 일괄 편집 바 ────────────────────────────────────────────────
+            ★★ 고른 것이 있을 때만 나타난다. 늘 떠 있으면 «지금 몇 건이 골라져 있나» 라는
+              신호가 배경이 되어 안 읽힌다.
+            ★★ **sticky 로 표 위에 붙인다** — 목록을 내려가며 고르는데 바가 화면 밖으로
+              나가면, 고르고 나서 다시 위로 올라가야 한다.
+            ★ 좌측 하단(종)·우측 하단(토스트)에는 이미 다른 것이 붙어 있어 화면 아래
+              고정은 피했다. 겹치면 둘 다 안 읽힌다.
+            ★ 밝게 «채운다» — 이 바는 «지금 무엇을 하려는 중» 이라는 상태 표시라
+              바탕에 묻히면 안 된다. */}
+        {pickedIds.length>0 && (
+          <div style={{position:'sticky',top:0,zIndex:120,marginBottom:8,
+            background:'#1E2B4E',border:'1px solid #5478BE',borderRadius:10,
+            boxShadow:'0 8px 24px rgba(0,0,0,.45)',padding:'9px 12px',
+            display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+            <span style={{fontSize:12,fontWeight:700,color:'var(--accent)'}}>
+              {pickedIds.length}건 고름</span>
+            <span style={{fontSize:10.5,color:'var(--sub)'}}>
+              이 화면에 보이는 건만 셉니다</span>
+            <div style={{flex:1}}></div>
+            {[['assignee','담당자'],['stage','상태'],['recheck','리체크 날짜']].map(([id,label])=>(
+              <button key={id} disabled={bulkBusy}
+                onClick={()=>setBulkOpen(o=>o===id?null:id)}
+                style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+                  cursor:'pointer',whiteSpace:'nowrap',
+                  background: bulkOpen===id ? '#8FC2FF' : 'transparent',
+                  border:'1px solid '+(bulkOpen===id ? '#8FC2FF' : CS_LINE),
+                  color: bulkOpen===id ? '#12203c' : 'var(--text)',
+                  fontWeight: bulkOpen===id ? 700 : 400}}>{label} 바꾸기</button>
+            ))}
+            <button onClick={()=>{ setPicked({}); setBulkOpen(null); }} disabled={bulkBusy}
+              style={{padding:'5px 10px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+                cursor:'pointer',background:'transparent',
+                border:'1px solid rgba(255,255,255,.22)',color:'var(--sub)'}}>선택 해제</button>
+            {bulkOpen && (
+              <div style={{flexBasis:'100%'}}>
+                <CsBulkPanel what={bulkOpen} count={pickedIds.length} busy={bulkBusy}
+                  optAssignee={optAssignee} currentUserEmail={currentUserEmail}
+                  isMaster={isMaster} onApply={applyBulk}
+                  onClose={()=>setBulkOpen(null)}/>
+              </div>
+            )}
+          </div>
+        )}
         <div ref={wrapRef}
           style={{overflowX:'auto',background:'var(--card)',border:'1px solid var(--border)',borderRadius:12}}>
           {/* ★★ tableLayout:'fixed' + colgroup — 폭을 «내가» 정하려면 이 둘이 필요하다.
@@ -18203,14 +18296,24 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                   그러면 앞의 열들은 준 값 그대로 선다.
               ★ minWidth 는 열 폭의 «합» 이다 — 합이 화면보다 넓으면 바깥 div 가
                 가로로 구른다(이미 overflowX:'auto'). */}
+          {/* ★ 고르는 칸(CS_SEL_W)도 폭의 합에 넣는다 — 빠뜨리면 그만큼 오른쪽 끝이 밀린다. */}
           <table style={{borderCollapse:'collapse',fontSize:12,tableLayout:'fixed',
-            width:'100%', minWidth: colKeys.reduce((s,k)=>s+widthOf(k),0)}}>
+            width:'100%', minWidth: CS_SEL_W + colKeys.reduce((s,k)=>s+widthOf(k),0)}}>
             <colgroup>
+              {/* 고르는 칸 — 값을 보여 주는 열이 아니라 «장치» 라 [보기 설정] 에 없다. */}
+              <col style={{width:CS_SEL_W}}/>
               {colKeys.map(k=><col key={k} style={{width:widthOf(k)}}/>)}
               <col/>
             </colgroup>
             <thead>
               <tr>
+                {/* ★ 「보이는 것만」 고른다 — 500건을 통째로 고르는 버튼은 실수 한 번의
+                    값이 너무 크다(설정 화면 [전체 선택] 과 같은 규칙). */}
+                <th style={{...csTh(CS_SEL_W),padding:'10px 0',textAlign:'center'}}>
+                  <input type="checkbox" checked={allPicked} onChange={toggleAll}
+                    title={allPicked?'이 화면의 선택을 모두 풉니다':'이 화면에 보이는 것을 모두 고릅니다'}
+                    style={{width:13,height:13,accentColor:'#5B8DEF',cursor:'pointer'}}/>
+                </th>
                 {/* ★ 「번호」도 이제 고를 수 있는 열이라 여기서 따로 그리지 않는다
                     (제니 2026-09-04). 목록에 있는 값은 하나도 빠짐없이 [보기 설정]
                     안에 있어야 한다. */}
@@ -18238,7 +18341,18 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
                    ★ 누를 수 있다는 것은 cursor:pointer 와 hover 색이 이미 말한다. */
                 <tr key={t.id} onClick={()=>goTicket(t.id)}
                   className="cs-row"
-                  style={{borderTop:'1px solid var(--border)',cursor:'pointer'}}>
+                  style={{borderTop:'1px solid var(--border)',cursor:'pointer',
+                    background: picked[t.id] ? 'rgba(120,170,255,.10)' : undefined}}>
+                  {/* ★★ **줄 아무 데나 누르면 티켓이 열리는 화면이다** — 체크박스를 누를
+                      때 그 클릭이 위로 올라가면 «고르려다 티켓이 열린다». 칸 전체를
+                      눌러도 골라지게 하고, 그 칸에서 클릭을 멈춘다. */}
+                  <td onClick={e=>{ e.stopPropagation();
+                      setPicked(p=>{ const n={...p};
+                        if(n[t.id]) delete n[t.id]; else n[t.id]=true; return n; }); }}
+                    style={{...csTd,padding:'10px 0',textAlign:'center'}}>
+                    <input type="checkbox" checked={!!picked[t.id]} readOnly
+                      style={{width:13,height:13,accentColor:'#5B8DEF',cursor:'pointer'}}/>
+                  </td>
                   {/* ★ 수량·금액 열은 머리글과 값이 «함께» 오른쪽으로 붙어야 한다 —
                        한쪽만 옮기면 그 열만 어긋나 보인다. */}
                   {colKeys.map(k=>(
@@ -18252,6 +18366,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket}){
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       <div style={{marginTop:12,fontSize:11,color:'var(--sub)'}}>
@@ -22922,6 +23037,94 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
         </div>
       </div>
     </>
+  );
+}
+
+// ── 일괄 편집 — 고른 건에 «한 값» 을 적용한다 (제니 2026-09-04) ──────────
+// ★★★ **되돌리기가 없는 일이라 한 번 더 묻는다.** 한 건을 잘못 고치는 것과 서른 건을
+//   잘못 고치는 것은 무게가 다르다 — 되돌리려면 서른 건을 하나씩 열어야 한다.
+//   확인 창(confirm)을 쓰는 이유도 그것이다: 토스트로는 «되돌릴 수 없음» 을 못 막는다.
+// ★★ **바꿀 수 있는 것은 셋뿐이다** — 담당자 · 상태 · 리체크 날짜. 돈이 오가는 칸
+//   (환불·정산)과 개인정보 칸은 일부러 뺐다. 일괄로 바꿔서 이로운 값이 아니고,
+//   그 칸들은 DB 트리거가 막고 있어 «화면에는 있는데 저장하면 실패» 가 될 자리다.
+// ★ 담당자 목록은 «지금 목록에 있는 사람 + 나» 다. console_users 를 읽으려면 정책을
+//   함께 열어야 하는데(계정 화면과 한 몸이다), 그 전까지는 이 편이 정직하다 —
+//   있지도 않은 사람을 고르게 하는 것보다 낫다.
+function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster,
+                      onApply, onClose}){
+  const [v,setV] = useState('');
+  useEffect(()=>{ setV(''); },[what]);
+  const box = {marginTop:9,paddingTop:9,borderTop:'1px solid rgba(255,255,255,.14)',
+    display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'};
+  const inp = {fontSize:12,padding:'5px 9px',background:'var(--bg)',
+    border:'1px solid '+CS_LINE,color:'var(--text)',borderRadius:6,fontFamily:'inherit'};
+
+  const run = ()=>{
+    if(!v && what!=='recheck') return;
+    let patch = null, line = '';
+    if(what==='assignee'){ patch = {assignee:v}; line = '담당자 : -> '+csShortUser(v); }
+    if(what==='stage'){
+      const s = CS_STAGE_LABEL[v] || {};
+      patch = {stage:v}; line = '상태 : -> '+(s.label||v);
+    }
+    if(what==='recheck'){
+      // ★ 빈 값은 «지운다» 는 뜻이다 — 리체크를 걸어 뒀다가 무르는 일이 실제로 있다.
+      patch = {recheck_at: v || null};
+      line = '리체크 : -> ' + (v || '없음');
+    }
+    if(!patch) return;
+    if(!confirm(count+'건의 '+({assignee:'담당자',stage:'상태',recheck:'리체크 날짜'}[what])
+      +' 를 한 번에 바꿉니다.\n\n'+line.replace(' : -> ',' → ')
+      +'\n\n되돌리려면 건마다 다시 고쳐야 합니다. 진행할까요?')) return;
+    onApply(patch, [line]);
+  };
+
+  return (
+    <div style={box}>
+      {what==='assignee' && (
+        <select value={v} onChange={e=>setV(e.target.value)} style={inp}>
+          <option value="">담당자를 고르세요</option>
+          {/* ★ «나» 를 맨 위에 따로 둔다 — 가장 자주 고르는 값이고, 목록에 내가 맡은
+              건이 아직 없으면 아래 목록에는 내가 아예 없다. */}
+          <option value={currentUserEmail}>나 ({csShortUser(currentUserEmail)})</option>
+          {optAssignee.filter(o=>o.value!==currentUserEmail)
+            .map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      )}
+      {what==='stage' && (
+        <select value={v} onChange={e=>setV(e.target.value)} style={inp}>
+          <option value="">상태를 고르세요</option>
+          {/* crew·manager 에게는 환불·정산·종결을 아예 안 보여 준다(상세와 같은 규칙) —
+              못 누르게 막는 것보다 «어디까지가 내 일인지» 를 보이는 편이 낫다. */}
+          {CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)
+            .map(x=><option key={x.id} value={x.id}>{x.label}</option>)}
+        </select>
+      )}
+      {what==='recheck' && (
+        <>
+          <input type="date" value={v} onChange={e=>setV(e.target.value)} style={inp}/>
+          {[1,3,7].map(n=>(
+            <button key={n} onClick={()=>setV(csPlusKst(n))}
+              style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+                cursor:'pointer',background:'transparent',border:'1px solid '+CS_LINE,
+                color:'var(--sub)'}}>+{n}일</button>
+          ))}
+          <span style={{fontSize:10.5,color:'var(--sub)'}}>비우고 적용하면 리체크를 지웁니다</span>
+        </>
+      )}
+      <div style={{flex:1}}></div>
+      <button onClick={onClose} disabled={busy}
+        style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+          cursor:'pointer',background:'transparent',
+          border:'1px solid rgba(255,255,255,.22)',color:'var(--sub)'}}>취소</button>
+      <button onClick={run} disabled={busy || (!v && what!=='recheck')}
+        style={{padding:'5px 13px',borderRadius:6,fontSize:11,fontWeight:700,
+          fontFamily:'inherit',border:'none',
+          color: (busy || (!v && what!=='recheck')) ? '#93A0BA' : '#fff',
+          background: (busy || (!v && what!=='recheck')) ? '#38425A' : '#3A63C4',
+          cursor: (busy || (!v && what!=='recheck')) ? 'default' : 'pointer'}}>
+        {busy ? '바꾸는 중…' : count+'건에 적용'}</button>
+    </div>
   );
 }
 
