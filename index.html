@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260907a_action_roles -->
+<!-- (2026-09-07) **메뉴 «안» 의 동작 권한**(제니 2026-09-04 요청: 「배송지연 관리는 crew 가 조회만 되고 등록은 못 하게」). 메뉴 권한이 «문을 여는가» 라면 이쪽은 «들어가서 무엇을 할 수 있는가» 다. ★★★ **동작을 자르는 단위는 «DB 가 구분할 수 있는 단위» 다** — 화면 버튼은 셋(등록·편집·해제)이지만 DB 가 보는 것은 INSERT 와 UPDATE 둘이다. 편집과 해제는 같은 UPDATE 라 DB 로는 못 가르는데, **화면에서만 가르면 «버튼은 없는데 API 로는 되는» 자리가 생긴다.** 그래서 설정도 둘로 뒀다(`delays.create`·`delays.update`). 화면이 약속한 것과 DB 가 지키는 것이 같아야 «권한» 이라 부를 수 있다. ★★ **배송지연 화면의 옛 «master/manager 만» 가드를 걷어냈다** — 라우팅이 이미 메뉴 권한으로 거르는데 화면에도 가드가 남아 있으면, 설정에서 crew 에게 메뉴를 열어도 «접근 권한이 없습니다» 가 뜬다. **설정이 거짓말을 하는 자리**가 된다. ★ 권한이 없으면 버튼을 **아예 그리지 않는다**(회색으로 두지 않는다) — 회색 버튼은 「내가 뭘 잘못했나」로 읽히고 없는 버튼은 「내 일이 아니다」로 읽힌다(제니 방향). 행에 남는 버튼이 없으면 «조회 전용» 이라 적고, 목록이 비었을 때의 안내가 **없는 버튼을 가리키지 않게** 갈랐다. ★ 설정은 계정 정보 → 콘솔 계정 탭의 «메뉴 권한» 바로 아래에 같은 모양으로 뒀다(master 는 켠 채 잠금 · 못 읽으면 저장 잠금 · 모르는 키는 안 지움). ★★ DB 도 같은 설정을 본다 — `sql/console_action_allows.sql`(console_settings.action_roles 를 읽어 delayed_options 의 INSERT·UPDATE 를 가른다). **아직 적용 전이다.** DELETE 는 정책을 두지 않았다 — 콘솔은 이 표를 지우지 않는다(실측). -->
 <!-- v20260904zi_menu_roles_db -->
 <!-- (2026-09-04) **DB 권한이 콘솔 설정을 읽는다** — 「콘솔에서 설정한 대로 바로바로 반영되게」(제니). 앞 판에서 메뉴 권한을 설정으로 뺐지만 **DB 정책은 여전히 «master 만» 이라 박혀 있어**, 콘솔에서 manager 를 켜도 화면만 열리고 목록은 비어 보였다. ★★★ **«전체 열기» 로 풀지 않았다.** refunds 에는 계좌번호·예금주가 들어 있어 authenticated 전원에게 열면 **화면에서 안 보여도 API 로 직접 부르면 다 읽힌다** — 화면이 아니라 DB 가 막아야 하는 값이다. → 정책이 `console_menu_allows(menu)` 로 **콘솔 설정을 읽어** 판정한다(dev 적용 완료: refunds_by_menu · console_audit_log_by_menu). **콘솔에서 켜면 그 순간 DB 도 열린다.** ★★ 이 콘솔이 이미 쓰는 방식이다 — cs_tickets_guard 트리거가 cs_field_rules 를 읽어 칸 권한을 판정한다. **판정은 한 곳에서만**: 화면과 DB 가 갈리면 어느 쪽이 진짜인지 알 수 없다. ★ 설정이 없거나 그 메뉴 키가 없으면 «master 만» 이다(못 읽었다고 열리면 그게 사고다). 씨앗도 넣어 화면의 코드 기본과 값을 맞췄고, 사람이 한 번이라도 저장했으면 그 값은 건드리지 않는다. ★★ **정책 이름을 바꿔 달았다**(…_by_menu) — 옛 이름(refunds_master)을 그대로 두면 «master 만» 이라는 뜻의 이름과 실제 동작이 어긋난다. **정책 이름은 다음 사람이 읽는 설명이기도 하다.** ★ CS 설정(console_settings)은 정책을 안 건드렸다: 읽기는 이미 등록자 전원이고 쓰기는 master 다 — 그 메뉴를 manager 에게 열면 «보이지만 저장은 안 되는» 상태가 되는데 그것이 지금 화면의 전제이기도 하다. ★ 저장하면 **내 화면은 바로** 따라온다(App 이 설정을 다시 읽는다). 다른 사람은 다음에 콘솔을 열 때인데, **DB 는 그때그때 설정을 보므로 즉시 따라온다** — 화면이 늦는 것이지 «막혀 있는데 열린 것처럼 보이는» 일은 없다. -->
 <!-- v20260904zh_menu_roles -->
@@ -9423,20 +9425,18 @@ function HistoryPage({ onEdit }) {
 // ── DELAYED PRODUCTS PAGE (배송 지연 관리) ──
 // Phase 5: 골격만 (탭 라우팅 + 권한 가드 + 빈 placeholder)
 // Phase 6~9에서 각 탭 내부 구현 예정
-function DelayedProductsPage({isMaster=false,isManager=false}){
+// ★★ 2026-09-07 — «누가 들어오나» 는 여기서 판단하지 않는다.
+//   메뉴 권한(console_settings.menu_roles)이 라우팅에서 이미 걸렀다. 여기에 옛
+//   «master/manager 만» 가드를 남겨 두면, 제니가 설정에서 crew 에게 이 메뉴를 열어도
+//   화면이 «접근 권한이 없습니다» 를 띄운다 — 설정이 거짓말을 하는 자리가 된다.
+//   ★ 이 화면이 판단하는 것은 «들어와서 무엇을 할 수 있는가» 뿐이다.
+function DelayedProductsPage({isMaster=false,isManager=false,can}){
   const [tab,setTab] = useState('register');
   const [activeCount,setActiveCount] = useState(null); // 진행 중 건수 (탭 뱃지용)
-  const canManageDelay = isMaster || isManager;
-
-  // 권한 가드: master/manager 외에는 접근 차단
-  if(!canManageDelay){
-    return (
-      <div style={{padding:'60px 28px',textAlign:'center',color:'var(--sub)'}}>
-        <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:8}}>접근 권한이 없습니다</div>
-        <div style={{fontSize:12}}>이 페이지는 master/manager 권한 사용자만 사용할 수 있습니다.</div>
-      </div>
-    );
-  }
+  // ★ can 이 안 넘어오면 옛 규칙(master/manager)으로 돈다 — 열리는 쪽으로 넘어지지 않는다.
+  const allow = can || (()=>isMaster||isManager);
+  const canCreate = allow('delays.create');   // [+ 지연 상품 추가]
+  const canUpdate = allow('delays.update');   // 목록의 [편집] · [해제]
 
   const tabs = [
     {id:'register', label:'지연 등록'},
@@ -9485,7 +9485,8 @@ function DelayedProductsPage({isMaster=false,isManager=false}){
       </div>
 
       {/* 탭 콘텐츠 */}
-      {tab==='register' && <DelayRegisterTab isMaster={isMaster} isManager={isManager} onCountChange={setActiveCount}/>}
+      {tab==='register' && <DelayRegisterTab isMaster={isMaster} isManager={isManager}
+        canCreate={canCreate} canUpdate={canUpdate} onCountChange={setActiveCount}/>}
       {tab==='history'  && <DelayHistoryTab/>}
       {tab==='report'   && <DelayReportTab/>}
     </div>
@@ -9509,7 +9510,10 @@ const delayPageBtn = (disabled)=>({
   cursor:disabled?'default':'pointer',fontSize:11,fontFamily:'inherit'
 });
 
-function DelayRegisterTab({isMaster,isManager,onCountChange}){
+// ★ canCreate·canUpdate 는 부모(DelayedProductsPage)가 동작 권한 설정을 읽어 내려 준다.
+//   기본값을 true 로 두지 않는다 — 부모 없이 이 탭만 쓰는 자리가 생기면 «열리는 쪽» 으로
+//   넘어지기 때문이다. 부모는 늘 둘을 함께 넘긴다.
+function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,onCountChange}){
   const PAGE = 50;
   const [rows,setRows] = useState([]);
   const [total,setTotal] = useState(0);
@@ -9792,10 +9796,14 @@ function DelayRegisterTab({isMaster,isManager,onCountChange}){
       <div style={{display:'flex',gap:8,alignItems:'stretch',marginBottom:14,flexWrap:'wrap'}}>
         <input type="text" placeholder="상품명 / 상품코드 / 품목코드 / 공급사 검색" value={search} onChange={e=>setSearch(e.target.value)}
           style={{flex:'1 1 240px',minWidth:200,padding:'10px 14px',background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,color:'var(--text)',fontSize:13,fontFamily:'inherit',outline:'none'}}/>
+        {/* ★ 권한이 없으면 회색으로 두지 않고 «아예 안 그린다» (제니 2026-09-04 방향).
+            회색 버튼은 «내가 뭘 잘못했나» 로 읽히고, 없는 버튼은 «내 일이 아니다» 로 읽힌다. */}
+        {canCreate && (
         <button onClick={handleAddClick}
           style={{padding:'10px 16px',background:'#2A478D',border:'1px solid #2A478D',borderRadius:8,color:'#fff',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
           + 지연 상품 추가
         </button>
+        )}
         <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'8px 14px',minWidth:100,display:'flex',flexDirection:'column',justifyContent:'center'}}>
           <div style={{fontSize:10,color:'var(--sub)',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase'}}>진행 중</div>
           <div style={{fontSize:18,fontWeight:700,color:'#F6AD09',marginTop:2}}>
@@ -9855,8 +9863,11 @@ function DelayRegisterTab({isMaster,isManager,onCountChange}){
               {search ? '검색 결과 없음' : (statusFilter==='active' ? '현재 지연 등록된 상품이 없습니다' : '데이터 없음')}
             </div>
             <div style={{fontSize:12,maxWidth:480,margin:'0 auto',lineHeight:1.6}}>
+              {/* ★ 없는 버튼을 가리키지 않는다 — 「그 버튼이 어디 있냐」를 묻게 만든다. */}
               {!search && statusFilter==='active'
-                ? '상단 [+ 지연 상품 추가] 버튼으로 신규 등록할 수 있습니다.'
+                ? (canCreate
+                    ? '상단 [+ 지연 상품 추가] 버튼으로 신규 등록할 수 있습니다.'
+                    : '지연 등록 권한이 없어 조회만 할 수 있습니다.')
                 : !search && statusFilter==='released'
                 ? '해제된 지연 이력이 없습니다.'
                 : '다른 조건으로 검색해보세요.'}
@@ -9951,15 +9962,22 @@ function DelayRegisterTab({isMaster,isManager,onCountChange}){
                   </td>
                   <td style={{padding:'12px 8px',textAlign:'center'}}>
                     <div style={{display:'inline-flex',gap:4,justifyContent:'center'}}>
+                      {/* 편집·해제는 DB 로 보면 둘 다 UPDATE 라 한 권한으로 묶는다.
+                          화면에서만 가르면 «버튼은 없는데 API 로는 되는» 자리가 생긴다. */}
+                      {canUpdate && (
                       <button onClick={()=>handleEditClick(r)}
                         style={{background:'transparent',border:'1px solid var(--border)',padding:'4px 10px',fontSize:11,borderRadius:4,cursor:'pointer',color:'var(--sub)',fontFamily:'inherit'}}>
                         편집
                       </button>
-                      {r.is_delayed && (
+                      )}
+                      {canUpdate && r.is_delayed && (
                         <button onClick={()=>handleReleaseClick(r)}
                           style={{background:'rgba(34,211,160,.1)',border:'1px solid rgba(34,211,160,.4)',padding:'4px 10px',fontSize:11,borderRadius:4,cursor:'pointer',color:'#22d3a0',fontFamily:'inherit'}}>
                           해제
                         </button>
+                      )}
+                      {!canCreate && !canUpdate && (
+                        <span style={{fontSize:10.5,color:'var(--sub)'}}>조회 전용</span>
                       )}
                     </div>
                   </td>
@@ -24267,6 +24285,33 @@ function csMenuAllows(settings, id, role){
   return arr.indexOf(role) >= 0;
 }
 
+// ── 메뉴 «안» 의 동작 권한 (제니 2026-09-04 요청 · 2026-09-07 구현) ──────────
+// 제니 예: 「배송지연 관리는 crew 가 조회만 되고 등록은 못 하게」.
+// 메뉴 권한이 «문을 여는가» 라면 이쪽은 «들어가서 무엇을 할 수 있는가» 다.
+//
+// ★★★ **동작을 자르는 단위는 «DB 가 구분할 수 있는 단위» 다.**
+//   화면에는 버튼이 셋(등록·편집·해제)이지만 DB 가 보는 것은 INSERT 와 UPDATE 둘뿐이다.
+//   편집과 해제는 같은 UPDATE 라 DB 로는 못 가른다 — 그런데 화면에서만 가르면
+//   «버튼은 없는데 API 로는 되는» 자리가 생긴다. 그래서 설정도 둘로 둔다:
+//     delays.create = 등록(INSERT) · delays.update = 편집·해제(UPDATE)
+//   화면이 약속한 것과 DB 가 지키는 것이 같아야 «권한» 이라 부를 수 있다.
+// ★ 여기 없는 동작은 «메뉴가 열리면 전원» 이다(메뉴 권한과 같은 규칙).
+// ★ 설정을 못 읽으면 «코드 기본» 으로 돈다 — 못 읽었다고 다 열리면 그게 사고다.
+const CS_ACTION_DEFS = [
+  {id:'delays.create', menu:'배송지연 관리', label:'지연 등록',
+   hint:'[+ 지연 상품 추가] 버튼', base:['master','manager']},
+  {id:'delays.update', menu:'배송지연 관리', label:'지연 편집 · 해제',
+   hint:'목록 행의 [편집] · [해제] 버튼', base:['master','manager']},
+];
+const CS_ACTION_BASE = (()=>{ const m={}; CS_ACTION_DEFS.forEach(d=>{ m[d.id]=d.base; }); return m; })();
+function csActionAllows(settings, id, role){
+  if(!role) return false;
+  const conf = (settings && settings.action_roles) || null;
+  const arr = (conf && Array.isArray(conf[id])) ? conf[id] : CS_ACTION_BASE[id];
+  if(!arr) return true;                 // 목록에 없는 동작은 전원
+  return arr.indexOf(role) >= 0;
+}
+
 // 화면 이름 — 오류 안내에 "어느 화면이 죽었는지"를 밝히는 데 쓴다.
 const PAGE_LABELS = {
   dashboard:'대시보드', entry:'상담 입력', agentAnalysis:'상담원 분석',
@@ -24918,7 +24963,143 @@ function CsMenuRoles({currentUserEmail, card, head, onSaved}){
   );
 }
 
-function AccountPage({session,role,alerts,onGo,onMenuSaved}){
+// ── 메뉴 «안» 의 동작 권한 (제니 2026-09-04 요청 · 2026-09-07) ──────────────
+// 메뉴 권한이 «문을 여는가» 라면 이쪽은 «들어가서 무엇을 할 수 있는가» 다.
+// 제니 예: 「배송지연 관리는 crew 가 조회만 되고 등록은 못 하게」.
+// ★ 메뉴 권한과 «같은 모양» 으로 만든다 — 읽는 법을 새로 배울 것이 없어야 한다.
+// ★★ 이쪽은 DB 도 같은 설정을 본다(console_action_allows) — 켜면 화면과 DB 가
+//   함께 열린다. 메뉴 권한에 붙은 «⚠ DB» 경고가 여기엔 없는 이유다.
+function CsActionRoles({currentUserEmail, card, head, onSaved}){
+  const ROLES = ['master','manager','crew'];
+  const [cfg,setCfg]   = useState(undefined);   // undefined=아직/못 읽음
+  const [draft,setDraft] = useState(null);
+  const [busy,setBusy] = useState(false);
+  const [meta,setMeta] = useState(null);
+  useEffect(()=>{ (async()=>{
+    const r = await csLoadSetting('action_roles');
+    if(r===undefined){ setCfg(undefined); return; }   // 조회 실패
+    setCfg((r&&r.value)||null);
+    setMeta(r||null);
+    const base = {};
+    CS_ACTION_DEFS.forEach(d=>{
+      const cur = (r&&r.value&&Array.isArray(r.value[d.id])) ? r.value[d.id] : d.base;
+      base[d.id] = cur.slice();
+    });
+    setDraft(base);
+  })(); },[]);
+
+  // ★★ master 는 늘 켠 채 잠근다 — 메뉴 권한과 같은 이유다.
+  const toggle = (id, role)=>{
+    if(role==='master') return;
+    setDraft(p=>{
+      const cur = p[id]||[];
+      return {...p, [id]: cur.indexOf(role)>=0 ? cur.filter(x=>x!==role) : cur.concat([role])};
+    });
+  };
+  const save = async ()=>{
+    if(!draft) return;
+    const out = {...(cfg||{})};   // 모르는 키는 지우지 않는다
+    CS_ACTION_DEFS.forEach(d=>{
+      const arr = Array.from(new Set(['master'].concat(draft[d.id]||[])));
+      out[d.id] = ROLES.filter(r=>arr.indexOf(r)>=0);
+    });
+    setBusy(true);
+    const ok = await csSaveSetting('action_roles', out, currentUserEmail);
+    setBusy(false);
+    if(!ok) return;
+    setCfg(out);
+    if(onSaved) onSaved();
+    toast('동작 권한을 저장했습니다. 다른 계정은 다음에 콘솔을 열 때 반영됩니다.','ok');
+  };
+  const dirty = draft && CS_ACTION_DEFS.some(d=>{
+    const now = (cfg && Array.isArray(cfg[d.id])) ? cfg[d.id] : d.base;
+    const nx  = Array.from(new Set(['master'].concat(draft[d.id]||[])));
+    return now.slice().sort().join(',') !== ROLES.filter(r=>nx.indexOf(r)>=0).sort().join(',');
+  });
+
+  const th = {textAlign:'center',padding:'6px 8px',color:'var(--sub)',fontSize:10.5,
+    fontWeight:700,borderBottom:'1px solid var(--border)'};
+  let lastMenu = null;
+  return (
+    <div style={{...card, maxWidth:980}}>
+      <div style={head}>동작 권한 — 메뉴 안에서 할 수 있는 일</div>
+      <div style={{padding:'14px 20px'}}>
+        <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7,marginBottom:12}}>
+          메뉴를 연 사람이 <b>그 안에서 무엇을 할 수 있는지</b> 정합니다.
+          여기 없는 동작은 <b>메뉴가 열리면 전원</b>입니다.
+          <br/>권한이 없으면 그 <b>버튼을 아예 그리지 않습니다</b> — 회색 버튼은
+          「내가 뭘 잘못했나」로 읽히고, 없는 버튼은 「내 일이 아니다」로 읽힙니다.
+          <br/><b style={{color:'#22d3a0'}}>DB 도 같은 설정을 봅니다</b> — 켜면 화면과 DB 가
+          함께 열립니다(메뉴 권한과 다른 점입니다).
+        </div>
+        {cfg===undefined ? (
+          <div style={{fontSize:12,color:'var(--red)'}}>
+            설정을 읽지 못했습니다 — 저장하면 지금 값이 통째로 덮이므로 잠가 두었습니다.</div>
+        ) : !draft ? (
+          <div style={{fontSize:12,color:'var(--sub)'}}>불러오는 중…</div>
+        ) : (
+          <>
+            <div style={{overflowX:'auto'}}>
+              <table style={{borderCollapse:'collapse',fontSize:12}}>
+                <thead><tr>
+                  <th style={{...th,textAlign:'left',minWidth:230}}>동작</th>
+                  {ROLES.map(r=><th key={r} style={{...th,minWidth:82}}>{r}</th>)}
+                </tr></thead>
+                <tbody>
+                  {CS_ACTION_DEFS.map(d=>{
+                    // ★ 메뉴 이름을 한 번만 적는다 — 같은 메뉴의 동작이 묶여 보여야
+                    //   «이 메뉴 안의 일» 이라는 것이 눈으로 읽힌다.
+                    const head2 = d.menu!==lastMenu; lastMenu = d.menu;
+                    return (
+                    <tr key={d.id} style={{borderBottom:'1px solid var(--border)'}}>
+                      <td style={{padding:'7px 8px',color:'var(--text)'}}>
+                        {head2 && <div style={{fontSize:10,color:'var(--sub)',fontWeight:700,
+                          letterSpacing:'.04em',marginBottom:2}}>{d.menu}</div>}
+                        <div>{d.label}</div>
+                        <div style={{fontSize:10,color:'var(--sub)',marginTop:1}}>{d.hint}</div>
+                      </td>
+                      {ROLES.map(r=>{
+                        const on = r==='master' || (draft[d.id]||[]).indexOf(r)>=0;
+                        return (
+                          <td key={r} style={{padding:'7px 8px',textAlign:'center'}}>
+                            <input type="checkbox" checked={on} disabled={r==='master'}
+                              onChange={()=>toggle(d.id,r)}
+                              title={r==='master'?'master 는 늘 할 수 있습니다':undefined}
+                              style={{width:14,height:14,accentColor:'#5B8DEF',
+                                cursor:r==='master'?'default':'pointer',
+                                opacity:r==='master'?.55:1}}/>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:12}}>
+              <span style={{fontSize:10.5,color:'var(--sub)',flex:1,lineHeight:1.6}}>
+                {meta && meta.updated_by
+                  ? '마지막으로 바꾼 사람 '+csShortUser(meta.updated_by)
+                    +(meta.updated_at?' · '+csStamp(meta.updated_at):'')
+                  : '아직 바꾼 적이 없습니다 (지금은 기본값)'}
+              </span>
+              <button onClick={save} disabled={busy||!dirty}
+                style={{padding:'7px 15px',borderRadius:7,fontSize:12,fontWeight:700,
+                  fontFamily:'inherit',border:'none',
+                  color: dirty?'#fff':'#93A0BA',
+                  background: dirty?'var(--primary)':'#38425A',
+                  cursor: (busy||!dirty)?'default':'pointer'}}>
+                {busy?'저장 중…':dirty?'저장':'저장됨'}</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved}){
   const isMaster=role==='master';
   // ★ 칩 — 성격이 다른 것을 다른 화면으로 보낸다(제니 2026-09-04). 기본은 «알림» 이다:
   //   이 화면에 들어오는 주된 이유가 「확인이 필요합니다」를 보는 것이다.
@@ -25101,6 +25282,10 @@ function AccountPage({session,role,alerts,onGo,onMenuSaved}){
                 한 자리에서 정하는 것이 자연스럽다(제니 2026-09-04). */}
             <CsMenuRoles currentUserEmail={session.user.email} card={card} head={head}
               onSaved={onMenuSaved}/>
+            {/* ★ 메뉴 권한 «바로 아래» 다 — «문을 여는가» 와 «들어가서 무엇을 하는가» 는
+                이어서 읽어야 하는 한 쌍이다. */}
+            <CsActionRoles currentUserEmail={session.user.email} card={card} head={head}
+              onSaved={onActionSaved}/>
           </div>
         )}
 
@@ -25337,6 +25522,10 @@ function App() {
   // 이 계정이 그 메뉴를 볼 수 있나. 사이드바와 라우팅이 «같은 함수» 를 쓴다 —
   // 두 곳에 따로 적으면 «메뉴는 보이는데 눌러도 안 열리는» 자리가 생긴다.
   const canMenu=(id)=>csMenuAllows({menu_roles:menuCfg}, id, role);
+  // 메뉴 «안» 의 동작 권한(2026-09-07). 메뉴 권한과 같은 모양으로 읽는다 —
+  // 읽는 법을 새로 배울 것이 없어야 한다.
+  const [actionCfg,setActionCfg]=useState(null);
+  const canAction=(id)=>csActionAllows({action_roles:actionCfg}, id, role);
   // 좌측 하단 계정 정보를 누르면 열리는 창. 연락처·알림 수신을 여기서 고친다.
   const isMaster = role==='master';
   const isManager= role==='manager';
@@ -25474,6 +25663,8 @@ function App() {
     csLoadUserNames().then(()=>{ if(alive) setNamesTick(t=>t+1); });
     // 메뉴 권한 설정 — 로그인마다 한 번.
     csLoadSetting('menu_roles').then(r=>{ if(alive) setMenuCfg((r&&r.value)||null); });
+    // 메뉴 «안» 의 동작 권한 — 같은 때에 함께 읽는다.
+    csLoadSetting('action_roles').then(r=>{ if(alive) setActionCfg((r&&r.value)||null); });
     return()=>{ alive=false; };
   },[session?.user?.id,meRetry]);
   if(loading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--sub)'}}>로딩 중...</div>;
@@ -25780,10 +25971,11 @@ function App() {
         {page==='account'&&<AccountPage session={session} role={role} alerts={alerts} onGo={navigateTo}
           /* ★ 메뉴 권한을 저장하면 «바로» 다시 읽는다 — 안 그러면 저장한 본인도
                새로고침해야 자기 사이드바가 바뀐다(제니: 「바로바로 반영되게」). */
-          onMenuSaved={()=>csLoadSetting('menu_roles').then(r=>setMenuCfg((r&&r.value)||null))}/>}
+          onMenuSaved={()=>csLoadSetting('menu_roles').then(r=>setMenuCfg((r&&r.value)||null))}
+          onActionSaved={()=>csLoadSetting('action_roles').then(r=>setActionCfg((r&&r.value)||null))}/>}
         {page==='products'&&<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
         {page==='suppliers'&&<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
-        {page==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager}/>}
+        {page==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager} can={canAction}/>}
         {page==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='csTickets'&&<CsTicketsPage currentUserEmail={session.user.email} role={role}
           onNew={()=>navigateTo('csNew')} goTicket={openTicket}
