@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260907g_list_head_std -->
+<!-- (2026-09-07) ★★★ **목록 제목 행을 콘솔 «기본 규칙» 으로 못 박았다**(제니: 「제목행은 어두운 네이비 배경, 내용은 흰 배경 — 이걸 기본으로 잡고 모든 메뉴에 동일하게 적용되게 해줘」). 계기는 데이터 내역·근태 관리 탭에서 **제목 글자가 배경과 같은 색이 되어 통째로 사라진 것**이다. ★★ 그동안 표의 머리를 **화면마다 따로 칠하고 있었다** — 어떤 곳은 #162244, 어떤 곳은 #1d2e54, 어떤 곳은 var(--bg), 어떤 곳은 아예 배경 없이 선 하나. 값이 흩어져 있으면 팔레트가 바뀔 때마다 **어딘가는 반드시 어긋난다**(라이트를 켜자 그 «어딘가» 가 한꺼번에 드러났다). → **`thead th` 라는 «자리» 에 한 번만 적는다**: `thead th{background:var(--head-bg);color:var(--head-ink)}`. 표가 스물넷인데 그중 열여섯은 배경을 안 갖고 있어 이 한 줄로 함께 정리됐다. ★ 인라인으로 덮고 있던 여덟 곳(데이터 내역·근태·상품 미리보기·CSV 미리보기·공급사 요약 등)을 표준 변수로 옮겼다 — 인라인은 CSS 를 이기므로 규칙만 세우고 두면 그 자리들은 계속 예전 색으로 남는다. ★ 근태 표의 «고정된 첫 열»(sticky)도 함께 — 스크롤해도 밴드가 한 줄로 이어져야 한다. ★ 상품 정보의 '#fff' 아홉 칸도 같은 변수로 바꿨다(값은 그대로지만, **다음에 팔레트를 손댈 때 또 빠뜨리지 않으려면 값이 아니라 이름으로 적혀 있어야 한다**). ★ 내용 쪽은 tbody 에 인라인 배경이 하나도 없어 표를 감싼 카드 색(라이트=흰색)을 그대로 쓴다 — 제니가 말한 «내용: 흰 배경» 이 이미 그 구조다. ★ dev 전용. -->
 <!-- v20260907f_entry_light -->
 <!-- (2026-09-07) 라이트 피드백 둘 더 — 데이터 입력 화면(제니). ①**업로드 겉 박스가 통째로 사라졌다** — `.upload-area` 의 배경이 `var(--bg)` 였는데 그것은 **화면 바탕과 같은 색**이다. 다크에서는 카드(#162244) 안에 놓여 한 단 어두운 홈처럼 읽혔지만, 라이트에서는 바탕도 박스도 #F2F5FA 라 «홈» 자체가 없어졌다. → `var(--card)` 로 채우고 점선을 브랜드 남색으로 세웠다(업로드 자리는 «놓는 곳» 이라 점선이 뜻을 갖는다). ★★ 여기서 남길 것: **--bg 는 «화면 바탕» 이지 «한 단 들어간 홈» 이 아니다.** 다크에서 그렇게 보였던 것은 그 위에 카드가 깔려 있어서였을 뿐이다. ②**[📂 파일 업로드] 글자가 안 보였다** — CSS 는 `color:var(--primary)` 인데 **인라인 `#fff` 가 그것을 덮고** 있었다. 옅은 파랑 채움 위의 흰 글자라 라이트에서 거의 사라진다. 제니 지시대로 **글자색을 테두리 색과 같게**(= var(--primary)) 되돌렸다 — 같은 꼴이 세 곳 더 있어 함께 고쳤다(FAQ 마스터·상품 업로드). ③**고르지 않은 탭이 안 보였다**(데이터 입력/데이터 내역) — 배경이 `var(--card)` 인데 라이트에서는 그것이 흰색이라 흰 바탕에서 «버튼» 으로 안 읽힌다. 제니 제안대로 **테두리를 그렸다.** ★ 고른 탭에도 «제 배경과 같은 색» 의 테두리를 준다 — 한쪽에만 주면 고를 때마다 버튼이 2px 씩 커졌다 작아진다. 같은 꼴 다섯 곳(인력 관리 둘·공통 탭 둘 포함)을 함께 고쳤다. ★ dev 전용. -->
 <!-- v20260907e_stage_pill_head -->
@@ -743,6 +745,11 @@
     /* HISTORY */
     .table-wrap{overflow-x:auto}
     table.hist{width:100%;border-collapse:collapse;font-size:13px}
+    /* ★★★ 2026-09-07 — 제니 지시: **모든 목록의 제목 행은 «어두운 네이비 배경 + 흰 글자»,
+       내용은 «흰 배경» 이 기본**이다. 화면마다 따로 칠하면 반드시 어긋난다(실제로 데이터 내역은
+       배경과 글자가 같은 색이 되어 제목이 통째로 사라졌다) — 그래서 «표의 머리» 라는 자리에
+       한 번만 적어 둔다. 개별 화면이 인라인으로 덮어쓰지 않는 한 여기 값이 적용된다. */
+    thead th{background:var(--head-bg);color:var(--head-ink)}
     table.hist thead th{text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:var(--head-ink);letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap}
     table.hist tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
     table.hist tbody tr:hover{background:var(--hover)}
@@ -1575,15 +1582,15 @@ function AttendancePage() {
                     <col style={{width:120}}/>
                     {days.map(d=><col key={d} style={{width:`calc((100% - 120px) / ${days.length})`}}/>)}
                   </colgroup>
-                  <thead><tr style={{background:'var(--bg)'}}>
-                    <th style={{padding:'8px 14px',textAlign:'left',color:'var(--sub)',fontWeight:700,borderBottom:'1px solid var(--border)',position:'sticky',left:0,background:'var(--bg)',zIndex:2}}>인원</th>
+                  <thead><tr style={{background:'var(--head-bg)'}}>
+                    <th style={{padding:'8px 14px',textAlign:'left',color:'var(--head-ink)',fontWeight:700,borderBottom:'1px solid var(--border)',position:'sticky',left:0,background:'var(--head-bg)',zIndex:2}}>인원</th>
                     {days.map(d=>{
                       const dow=new Date(year,month-1,d).getDay();
                       const isW=dow===0||dow===6;
                       const isH=isHoliday(d);
                       const isOff2=isW||isH;
                       return(
-                        <th key={d} style={{padding:'6px 2px',textAlign:'center',color:isOff2?'var(--red)':'var(--sub)',fontWeight:700,borderBottom:'1px solid var(--border)',background:isOff2?'rgba(248,113,113,.06)':'var(--bg)'}}>
+                        <th key={d} style={{padding:'6px 2px',textAlign:'center',color:isOff2?'var(--red)':'var(--head-ink)',fontWeight:700,borderBottom:'1px solid var(--border)',background:isOff2?'rgba(248,113,113,.06)':'var(--bg)'}}>
                           {d}<br/>
                           <span style={{fontSize:10,fontWeight:400}}>
                             {'일월화수목금토'[dow]}{isH?'🔴':''}
@@ -4361,15 +4368,15 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                       onChange={e=>{if(e.target.checked)setCheckedIds(new Set(products.map(p=>p.id)));else setCheckedIds(new Set());}}
                       style={{cursor:'pointer',width:14,height:14}}/>
                   </th>
-                  <th style={{color:'#fff',fontWeight:600}}>공급사</th>
-                  <th style={{color:'#fff',fontWeight:600}}>코드</th>
-                  <th style={{color:'#fff',fontWeight:600}}>상품명</th>
-                  <th style={{color:'#fff',fontWeight:600}}>배송</th>
-                  <th style={{color:'#fff',fontWeight:600}}>반품배송비</th>
-                  <th style={{color:'#fff',fontWeight:600}}>CS 정보</th>
-                  <th style={{color:'#fff',fontWeight:600}}>URL</th>
-                  <th style={{color:'#fff',fontWeight:600}}>등록/수정 날짜</th>
-                  <th style={{color:'#fff',fontWeight:600}}>관리</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>공급사</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>코드</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>상품명</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>배송</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>반품배송비</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>CS 정보</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>URL</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>등록/수정 날짜</th>
+                  <th style={{color:'var(--head-ink)',fontWeight:600}}>관리</th>
                 </tr></thead>
                 <tbody>{products.map(p=>(
                   <React.Fragment key={p.id}>
@@ -5451,9 +5458,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
             </div>
             <div style={{flex:1,overflowY:'auto',border:'1px solid var(--border)',borderRadius:8}}>
               <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
-                <thead><tr style={{background:'var(--bg)',position:'sticky',top:0}}>
+                <thead><tr style={{background:'var(--head-bg)',position:'sticky',top:0}}>
                   {['문항ID','유형','필수','적용','문항'].map(h=>(
-                    <th key={h} style={{padding:'8px 10px',textAlign:'left',color:'var(--sub)',fontWeight:700,fontSize:11,borderBottom:'1px solid var(--border)'}}>{h}</th>
+                    <th key={h} style={{padding:'8px 10px',textAlign:'left',color:'var(--head-ink)',fontWeight:700,fontSize:11,borderBottom:'1px solid var(--border)'}}>{h}</th>
                   ))}
                 </tr></thead>
                 <tbody>
@@ -10064,7 +10071,7 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,on
               <col style={{width:'7%'}}/><col style={{width:'5%'}}/><col style={{width:'9%'}}/>
             </colgroup>
             <thead>
-              <tr style={{background:'var(--bg)',color:'var(--sub)'}}>
+              <tr style={{background:'var(--head-bg)',color:'var(--head-ink)'}}>
                 <th style={{textAlign:'left',padding:'10px 14px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>상품명</th>
                 <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>옵션</th>
                 <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>공급사</th>
@@ -13343,7 +13350,7 @@ function DelayHistoryTab(){
               <col style={{width:'6%'}}/>
             </colgroup>
             <thead>
-              <tr style={{background:'var(--bg)',color:'var(--sub)'}}>
+              <tr style={{background:'var(--head-bg)',color:'var(--head-ink)'}}>
                 <th style={{textAlign:'center',padding:'10px 4px',borderBottom:'1px solid var(--border)'}}>
                   <input type="checkbox"
                     disabled={pageFailedIds.length===0}
@@ -17918,8 +17925,8 @@ function CsNoteBody({text}){
           <div key={bi} style={{overflowX:'auto',margin:'6px 0'}}>
             <table style={{borderCollapse:'collapse',fontSize:11.5}}>
               <thead><tr>{head.map((c,i)=>(
-                <th key={i} style={{...td,textAlign:'left',color:'var(--accent)',
-                  fontWeight:700,background:'rgba(120,170,255,.14)',
+                <th key={i} style={{...td,textAlign:'left',color:'var(--head-ink)',
+                  fontWeight:700,background:'var(--head-bg)',
                   whiteSpace:'nowrap'}}>{c}</th>
               ))}</tr></thead>
               <tbody>{body.map((r,ri)=>(
@@ -24999,7 +25006,7 @@ function CsAccountAdmin({session, card, head}){
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:11.5}}>
               <thead><tr>
                 {['이메일','이름','권한','마지막 로그인',''].map((c,i)=>(
-                  <th key={i} style={{textAlign:'left',padding:'6px 8px',color:'var(--sub)',
+                  <th key={i} style={{textAlign:'left',padding:'6px 8px',color:'var(--head-ink)',
                     borderBottom:'1px solid var(--border)',whiteSpace:'nowrap',
                     fontSize:10.5,fontWeight:700}}>{c}</th>
                 ))}
