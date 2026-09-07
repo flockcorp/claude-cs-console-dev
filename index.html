@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260907j_on_accent_btn -->
+<!-- (2026-09-07) 오늘 마지막. **[목록으로]·[주소 찾기] 처럼 «강조색으로 채운 버튼» 의 글자**를 `--on-accent` 로 옮겼다(제니: 「목록으로 버튼 텍스트 색 밝게」). 앞 판(h)에서 칩·탭의 «고른 상태» 를 옮기며 같은 문제를 이미 풀었는데, **`#12203c` 만 훑고 `#1A2240` 은 못 봤다** — 같은 뜻을 두 값으로 적어 둔 자리가 있었던 것이다. ★★ 여기서 남길 것: **«같은 뜻인데 값이 여러 개» 면 한 번의 훑기로는 못 잡는다.** 색을 옮길 때는 값이 아니라 **«그 색이 무엇 위에 얹히는가»** 로 찾아야 한다 — 이번에는 `background:'var(--accent)'` 가 함께 있는 줄만 골라 다섯 곳을 바꿨고, 같은 `#1A2240` 이라도 **모드를 안 따르는 고정 배경**(밝은 판·노란 뱃지) 위의 여덟 곳은 그대로 뒀다. ★ dev 전용. -->
 <!-- v20260907i_sup_colhead_revert -->
 <!-- (2026-09-07) 앞 판(h)에서 공급사 목록의 **컬럼 헤더까지 네이비 밴드로 바꾼 것을 되돌린다**(제니: 「컬럼 헤더는 기존대로. 그룹 헤더랑 같은 색인 게 이상하다」). ★★ 내가 «모든 목록 제목행은 네이비» 규칙을 **한 겹 더 밀어붙인 것이 잘못이었다.** 이 표는 머리가 «두 줄» 이다 — 위는 영역을 묶는 **그룹 헤더**(📋 기본 정보·배송방식 …), 아래가 실제 **컬럼 헤더**(배송방법·선결제 …). 둘을 같은 색으로 칠하면 **두 줄이 한 덩어리가 되어 «묶음» 과 «열 이름» 의 층이 사라진다.** 제니가 «이상하다» 고 한 것이 그 층이다. → 그룹 헤더만 네이비, 컬럼 헤더는 원래의 옅은 띠(#F1F5FB/#5F7195)로 되돌린다. 층은 «네이비 → 옅은 띠 → 흰 내용» 세 단이 된다. ★ 제니가 처음 말한 것은 **글자 크기**(그룹 9px < 컬럼 10px)뿐이었고 그것은 그대로 둔다 — **요청은 크기였는데 색까지 함께 바꾼 것이 이 되돌림의 원인이다.** 규칙을 세운 뒤에는 «이 자리가 정말 그 규칙이 말하는 자리인가» 를 한 번 더 볼 것. ★ dev 전용. -->
 <!-- v20260907h_badge_chip_head -->
@@ -21794,7 +21796,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             ★ 그래도 파란 주 버튼(var(--primary))은 쓰지 않는다 — 이 화면의 주 동작은
               «티켓 등록» 이고, 나가는 길이 그것보다 세게 보이면 안 된다. */}
         <button onClick={onCancel} style={{padding:'7px 16px',background:'var(--accent)',
-          border:'none',borderRadius:7,color:'#1A2240',fontSize:12,fontWeight:600,
+          border:'none',borderRadius:7,color:'var(--on-accent)',fontSize:12,fontWeight:600,
           cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
 
@@ -21991,7 +21993,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     setF(p=>({...p, pickup_zipcode:zip, pickup_address1:addr})))}
                   style={{padding:'6px 12px',borderRadius:6,fontSize:11,fontWeight:600,
                     fontFamily:'inherit',cursor:'pointer',whiteSpace:'nowrap',
-                    background:'var(--accent)',border:'none',color:'#1A2240'}}>주소 찾기</button>
+                    background:'var(--accent)',border:'none',color:'var(--on-accent)'}}>주소 찾기</button>
               </div>
               <input value={f.pickup_address1} onChange={e=>set('pickup_address1',e.target.value)}
                 placeholder="주소" style={{...inp,marginBottom:5}}/>
@@ -22922,7 +22924,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             ★ 그래도 파란 주 버튼(var(--primary))은 쓰지 않는다 — 이 화면의 주 동작은
               «저장» 이고, 나가는 길이 그것보다 세게 보이면 안 된다. */}
         <button onClick={onBack} style={{padding:'7px 16px',background:'var(--accent)',
-          border:'none',borderRadius:7,color:'#1A2240',fontSize:12,fontWeight:600,
+          border:'none',borderRadius:7,color:'var(--on-accent)',fontSize:12,fontWeight:600,
           cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
 
@@ -23024,7 +23026,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                     setEdit(p=>({...p, pickup_zipcode:zip, pickup_address1:addr})))}
                   style={{padding:'6px 12px',borderRadius:6,fontSize:11,fontWeight:600,
                     fontFamily:'inherit',cursor:'pointer',whiteSpace:'nowrap',
-                    background:'var(--accent)',border:'none',color:'#1A2240'}}>주소 찾기</button>
+                    background:'var(--accent)',border:'none',color:'var(--on-accent)'}}>주소 찾기</button>
               </div>
               <input value={edit.pickup_address1} onChange={e=>setE('pickup_address1',e.target.value)}
                 placeholder="주소" style={{...inp,marginBottom:5}}/>
@@ -24192,7 +24194,7 @@ function CsSupplierDraft({rows, events, supMap, busy, onSent, onBack, goTicket})
           접수 대기 {rows.length}건 · 공급사 {groups.length}곳</span>
         <div style={{flex:1}}></div>
         <button onClick={onBack} style={{padding:'7px 16px',background:'var(--accent)',
-          border:'none',borderRadius:7,color:'#1A2240',fontSize:12,fontWeight:600,
+          border:'none',borderRadius:7,color:'var(--on-accent)',fontSize:12,fontWeight:600,
           cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
       {/* ★★★ 이 한 줄이 이 화면에서 가장 중요하다 — 콘솔은 «보내지 않는다». */}
