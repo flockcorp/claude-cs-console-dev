@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908v_modal_size_and_order -->
+<!-- (2026-09-08) 제니 둘. ①**공급사 모달 크기를 고정했다**(「검색값 입력할 때 사이즈가 너무 확확 바뀐다. 처음 전체값이 나올 때의 사이즈를 고정으로」). 원인은 `maxHeight:88vh` — 그건 «넘지 마라» 일 뿐이라 **줄이 줄면 창이 따라 줄었다.** ★★ **«최대» 와 «고정» 은 다르다.** 목록이 처음부터 88vh 를 넘으므로 그 값으로 고정하면 곧 «처음 전체값이 나올 때의 크기» 이고, 안쪽 목록이 스크롤을 맡으므로 결과가 한 줄이어도 창은 그대로 선다. ★ 겸해 **세로 스크롤 자리를 늘 비워 뒀다**(overflowY:scroll) — auto 로 두면 결과가 줄어 스크롤이 사라지는 순간 내용이 5px 옆으로 튄다. **창을 고정해 놓고도 이것이 남으면 여전히 «흔들린다» 로 읽힌다.** ②🔴 **연락망 항목 차례가 공급사마다 달랐다**(제니 물음: 「항목 순서는 모든 공급사가 동일한가?」). **아니었다** — `Object.keys()` 로 그리고 있었는데 **jsonb 는 넣은 차례를 기억하지 않는다**(키 길이·바이트 순으로 다시 늘어놓는다). 게다가 값이 빈 칸은 아예 없어서 공급사마다 줄이 들쭉날쭉했다. → **정산 시스템 표의 칸 차례**로 그린다. ★★ 여러 공급사를 잇달아 펼쳐 볼 때 **같은 것이 늘 같은 자리에 있어야 눈이 그 자리를 기억한다** — 그것이 표를 읽는 방식이다. ★ 우리가 모르는 칸(정산 시스템이 새로 더한 것)은 맨 뒤에 붙인다 — 모른다고 버리지 않는다(이 표를 jsonb 로 둔 이유가 그것이다). ★ dev 전용. -->
 <!-- v20260908u_contacts_in_modal -->
 <!-- (2026-09-08) **상품 정보 > 「거래중 총 공급사」 모달에 «연락망» 탭을 붙였다**(제니: 「넣는 건 공급사 관리 > 연락망 탭이고, **실제 이 값을 쓰려고 검색하는 건** 이 모달의 연락망 탭이 될 거야」). ★★★ **같은 컴포넌트를 쓴다** — 두 화면이 같은 것을 보여 주는데 따로 그리면 반드시 한쪽만 낡는다. **오늘 접수 문안 미리보기에서 정확히 그 일을 겪었다**(설정과 실제를 한 함수로 묶으면서 세 번째 자리를 빠뜨렸고, 제니가 쓰다가 발견했다). 그래서 이번에는 처음부터 하나로 두고 `compact` 로 «놓이는 자리» 만 가른다. ★★ compact 에서 빼는 것 둘: **①붙여넣기** — 찾아보러 들어온 화면에 «통째로 갈아 끼우는 단추» 가 있으면 안 된다. **넣는 일은 «넣는 자리» 에서만** 한다. ②안내문 — 그 화면에서 할 일이 아니다. 대신 모달 머리말에 「여기서는 고치지 않습니다」를 적었다 — **같은 값을 두 곳에서 고칠 수 있으면 어느 쪽이 맞는지 사람이 매번 생각한다.** ★ 모달의 공용 검색칸은 연락망 탭에서 감춘다 — 연락망은 «담긴 값 전체» 를 훑는 제 검색칸을 갖고 있어, 검색칸이 둘이면 어느 쪽이 듣는지 눌러 봐야 안다. ★ 탭에 따라 모달 폭을 넓힌다(연락망 1000px) — 담당자·연락처·메모가 한 줄에 서야 훑을 수 있다. ★ dev 전용. -->
 <!-- v20260908t_supplier_contacts -->
@@ -5214,7 +5216,14 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
         </div>
       )}
 
-      {/* 공급사 소통 채널 관리 모달 */}
+      {/* 공급사 소통 채널 관리 모달
+          ★★★ 2026-09-08 — **창 크기를 고정한다**(제니: 「검색값 입력할 때 사이즈가
+            너무 확확 바뀐다. 처음 전체값이 나올 때의 사이즈를 고정으로」).
+            `maxHeight:88vh` 였다 — «넘지 마라» 일 뿐이라 **줄이 줄면 창이 따라 줄었다.**
+            한 글자 칠 때마다 창이 뛰면 눈이 그것을 쫓느라 정작 결과를 못 읽는다.
+          ★★ **«최대» 와 «고정» 은 다르다** — 목록이 처음부터 88vh 를 넘으므로
+            그 값으로 «고정» 하면 곧 «처음 전체값이 나올 때의 크기» 다.
+            안쪽 목록이 스크롤을 맡으므로 결과가 한 줄이어도 창은 그대로 선다. */}
       {supModal&&canManageSupplier&&(()=>{
         // 상품에서 사용된 모든 공급사명 + suppliers 테이블 등록 공급사명 union
         const usedFromProducts={};
@@ -5263,7 +5272,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
           : `총 ${counts.all}개 공급사 · "저장" 버튼 클릭 시 반영됩니다`;
         return (
           <div onClick={()=>setSupModal(false)} style={{position:'fixed',top:0,left:0,width:'100vw',height:'100vh',background:'rgba(0,0,0,.7)',zIndex:1900,display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <div onClick={e=>e.stopPropagation()} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,width:supModalTab==='shipping'?1280:(supModalTab==='contacts'?1000:820),maxWidth:'94vw',maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
+            <div onClick={e=>e.stopPropagation()} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,width:supModalTab==='shipping'?1280:(supModalTab==='contacts'?1000:820),maxWidth:'94vw',height:'88vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
               <div style={{padding:'16px 22px',background:'var(--panel-bg)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div>
                   <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>공급사 관리</div>
@@ -5308,7 +5317,10 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                 )}
               </div>
               )}
-              <div style={{padding:'14px 22px',overflow:'auto',flex:1}}>
+              {/* ★ 세로 스크롤 자리를 «늘» 비워 둔다(overflowY:scroll) — auto 로 두면
+                  결과가 줄어 스크롤이 사라지는 순간 내용이 5px 옆으로 튄다.
+                  창 크기를 고정해 놓고도 이것이 남으면 여전히 «흔들린다» 로 읽힌다. */}
+              <div style={{padding:'14px 22px',overflowY:'scroll',overflowX:'auto',flex:1}}>
                 {supModalTab==='contacts'?(
                   <SupplierContactsTab compact isMaster={isMaster}
                     currentUserEmail={currentUserEmail} supplierNames={[]}/>
@@ -6221,7 +6233,18 @@ function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact
       ) : list.slice(0,200).map(r=>{
         const d = r.data||{};
         const stale = newest && r.synced_at && r.synced_at < newest;
-        const keys = Object.keys(d).filter(k=>k!=='공급사코드' && k!=='공급사명')
+        // ★★★ 2026-09-08 제니 물음: 「항목 순서는 모든 공급사가 동일한가?」
+        //   그전에는 `Object.keys(d)` 였다 — **jsonb 는 넣은 차례를 기억하지 않는다**
+        //   (키 길이·바이트 순으로 다시 늘어놓는다). 그래서 정산 시스템 표의 차례와
+        //   달랐고, 값이 빈 칸은 아예 없으니 **공급사마다 줄이 들쭉날쭉했다.**
+        //   ★★ 표의 «칸 차례» 로 그린다 — 여러 공급사를 잇달아 펼쳐 볼 때 **같은 것이
+        //     늘 같은 자리**에 있어야 눈이 그 자리를 기억한다. 그것이 표를 읽는 방식이다.
+        //   ★ 우리가 모르는 칸(정산 시스템이 새로 더한 것)은 «맨 뒤» 에 붙인다 —
+        //     모른다고 버리지 않는다(이 표를 jsonb 로 둔 이유가 그것이다).
+        const known = SUP_CONTACT_COLS_DEFAULT.filter(k=>d[k]!=null);
+        const extra = Object.keys(d).filter(k=>SUP_CONTACT_COLS_DEFAULT.indexOf(k)<0);
+        const keys = known.concat(extra)
+          .filter(k=>k!=='공급사코드' && k!=='공급사명')
           .filter(k=> isMaster || SUP_CONTACT_MONEY_COLS.indexOf(k)<0);
         return (
           <div key={r.code} style={{...card,marginBottom:8,padding:'11px 14px'}}>
