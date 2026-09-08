@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zm_cafe24_order_link -->
+<!-- (2026-09-08) 티켓 상세 ① 의 **«주문» 묶음 머리에 [카페24 주문서 ↗]** 를 달았다(제니 확정 자리). 누르면 그 주문의 카페24 어드민 주문서가 새 창으로 열린다. ★★★ 주소는 **제니가 준 실제 주소 그대로**다 — 어드민 주소는 몰·버전마다 달라 지어내면 «눌렀는데 안 열리는» 단추가 되고, 그것은 없느니만 못하다. `menu_no`·`bIsPinpointSearch` 도 **그대로 뒀다**: 뜻을 모르는 값을 «필요 없어 보인다» 고 빼면 안 열렸을 때 원인을 찾을 자리가 사라진다. **아는 것만 바꾼다.** ★★ 카페24 주문서는 **«주문» 단위이지 «품목» 단위가 아니다** — 품목별 주문번호(…-01)에서 뒤의 품목 자리를 떼어 연다. 규칙은 환불 화면의 주문 묶기(orderGroupIdOf)와 «같은 것» 을 쓴다: 규칙이 둘이면 같은 주문을 두 가지로 세게 된다. ★★ 그래서 자리도 **값 줄이 아니라 묶음 머리**다 — 「품목별 주문번호」 옆에 붙이면 «이 품목의 주문서» 로 읽혀, 여러 품목이 함께 뜨는 것을 «잘못 열렸다» 로 본다. 머리말 줄([목록으로] 옆)도 아니다: 거기는 «이 화면을 떠나는» 자리다. ★ 주문번호가 없으면 단추 대신 「주문서 ✕」 로 흐리게 둔다 — 눌러도 아무 일이 없는 단추를 남기지 않는다. ★ dev 전용. -->
 <!-- v20260908zl_macro_edit_btn -->
 <!-- (2026-09-08) CS 설정 > 매크로 목록의 **[수정] 테두리를 진하게**(제니). 옆의 [끄기]·[지우기] 는 제 색을 옅게 깐 테두리라 또렷한데 이 단추만 흐린 하늘빛 «고정값»(rgba .50)이어서 두 모드 어디서도 흐렸다. → **값이 아니라 «뜻»(var(--accent))을 쓴다** — 다크·라이트에서 각각 제 밝기로 따라온다(이 콘솔에서 되풀이해 세운 규칙이다). 옅은 바탕도 함께 깔아 옆 단추들과 같은 꼴로 맞췄다. ★ dev 전용. -->
 <!-- v20260908zk_macro_symbolbar -->
@@ -23950,6 +23952,29 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 //   「이 품목에 이미 N건 있습니다」 옆의 [티켓 이동] 을 누르거나.
 //   두 번째가 이 화면이 급했던 이유다 — **새로 만들 일이 아니라 그 건에 이력을
 //   더할 일** 인 경우의 길이 없었다.
+// ── 카페24 주문서 열기 (제니 2026-09-08) ──────────────────────────────────
+// ★★★ 주소는 **제니가 준 실제 주소 그대로**다. 카페24 어드민 주소는 몰·버전마다
+//   다르고, 지어낸 주소는 «눌렀는데 안 열리는» 단추가 된다 — 그것은 없느니만 못하다.
+// ★★ `menu_no`·`bIsPinpointSearch` 도 **그대로 둔다.** 뜻을 모르는 값을 «필요 없어
+//   보인다» 는 이유로 빼면, 안 열렸을 때 원인을 찾을 자리가 사라진다. 아는 것만 바꾼다.
+const CS_CAFE24_ORDER_URL =
+  'https://oneroommake.cafe24.com/admin/php/shop1/s_new/order_detail.php'
+  + '?order_id={ORDER}&menu_no=78&bIsPinpointSearch=undefined';
+// ★★ 카페24 주문서는 **«주문» 단위이지 «품목» 단위가 아니다.**
+//   품목별 주문번호(20260901-0012345-01)에서 뒤의 품목 자리를 떼어 낸다 —
+//   환불 화면이 이미 같은 규칙으로 주문을 묶는다(orderGroupIdOf). 규칙이 둘이면
+//   같은 주문을 두 가지로 세게 된다.
+function csOrderNo(t){
+  const s = String((t && (t.order_id || t.order_item_code)) || '').trim();
+  if(!s) return '';
+  const m = s.match(/^(\d{8}-\d+)-\d+$/);
+  return m ? m[1] : s;
+}
+function csCafe24OrderUrl(t){
+  const no = csOrderNo(t);
+  return no ? CS_CAFE24_ORDER_URL.replace('{ORDER}', encodeURIComponent(no)) : '';
+}
+
 function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
@@ -24542,7 +24567,30 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           {/* ★★ 뎁스를 두 화면에서 같게 둔다(제니 2026-09-02) — «주문(카페24가 준 것)·
               고객·주소». 이름이 없으면 맨 위 값들이 «분류 없는 것» 처럼 떠 있고,
               그러면 아래 묶음들만 이름을 가진 목록이 되어 층이 하나 모자라 보인다. */}
-          <div style={secTop}>주문</div>
+          {/* ★★★ [카페24 주문서] 는 **«주문» 묶음의 머리**에 둔다(제니 2026-09-08 확정).
+              ★ 이 묶음이 통째로 «카페24가 준 값» 이라 뜻이 맞고, 설정(cs_detail_order)으로
+                안의 칸이 바뀌어도 머리는 늘 그 자리에 있다.
+              ★★ 값 줄(「품목별 주문번호」) 옆에 붙이지 않은 이유: 카페24 주문서는
+                **주문 단위**라 그 품목만 열리는 것이 아니다. 값 옆에 두면 «이 품목의
+                주문서» 로 읽혀, 여러 품목이 함께 뜨는 것을 «잘못 열렸다» 로 본다.
+              ★ 머리말 줄([목록으로] 옆)도 아니다 — 거기는 «이 화면을 떠나는» 자리다. */}
+          <div style={{...secTop,display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',
+            paddingRight:secPad}}>
+            <span>주문</span>
+            <div style={{flex:1}}></div>
+            {csOrderNo(t) ? (
+              <a href={csCafe24OrderUrl(t)} target="_blank" rel="noreferrer"
+                data-tip={'카페24 어드민에서 주문 '+csOrderNo(t)+' 를 새 창으로 엽니다'}
+                style={{fontSize:10.5,fontWeight:600,color:'var(--accent)',
+                  textDecoration:'none',padding:'3px 8px',borderRadius:5,
+                  border:'1px solid var(--accent)',background:'rgba(120,170,255,.12)',
+                  whiteSpace:'nowrap'}}>카페24 주문서 ↗</a>
+            ) : (
+              <span data-tip="주문번호가 없어 주문서를 열 수 없습니다"
+                style={{fontSize:10.5,fontWeight:400,color:'var(--sub)',opacity:.75,
+                  whiteSpace:'nowrap'}}>주문서 ✕</span>
+            )}
+          </div>
           {ro('품목별 주문번호', t.order_item_code, true)}
           {/* ★ 상품과 옵션을 «두 줄» 로 나눈다(제니). 「／」로 이어 붙이면 상품명이 길
               때 옵션이 그 뒤에 묻혀, 어디까지가 상품이고 어디부터가 옵션인지 안 보인다.
