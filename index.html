@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zo_cafe24_wired -->
+<!-- (2026-09-08) **「카페24 연동」 설정을 티켓까지 이었다**(제니: 「CS 관리 > 설정 > 카페24 연동의 값은 실제 티켓 화면에 적용이 되지 않고 있어」— 맞았다). ★★★ 그동안 이 설정은 **아무 데도 안 닿아 있었다**: 화면에서 고르고 저장까지 되는데 **티켓을 만들 때 `cafe24_snapshot` 은 늘 비어 있었고, 담긴 것을 보여 주는 자리도 없었다.** 09-08 에만 네 번째로 만나는 계열이다(필수·담당자 권한·M 뱃지 — **설정은 있는데 화면이 안 읽던** 자리들). **설정과 화면이 서로 다른 말을 하면 사람은 둘 다 안 믿게 된다.** ①**엣지 함수(refund-fetch-order)에 `cafe24` 덩어리를 더했다** — **설정의 id 를 그대로 키로** 쓴다. 그전에는 평평한 키가 «환불 화면이 쓰는 이름»(ref_*·customer_*)이라 설정 id 와 달랐고, **아예 안 돌려주던 것이 열둘**이었다(상품 금액·옵션 금액·공급사 코드·공급사 상품명·개별 배송비·회수 완료일·CS 전 주문 상태·마켓·주문자 메일·주문자 전화·수령인 전화·결제일). ★ 기존 키는 하나도 안 건드렸다 — 이 함수는 환불 화면도 쓴다. **더하기만 한다.** ②**티켓을 만들 때 «고른 것만» 담는다**(`csCafe24Snapshot` — 설정과 티켓 사이의 **유일한 다리**다). ★ 함수가 옛 판이어도 담을 수 있는 것은 담기게 평평한 키로 물러설 표를 뒀다. ★★ 설정을 **못 읽으면 «항상 있는 값» 만** 담는다 — 못 읽었다고 다 담으면 안 고른 개인정보까지 티켓에 굳는다. **되돌릴 수 없는 쪽으로 물러서지 않는다.** ★ 값이 비어도 **키는 남긴다**: 나중에 「안 담은 것인가, 카페24가 안 준 것인가」를 갈라야 한다. ③**티켓 상세 ① 맨 아래에 「카페24 · 접수 시점」 묶음**을 만들어 차례(cs_detail_order)대로 그린다. ★★ **접수 시점의 고정값**이다 — 지금 카페24를 다시 보는 것이 아니라 그날 담은 것을 보여 준다(주문이 나중에 바뀌어도 안 흔들린다). ★ 옛 티켓에는 「그때는 안 담았다」고 적는다 — 빈 자리를 그냥 두면 사람은 고장으로 읽는다. ★ 엣지 함수는 **dev 에 배포 완료**. ★ dev 전용. -->
 <!-- v20260908zn_cafe24_url_measured -->
 <!-- (2026-09-08) 카페24 주문서 주소를 **둘을 견줘 정리했다**(제니가 「같은 화면인데 앞서 준 거랑 조금 다르다」며 두 번째 주소를 줬다). 다른 곳은 **`shop1/` 유무**와 **`menu_no`(78·74)** 뿐인데 **둘 다 열린다** → 그 둘은 주문서를 여는 데 필요한 값이 아니다(menu_no 는 어드민 왼쪽 메뉴 중 «어디서 들어왔나» 를 칠하는 값, shop1 은 다중 상점 자리). ★★★ 여기서 «아는 것만 바꾼다» 를 지키는 방법이 달라진다 — **짐작으로 빼는 것이 아니라 «두 가지가 다 되는 것을 보고» 고른다.** 그래서 둘 중 짧고 실제로 열리는 것이 확인된 ②를 글자 그대로 쓴다. ★ `bIsPinpointSearch=undefined` 는 **둘에서 같았다** — 빼도 되는지 본 적이 없으므로 그대로 둔다. **확인한 것만 줄인다.** ★ dev 전용. -->
 <!-- v20260908zm_cafe24_order_link -->
@@ -20261,6 +20263,78 @@ const CS_CAFE24_FIELDS = [
 ];
 const CS_CAFE24_GROUPS = ['품목','배송','클레임','주문','주문자','수령인 · 배송지','결제'];
 
+// ── 고른 값만 골라 담는다 (제니 2026-09-08: 「설정 값이 티켓 화면에 적용되지 않는다」)
+// ★★★ 그동안 이 설정은 **아무 데도 안 닿아 있었다.** 화면에서 고르고 저장까지 되는데
+//   티켓을 만들 때 cafe24_snapshot 은 늘 비어 있었다 —
+//   **설정과 화면이 서로 다른 말을 하면 사람은 둘 다 안 믿게 된다**(09-08 에만 네 번째다).
+// ★★ 이 함수가 «설정 ↔ 티켓» 의 **유일한 다리**다. 무엇이 담기는지 알고 싶으면 여기만 본다.
+// ★★ 엣지 함수가 새 판이면 `res.cafe24` 가 **설정 id 를 그대로 키로** 들고 온다.
+//   옛 판이면 그 덩어리가 없으므로 «평평한 키» 에서 물러나 채운다 — 함수 배포가
+//   늦어도 담을 수 있는 것은 담긴다. 그 표가 아래 CS_CAFE24_FALLBACK 이다.
+//   ★ 물러설 길이 없는 값(상품 금액·공급사 코드·주문자 메일 …)은 그냥 없다.
+//     **없는 것을 지어내지 않는다** — 새 판이 깔리면 그때부터 들어온다.
+const CS_CAFE24_FALLBACK = {
+  order_item_code:'order_item_code', item_no:'item_no', product_code:'product_code',
+  option_value:'option_value', quantity:'quantity', supplier_name:'supplier_name',
+  tracking_no:'tracking_no', shipping_company_name:'shipping_company_name',
+  shipped_date:'shipped_date', delivered_date:'delivered_date',
+  status_text:'status_text', claim_reason:'claim_reason',
+  claim_reason_type:'claim_reason_type',
+  return_request_date:'return_request_date',
+  exchange_request_date:'exchange_request_date',
+  cancel_request_date:'cancel_request_date',
+  order_date:'order_date', order_place_name:'order_place_name',
+  market_order_no:'ref_market_order_no',
+  'buyer.name':'customer_name', 'buyer.cellphone':'customer_phone',
+  'receivers.name':'receiver_name', 'receivers.cellphone':'receiver_phone',
+  'receivers.zipcode':'ship_zipcode', 'receivers.address1':'ship_address1',
+  'receivers.address2':'ship_address2',
+  'receivers.shipping_message':'shipping_message',
+  payment_method_name:'ref_payment_label',
+};
+// ★★ **담는 키는 «접수할 때 고른 것» 그대로다** — 값이 비어도 키를 남긴다.
+//   그래야 나중에 「이 티켓은 그 값을 안 담은 것인가, 카페24가 안 준 것인가」를
+//   가를 수 있다. 설정은 언제든 바뀌는데 티켓은 그날의 것으로 남아야 한다.
+function csCafe24Snapshot(res, onIds){
+  if(!res) return {};
+  const always = CS_CAFE24_FIELDS.filter(f=>f.always).map(f=>f.id);
+  const ids = Array.isArray(onIds) ? onIds : [];
+  const want = always.concat(ids.filter(id=>always.indexOf(id)<0));
+  const src = (res.cafe24 && typeof res.cafe24==='object') ? res.cafe24 : null;
+  const out = {};
+  want.forEach(id=>{
+    let v;
+    if(src && Object.prototype.hasOwnProperty.call(src, id)) v = src[id];
+    else { const k = CS_CAFE24_FALLBACK[id]; v = k ? res[k] : undefined; }
+    if((v===undefined || v==='' || v===null) && id==='order_id'){
+      v = csOrderNo({order_item_code: res.order_item_code || res.code});
+    }
+    out[id] = (v===undefined || v==='') ? null : v;
+  });
+  return out;
+}
+// 값 하나를 사람이 읽는 꼴로. ★ 날짜·금액만 손대고 나머지는 «온 그대로» 둔다 —
+//   모르는 값을 예쁘게 만들려다 뜻이 바뀌는 것이 더 나쁘다.
+const CS_CAFE24_MONEY = ['product_price','option_price','individual_shipping_fee'];
+// 복사 단추를 붙일 값 — «옮겨 적는» 값만이다(번호·연락처·주소).
+const CS_CAFE24_COPY = ['order_id','order_item_code','product_code','supplier_id',
+  'tracking_no','market_order_no','buyer.cellphone','buyer.phone','buyer.email',
+  'receivers.cellphone','receivers.phone','receivers.zipcode',
+  'receivers.address1','receivers.address2'];
+function csCafe24Show(id, v){
+  if(v===null || v===undefined || v==='') return '';
+  if(CS_CAFE24_MONEY.indexOf(id)>=0){
+    const n = Number(v);
+    return isNaN(n) ? String(v) : n.toLocaleString()+'원';
+  }
+  if(/(_date|date)$/.test(id) || id==='order_date' || id==='payment_date'){
+    const s = String(v);
+    // 카페24는 「2026-09-01」·「2026-09-01T12:00:00+09:00」 두 꼴을 섞어 준다.
+    return s.indexOf('T')>0 ? csStamp(s) : s;
+  }
+  return String(v);
+}
+
 // console_settings 한 줄을 읽는다.
 // ★★ 세 결과를 «구분해서» 돌려준다 — undefined(못 읽었다) · null(아직 없다) · 값.
 //   셋을 뭉뚱그리면 「설정이 비었다」와 「조회가 실패했다」가 같아 보이고, 그러면
@@ -22814,6 +22888,20 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   ★ 기본값은 그대로 «나» 다 — 대부분의 등록이 자기 건이라, 기본을 비워 두면
   //     매번 한 번 더 골라야 한다. **바뀐 것은 «바꿀 수 있게 된 것» 뿐이다.**
   const [assignee,setAssignee] = useState(currentUserEmail);
+  // ★★ 「카페24 연동」에서 고른 값 — 티켓을 만들 때 cafe24_snapshot 에 담는다(2026-09-08).
+  //   ★ 못 읽으면 «항상 있는 값» 만 담는다. 못 읽었다고 다 담으면, 안 고른 개인정보까지
+  //     티켓에 굳는다 — 되돌릴 수 없는 쪽으로 물러서지 않는다.
+  //   ★ 설정이 아직 한 번도 저장 안 됐을 때도 «항상 있는 값» 만이다. 설정 화면이
+  //     보여 주는 지금 상태와 **같은 답**이어야 한다.
+  const [cafe24On,setCafe24On] = useState([]);
+  useEffect(()=>{ let alive=true;
+    csLoadSetting('cs_cafe24_fields').then(r=>{
+      if(!alive) return;
+      if(r===undefined) console.error('[카페24 연동 설정] 읽지 못했습니다 — 항상 있는 값만 담습니다.');
+      setCafe24On((r && r.value && Array.isArray(r.value.on)) ? r.value.on : []);
+    });
+    return ()=>{ alive=false; };
+  },[]);
   // 지금 적고 있는 줄에 붙일 사진(이미 Storage 에 올라간 주소들) — 2026-09-03
   const [photos,setPhotos] = useState([]);
   const noteRef = useRef(null);   // 기호를 «커서 자리에» 넣으려면 칸을 직접 잡아야 한다
@@ -23138,6 +23226,12 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         assignee: assignee || currentUserEmail,
         created_by: currentUserEmail, updated_by: currentUserEmail,
         memo: f.memo || null,
+        // ★★★ 「카페24 연동」에서 고른 값 — **접수 시점의 고정값**이다(2026-09-08).
+        //   설정이 여기까지 안 닿아 있어 늘 비어 있던 칸이다(제니 제보).
+        //   ★ 티켓 칸이 늘지 않는다: 고른 것이 무엇이든 jsonb 한 칸에 담긴다.
+        //   ★ `it` 은 조회 결과 통째(fetchOne 이 {code, ...data} 로 담아 둔 것)라
+        //     새 판의 `it.cafe24` 도, 옛 판의 평평한 키도 여기서 다 본다.
+        cafe24_snapshot: csCafe24Snapshot(it, cafe24On),
       };
     };
 
@@ -24003,6 +24097,17 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const [byPhone,setByPhone] = useState(null);
   const [csInfo,setCsInfo]   = useState(null);
   const [group,setGroup]     = useState([]);   // 같은 묶음의 티켓들(메인+서브)
+  // ★★ 「카페24 연동」의 **차례**(cs_detail_order). 무엇을 담을지는 접수할 때 이미
+  //   정해졌고(cafe24_snapshot), 여기서는 **어떤 차례로 보일지만** 읽는다.
+  //   ★ 못 읽어도 그린다 — 그때는 담긴 차례 그대로다. 차례를 몰라 값을 안 보여 주는
+  //     것은 «담은 것을 못 보는» 일이라 훨씬 나쁘다.
+  const [detailOrder,setDetailOrder] = useState([]);
+  useEffect(()=>{ let alive=true;
+    csLoadSetting('cs_detail_order').then(r=>{
+      if(alive) setDetailOrder((r && r.value && Array.isArray(r.value.order)) ? r.value.order : []);
+    });
+    return ()=>{ alive=false; };
+  },[]);
 
   // ★★ 1단의 값은 «바로» 저장하지 않는다(제니 2026-09-01). 고칠 때마다 저장하면
   //   손이 미끄러진 것·잘못 고른 것까지 전부 이력에 남아 정작 봐야 할 흐름이 묻힌다.
@@ -24815,6 +24920,50 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               {ro('정산 배송료', t.settle_shipping_fee!=null ? t.settle_shipping_fee.toLocaleString()+'원' : null)}
             </>
           )}
+
+          {/* ── 카페24 · 접수 시점 (제니 2026-09-08) ───────────────────────
+              ★★★ 「CS 관리 > 설정 > 카페24 연동의 값이 실제 티켓 화면에 적용되지
+                않고 있어」— 맞았다. 고르고 저장까지 되는데 **티켓을 만들 때 아무것도
+                안 담겼고, 담긴 것을 보여 주는 자리도 없었다.**
+              ★★ **접수 시점의 고정값**이다. 지금 카페24를 다시 보는 것이 아니라,
+                티켓을 만들 때 담아 둔 것을 그대로 보여 준다 — 그래서 「접수 시점」을
+                제목에 적는다. 주문이 나중에 바뀌어도 이 값은 그날 것으로 남는다.
+              ★ 차례는 설정(cs_detail_order)이 정하고, 거기 없는 것은 뒤에 붙인다 —
+                두 설정이 어긋나 있어도 **아무것도 잃지 않는다.**
+              ★ 옛 티켓은 담긴 것이 없다. 그때는 «없다» 가 아니라 «그때는 안 담았다» 고
+                적는다 — 빈 자리를 그냥 두면 사람은 그것을 고장으로 읽는다. */}
+          {(()=>{
+            const snap = (t.cafe24_snapshot && typeof t.cafe24_snapshot==='object')
+              ? t.cafe24_snapshot : {};
+            const keys = Object.keys(snap);
+            const seq = detailOrder.filter(id=>keys.indexOf(id)>=0)
+              .concat(keys.filter(id=>detailOrder.indexOf(id)<0));
+            const shown = seq.filter(id=>csCafe24Show(id, snap[id])!=='');
+            return (
+              <>
+                <div style={sec}>카페24 <span style={{opacity:.7}}>· 접수 시점</span></div>
+                {keys.length===0 ? (
+                  <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,paddingLeft:8}}>
+                    이 티켓을 접수할 때는 담기지 않았습니다.<br/>
+                    <span style={{opacity:.8}}>새로 접수하는 티켓부터 보입니다
+                    (CS 설정 &gt; 카페24 연동에서 무엇을 담을지 고릅니다).</span>
+                  </div>
+                ) : shown.length===0 ? (
+                  <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,paddingLeft:8}}>
+                    고른 값 {keys.length}개를 담았지만 카페24가 준 값이 모두 비어 있었습니다.
+                  </div>
+                ) : shown.map(id=>{
+                  const def = CS_CAFE24_FIELDS.find(f=>f.id===id);
+                  // ★ 세 번째 인자는 «복사 단추» 다. 옮겨 적을 값(번호·연락처·주소)에만
+                  //   붙인다 — 날짜·금액까지 붙이면 줄마다 단추가 서서 값이 안 읽힌다.
+                  return <React.Fragment key={id}>
+                    {ro(def ? def.label : id, csCafe24Show(id, snap[id]),
+                        CS_CAFE24_COPY.indexOf(id)>=0)}
+                  </React.Fragment>;
+                })}
+              </>
+            );
+          })()}
 
         </div>
 
