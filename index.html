@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908k_flyout_head_bleed -->
+<!-- (2026-09-08) 접힘 패널의 «상위 메뉴명» 을 **판의 맨 윗단 그 자체**로 바꿨다(제니: 「박스가 아니고, 목록 박스에서 상단 부모메뉴명 부분을 아예 네이비 색으로」). 앞 판에서 나는 판 «안» 에 여백을 두고 그 안에 둥근 네이비 칩을 놓았다 — 뜻은 «머리» 인데 모양은 «판에 얹힌 조각» 이었다. ★★ **머리는 판의 한 단이지 판 위의 물건이 아니다** — 판의 좌우 여백을 없애 머리가 끝에서 끝까지 닿게 하고, 둥근 모서리는 머리가 스스로 갖는 대신 판이 overflow 로 깎는다(제 radius 를 주면 판의 모서리와 두 겹이 되어 어긋난다). ★ 자식 줄도 함께 끝까지 닿게 했다 — 마우스를 올렸을 때 칠해지는 자리가 «머리와 같은 폭» 이어야 한 판으로 읽힌다. 여백은 아래쪽에만 남긴다. ★ dev 전용. -->
 <!-- v20260908j_col_ratio_and_head_ink -->
 <!-- (2026-09-08) 제니 피드백 셋. ①🔴🔴 **CS 목록의 열 너비를 «비율» 로 바꿨다.** 앞 판에서 나는 «넘칠 때만 눌러 담기» 로 만들었는데 **반쪽이었다** — 제니: 「다른 메뉴의 목록처럼 **설정한 값 기준으로 비율로 늘림·줄임**이 되어야 하는데 목록 내 너비가 고정이라 접었다 폈다 하면 가로 스크롤이 생긴다」. ★★★ **조건을 하나씩 막는 것과 전제를 바꾸는 것은 다르다** — 저장값이 px 인 한 그릇이 커지면 오른쪽이 남고 작아지면 넘친다. 이제 저장값은 **«비율의 재료»** 이고 서로의 크기 관계만 뜻한다. 그래서 접었다 펴도 맞춰 둔 비율 그대로 돌아오고, 넘칠 수가 없다(열을 아주 많이 켜서 «최소 폭의 합» 조차 넘으면 그때만 구른다 — 그건 그릇 탓이 아니라 켠 열이 많아서다). ★★ 폭이 비율이 되면 **끄는 방식도 달라져야 한다**: 합이 그릇에 딱 맞으므로 한 열을 넓히면 어디선가 그만큼 좁아지는데, 그걸 안 정하면 브라우저가 «모든 열에서 조금씩» 가져가 **2026-09-04 에 제니가 짚은 「한 열을 조정하면 앞쪽 너비도 같이 바뀐다」가 그대로 돌아온다.** → **바로 «다음» 열에서만 주고받는다.** 잡은 경계의 좌·우 둘만 움직이고 앞쪽은 한 픽셀도 안 움직인다 — 경계를 끄는 손의 뜻과도 맞는다. 마지막 열은 다음이 없으므로 예전처럼 «남는 빈 폭» 이 상대다. ②**메일 문안 표의 제목행 줄바꿈**(제니). 열 폭을 안 주면 메일 클라이언트가 제 마음대로 나눠 「주문자명(수령 / 자명)」처럼 **말 가운데가 갈린다** → `white-space:nowrap` + (그걸 못 읽는 클라이언트를 위한) `word-break:keep-all`. 겸해 **제목행 글자색을 박았다** — 회색 바탕에 색을 안 주면 어두운 테마의 메일함에서 흰 글자가 되어 사라진다. **배경을 정했으면 그 위의 글자도 함께 정해야 한다.** 값 칸은 위로 붙여 그린다(사유가 두 줄이 되면 그 칸만 가운데로 떠 옆 칸과 어긋나 보인다). ③**«네이비 밴드 위의 안 보이는 글자» 를 전수로 훑었다**(제니: 「설정 메뉴에 이런 부분이 더 있는 것 같은데」). 여는 태그를 중괄호 깊이로 정확히 끊어 `<th>` 를 전수 검사했고 **세 자리**를 고쳤다: 공급사 접수 문안 «미리보기» 표 · **CS 설정 표 머리글(csSetTh)** · 변경 이력 표 머리글(제 배경·글자를 인라인으로 깔아 규칙 자체를 이기고 있었다 → 둘 다 걷어 규칙에 맡겼다). 겸해 설정 표의 줄 사이 선이 «흰색 반투명» 이라 **라이트에서 흰 종이 위 흰 선**이 되던 것도 고쳤다. ★★ **09-08 에 --head-bg 를 진한 남색으로 바꾼 뒤 이런 자리가 줄줄이 나왔다 — 밴드를 밝히면 그 위에 얹힌 글자를 «전부» 다시 봐야 한다.** 🔴 **오늘 세 번째로 «식 자리의 JSX 주석»** 을 밟았다(`.map(c=>(` 바로 뒤). **`(`·`=>(`·`return(`·`&& (` 다음에는 JSX 주석을 두지 않는다.** ★ dev 전용. -->
 <!-- v20260908i_collapse_fixes -->
@@ -708,12 +710,21 @@
       .sidebar.collapsed .nav-kids.open{display:none;position:absolute;left:100%;top:0;
         z-index:1200;min-width:186px;padding:6px 6px 6px 12px;background:transparent;box-shadow:none;border:none}
       .sidebar.collapsed .nav-group:hover > .nav-kids{display:block}
+      /* ★★ 패널의 «머리» 는 상자 안에 든 상자가 아니라 **판의 맨 윗단 그 자체**다
+         (제니 2026-09-08: 「박스가 아니고 상단 부모메뉴 영역의 색을 네이비로」).
+         → 판의 좌우 여백을 없애 머리가 «끝에서 끝까지» 닿게 하고, 둥근 모서리는
+           판이 overflow 로 깎는다. 여백은 아래쪽에만 남긴다.
+         ★ 자식 줄도 함께 끝까지 닿는다 — 마우스를 올렸을 때 칠해지는 자리가
+           «머리와 같은 폭» 이어야 한 판으로 읽힌다. */
       .sidebar.collapsed .nav-kids > .nav-kids-inner{background:var(--surface);
-        border:1px solid var(--border);border-radius:10px;padding:6px;box-shadow:var(--pop-shadow)}
+        border:1px solid var(--border);border-radius:10px;padding:0 0 6px;
+        overflow:hidden;box-shadow:var(--pop-shadow)}
       /* 접었을 때는 «어느 메뉴의 자식인가» 를 패널이 스스로 말해야 한다 —
          왼쪽에 남은 것이 아이콘 하나뿐이라 이름이 어디에도 없다. */
-      .sidebar.collapsed .nav-kids-head{display:block}
-      .sidebar.collapsed .nav-kids .nav-child{padding-left:12px}
+      /* 머리는 판의 윗단이므로 제 둥근 모서리도 여백도 갖지 않는다 — 판이 깎아 준다. */
+      .sidebar.collapsed .nav-kids-head{display:block;border-radius:0;margin:0 0 5px;
+        padding:9px 13px}
+      .sidebar.collapsed .nav-kids .nav-child{padding-left:13px;border-radius:0;margin-bottom:0}
 
       .sidebar.collapsed .sidebar-bottom{padding:12px 8px}
       /* 접으면 **프로필 그림과 권한 뱃지만** 세로로 가운데 선다(제니 2026-09-08) —
@@ -736,8 +747,7 @@
        콘솔의 «머리» 는 이미 --head-bg/--head-ink 한 쌍으로 정해져 있으므로 새 색을
        짓지 않고 그것을 쓴다. 상위와 하위가 «층» 으로 갈린다. */
     .nav-kids-head{display:none;font-size:10.5px;font-weight:700;color:var(--head-ink);
-      background:var(--head-bg);letter-spacing:.04em;padding:6px 10px;white-space:nowrap;
-      border-radius:6px;margin-bottom:4px}
+      background:var(--head-bg);letter-spacing:.04em;padding:6px 10px;white-space:nowrap}
     /* 접기/펼치기 단추 — 로고 줄 오른쪽 위. 늘 같은 자리에 있어야 «접었다 폈다» 가
        한 자리에서 끝난다(접힌 뒤 펴는 단추를 찾아다니게 하지 않는다). */
     .sidebar-logo{position:relative}
