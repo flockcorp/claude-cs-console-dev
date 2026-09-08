@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908b_head_band_and_panel -->
+<!-- (2026-09-08) 제니 피드백 둘 — **두 건 다 «09-07 에 값을 한곳으로 모으다 놓친 자리»** 다. ①🔴 **다크에서 CS 관리 목록의 제목 행이 내용과 같은 색**(제니). 실측해 보니 `--head-bg` 가 **`--card` 와 글자 그대로 같은 `#162244`** 였다 — 목록의 줄이 카드 위에 그려지므로 밴드가 통째로 사라진다. ★★★ 어쩌다 이렇게 됐나: 09-07 에 흩어진 값을 쌍으로 묶으면서 **«모달·카드의 머리말 띠»(#162244)와 «목록의 제목 행»(#1d2e54)을 같은 것으로 봤다.** 원래 상품 정보·공급사 목록이 쓰던 값은 #1d2e54 다. **라이트에서는 --card 가 흰색이라 이 겹침이 드러나지 않아** 그대로 넘어갔다 — 한쪽 모드만 보고 «됐다» 하면 다른 쪽에서 이렇게 나온다. → `--head-bg:#1d2e54`(다크만). `--panel-bg` 는 «값을 안 담는 띠» 라 #162244 그대로 둔다. **«띠» 와 «제목 행» 은 다른 것이다.** ②**라이트에서 [⚙ 보기 설정] 패널만 통째로 다크**였다(제니: 「텍스트가 어두워졌는데 배경은 여전히 어두워서 글자가 안 보인다」). 이 판은 09-04 에 «화면 바탕과 갈라져 보이게» 하려고 값을 손으로 박아 둔 자리(#1E2B4E)라 팔레트가 바뀌어도 안 따라왔고, 안의 글자만 var(--text)/var(--sub) 라 함께 어두워졌다. ★ **--card 로 갈아 끼우지 않았다** — 라이트는 --bg(#F2F5FA)와 --card(#FFFFFF)가 가까워 흰 판만으로는 09-04 에 고쳤던 «화면에 뚫린 구멍» 이 그대로 돌아온다. 흰 판 + 또렷한 남색 테두리 + 짙은 그림자로 띄운다(토스트와 같은 판단). ★★ **판을 뒤집으면 그 «안» 을 전부 다시 본다** — 여섯을 다시 봤다: 구분선 · 버튼 테두리 · 체크박스 accentColor(#5B8DEF 의 «한 단계 밝게» 는 어두운 판에서만 맞는 방향이다) · 끌고 있는 줄의 배경 · [저장] 버튼(#3A63C4 는 흰 판 위에서 오히려 뜬다) · 노란 알림 글자(#F6AD09 는 흰 바탕에서 거의 안 읽힌다 → --warn-ink). 판 하나를 `P` 객체로 모아 두어 다음에 또 흩어지지 않게 했다. ★ dev 전용. -->
 <!-- v20260908a_light_contrast3 -->
 <!-- (2026-09-08) 제니 라이트 피드백 셋 — **셋 다 «바탕은 모드를 따르는데 그 위에 얹힌 것은 안 따랐다»** 는 같은 병이다. ①**이력의 «누가» 뱃지**(고객·원룸만들기·공급사)가 흰 종이 위에서 글자만 안 보였다 — 바탕 rgba(색,.14)는 옅어지는데 글자는 어두운 화면용 밝은 색 그대로다. 「색감은 좋으니 CS 관리 목록의 상태 뱃지처럼」(제니) → **색상(hue)은 손대지 않고**, 새 값을 짓지도 않았다: 09-03 에 «이력 적는 밝은 판» 을 위해 만들어 둔 `CS_SIDE_STYLE_LIGHT` 가 이미 그 계열의 «어두운 글자» 판이다. ★★ **만드는 곳에서 한 번 누른다**(csInk 와 같은 판단) — `csSideStyle()` 하나를 모드에 맞추니 뱃지·줄 바탕·테두리·왼쪽 색 바가 함께 따라온다. 쓰는 쪽마다 부르게 했으면 «줄 바탕만 밝고 색 바는 어두운» 절름발이가 됐다. ②**서브 티켓 안 [메인 티켓 #번호] 버튼**이 «네이비 바탕 + 검은 글자» 였다 — `--accent` 로 채운 자리라 그 위 글자는 `--on-accent` 여야 한다. ★★★ 여기만 같은 뜻을 **세 번째 값**(`#16233F`)으로 적어 두어 09-07 의 두 차례 훑기(`#12203c` → `#1A2240`)를 다 빠져나갔다. **값으로 찾는 훑기는 끝나지 않는다** — 이번엔 `background:…var(--accent)` 가 있는 줄을 전수로 세어 남은 자리가 이 하나임을 확인하고 끝냈다. ③**저장 버튼의 «못 누르는» 상태**가 라이트에서도 짙은 남색이었다(제니: 「텍스트만 흐려지고 버튼 색 자체는 진하게 남아 있어」). ★★★ 원인은 `light` 라는 이름으로 **«판» 과 «모드» 를 같은 말로 쓰고 있던 것**이다 — 그 prop 은 «이력 적는 밝은 판 안인가» 라는 뜻뿐이라, 화면 전체가 밝아져도 false 여서 어두운 화면용 `CS_TONE_DIM`(#22355F)이 흰 카드 위에 그대로 얹혔다. **«옅게 하는 방향» 을 정하는 것은 판이 아니라 «바탕이 밝은가» 다** → `light || csIsLight()`. 활성 상태는 한 픽셀도 안 건드렸다(제니: 「활성화 상태일 때는 딱 좋아」). ★ dev 전용. -->
 <!-- v20260907j_on_accent_btn -->
@@ -466,7 +468,16 @@
          **어두운 바탕에 어두운 글자**가 됐다. 둘 중 하나만 모드를 따르면 반드시 어긋난다.
          ★ 라이트에서도 제목 행은 «어두운 밴드» 로 둔다 — 브랜드 남색이라 표의 머리가
            분명히 서고, 제니가 말한 그 규칙(어두우면 밝게)이 두 모드에서 같이 지켜진다. */
-      --head-bg:#162244; --head-ink:#DCE8FF;
+      /* ★★★ 2026-09-08 — 다크에서 이 값이 **--card 와 똑같은 #162244** 였다
+         (제니: 「CS 관리 목록의 제목행이 내용과 동일 색상이네」). 목록의 줄이 카드 위에
+         그려지므로 «머리» 와 «내용» 이 한 색이 되어 밴드가 통째로 사라졌다.
+         ★★ 어쩌다 이렇게 됐나 — 09-07 에 이 쌍을 만들 때 화면마다 흩어져 있던 값을
+           모으면서 **«모달·카드의 머리말 띠»(#162244)와 «목록의 제목 행»(#1d2e54)을
+           같은 것으로 봤다.** 원래 상품 정보·공급사 목록이 쓰던 값은 #1d2e54 다.
+           라이트에서는 --card 가 흰색이라 이 겹침이 드러나지 않아 그대로 넘어갔다.
+         ★ **«띠» 와 «제목 행» 은 다른 것이다** — 띠는 값을 안 담고 판을 가르는 자리라
+           --panel-bg(#162244) 그대로 두고, 제목 행만 한 단 밝은 밴드로 돌려놓는다. */
+      --head-bg:#1d2e54; --head-ink:#DCE8FF;
       /* 판의 «머리와 발» — 모달 헤더·카드 머리말·버튼 줄. 제목 행과 달리 값을 담지 않는
          띠라서, 라이트에서는 굳이 어둡게 두지 않고 옅게만 갈라 준다. */
       --panel-bg:#162244;
@@ -23668,6 +23679,28 @@ const csTd = {padding:'10px '+CS_CELL_PAD+'px',color:'var(--text)',verticalAlign
 //   색을 깔면 그 줄과 «자리를 바꾸는» 것처럼 보이는데 실제로는 앞뒤에 끼우는 것이다.
 function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEmail,
                            widthsChanged, onResetWidths, onClose}){
+  // ★★★ 2026-09-08 — 라이트에서 **이 패널만 통째로 다크였다**(제니: 「텍스트가
+  //   어두워졌는데 배경은 여전히 어두워서 글자가 안 보인다」). 이 판은 09-04 에
+  //   «화면 바탕과 갈라져 보이게» 하려고 값을 손으로 박아 둔 자리라(#1E2B4E) 팔레트가
+  //   바뀌어도 따라오지 않았고, 안의 글자만 var(--text)/var(--sub) 라 함께 어두워졌다.
+  //   ★★ **한 조각만 모드를 안 따르면 그 조각의 «안» 이 전부 깨진다** — 09-07 부터
+  //     되풀이해 만나는 그 규칙이고, 여기서는 판이 통째로 남아 가장 크게 드러났다.
+  //   ★ 그렇다고 --card 로 갈아 끼우지 않는다. 이 판은 «떠 있는 창» 이라 바탕과
+  //     갈라져야 하는데, 라이트에서는 --bg(#F2F5FA)와 --card(#FFFFFF)가 가까워
+  //     흰 판만으로는 09-04 에 고쳤던 «화면에 뚫린 구멍» 문제가 그대로 돌아온다
+  //     → 라이트는 **흰 판 + 또렷한 남색 테두리 + 짙은 그림자**로 띄운다(토스트와 같은 판단).
+  //   ★★ 판을 뒤집으면 그 «안» 을 전부 다시 본다(09-04 에 적어 둔 그대로) — 여기서
+  //     다시 본 것 여섯: 구분선 · 버튼 테두리 · 체크박스 색 · 끌고 있는 줄의 배경 ·
+  //     [저장] 버튼(#3A63C4 는 흰 판 위에서 오히려 뜬다 → --primary 로) · 노란 알림 글자
+  //     (#F6AD09 는 흰 바탕에서 거의 안 읽힌다 → --warn-ink, 09-07 에 그러라고 만든 변수다).
+  const pLight = csIsLight();
+  const P = pLight
+    ? {bg:'#FFFFFF', bd:'#2A478D', shadow:'0 16px 40px rgba(22,35,63,.24)',
+       line:'rgba(22,35,63,.14)', btnBd:'rgba(22,35,63,.24)', dragBg:'rgba(22,35,63,.06)',
+       check:'#2A478D', save:'#2A478D', saveBusy:'rgba(22,35,63,.20)', warn:'var(--warn-ink)'}
+    : {bg:'#1E2B4E', bd:'#5478BE', shadow:'0 16px 40px rgba(0,0,0,.62)',
+       line:'rgba(255,255,255,.14)', btnBd:'rgba(255,255,255,.22)', dragBg:'rgba(255,255,255,.08)',
+       check:'#5B8DEF', save:'#3A63C4', saveBusy:'rgba(255,255,255,.18)', warn:'#F6AD09'};
   const saved = (settings && settings.cs_list_columns) || {};
   const initial = Array.isArray(saved[chip]) ? saved[chip]
                 : Array.isArray(saved['_default']) ? saved['_default']
@@ -23740,7 +23773,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
         onDragLeave={on ? ()=>setOver(o=>o===k?null:o) : undefined}
         onDrop={on ? (e)=>{ e.preventDefault(); dropOn(k); } : undefined}
         style={{display:'flex',alignItems:'center',gap:7,padding:'5px 7px',borderRadius:6,
-          background: drag===k ? 'rgba(255,255,255,.08)' : 'transparent',
+          background: drag===k ? P.dragBg : 'transparent',
           borderTop:'2px solid '+(isOver ? 'var(--accent)' : 'transparent')}}>
         {on ? (
           <span title="끌어서 차례를 바꿉니다"
@@ -23754,9 +23787,11 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
         ) : <span style={{width:12}}></span>}
         <label style={{display:'flex',alignItems:'center',gap:6,flex:1,minWidth:0,cursor:'pointer'}}>
           {/* ★ 판이 밝아지면서 accentColor 도 다시 봐야 했다 — var(--primary)(#2A478D)는
-              밝은 남색 판 위에서 «켜졌는지» 가 안 읽힌다. 한 단계 밝은 파랑으로. */}
+              밝은 남색 판 위에서 «켜졌는지» 가 안 읽힌다. 한 단계 밝은 파랑으로.
+              ★★ 그 «한 단계 밝게» 는 어두운 판에서만 맞는 방향이다 — 흰 판 위에서는
+                같은 #5B8DEF 가 옅어져 다시 안 읽힌다. 판을 따라 뒤집는다(P.check). */}
           <input type="checkbox" checked={on} onChange={()=>toggle(k)}
-            style={{width:13,height:13,accentColor:'#5B8DEF',cursor:'pointer'}}/>
+            style={{width:13,height:13,accentColor:P.check,cursor:'pointer'}}/>
           {/* ★ 패널에서는 «무엇인지 분명한 이름»(plabel)을, 목록 머리글에서는 짧은
               이름을 쓴다 — 고르는 자리와 보는 자리의 셈이 다르다. */}
           <span style={{fontSize:11.5,color:on?'var(--text)':'var(--sub)',
@@ -23781,8 +23816,8 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
             여기서 다시 본 것: 구분선·버튼 테두리(var(--border)는 이 판 위에서 사라진다) ·
             체크박스 색 · 끌고 있는 줄의 배경 · [저장] 버튼(var(--primary)가 판에 잠긴다). */}
       <div style={{position:'absolute',top:'calc(100% + 6px)',right:0,zIndex:2401,
-        width:300,background:'#1E2B4E',border:'1px solid #5478BE',
-        borderRadius:10,boxShadow:'0 16px 40px rgba(0,0,0,.62)',padding:'12px 13px'}}>
+        width:300,background:P.bg,border:'1px solid '+P.bd,
+        borderRadius:10,boxShadow:P.shadow,padding:'12px 13px'}}>
         <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:3}}>
           보기 설정</div>
         {/* ★ «어느 칩의 설정인가» 를 반드시 적는다 — 칩마다 따로 저장되므로, 안 적으면
@@ -23802,7 +23837,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
           {off.length>0 && (
             <>
               <div style={{fontSize:9.5,color:'var(--sub)',letterSpacing:'.06em',
-                padding:'9px 7px 3px',borderTop:'1px solid rgba(255,255,255,.14)',
+                padding:'9px 7px 3px',borderTop:'1px solid '+P.line,
                 marginTop:6}}>안 보이는 열</div>
               {/* ★ 티켓 ① 영역의 뎁스로 묶어 보여 준다 — 상세에서 본 자리를 여기서
                   그대로 찾는다. 묶음 이름은 눌리는 것이 아니므로 «표시» 로만 둔다. */}
@@ -23821,9 +23856,9 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
             눌러야 열리는지 알려 주던 표시가 사라지므로, 끈 그때 그 자리에서 알린다 —
             «끄고 나서 알아채는» 것이 아니라 «끄기 전에 아는» 편이 낫다. */}
         <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.6,marginTop:9,
-          paddingTop:8,borderTop:'1px solid rgba(255,255,255,.14)'}}>
+          paddingTop:8,borderTop:'1px solid '+P.line}}>
           {order.indexOf('id')<0
-            ? <span style={{color:'#F6AD09'}}>「티켓 번호」를 껐습니다 — 줄 아무 데나 누르면 열리는 것은 그대로입니다.</span>
+            ? <span style={{color:P.warn}}>「티켓 번호」를 껐습니다 — 줄 아무 데나 누르면 열리는 것은 그대로입니다.</span>
             : '줄 아무 데나 누르면 티켓이 열립니다.'}
         </div>
 
@@ -23833,7 +23868,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
               남는 «취향» 이다. 한 패널에 있으면서 저장 단추도 다르므로(너비는 끄는
               즉시 남는다) 말해 두지 않으면 [저장] 을 눌러야 하는 줄 안다. */}
         <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.6,marginTop:8,
-          paddingTop:8,borderTop:'1px solid rgba(255,255,255,.14)',
+          paddingTop:8,borderTop:'1px solid '+P.line,
           display:'flex',alignItems:'center',gap:8}}>
           <span style={{flex:1}}>열 너비는 <b>머리글 경계를 끌어</b> 바꿉니다
             (두 번 누르면 그 열만 기본값). 너비도 <b>이 칩에만</b> 적용되고,
@@ -23842,7 +23877,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
             <button onClick={onResetWidths}
               style={{padding:'4px 8px',borderRadius:6,fontSize:10,fontFamily:'inherit',
                 cursor:'pointer',background:'transparent',whiteSpace:'nowrap',
-                border:'1px solid rgba(255,255,255,.22)',color:'var(--sub)'}}>너비 되돌리기</button>
+                border:'1px solid '+P.btnBd,color:'var(--sub)'}}>너비 되돌리기</button>
           )}
         </div>
 
@@ -23850,20 +23885,20 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
           <button onClick={()=>setOrder(known(CS_COLS_FALLBACK))} disabled={busy}
             style={{padding:'5px 9px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
               cursor:'pointer',background:'transparent',
-              border:'1px solid rgba(255,255,255,.22)',
+              border:'1px solid '+P.btnBd,
               color:'var(--sub)'}}>기본값으로</button>
           <div style={{flex:1}}></div>
           <button onClick={onClose} disabled={busy}
             style={{padding:'5px 10px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
               cursor:'pointer',background:'transparent',
-              border:'1px solid rgba(255,255,255,.22)',
+              border:'1px solid '+P.btnBd,
               color:'var(--sub)'}}>닫기</button>
           {/* ★ 저장 버튼은 판보다 «밝아야» 한다 — var(--primary)(#2A478D)는 이 판
               (#1E2B4E) 위에서 거의 같은 색이라 버튼 모양이 사라진다. */}
           <button onClick={save} disabled={busy}
             style={{padding:'5px 12px',borderRadius:6,fontSize:10.5,fontWeight:600,
               fontFamily:'inherit',border:'none',color:'#fff',
-              background: busy?'rgba(255,255,255,.18)':'#3A63C4',
+              background: busy?P.saveBusy:P.save,
               cursor: busy?'default':'pointer'}}>{busy?'저장 중…':'저장'}</button>
         </div>
       </div>
