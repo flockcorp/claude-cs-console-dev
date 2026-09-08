@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zs_draft_tracking -->
+<!-- (2026-09-08) 🔴 **접수 문안에서 «운송장 번호» 줄이 값이 있는데도 빠졌다**(제니 제보). 원인이 둘이었다. ①**티켓 등록 화면이 문안에 넘기는 임시 객체에 그 칸이 아예 없었다.** 치환자는 티켓의 칸을 읽는데 칸이 없으면 «값이 빈 것» 으로 판정되고, 빈 치환자만 든 줄은 통째로 빠진다(09-04 규칙) — 그래서 **값이 있는데 줄이 사라졌다.** ★★★ 여기서 만드는 것은 «티켓처럼 생긴 것» 이다: **문안이 티켓에서 읽는 칸은 여기에도 다 있어야 한다.** 저장 뒤 상세에서 누른 것과 같은 글이 나와야 하기 때문이다(운송장·주문번호·공급사·수령인 연락처를 함께 채웠다). ②**송장번호를 담을지 말지를 «설정» 이 정하고 있었다** — 카페24 연동에서 안 켜면 스냅샷에 안 담기고, 그러면 문안의 운송장 줄이 조용히 사라진다. → **always 로 바꿔 늘 담는다.** ★★★ 배운 것: **다른 기능이 쓰는 값은 그 기능이 필요로 하는 만큼 늘 있어야 한다.** 골라서 끄게 두면 «설정 하나가 다른 화면을 조용히 망가뜨리는» 자리가 된다. 설정 화면에도 그 까닭을 적었다(「공급사 접수 문안이 쓰는 값이라 늘 담습니다」). ★ `csTrackingNo` 는 스냅샷을 먼저 보고 없으면 평평한 칸을 본다 — «등록에서는 안 나오고 상세에서만 나오는» 자리를 없앤다. ★ dev 전용. -->
 <!-- v20260908zr_order_link_new -->
 <!-- (2026-09-08) **[카페24 주문서 ↗] 를 티켓 등록 화면 ①의 «주문» 머리에도** 달았다(제니: 「등록 화면에는 안 뜨나?」). ★ 두 화면의 ①은 기본 틀이 같아야 한다 — 한쪽에만 있으면 다른 쪽에서 «없어졌나» 를 한 번 생각하게 된다(이 콘솔에서 되풀이해 세운 규칙이다). ★★ 다만 등록에는 **주문번호가 아직 없을 수 있다.** 그래서 상세처럼 「주문서 ✕」로 자리를 잡아 두지 않고 **번호가 생기면 그때 나타난다** — 불러오기 전부터 흐린 글자가 앉아 있으면 화면이 시작부터 «막힌 것» 처럼 보인다. ★ 번호는 «고른 품목 → 조회된 첫 품목 → 입력칸» 차례로 본다. **입력칸 글자는 주문번호 꼴일 때만 쓴다** — 치는 중인 글자로 링크를 만들면 눌렀을 때 카페24가 «없는 주문» 을 연다. ★ dev 전용. -->
 <!-- v20260908zq_cafe24_inline -->
@@ -20230,7 +20232,14 @@ const CS_CAFE24_FIELDS = [
   {g:'품목', id:'supplier_name',   label:'공급사명'},
   {g:'품목', id:'supplier_product_name', label:'공급사 상품명'},
   {g:'품목', id:'individual_shipping_fee', label:'개별 배송비'},
-  {g:'배송', id:'tracking_no',     label:'송장번호'},
+  // ★★★ 2026-09-08 — 송장번호는 «항상 담는다»(제니 제보: 「운송장 번호 값이 비지
+  //   않았는데 문안에 안 뜬다」). 원인은 **접수 문안이 이 값을 쓰는데, 담을지 말지를
+  //   설정이 정하고 있었던 것**이다 — 설정에서 안 켜면 문안의 「운송장 번호」 줄이
+  //   조용히 사라진다. 값이 «있는데 안 나오는» 것이라 사람은 이것을 고장으로 읽는다.
+  //   ★★ **다른 기능이 쓰는 값은 그 기능이 필요로 하는 만큼 늘 있어야 한다.**
+  //     골라서 끄게 두면 «설정 하나가 다른 화면을 조용히 망가뜨리는» 자리가 된다.
+  {g:'배송', id:'tracking_no',     label:'송장번호', always:true,
+   note:'공급사 접수 문안이 쓰는 값이라 늘 담습니다'},
   {g:'배송', id:'shipping_company_name', label:'택배사'},
   {g:'배송', id:'shipped_date',    label:'출고일'},
   {g:'배송', id:'delivered_date',  label:'배송완료일'},
@@ -23903,15 +23912,27 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     //   이력 줄(notes)에서 가져온다 — 화면에서 보이는 것과 같은 글이
                     //   나가야 한다. 저장 뒤에 상세에서 눌러도 같은 결과가 되도록
                     //   ticket_id 를 맞춰 «이력처럼» 만들어 넘긴다.
+                    // ★★ 2026-09-08 — 여기 «없던 칸» 때문에 문안의 줄이 조용히 빠졌다
+                    //   (제니: 「운송장 번호 값이 비지 않았는데 문안에 안 뜬다」).
+                    //   치환자가 t 의 칸을 읽는데 이 임시 객체에 그 칸이 아예 없으면
+                    //   «값이 빈 것» 으로 판정되어 그 줄이 통째로 사라진다.
+                    //   ★★★ **여기서 만드는 것은 «티켓처럼 생긴 것» 이다** —
+                    //     문안이 티켓에서 읽는 칸은 여기에도 다 있어야 한다.
+                    //     저장 뒤 상세에서 누른 것과 같은 글이 나와야 하기 때문이다.
                     const list = chosen.map(it=>({
                       id:'new', cs_type:f.cs_type, direction:f.direction,
+                      order_id: baseOf(it.code), supplier_name: it.supplier_name,
                       order_item_code:it.code, orderer_name:it.customer_name,
                       orderer_phone:it.customer_phone,
                       receiver_name:(itemF[it.code]||{}).receiver_name,
+                      receiver_phone:(itemF[it.code]||{}).receiver_phone,
                       product_name:it.product_name,
                       option_name:(itemF[it.code]||{}).option_name,
                       order_qty: parseInt((itemF[it.code]||{}).order_qty,10) || null,
                       cs_qty: parseInt((itemF[it.code]||{}).cs_qty ?? '1',10) || 1,
+                      // 저장할 때와 «같은 함수» 로 만든다 — 등록에서 본 문안과
+                      // 저장 뒤 상세에서 뽑는 문안이 다르면 안 된다.
+                      cafe24_snapshot: csCafe24Snapshot(it, cafe24On),
                     }));
                     const evs = notes.filter(n=>n.side==='고객' && n.text)
                       .map((n,i)=>({id:'n'+i, ticket_id:'new', side:'고객', note:n.text}));
@@ -25983,9 +26004,13 @@ function csQtyPair(t){
   const c = (t.cs_qty==null) ? '—' : t.cs_qty;
   return o+' / '+c;
 }
+// ★ 스냅샷이 먼저이고, 없으면 «평평한 칸» 을 본다 — 티켓 등록 화면은 아직 티켓이
+//   없어서 조회 결과를 그대로 넘기는데, 그 결과는 tracking_no 를 평평하게 들고 있다.
+//   둘 다 보게 해 두면 «등록에서는 안 나오고 상세에서만 나오는» 자리가 안 생긴다.
 function csTrackingNo(t){
+  if(!t) return '';
   const s = t.cafe24_snapshot;
-  return (s && (s.tracking_no || s['tracking_no'])) || '';
+  return (s && s.tracking_no) || t.tracking_no || '';
 }
 // ★ 열의 «값» 은 치환자 이름 하나가 보통이지만, 중괄호를 쓴 문장이면 그대로 채운다
 //   (「{주문자} / {연락처}」처럼 한 칸에 둘을 담고 싶을 때).
