@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zq_cafe24_inline -->
+<!-- (2026-09-08) **카페24 값을 ① «안» 에 흩어 놓는다**(제니: 「하단에 따로 표시가 아니고 ① 전체 영역에 표현되는 걸 의미했어」 — 전제가 어긋나 있었다). ★★★ 앞 판은 ① 맨 아래에 «카페24» 상자를 따로 세웠다. 그러면 같은 성격의 값이 두 곳으로 나뉜다 — 송장번호를 보려면 위의 주문 묶음을 지나 맨 아래까지 가야 한다. **값은 «어디서 왔나» 가 아니라 «무엇에 대한 값인가» 로 묶인다** — 출처로 묶는 것은 만드는 사람의 사정이지 보는 사람의 사정이 아니다. → 설정의 묶음을 ①의 묶음으로 옮겨(품목·배송·클레임·주문·결제→**주문** · 주문자→**고객** · 수령인은 사람은 **고객**, 주소는 **주소**) 각 묶음 «끝» 에 이어 붙인다. ★★ **겹치면 안 넣는다**(제니 선택). ①이 «티켓 칸» 으로 이미 그리는 값(품목별 주문번호·옵션·수량·공급사·주문자·수령인·배송 주소)이 그것이다 — **이 값들은 설정과 무관하게 늘 담긴다**(주문을 불러오면 티켓의 제 칸에 저장된다). 그래서 설정에서 꺼도 ①에서 안 사라지고, 그 편이 맞다: 티켓이 제 값을 들고 있어야 나중에 주문을 다시 안 봐도 된다. ★★ 등록·상세가 **같은 함수(csCafe24Rows)로 같은 줄을 그린다** — 등록에서 본 것과 저장된 것이 다르면 미리보기는 없느니만 못하다. ★★★ 겸해 **설정 화면의 안내문을 사실에 맞췄다**: 「다시 조회하면 조회 시점 값을 읽어옴」이라 적혀 있었는데 **그런 길이 없다**(담기는 때는 접수할 때 한 번뿐이다). **안내문은 사실이 아니게 되는 순간 고친다** — 남아 있으면 사람은 그것을 믿고 다른 곳을 뒤진다. ★ dev 전용. -->
 <!-- v20260908zp_cafe24_new_preview -->
 <!-- (2026-09-08) **티켓 등록 화면 ① 에도 「카페24 · 접수하면 담길 값」을 그린다**(제니: 「티켓 등록 화면에서 확인이 안 되는데?」). ★★★ 직전 판에서 **상세에만 그려 놓고 «담기는 자리» 에는 안 그렸다.** 그런데 사람이 「설정한 대로 되나」를 확인하는 순간은 **담기기 «전»**, 곧 등록 화면이다 — 상세에서 보는 것은 이미 저장이 끝난 뒤라 틀렸어도 되돌릴 수 없다. **«무엇이 저장될지» 는 저장하기 전에 보여야 한다.** ★★ 상세와 **같은 함수**(csCafe24Snapshot·csCafe24Show)로 그린다 — 여기서 본 것과 저장된 것이 다르면 이 미리보기는 없느니만 못하다. ★ 값은 «고른 첫 품목» 기준 한 벌만 그리고, 여러 품목이면 그 사정을 한 줄로 적는다: 세 벌을 늘어놓으면 09-03 에 수령인을 세 번 찍어 «다를 수도 있는 값» 으로 읽힌 그 자리를 또 밟는다. ★ 고른 값이 없으면 「CS 설정 > 카페24 연동에서 고르세요」로 길을 알려 준다. ★ dev 전용. -->
 <!-- v20260908zo_cafe24_wired -->
@@ -20323,6 +20325,55 @@ const CS_CAFE24_COPY = ['order_id','order_item_code','product_code','supplier_id
   'tracking_no','market_order_no','buyer.cellphone','buyer.phone','buyer.email',
   'receivers.cellphone','receivers.phone','receivers.zipcode',
   'receivers.address1','receivers.address2'];
+
+// ── 고른 값을 ① «안» 에 흩어 놓는다 (제니 2026-09-08) ──────────────────────
+// 「설정에서 체크한 항목이 ① 영역에 표기되는 걸 희망했는데, 지금처럼 하단에 따로
+//   표시가 아니고 ① 전체 영역에 표현되는 걸 의미했어.」
+// ★★★ 앞 판은 ① «맨 아래에 카페24 상자» 를 따로 세웠다. 그러면 같은 성격의 값이
+//   두 곳에 나뉜다 — 송장번호를 보려면 위의 주문 묶음을 지나 맨 아래까지 가야 한다.
+//   **값은 «어디서 왔나» 가 아니라 «무엇에 대한 값인가» 로 묶인다.**
+//   출처로 묶는 것은 만드는 사람의 사정이지 보는 사람의 사정이 아니다.
+const CS_CAFE24_PANE = {
+  '품목':'주문', '배송':'주문', '클레임':'주문', '주문':'주문', '결제':'주문',
+  '주문자':'고객', '수령인 · 배송지':'고객',
+};
+// 수령인 묶음은 «사람» 과 «주소» 로 갈린다 — ① 도 그렇게 갈라져 있다.
+const CS_CAFE24_PANE_ID = {
+  'receivers.zipcode':'주소', 'receivers.address1':'주소',
+  'receivers.address2':'주소', 'receivers.shipping_message':'주소',
+};
+// ★★★ ①이 «티켓 칸» 으로 **이미 그리고 있는** 값 — 두 번 그리지 않는다(제니 결정).
+//   ★★ 이 값들은 설정과 **무관하게 늘 담긴다.** 주문번호를 불러오면 티켓의 제 칸
+//     (order_item_code·option_name·orderer_name·ship_address1 …)에 저장되기 때문이다.
+//     그래서 설정에서 꺼도 ①에서 안 사라진다 — 그 편이 맞다: 그 값들은 티켓이
+//     제 것으로 들고 있어야 나중에 주문을 다시 안 봐도 된다.
+//   ★ order_id 도 여기 넣는다 — 「품목별 주문번호」가 그것을 품고 있고,
+//     [카페24 주문서] 단추가 이미 주문 단위로 말하고 있다.
+const CS_CAFE24_DUP = ['order_id','order_item_code','option_value','quantity',
+  'supplier_name','buyer.name','buyer.cellphone',
+  'receivers.name','receivers.cellphone',
+  'receivers.zipcode','receivers.address1','receivers.address2'];
+// ★ ro 는 화면마다 제 것을 쓴다(등록·상세가 각각 갖고 있다) — 그리는 함수를 받아
+//   쓰면 두 화면이 «같은 줄» 로 그려진다. 조각을 하나 더 만들지 않는 이유다.
+function csCafe24Rows(snap, order, pane, ro){
+  const keys = Object.keys(snap||{});
+  const ord  = Array.isArray(order) ? order : [];
+  const seq  = ord.filter(id=>keys.indexOf(id)>=0)
+                  .concat(keys.filter(id=>ord.indexOf(id)<0));
+  return seq.filter(id=>{
+    if(CS_CAFE24_DUP.indexOf(id)>=0) return false;
+    const def = CS_CAFE24_FIELDS.find(f=>f.id===id);
+    const p = CS_CAFE24_PANE_ID[id] || (def ? CS_CAFE24_PANE[def.g] : '주문') || '주문';
+    if(p!==pane) return false;
+    return csCafe24Show(id, snap[id])!=='';
+  }).map(id=>{
+    const def = CS_CAFE24_FIELDS.find(f=>f.id===id);
+    return <React.Fragment key={'c24:'+id}>
+      {ro(def ? def.label : id, csCafe24Show(id, snap[id]),
+          CS_CAFE24_COPY.indexOf(id)>=0)}
+    </React.Fragment>;
+  });
+}
 function csCafe24Show(id, v){
   if(v===null || v===undefined || v==='') return '';
   if(CS_CAFE24_MONEY.indexOf(id)>=0){
@@ -20870,14 +20921,21 @@ function CsCafe24Settings({currentUserEmail}){
 
   return (
     <div style={{width:'100%',maxWidth:'max(760px, 72%)'}}>
+      {/* ★★★ 2026-09-08 — 설정이 티켓까지 «실제로» 이어진 날, 이 안내도 사실에 맞췄다.
+          그전 문구는 「다시 조회하면 조회 시점 값을 읽어옴」이라고 적혀 있었는데
+          **그런 길이 없다** — 담기는 때는 접수할 때 한 번뿐이다.
+          ★ 이 콘솔의 규칙: **안내문은 사실이 아니게 되는 순간 고친다.** 남아 있으면
+            사람은 그것을 믿고 «그런가 보다» 하며 다른 곳을 뒤진다. */}
       <CsSetNote>
-        티켓을 만들 때 카페24 주문에서 <b>어떤 값을 보여줄지</b>와, 그 값들이 티켓 왼쪽에
+        티켓을 만들 때 카페24 주문에서 <b>어떤 값을 담을지</b>와, 그 값들이 티켓 왼쪽(①)에
         <b> 보이는 차례</b>를 정합니다.
         <br/>★ 고른 값은 티켓에 칸이 늘지 않고 <span style={{fontFamily:'monospace'}}>cafe24_snapshot</span> 한
         칸에 통째로 담깁니다.
-        <br/>★ 아래 항목은 카페24 주문서에서 연동해오는 값입니다. <b>연동 시점의 값</b>을 가져옵니다.
-        (다시 조회하면 조회 시점 값을 읽어옴.)
-        <br/>예외 ) 티켓 접수 시점 고정값 : 상품명, 수량, 연락처, 주소
+        <br/>★ 담기는 때는 <b>접수할 때 한 번</b>입니다 — 그날 값으로 굳고, 주문이 나중에
+        바뀌어도 티켓의 값은 그대로입니다.
+        <br/>★ <b>①에 이미 있는 값은 두 번 그리지 않습니다</b> — 품목별 주문번호·옵션·수량·
+        공급사·주문자·수령인·배송 주소가 그것입니다. 이 값들은 <b>이 설정과 무관하게</b> 늘
+        티켓의 제 칸에 담기므로, 여기서 꺼도 ①에서 사라지지 않습니다.
       </CsSetNote>
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 300px',gap:14,alignItems:'start'}}>
@@ -22896,11 +22954,17 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   ★ 설정이 아직 한 번도 저장 안 됐을 때도 «항상 있는 값» 만이다. 설정 화면이
   //     보여 주는 지금 상태와 **같은 답**이어야 한다.
   const [cafe24On,setCafe24On] = useState([]);
+  // 차례는 상세 화면과 «같은 설정» 을 본다 — 두 화면이 다른 차례로 그리면
+  // 등록에서 본 것을 상세에서 다시 찾아야 한다.
+  const [detailOrder,setDetailOrder] = useState([]);
   useEffect(()=>{ let alive=true;
     csLoadSetting('cs_cafe24_fields').then(r=>{
       if(!alive) return;
       if(r===undefined) console.error('[카페24 연동 설정] 읽지 못했습니다 — 항상 있는 값만 담습니다.');
       setCafe24On((r && r.value && Array.isArray(r.value.on)) ? r.value.on : []);
+    });
+    csLoadSetting('cs_detail_order').then(r=>{
+      if(alive) setDetailOrder((r && r.value && Array.isArray(r.value.order)) ? r.value.order : []);
     });
     return ()=>{ alive=false; };
   },[]);
@@ -22980,6 +23044,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   // ★ 넣은 글이 한눈에 보이게 칸을 늘린다 — 글이 바뀔 때마다 다시 잰다.
   useEffect(()=>{ csAutoGrow(noteRef.current); },[draft]);
   const head = chosen[0] || null;           // 공통 값(공급사·주문자)은 첫 품목에서 본다
+  // ★ 접수하면 담길 카페24 값 — «고른 첫 품목» 기준으로 한 벌만 미리 그린다.
+  //   품목마다 제 값이 담기지만(상품 금액처럼 다른 것이 있다) 세 벌을 늘어놓으면
+  //   09-03 에 수령인을 세 번 찍어 «다를 수도 있는 값» 으로 읽힌 그 자리를 또 밟는다.
+  const c24 = head ? csCafe24Snapshot(head, cafe24On) : {};
 
   // ★★★ 수령인·배송지는 «주문» 의 값이다 — 품목마다 갖지 않는다(제니 2026-09-03).
   //   「우리가 쓰는 카페24는 동일 주문번호 안의 품목별 주문번호가 같은 주문자·수령자·
@@ -23523,6 +23591,16 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   티켓을 보는 자리에서 바로 읽힌다. */}
               {ro('공급사', <>{head.supplier_name || '—'}
                 <CsSupplierChannel name={head.supplier_name}/></>)}
+              {/* ★ 「카페24 연동」에서 켠 값 — 접수하면 이 그대로 담긴다.
+                  ★★ 상세와 «같은 함수» 로 그린다. 여기서 본 것과 저장된 것이
+                    다르면 이 미리보기는 없느니만 못하다. */}
+              {csCafe24Rows(c24, detailOrder, '주문', ro)}
+              {chosen.length>1 && csCafe24Rows(c24, detailOrder, '주문', ro).length>0 && (
+                <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.6,
+                  margin:'2px 0 8px',paddingLeft:8}}>
+                  ★ 위 카페24 값은 <b>고른 첫 품목</b> 기준입니다 — 티켓마다 그 품목의 값이 담깁니다.
+                </div>
+              )}
             </>
           )}
 
@@ -23566,6 +23644,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   <div style={{flex:1,minWidth:0}}>{ocell('receiver_phone','연락처')}</div>
                 </div>
               )))}
+          {csCafe24Rows(c24, detailOrder, '고객', ro)}
 
           {/* ── 주소 ───────────────────────────────────────────────────────
               ★ 배송 주소지도 «주문» 의 값이다 — 위 「수령인」 과 같은 규칙으로 한 번만. */}
@@ -23592,6 +23671,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   <div style={{minWidth:0}}>{ocell('ship_address2','상세 주소')}</div>
                 </div>
               )))}
+          {csCafe24Rows(c24, detailOrder, '주소', ro)}
           {/* ★ 2뎁스 선 — 「주소」 묶음 «안» 에서 배송지와 회수지를 나눈다.
               1뎁스보다 연해야 «큰 묶음이 아니라 그 안의 갈래» 로 읽힌다. */}
           <div style={sec2}></div>
@@ -23708,44 +23788,6 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               전부 내려받게 되어 걷어냈다(제니 확인). 안내문은 사실이 아니게 되는
               순간 지워야 한다: 남아 있으면 «그런가 보다» 하고 손으로 다시 적는다. */}
 
-          {/* ── 카페24 · 담길 값 (제니 2026-09-08: 「티켓 등록 화면에서 확인이 안 되는데?」)
-              ★★★ 상세에만 그려 놓고 **«담기는 자리» 에는 안 그렸다.** 그런데 사람이
-                「설정한 대로 되나」를 확인하는 순간은 **담기기 «전»**, 즉 여기다 —
-                상세에서 보는 것은 이미 저장이 끝난 뒤라 틀렸어도 되돌릴 수 없다.
-                **«무엇이 저장될지» 는 저장하기 전에 보여야 한다.**
-              ★★ 값은 «고른 첫 품목» 기준으로 한 벌만 그린다(head). 품목마다 제 값이 담기지만
-                (상품 금액처럼 품목마다 다른 것이 있다) 세 벌을 늘어놓으면 ①이 길어지고,
-                09-03 에 수령인을 세 번 찍어 «다를 수도 있는 값» 으로 읽힌 그 자리를
-                또 밟는다. 대신 여러 품목일 때는 그 사정을 한 줄로 적는다.
-              ★ 상세와 «같은 함수»(csCafe24Snapshot·csCafe24Show)로 그린다 —
-                여기서 본 것과 저장된 것이 다르면 이 미리보기는 없느니만 못하다. */}
-          {head && (()=>{
-            const snap = csCafe24Snapshot(head, cafe24On);
-            const seq  = Object.keys(snap);
-            const shown = seq.filter(id=>csCafe24Show(id, snap[id])!=='');
-            return (
-              <>
-                <div style={sec}>카페24 <span style={{opacity:.7}}>· 접수하면 담길 값</span></div>
-                {chosen.length>1 && (
-                  <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.6,
-                    marginBottom:6,paddingLeft:8}}>
-                    아래는 <b>고른 첫 품목</b> 기준입니다 — 티켓마다 <b>그 품목의 값</b>이 담깁니다.
-                  </div>
-                )}
-                {shown.length===0 ? (
-                  <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,paddingLeft:8}}>
-                    담길 값이 없습니다 — <b>CS 설정 &gt; 카페24 연동</b>에서 끌어올 값을 고르세요.
-                  </div>
-                ) : shown.map(id=>{
-                  const def = CS_CAFE24_FIELDS.find(f2=>f2.id===id);
-                  return <React.Fragment key={id}>
-                    {ro(def ? def.label : id, csCafe24Show(id, snap[id]),
-                        CS_CAFE24_COPY.indexOf(id)>=0)}
-                  </React.Fragment>;
-                })}
-              </>
-            );
-          })()}
         </div>
 
         <CsPaneBar onMouseDown={dragPane('l')}/>
@@ -24783,6 +24825,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           {/* ★ 등록 화면과 같은 자리·같은 뱃지(제니 2026-09-03). */}
           {ro('공급사', <>{t.supplier_name || '—'}
             <CsSupplierChannel name={t.supplier_name}/></>)}
+          {/* ★ 「카페24 연동」에서 켠 값 중 «주문에 대한 것» 이 여기 이어 붙는다. */}
+          {csCafe24Rows(t.cafe24_snapshot, detailOrder, '주문', ro)}
 
           <div style={sec}>고객</div>
           {/* ★★ 이름과 연락처는 «따로» 복사한다(제니가 둘을 따로 꼽았다). 한 덩어리로
@@ -24805,11 +24849,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           {ro('수령인', (t.receiver_name || t.orderer_name || '—')
             + ((t.receiver_phone || t.orderer_phone)
                 ? ' · ' + (t.receiver_phone || t.orderer_phone) : ''))}
+          {csCafe24Rows(t.cafe24_snapshot, detailOrder, '고객', ro)}
 
           <div style={sec}>주소</div>
           {/* ★ 복사하는 값은 «보이는 그대로» 다 — 우편번호 대괄호까지 함께 간다.
               카페24·택배사 어디에 넣어도 사람이 다시 다듬을 것이 없어야 한다. */}
           {ro('배송 주소지', addr(t.ship_zipcode,t.ship_address1,t.ship_address2), true)}
+          {csCafe24Rows(t.cafe24_snapshot, detailOrder, '주소', ro)}
           {/* ★ 회수 주소지는 카페24에 없는 값이라 사람이 정한다. 비우면 «배송지와
               같다» 는 뜻이고, 저장할 때 배송지를 복사해 채우지 않는다 — 복사해 두면
               배송지가 바뀌어도 회수지가 그날 값으로 굳는다.
@@ -24961,50 +25007,6 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               {ro('정산 배송료', t.settle_shipping_fee!=null ? t.settle_shipping_fee.toLocaleString()+'원' : null)}
             </>
           )}
-
-          {/* ── 카페24 · 접수 시점 (제니 2026-09-08) ───────────────────────
-              ★★★ 「CS 관리 > 설정 > 카페24 연동의 값이 실제 티켓 화면에 적용되지
-                않고 있어」— 맞았다. 고르고 저장까지 되는데 **티켓을 만들 때 아무것도
-                안 담겼고, 담긴 것을 보여 주는 자리도 없었다.**
-              ★★ **접수 시점의 고정값**이다. 지금 카페24를 다시 보는 것이 아니라,
-                티켓을 만들 때 담아 둔 것을 그대로 보여 준다 — 그래서 「접수 시점」을
-                제목에 적는다. 주문이 나중에 바뀌어도 이 값은 그날 것으로 남는다.
-              ★ 차례는 설정(cs_detail_order)이 정하고, 거기 없는 것은 뒤에 붙인다 —
-                두 설정이 어긋나 있어도 **아무것도 잃지 않는다.**
-              ★ 옛 티켓은 담긴 것이 없다. 그때는 «없다» 가 아니라 «그때는 안 담았다» 고
-                적는다 — 빈 자리를 그냥 두면 사람은 그것을 고장으로 읽는다. */}
-          {(()=>{
-            const snap = (t.cafe24_snapshot && typeof t.cafe24_snapshot==='object')
-              ? t.cafe24_snapshot : {};
-            const keys = Object.keys(snap);
-            const seq = detailOrder.filter(id=>keys.indexOf(id)>=0)
-              .concat(keys.filter(id=>detailOrder.indexOf(id)<0));
-            const shown = seq.filter(id=>csCafe24Show(id, snap[id])!=='');
-            return (
-              <>
-                <div style={sec}>카페24 <span style={{opacity:.7}}>· 접수 시점</span></div>
-                {keys.length===0 ? (
-                  <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,paddingLeft:8}}>
-                    이 티켓을 접수할 때는 담기지 않았습니다.<br/>
-                    <span style={{opacity:.8}}>새로 접수하는 티켓부터 보입니다
-                    (CS 설정 &gt; 카페24 연동에서 무엇을 담을지 고릅니다).</span>
-                  </div>
-                ) : shown.length===0 ? (
-                  <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,paddingLeft:8}}>
-                    고른 값 {keys.length}개를 담았지만 카페24가 준 값이 모두 비어 있었습니다.
-                  </div>
-                ) : shown.map(id=>{
-                  const def = CS_CAFE24_FIELDS.find(f=>f.id===id);
-                  // ★ 세 번째 인자는 «복사 단추» 다. 옮겨 적을 값(번호·연락처·주소)에만
-                  //   붙인다 — 날짜·금액까지 붙이면 줄마다 단추가 서서 값이 안 읽힌다.
-                  return <React.Fragment key={id}>
-                    {ro(def ? def.label : id, csCafe24Show(id, snap[id]),
-                        CS_CAFE24_COPY.indexOf(id)>=0)}
-                  </React.Fragment>;
-                })}
-              </>
-            );
-          })()}
 
         </div>
 
