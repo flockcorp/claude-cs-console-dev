@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908s_products_light -->
+<!-- (2026-09-08) 상품 정보 화면 넷(제니). ①**«마지막 동기화» 문구를 권한 상관없이 보여 준다.** 그전에는 화면도 조회도 master 로 막혀 있었다(표의 RLS 도 master 전용이라 화면만 풀면 «동기화 기록 없음» 이라는 거짓말이 된다). → 읽기 정책을 **콘솔 등록자 전원**으로 열고(`sql/ops_sync_status_read_all.sql` · dev 적용 완료) 화면의 두 자리(조회·표시)에서 master 판정을 걷었다. ★★★ **이 화면을 매일 보는 사람이 상담원인데 master 만 보게 해 두면 «동기화가 멈추면 카드가 스스로 눈에 띈다» 는 장치가 절반만 작동한다** — 2026-08-18 에 8일간 아무도 몰랐던 그 일이다. 담는 것은 «언제 돌았고 성공했나» 뿐이고 쓰기는 그대로 워크플로(service_role)만이다. ②**«거래중 총 공급사» 카드에 마우스를 올리면 글자가 사라지던 것** — hover 배경이 `#1a2e55`(어두운 남색)로 박혀 있어 라이트에서 «어두운 판 + 어두운 글자» 가 됐다 → `--hover`. ③**모달 «공급사 관리» 제목이 안 보이던 것** — `#fff` 로 박혀 있었다. 09-07 에 모달 머리말 띠를 `--panel-bg` 로 옮겨 라이트에서 옅어졌는데, **그 위의 글자를 같이 안 옮겼다**(배경과 글자는 한 쌍이다 — 오늘만 세 번째다) → `--text`. ④**탭 줄이 어색하게 어둡던 것** — 줄 배경 `#0f1933`·고른 탭 `#162244`·고른 탭 글자 `#fff` 셋 다 박혀 있었다. 뜻대로 옮긴다: 줄은 «한 단 들어간 바탕»(`--bg`), 고른 탭은 «앞으로 나온 판»(`--card`), 글자는 `--text`. **뜻으로 적으면 두 모드가 저절로 맞는다.** ⑤배송비 관리의 «구매금액 조건·메모» 가 못 쓰는 칸일 때 배경이 `#1a2240` 이었다 → `--panel-bg`(다크는 바탕보다 밝고, 라이트는 흰 칸보다 어둡다 — 두 모드에서 «잠긴 칸» 으로 읽힌다). ★ dev 전용. -->
 <!-- v20260908r_field_tab_and_notes -->
 <!-- (2026-09-08) 제니 문구·꼴 수정 넷. ①탭 이름 **「칸 · 권한」 → 「필드 권한」**. ②**묶음 이름 줄과 항목 줄이 구분이 안 되던 것**(접수·고객·주소·마무리·정산). 원인은 배경이 `rgba(255,255,255,.02)` 였다는 것 — **어두운 화면에서도 거의 안 보이고 라이트에서는 «흰 종이 위 흰색» 이라 아예 없는 값**이다. 「항목보다 살짝만 하늘색」(제니) → 콘솔이 이미 가진 «옅은 강조 배경»(`--brand-soft`)을 쓴다(두 모드에 각각 옅게 잡혀 있어 새 색을 지을 필요가 없다). ★ 글자도 한 단 또렷하게 올렸다 — **배경만 바꾸면 «흐린 글자가 든 옅은 띠» 가 되어 층이 여전히 약하다. 배경과 글자는 한 쌍이다.** ③🔴 **「필수는 실제 저장을 막지 않습니다」를 걷어냈다**(제니: 「오히려 헷갈리게 한다」). **맞는 지적이다** — 그 문장은 «DB 는 안 막는다» 는 **만든 사람의 사정**이고, 쓰는 사람에게는 필수를 걸면 티켓이 실제로 저장되지 않는다. ★★★ **화면의 안내는 «무엇이 일어나는가» 를 말해야지 «어디서 막는가» 를 말할 자리가 아니다** — 09-02 에 같은 이유로 문구를 통째로 갈아 끼웠는데 이 한 줄만 남아 **반대 방향으로 거짓말을 하고 있었다.** 겸해 「-」가 빈칸보다 나쁘다는 배경 설명도 상단에서 뺐다(늘 보일 자리가 아니다). 대신 표 머리글 **「필수 시점」 옆에 「?」 풍선**을 두고 제니가 준 문구를 담았다(새 툴팁은 CsHint 로 만든다는 콘솔 규칙 그대로). ④**콘솔 계정 화면의 안내 문구를 제니가 준 그대로** 갈아 끼웠다. 내가 쓴 것은 «왜 이 화면이 있는가»(가입이 없다 · 공용 계정이면 이력이 안 남는다)를 설명했는데, 읽는 사람이 여기서 알아야 할 것은 **«무엇을 하면 되는가»** 였다. ★ 뜻은 그대로 살아 있다 — 「master 가 직접 추가」가 «가입이 없다» 이고 「1계정당 1명(처리 이력 추적 용이)」이 «공용 계정이면 누가가 안 남는다» 다. **같은 말을 «해야 할 일» 쪽에서 적으면 설명이 짧아진다.** ★ dev 전용. -->
 <!-- v20260908q_admin_token_retry -->
@@ -3710,8 +3712,13 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
       //   운영 DB 에는 …_prod 만 들어 있는데, 이 파일은 dev 에서 운영으로 «그대로»
       //   이식되므로(promote.js 가 접속 정보 2줄만 바꾼다) 한쪽 이름을 박으면
       //   다른 환경에서 영영 안 보인다. 접두사로 찾고 최근 것 하나만 쓴다.
-      // ★ RLS 로 master 만 읽을 수 있다. 그 밖의 권한은 0건으로 오므로 조회하지 않는다.
-      if(isMaster){
+      // ★★ 2026-09-08 제니 — **권한 상관없이 보여 준다.** 그전에는 master 만 읽을 수
+      //   있어(RLS) 조회 자체를 걸러 냈다. 이 화면을 매일 보는 사람이 상담원인데
+      //   master 만 보게 해 두면 «동기화가 멈추면 카드가 스스로 눈에 띈다» 는 장치가
+      //   절반만 작동한다(2026-08-18 에 8일간 아무도 몰랐던 그 일이다).
+      //   → 읽기 정책을 «콘솔 등록자 전원» 으로 열었다(sql/ops_sync_status_read_all.sql).
+      //     쓰기는 그대로 워크플로(service_role)만이다.
+      {
         const rSync=await sb.from('ops_sync_status')
           .select('key,label,last_run_at,last_result,last_detail,last_success_at,consecutive_failures')
           .like('key','cafe24_sync_products%')
@@ -4375,7 +4382,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
   // 카드와 경고 띠가 «같은 판단» 을 써야 한다. 두 곳에서 따로 계산하면
   // 언젠가 한쪽만 고쳐져 «띠는 빨간데 카드는 멀쩡한» 상태가 생긴다.
   const syncAlert=(()=>{
-    if(!isMaster||syncStatus===undefined)return null;          // 아직 안 읽었거나 볼 권한이 없다
+    if(syncStatus===undefined)return null;                     // 아직 안 읽었다
     const HOUR=3600*1000, DAY=24*HOUR;
     const STALE_MS=36*HOUR;   // 동기화는 하루 한 번 돈다. 36시간이면 뭔가 멈춘 것이다.
     if(!syncStatus)return{tone:null,note:'동기화 기록 없음',headline:null,sub:null,href:null};
@@ -4420,7 +4427,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
         <div style={{display:'flex',alignItems:'flex-start',gap:12}}>
           <div style={{display:'flex',gap:12}}>
             <div onClick={canManageSupplier?(()=>setSupModal(true)):undefined} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'9px 18px',textAlign:'center',cursor:canManageSupplier?'pointer':'default',transition:'all .15s'}}
-              onMouseEnter={canManageSupplier?(e)=>{e.currentTarget.style.borderColor='#2A478D';e.currentTarget.style.background='#1a2e55';}:undefined}
+              onMouseEnter={canManageSupplier?(e)=>{e.currentTarget.style.borderColor='#2A478D';e.currentTarget.style.background='var(--hover)';}:undefined}
               onMouseLeave={canManageSupplier?(e)=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='var(--card)';}:undefined}>
               {/* ★ 세는 기준을 «상품이 있는 공급사» 에서 «거래중인 공급사» 로 바꿨다(제니 지시).
                   옛 문구 「상품 정보가 있는 총 공급사 수만 가져옵니다」 는 «상품 정보» 를
@@ -5251,17 +5258,17 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
             <div onClick={e=>e.stopPropagation()} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,width:supModalTab==='shipping'?1280:820,maxWidth:'94vw',maxHeight:'88vh',display:'flex',flexDirection:'column',overflow:'hidden'}}>
               <div style={{padding:'16px 22px',background:'var(--panel-bg)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                 <div>
-                  <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>공급사 관리</div>
+                  <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>공급사 관리</div>
                   <div style={{fontSize:11,color:'var(--sub)',marginTop:3}}>{tabDesc}</div>
                 </div>
                 <button onClick={()=>setSupModal(false)} style={{background:'none',border:'none',color:'var(--sub)',fontSize:20,cursor:'pointer'}}>✕</button>
               </div>
               {/* 탭 헤더 */}
-              <div style={{display:'flex',background:'#0f1933',borderBottom:'1px solid var(--border)'}}>
+              <div style={{display:'flex',background:'var(--bg)',borderBottom:'1px solid var(--border)'}}>
                 {[{k:'channels',label:'💬 채널 관리'},{k:'shipping',label:'🚚 배송비 관리'}].map(tab=>(
                   <button key={tab.k}
                     onClick={()=>{setSupModalTab(tab.k); setSupModalFilter('all'); setSupShipEdit({});}}
-                    style={{flex:'0 0 auto',padding:'12px 24px',background:supModalTab===tab.k?'#162244':'transparent',border:'none',borderBottom:supModalTab===tab.k?'2px solid var(--accent)':'2px solid transparent',color:supModalTab===tab.k?'#fff':'var(--sub)',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
+                    style={{flex:'0 0 auto',padding:'12px 24px',background:supModalTab===tab.k?'var(--card)':'transparent',border:'none',borderBottom:supModalTab===tab.k?'2px solid var(--accent)':'2px solid transparent',color:supModalTab===tab.k?'var(--text)':'var(--sub)',fontSize:13,fontWeight:600,cursor:'pointer',fontFamily:'inherit',transition:'all .15s'}}>
                     {tab.label}
                   </button>
                 ))}
@@ -5385,11 +5392,11 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                           </select>
                           <input type="number" value={feeDisabled?'메모':cur.fee} disabled={feeDisabled}
                             onChange={e=>updateEdit({fee:e.target.value})}
-                            placeholder="0" style={{padding:'5px 8px',background:feeDisabled?'#1a2240':'var(--bg)',border:'1px solid var(--border)',borderRadius:4,color:'var(--text)',fontSize:11,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                            placeholder="0" style={{padding:'5px 8px',background:feeDisabled?'var(--panel-bg)':'var(--bg)',border:'1px solid var(--border)',borderRadius:4,color:'var(--text)',fontSize:11,fontFamily:'inherit',outline:'none',width:'100%'}}/>
                           <input type="number" value={thresholdEnabled?cur.threshold:''} disabled={!thresholdEnabled}
                             onChange={e=>updateEdit({threshold:e.target.value})}
                             placeholder={thresholdEnabled?'예: 50000':'-'}
-                            style={{padding:'5px 8px',background:!thresholdEnabled?'#1a2240':'var(--bg)',border:'1px solid var(--border)',borderRadius:4,color:'var(--text)',fontSize:11,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                            style={{padding:'5px 8px',background:!thresholdEnabled?'var(--panel-bg)':'var(--bg)',border:'1px solid var(--border)',borderRadius:4,color:'var(--text)',fontSize:11,fontFamily:'inherit',outline:'none',width:'100%'}}/>
                           <input type="text" value={memoEnabled?cur.memo:''} disabled={!memoEnabled}
                             onChange={e=>updateEdit({memo:e.target.value})}
                             placeholder={
@@ -5399,7 +5406,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
                               cur.cond==='메모 확인' ? '직접 메모 입력' :
                               '-'
                             }
-                            style={{padding:'5px 8px',background:!memoEnabled?'#1a2240':'var(--bg)',border:'1px solid var(--border)',borderRadius:4,color:'var(--text)',fontSize:11,fontFamily:'inherit',outline:'none',width:'100%'}}/>
+                            style={{padding:'5px 8px',background:!memoEnabled?'var(--panel-bg)':'var(--bg)',border:'1px solid var(--border)',borderRadius:4,color:'var(--text)',fontSize:11,fontFamily:'inherit',outline:'none',width:'100%'}}/>
                           <button disabled={!isDirty||isSaving}
                             onClick={()=>setSupplierShipping(name,cur)}
                             style={{padding:'5px 8px',background:isDirty?'#2A478D':'var(--bg)',border:'1px solid '+(isDirty?'#2A478D':'var(--border)'),borderRadius:4,color:isDirty?'#fff':'var(--sub)',fontSize:10,fontWeight:700,cursor:isDirty&&!isSaving?'pointer':'default',fontFamily:'inherit',opacity:isSaving?0.5:1}}>
