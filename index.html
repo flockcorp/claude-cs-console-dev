@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260909a_claim_type_names -->
+<!-- (2026-09-08) **「클레임 사유 분류 이름표」를 설정에 만들었다**(제니 승인). 카페24가 이 값을 **알파벳 코드**로 주는데(「A」), **공개 문서 어디에도 코드표가 없다** — 개발자센터 API 문서는 필드 설명만 두고 값 목록이 없으며, 헬프센터는 사유를 「상점관리 > 운영방식 설정」의 값이라고만 한다(쇼핑몰마다 다를 수 있다는 뜻이다). 문서를 훑어 확인했다. ★★★ 그래서 **내가 표를 코드에 박지 않는다.** 짐작으로 한글을 붙이면 틀렸을 때 **CS 판단 자체가 틀어지고, 아무도 그것이 지어낸 값인지 모른다.** PG사 코드에 세운 규칙과 같은 자리다 — **모르는 코드는 코드 그대로.** ★★ 대신 **사람이 채운다**: 콘솔이 «지금까지 티켓에 실제로 들어온 코드» 를 세어 보여 주고, 한글 이름을 적으면 티켓 화면이 「A · 단순변심」으로 그린다. 카페24가 코드를 늘려도 설정만 채우면 되고 내가 안 나와도 된다. ★ **이름을 붙인 뒤에도 코드를 함께 보여 준다** — 어느 코드에 붙인 이름인지 알아야 나중에 틀린 짝을 찾을 수 있다. ★ 목록은 «들어온 코드 + 이름을 적어 둔 코드» 를 합친다: 카페24가 코드를 바꿔도 지난 티켓의 이름을 잃지 않는다. ★ **본 적 없는 코드를 «있을 법한» 이름으로 미리 채우지 않는다** — 빈 채로 두면 사람이 채우지만, 틀린 이름이 채워져 있으면 아무도 그것이 틀렸는지 모른다. ★ dev 전용. -->
 <!-- v20260908zz_tracking_dedup -->
 <!-- (2026-09-08) **`{운송장}` 과 `{송장번호}` 가 겹쳐 있었다**(제니). 같은 값인데 **이름이 아예 달라서**(운송장 ↔ 송장번호) 이름 대조 걸름망을 그대로 빠져나갔다 — 앞 판의 「주문자 이름 ↔ 주문자명」과 같은 계열인데, 이번엔 한 글자가 아니라 **말 자체가 다른** 짝이다. ★★★ 이것이 겹침 목록을 «손으로» 적어 두는 까닭이다: **겹침은 이름으로 못 잰다.** 기존 `{운송장}` 을 남기고 카페24 쪽을 뺐다(제니 규칙). ★ 이름이 서로 달라 헷갈리므로 설명에 「연동의 «송장번호»」를 적어 뒀다 — 두 화면에서 다른 이름으로 부르는 값은 어느 한쪽에 그 사실을 적어 둬야 한다. ★ 남은 카페24 변수 전수 확인: 더 겹치는 짝은 없다. ★ dev 전용. -->
 <!-- v20260908zy_addr_vars -->
@@ -20417,8 +20419,33 @@ function csCafe24Rows(snap, order, pane, ro){
     </React.Fragment>;
   });
 }
+// ── 클레임 사유 «분류» 이름표 (제니 2026-09-08) ────────────────────────────
+// 카페24가 `claim_reason_type` 을 **알파벳 코드**로 준다(예: 「A」). 그런데
+// **공개 문서 어디에도 그 코드표가 없다** — 개발자센터 API 문서에는 필드 설명만 있고
+// 값 목록이 없으며, 헬프센터는 사유를 「상점관리 > 운영방식 설정」에서 다루는 값이라고만
+// 한다(즉 쇼핑몰마다 다를 수 있다). 2026-09-08 에 문서를 훑어 확인했다.
+// ★★★ 그래서 **내가 표를 코드에 박지 않는다.** 짐작으로 한글을 붙이면 틀렸을 때
+//   CS 판단 자체가 틀어지고, 아무도 그것이 지어낸 값인지 모른다.
+//   PG사 코드에 세운 규칙과 같은 자리다: **모르는 코드는 코드 그대로 둔다.**
+// ★★ 대신 **사람이 채운다**: 콘솔이 지금까지 들어온 코드를 모아 보여 주고, 설정에서
+//   한글 이름을 적으면 티켓 화면이 그 이름으로 그린다(제니 승인 2026-09-08).
+//   카페24가 코드를 늘려도 설정만 채우면 되고, 내가 안 나와도 된다.
+let CS_CLAIM_TYPES = null;    // {코드: 이름}. null = 아직 못 읽었다
+async function csLoadClaimTypes(){
+  const r = await csLoadSetting('cs_claim_reason_types');
+  CS_CLAIM_TYPES = (r && r.value && typeof r.value==='object') ? r.value : null;
+}
+// ★ 이름이 있으면 「A · 단순변심」, 없으면 「A」 그대로. **코드를 지우지 않는다** —
+//   이름을 붙인 뒤에도 원래 값이 보여야 «이 이름이 어느 코드에 붙은 것인지» 를 안다.
+function csClaimTypeLabel(code){
+  const c = String(code||'').trim();
+  if(!c) return '';
+  const nm = CS_CLAIM_TYPES && CS_CLAIM_TYPES[c];
+  return nm ? (c+' · '+nm) : c;
+}
 function csCafe24Show(id, v){
   if(v===null || v===undefined || v==='') return '';
+  if(id==='claim_reason_type') return csClaimTypeLabel(v);
   if(CS_CAFE24_MONEY.indexOf(id)>=0){
     const n = Number(v);
     return isNaN(n) ? String(v) : n.toLocaleString()+'원';
@@ -21093,8 +21120,139 @@ function CsCafe24Settings({currentUserEmail}){
         </div>
       )}
 
+      <CsClaimTypeNames currentUserEmail={currentUserEmail}/>
+
       <CsSaveBar row={rowF} dirty={dirty} busy={busy} onSave={save}
         onReset={()=>setOrder(base)}/>
+    </div>
+  );
+}
+
+// ── 클레임 사유 «분류» 이름표 (제니 2026-09-08 승인) ───────────────────────
+// 카페24가 알파벳 코드로 주는데 **공개 문서에 코드표가 없다**(2026-09-08 확인).
+// → 콘솔이 «지금까지 실제로 들어온 코드» 를 모아 보여 주고, 사람이 이름을 채운다.
+// ★★ 목록을 코드에 박지 않는 이유는 셋이다: ①문서가 없어 내가 적으면 지어낸 값이 되고
+//   ②헬프센터가 사유를 「상점관리 > 운영방식 설정」의 값이라 하여 쇼핑몰마다 다를 수 있고
+//   ③카페24가 코드를 늘리면 그때마다 내가 나와야 한다.
+// ★★★ **본 적 없는 코드를 «있을 법한» 이름으로 미리 채우지 않는다.** 빈 채로 두면
+//   사람이 채우지만, 틀린 이름이 채워져 있으면 아무도 그것이 틀렸는지 모른다.
+function CsClaimTypeNames({currentUserEmail}){
+  const [row,setRow]   = useState(null);
+  const [draft,setDraft] = useState(null);   // {코드: 이름}
+  const [seen,setSeen] = useState(null);     // {코드: 건수} · null=읽는 중
+  const [busy,setBusy] = useState(false);
+  const [add,setAdd]   = useState('');
+  useEffect(()=>{ let alive=true; (async()=>{
+    const r = await csLoadSetting('cs_claim_reason_types');
+    if(!alive) return;
+    setRow(r||null);
+    setDraft({...((r && r.value && typeof r.value==='object') ? r.value : {})});
+    // ★ 「지금까지 들어온 코드」 — 스냅샷 안의 값이라 티켓을 훑어 센다.
+    //   ★ 화살표 조회가 막히면 통째로 받아 클라이언트에서 센다(둘 다 실패해도
+    //     이름표는 손으로 더할 수 있다 — 화면이 멈추지 않게 한다).
+    let counts = {};
+    const {data,error} = await sb.from('cs_tickets')
+      .select('code:cafe24_snapshot->>claim_reason_type')
+      .not('cafe24_snapshot->>claim_reason_type','is',null).limit(3000);
+    if(!error && Array.isArray(data)){
+      data.forEach(x=>{ const c=String(x.code||'').trim(); if(c) counts[c]=(counts[c]||0)+1; });
+    }else{
+      const {data:d2} = await sb.from('cs_tickets').select('cafe24_snapshot')
+        .order('id',{ascending:false}).limit(1000);
+      (d2||[]).forEach(t=>{
+        const c = String(((t.cafe24_snapshot||{}).claim_reason_type)||'').trim();
+        if(c) counts[c]=(counts[c]||0)+1;
+      });
+    }
+    if(alive) setSeen(counts);
+  })(); return ()=>{ alive=false; }; },[]);
+
+  const base = (row && row.value && typeof row.value==='object') ? row.value : {};
+  const dirty = draft && JSON.stringify(base)!==JSON.stringify(draft);
+  // 코드 목록 = «들어온 것» + «이름을 적어 둔 것». 둘을 합쳐야 지금 안 들어오는 옛 코드도
+  // 이름을 잃지 않는다(카페24가 코드를 바꿔도 지난 티켓은 그 코드로 남아 있다).
+  const codes = Array.from(new Set(Object.keys(seen||{}).concat(Object.keys(draft||{})))).sort();
+  const save = async ()=>{
+    setBusy(true);
+    // ★ 빈 이름은 담지 않는다 — «이름을 지웠다» 와 «빈 이름을 저장했다» 는 같아야 한다.
+    const clean = {};
+    Object.keys(draft||{}).forEach(k=>{ const v=String(draft[k]||'').trim(); if(v) clean[k]=v; });
+    const ok = await csSaveSetting('cs_claim_reason_types', clean, currentUserEmail);
+    setBusy(false);
+    if(!ok) return;
+    setRow({value:clean, updated_at:new Date().toISOString(), updated_by:currentUserEmail});
+    setDraft(clean);
+    await csLoadClaimTypes();   // 지금 화면부터 새 이름으로 돈다
+    toast('클레임 사유 분류 이름표를 저장했습니다.','ok');
+  };
+  const inp = {fontSize:12,padding:'6px 9px',background:'var(--bg)',
+    border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+    fontFamily:'inherit',boxSizing:'border-box'};
+
+  return (
+    <div style={{marginTop:16,border:'1px solid var(--border)',borderRadius:10,
+      background:'var(--card)',padding:'14px 16px'}}>
+      <div style={{fontSize:12.5,fontWeight:700,color:'var(--text)',marginBottom:8}}>
+        클레임 사유 분류 이름표</div>
+      <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.75,marginBottom:11}}>
+        카페24는 <b>「클레임 사유 분류」를 알파벳 코드로</b> 줍니다
+        (<span style={{fontFamily:MONO}}>A</span> · <span style={{fontFamily:MONO}}>B</span> …).
+        <b> 공개된 코드표가 없어</b> 콘솔이 뜻을 지어내지 않습니다.
+        <br/>아래는 <b>지금까지 티켓에 실제로 들어온 코드</b>입니다. 한글 이름을 적으면
+        티켓 화면이 <span style={{fontFamily:MONO}}>A · 단순변심</span> 처럼 보여 줍니다.
+        <br/>★ 이름이 없는 코드는 <b>코드 그대로</b> 둡니다. 코드는 이름을 붙인 뒤에도 함께 보입니다
+        — 어느 코드에 붙인 이름인지 알아야 하기 때문입니다.
+        <br/>★ 짝은 카페24 어드민 주문서에서 그 건의 사유를 보고 맞추면 됩니다.
+      </div>
+      {seen===null || draft===null ? (
+        <div style={{fontSize:11.5,color:'var(--sub)'}}>읽는 중…</div>
+      ) : codes.length===0 ? (
+        <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7}}>
+          아직 들어온 코드가 없습니다 — 카페24 연동에서 <b>「클레임 사유 분류」</b>를 켜고
+          티켓을 접수하면 여기 모입니다. 미리 알고 있는 코드는 아래에서 더할 수 있습니다.
+        </div>
+      ) : (
+        <div style={{display:'grid',gridTemplateColumns:'max-content 1fr max-content',
+          columnGap:10,rowGap:6,alignItems:'center'}}>
+          {codes.map(c=>(
+            <React.Fragment key={c}>
+              <span style={{fontFamily:MONO,fontSize:12,padding:'3px 9px',borderRadius:5,
+                background:'var(--hover)',border:'1px solid var(--border)',
+                color:'var(--text)'}}>{c}</span>
+              <input value={draft[c]||''} placeholder="한글 이름 (예: 단순변심)"
+                onChange={e=>setDraft(p=>({...p,[c]:e.target.value}))}
+                style={{...inp,width:'100%'}}/>
+              <span style={{fontSize:10.5,color:'var(--sub)',whiteSpace:'nowrap'}}>
+                {(seen[c]||0)>0 ? (seen[c]+'건') : '들어온 적 없음'}</span>
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+      <div style={{display:'flex',gap:6,alignItems:'center',marginTop:11,flexWrap:'wrap'}}>
+        <input value={add} onChange={e=>setAdd(e.target.value)}
+          onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault();
+            const c=add.trim(); if(c){ setDraft(p=>({...p,[c]:p[c]||''})); setAdd(''); } } }}
+          placeholder="코드 직접 추가 (예: A)"
+          style={{...inp,width:150,fontFamily:MONO}}/>
+        <button onClick={()=>{ const c=add.trim(); if(c){ setDraft(p=>({...p,[c]:p[c]||''})); setAdd(''); } }}
+          style={{padding:'6px 12px',borderRadius:6,fontSize:11.5,fontFamily:'inherit',
+            background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',
+            cursor:'pointer'}}>추가</button>
+        <div style={{flex:1}}></div>
+        <span style={{fontSize:10.5,color:'var(--sub)'}}>
+          {row && row.updated_by
+            ? '마지막으로 바꾼 사람 '+csShortUser(row.updated_by)
+              +(row.updated_at?' · '+csStamp(row.updated_at):'')
+            : '아직 바꾼 적이 없습니다'}
+        </span>
+        <button onClick={save} disabled={busy||!dirty}
+          style={{padding:'7px 15px',borderRadius:7,fontSize:12,fontWeight:700,
+            fontFamily:'inherit',border:'none',
+            color: dirty?'#fff':'#93A0BA',
+            background: dirty?'var(--primary)':'#38425A',
+            cursor:(busy||!dirty)?'default':'pointer'}}>
+          {busy?'저장 중…':dirty?'저장':'저장됨'}</button>
+      </div>
     </div>
   );
 }
@@ -28696,6 +28854,9 @@ function App() {
     //   ★ 이건 «다시 그려라» 신호가 필요 없다: 문안은 버튼을 누르는 그 순간 만들어지고,
     //     화면에 미리 그려 두는 값이 아니다(이름 지도와 다른 점이다).
     csLoadDraftTpl();
+    // ★ 클레임 사유 분류 이름표(2026-09-08) — 문안 틀과 같은 자리에서 읽는다.
+    //   못 읽으면 코드 그대로 보인다: 이름이 없어 화면이 멈추는 일은 없다.
+    csLoadClaimTypes();
     return()=>{ alive=false; };
   },[session?.user?.id,meRetry]);
   if(loading)return<div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',color:'var(--sub)'}}>로딩 중...</div>;
