@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zc_layout_sweep -->
+<!-- (2026-09-08) 제니 피드백 여섯 — 레이아웃 마무리. ①**환불 관리 머리말**이 아직 «부연이 아래» 였다 → 한 줄로, 탭도 공용 조각으로. ②**메뉴명·탭 «위치» 가 화면마다 달랐다.** 범인은 바깥 여백이었다: `.section`(24/32)과 달리 **공급사 관리·상담원 분석만 `20px 28px`** 였고, `.page-header` 를 쓰는 화면은 그 아래 `.section` 이 위 여백 24px 을 «또» 얹어 탭이 한 단 내려갔다. → 여백을 하나로 맞추고, 머리말 바로 아래 오는 탭 줄은 위 여백을 0 으로. ★★ **«같은 꼴로 그렸다» 와 «같은 자리에 선다» 는 다른 말이다** — 조각을 통일한 뒤에도 «그 조각이 놓이는 여백» 이 남아 있었다. ③**인력 관리·상품 정보의 «단추» 탭도 공용 조각으로** 옮겼다(TabBtn 두 벌을 걷어냈다 — 같은 일을 하는 조각이 세 벌이면 규칙이 아니라 우연이다). ④**인력 관리 재직 인원의 [수정]·[퇴사]·[삭제] 글자가 라이트에서 안 보였다** — 오늘만 네 번째 «옅은 바탕 + 밝은 글자» 다. `csInk()`·`--red-ink` 로 **색감은 두고 밝기만** 눌렀다. ⑤**[인원 추가] 단추 높이를 옆 입력칸(34px)에 맞췄다** — 한 줄에 선 조각들의 높이가 다르면 줄이 삐뚤어 보인다. `.btn-add` 는 다른 화면도 쓰므로 클래스를 안 건드리고 그 자리에서만 맞췄다. ⑥**근태 관리의 휴일을 «죽은 칸» 회색으로**(제니: 「휴일은 쉬는 날로 영업하지 않으니」). 맞는 말이다 — **이 콘솔에서 붉은색은 «봐야 할 것»**(지난 리체크·실패·경고)인데, 쉬는 날은 볼 것이 없는 칸이라 붉게 두면 **한 달치 표에서 가장 눈에 띄는 것이 «아무 일도 없는 날»** 이 된다. 회색은 이 콘솔에서 «못 누르는·비어 있는» 을 뜻해 온 색이다(🔴 표시도 ⚫ 로). ★ dev 전용. -->
 <!-- v20260908zb_mtag_from_setting -->
 <!-- (2026-09-08) **사이드바 「M」 뱃지를 설정에서 읽는다**(제니: 「고정이 아니라 계정 설정 > 메뉴 권한에서 **master 만 체크된 메뉴에만** 표시되도록. master 만 있다가 manager 가 체크돼 권한이 열리면 M 뱃지는 없어지는 것」). ★★★ 그전에는 **어느 메뉴에 뱃지를 다는지가 화면에 손으로 박혀 있었다.** 그래서 설정에서 manager 를 열어 줘도 뱃지는 그대로 「M」이라고 말했다 — **설정과 화면이 서로 다른 말을 하면 사람은 둘 다 안 믿게 된다.** 이건 오늘만 세 번째로 만나는 계열이다(09-04 «필수»·카페24 연동·담당자 권한 — 설정은 있는데 화면이 안 읽던 자리들). ★★ 판정은 **`csMenuAllows` 와 «같은 자리» 를 본다**: 설정에 적혀 있으면 그것, 없으면 코드 기본. 둘이 다른 것을 보면 «열렸는데 뱃지가 남는» 일이 또 생긴다. ★★ 뱃지가 **설정을 직접 읽지 않는다** — 사이드바가 그리는 동안 설정이 아직 안 왔을 수 있고, 그때 조각마다 따로 읽으면 «어떤 메뉴는 붙고 어떤 메뉴는 안 붙은» 절름발이 상태가 보인다. **한 곳(App)에서 한 번 읽어 내려 준다.** ★ 「CS 관리 > 설정」에도 붙였다 — **규칙을 세웠으면 그 규칙이 맞는 자리에는 다 붙어야 한다.** 여기만 빼 두면 «M 이 없으니 나도 되겠지» 로 읽힌다. 🔴 **`&& (` 안에 JSX 주석을 또 뒀다 — 오늘만 다섯 번째다.** ★ dev 전용. -->
 <!-- v20260908za_tabs_unify -->
@@ -1833,15 +1835,21 @@ function AttendancePage() {
                       //   (var(--bg)) — 글자는 --head-ink 라서 **라이트에서 흰 글자가 흰
                       //   바탕에 잠겼다.** 09-07 에 «인라인은 CSS 를 이긴다» 로 sticky 첫
                       //   열을 옮겼는데 이 열이 남아 있었다.
-                      // ★ 쉬는 날 표시는 «다른 배경» 이 아니라 **밴드 위에 얹는 붉은 겹**
+                      // ★ 쉬는 날 표시는 «다른 배경» 이 아니라 **밴드 위에 얹는 겹**
                       //   으로 준다 — 배경을 갈아 치우면 그 칸만 밴드에서 떨어져 나간다.
                       //   글자는 밴드 위에서 읽혀야 하므로 두 경우 다 --head-ink 다.
+                      // ★★ 2026-09-08 제니 — 그 겹을 **붉은색에서 회색으로** 바꿨다.
+                      //   「휴일은 쉬는 날로 영업하지 않으니 죽은 칸으로 회색 처리」.
+                      //   맞는 말이다: 이 콘솔에서 **붉은색은 «봐야 할 것»**(지난 리체크·
+                      //   실패·경고)이다. 쉬는 날은 볼 것이 없는 칸인데 붉게 두면
+                      //   **한 달치 표에서 가장 눈에 띄는 것이 «아무 일도 없는 날»** 이 된다.
+                      //   회색은 이 콘솔에서 «못 누르는·비어 있는» 을 뜻해 온 색이다.
                       // ⚠ 주석을 return( 뒤에 {/* */} 로 두면 문법이 깨진다(식 자리다).
                       return(
-                        <th key={d} style={{padding:'6px 2px',textAlign:'center',color:'var(--head-ink)',fontWeight:700,borderBottom:'1px solid var(--border)',background:isOff2?'linear-gradient(rgba(248,113,113,.30),rgba(248,113,113,.30)), var(--head-bg)':'var(--head-bg)'}}>
+                        <th key={d} style={{padding:'6px 2px',textAlign:'center',color:'var(--head-ink)',fontWeight:700,borderBottom:'1px solid var(--border)',background:isOff2?'linear-gradient(rgba(128,128,128,.38),rgba(128,128,128,.38)), var(--head-bg)':'var(--head-bg)'}}>
                           {d}<br/>
                           <span style={{fontSize:10,fontWeight:400}}>
-                            {'일월화수목금토'[dow]}{isH?'🔴':''}
+                            {'일월화수목금토'[dow]}{isH?'⚫':''}
                           </span>
                         </th>);
                     })}
@@ -1866,7 +1874,7 @@ function AttendancePage() {
                         const isOffDay=isW||isH;
                         const status=getVal(d,a.name,'status');
                         const ot=getVal(d,a.name,'ot_hours');
-                        return(<td key={d} style={{padding:'2px',verticalAlign:'top',background:isOffDay?'rgba(248,113,113,.05)':'',overflow:'hidden'}}>
+                        return(<td key={d} style={{padding:'2px',verticalAlign:'top',background:isOffDay?'var(--panel-bg)':'',overflow:'hidden'}}>
                           {isOffDay
                             ? <div style={{textAlign:'center',padding:'4px 2px',color:'var(--sub)',fontSize:10}}>휴일</div>
                             : <>
@@ -2146,21 +2154,12 @@ function AuditLogPage() {
 function AgentMgmtPage() {
   const [tab, setTab] = useState('agents');
 
-  const TabBtn = ({id, label}) => (
-    <button onClick={()=>setTab(id)} style={{padding:'9px 22px',borderRadius:8,border:'1px solid '+(tab===id?'var(--primary)':'var(--border)'),fontFamily:'inherit',fontWeight:600,fontSize:13,cursor:'pointer',
-      background:tab===id?'var(--primary)':'var(--card)',color:tab===id?'#fff':'var(--sub)',transition:'all .15s'}}>
-      {label}
-    </button>
-  );
-
   return (
     <div>
       <div className="page-header"><div><div className="page-title">👥 인력 관리</div><div className="page-sub">인원 등록 및 근태 관리</div></div></div>
-      <div className="section" style={{paddingBottom:0}}>
-        <div style={{display:'flex',gap:8,marginBottom:24}}>
-          <TabBtn id="agents" label="인원 목록"/>
-          <TabBtn id="attendance" label="근태 관리"/>
-        </div>
+      <div className="section" style={{paddingTop:0,paddingBottom:0}}>
+        <CsPageTabs value={tab} onChange={setTab}
+          tabs={[{id:'agents',label:'인원 목록'},{id:'attendance',label:'근태 관리'}]}/>
       </div>
       {tab==='agents' && <AgentListTab/>}
       {tab==='attendance' && <AttendancePage/>}
@@ -2282,9 +2281,9 @@ function AgentListTab() {
                       {a.hire_date&&<span>근무 <span style={{background:'rgba(34,211,160,.1)',color:'#22d3a0',padding:'1px 7px',borderRadius:10,fontSize:10,fontWeight:600}}>{calcDays(a.hire_date,null)}일</span></span>}
                     </div>
                   </div>
-                  <button onClick={()=>startEdit(a)} style={{padding:'4px 10px',background:'rgba(42,71,141,.15)',border:'1px solid #2A478D',color:'#D2E5FF',borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>수정</button>
-                  <button onClick={()=>{setResignTarget(a);setResignDate(today());}} style={{padding:'4px 10px',background:'rgba(100,130,200,.15)',border:'1px solid #5a7abf',color:'#a8c4ff',borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>퇴사</button>
-                  <button onClick={()=>del(a)} style={{padding:'4px 10px',background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.3)',color:'#f87171',borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>
+                  <button onClick={()=>startEdit(a)} style={{padding:'4px 10px',background:'rgba(42,71,141,.15)',border:'1px solid #2A478D',color:csInk('#D2E5FF'),borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>수정</button>
+                  <button onClick={()=>{setResignTarget(a);setResignDate(today());}} style={{padding:'4px 10px',background:'rgba(100,130,200,.15)',border:'1px solid #5a7abf',color:csInk('#a8c4ff'),borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>퇴사</button>
+                  <button onClick={()=>del(a)} style={{padding:'4px 10px',background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.3)',color:'var(--red-ink)',borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>
                 </div>
               )}
             </div>
@@ -2310,7 +2309,7 @@ function AgentListTab() {
                   </div>
                 </div>
                 <button onClick={()=>doRestore(a)} style={{padding:'3px 8px',background:'rgba(34,211,160,.08)',border:'1px solid rgba(34,211,160,.3)',color:'#22d3a0',borderRadius:4,fontSize:11,cursor:'pointer',fontFamily:'inherit'}}>복직</button>
-                <button onClick={()=>del(a)} style={{padding:'4px 10px',background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.3)',color:'#f87171',borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>
+                <button onClick={()=>del(a)} style={{padding:'4px 10px',background:'rgba(248,113,113,.1)',border:'1px solid rgba(248,113,113,.3)',color:'var(--red-ink)',borderRadius:5,fontSize:11,fontWeight:500,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>
               </div>
             </div>
           ))}
@@ -2336,7 +2335,11 @@ function AgentListTab() {
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:4}}>
             <span style={{fontSize:10,color:'transparent'}}>.</span>
-            <button className="btn-add" onClick={add}>추가</button>
+            {/* ★ 옆 입력칸과 «세로 크기» 를 맞춘다(제니 2026-09-08) — 한 줄에 선
+                조각들의 높이가 다르면 줄이 삐뚤어 보인다. .btn-add 는 다른 화면도
+                쓰므로 클래스를 고치지 않고 이 자리에서만 높이를 맞춘다. */}
+            <button className="btn-add" onClick={add}
+              style={{height:34,padding:'0 18px',fontSize:12}}>추가</button>
           </div>
         </div>
         {msg&&<div className="error-msg" style={{marginTop:8,textAlign:'left'}}>{msg}</div>}
@@ -2639,7 +2642,7 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
       <div className="page-header">
         <div><div className="page-title">✍️ 데이터 입력</div><div className="page-sub">일별 운영 현황 데이터 입력 및 내역 관리</div></div>
       </div>
-      <div className="section" style={{paddingBottom:0}}>
+      <div className="section" style={{paddingTop:0,paddingBottom:0}}>
         {/* ★ 단추 꼴이던 것을 탭으로 옮겼다(2026-09-08) — 화면을 바꾸는 것은 탭이다.
             «단추» 는 «누르면 무슨 일이 일어난다» 는 뜻이라, 화면 전환에 쓰면
             저장·발송 같은 것과 같은 꼴이 되어 무게가 잘못 실린다. */}
@@ -4403,10 +4406,6 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
   };
 
 
-  const TabBtn=({id,label})=>(
-    <button onClick={()=>{setTab(id);setMsg('');setCheckedIds(new Set());}} style={{padding:'8px 18px',borderRadius:8,border:'1px solid '+(tab===id?'var(--primary)':'var(--border)'),fontFamily:'inherit',fontWeight:600,fontSize:13,cursor:'pointer',
-      background:tab===id?'var(--primary)':'var(--card)',color:tab===id?'#fff':'var(--sub)',transition:'all .15s'}}>{label}</button>
-  );
 
   const inputStyle={width:'100%',padding:'10px 12px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,color:'var(--text)',fontSize:14,fontFamily:'inherit',outline:'none'};
   const taStyle={...inputStyle,resize:'vertical'};
@@ -4558,11 +4557,10 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
           </div>
         );
       })()}
-      <div className="section" style={{paddingBottom:0}}>
-        <div style={{display:'flex',gap:8,marginBottom:16}}>
-          <TabBtn id="list" label="상품 목록"/>
-          {editId&&<TabBtn id="add" label="상품 수정"/>}
-        </div>
+      <div className="section" style={{paddingTop:0,paddingBottom:0}}>
+        <CsPageTabs value={tab}
+          onChange={(id)=>{setTab(id);setMsg('');setCheckedIds(new Set());}}
+          tabs={[{id:'list',label:'상품 목록'}].concat(editId?[{id:'add',label:'상품 수정'}]:[])}/>
       </div>
 
       {tab==='list'&&(
@@ -6847,7 +6845,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
   if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',color:'var(--sub)',fontSize:13}}>📦 공급사 정보 로드 중...</div>;
 
   return (
-    <div style={{padding:'20px 28px'}}>
+    <div style={{padding:'24px 32px'}}>
       {/* 페이지 헤더 */}
       {/* ★ 부연을 «제목 오른쪽 한 줄» 로 함축했다(제니 2026-09-08: 「문장형 말고
           CS 관리 메뉴처럼」). 세 줄이던 것을 한 마디로 줄인다 — 머리말은 «여기가
@@ -9549,27 +9547,13 @@ function RefundManagementPage({ currentUserEmail }) {
   return (
     <div className="section" style={{contain:'inline-size'}}>
       {/* 페이지 헤더 (공통) */}
-      <div style={{marginBottom:16}}>
+      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>💸 환불 관리</h1>
-        <div style={{fontSize:12,color:'var(--sub)',marginTop:4}}>환불 요청 등록 · 처리 진행 추적 · master 전용</div>
+        <span style={{fontSize:12,color:'var(--sub)'}}>요청 등록 · 처리 추적 · master 전용</span>
       </div>
 
-      {/* 탭 */}
-      <div style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',marginBottom:20}}>
-        {[
-          {id:'request',label:'요청'},
-          {id:'report', label:'Report'},
-        ].map(t=>(
-          <div key={t.id} onClick={()=>setTab(t.id)}
-            style={{
-              padding:'12px 20px',cursor:'pointer',fontSize:13,
-              fontWeight: tab===t.id ? 700 : 500,
-              color:      tab===t.id ? '#F6AD09' : 'var(--sub)',
-              borderBottom: tab===t.id ? '2px solid #F6AD09' : '2px solid transparent',
-              marginBottom:'-1px',userSelect:'none',
-            }}>{t.label}</div>
-        ))}
-      </div>
+      <CsPageTabs value={tab} onChange={setTab}
+        tabs={[{id:'request',label:'요청'},{id:'report',label:'Report'}]}/>
 
       {/* Report 탭 */}
       {tab==='report' && <RefundReportTab reasons={reasons}/>}
@@ -10123,7 +10107,7 @@ function AgentAnalysisPage(){
   };
 
   return (
-    <div style={{padding:'20px 28px'}}>
+    <div style={{padding:'24px 32px'}}>
       {/* 헤더 */}
       <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>📈 상담원 분석</h1>
