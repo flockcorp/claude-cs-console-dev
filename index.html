@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908g_assignee_group -->
+<!-- (2026-09-08) **담당자를 «그 티켓만» 에서 «묶음 함께» 로 바꿨다**(제니). 앞 판에서 나는 「품목마다 처리하는 사람이 갈릴 수 있다」고 보고 유형·방향·정산 금액과 같은 무리에 뒀는데, 제니가 바로잡았다 — **담당자는 단계·리체크와 같은 무리다.** ★★ 가르는 기준이 «품목마다 다를 수 있나» 가 아니라 **«한 사건인가»** 였다: 공급사 접수도 회신도 묶음 단위로 일어나므로 그 사건을 한 사람이 끝까지 본다. 절반만 배정을 옮기면 «내 것» 칩에서 형제가 갈라져, 회신이 왔을 때 누가 처리할 차례인지가 티켓마다 달라진다. ★★ 겸해 **이력 문구가 「단계·리체크는 묶음 N건에 함께 적용」 으로 박혀 있던 것을 함께 고쳤다** — 항목을 더하면서 문구를 안 고치면 **이력이 사실과 다른 말을 한다.** 이제 실제로 함께 적용한 이름만 모아 적는다(grpNames 한 자리에서 값과 이름을 같이 담는다). ★ 등록 화면은 원래부터 묶음 전체가 같은 담당자로 만들어진다(한 번에 만드는 값이다). ★ dev 전용. -->
 <!-- v20260908f_assignee_setting_and_detail -->
 <!-- (2026-09-08) 제니 피드백 넷. ①🔴🔴 **주석 «안» 에 JSX 주석 닫는 기호를 글자로 적어 화면에 큰 글자가 튀어나왔다**(제니 제보). 그 자리에서 주석이 닫히고 나머지가 그대로 자식 텍스트가 된 것이다 — 앞 판에서 「주석은 괄호 밖에」를 «설명하려고» 적은 문장이 스스로 그 사고를 냈다. 지우고, **파일 전체의 JSX 주석을 훑어 일찍 닫히는 곳이 더 없는지 세어 확인했다**(0곳). ②**목록 «사진» 열 기본 폭 60 → 46**(제니: 「간격이 너무 커」). 담는 값이 📎 하나뿐인 열이라 넓게 잡으면 가운데 정렬 때문에 좌우로 빈자리가 두 겹 생긴다 — 09-07 에 여백을 12→5 로 줄인 것과 같은 뜻이다. ③**등록 화면 아래 「담당자 : 제니」를 뺐다**(제니: 「중복 표기가 돼」). ★★ **화면에 자리가 생기면 그 값을 대신 말해 주던 문장은 없애야 한다** — 안 그러면 어느 쪽이 진짜인지 매번 눈으로 맞춰 보게 된다. 그 줄에 남는 것은 «저장하면 몇 건이 만들어지나» 뿐이고, 그건 위 어디에도 없는 말이다. ④**티켓 «상세» 에도 담당자 자리를 만들었다**(제니: 「상세 화면에는 없네」). 등록에서만 되면 **배정을 바꾸려고 목록의 일괄 편집으로 나가야 한다** — 한 건을 보고 있는데 그 건을 고치러 다른 화면으로 가는 셈이다. 1단의 다른 값과 같은 규칙(바로 저장하지 않고 [저장] 때 한 번에, 이력에 «담당자 : 옛 -> 새» 한 줄). ★ 담당자는 **«그 티켓만»** 이다 — 묶음에 함께 적용하는 값(단계·리체크)에 넣지 않았다. ★ 지금 담당자가 명단에 없는 경우(지운 계정·이관 티켓)를 맨 앞에 세운다 — 없으면 select 가 첫 항목으로 «조용히» 바뀌어 저장 때 담당자가 갈린다. ⑤★★★ **담당자 변경 권한을 설정으로 옮겼다**(제니: 「설정 메뉴에서 설정할 수 있게 하자」). **그 설정은 이미 있었다** — CS 설정 > «칸» > 담당자 > «고칠 수 있는 사람» 이고 **DB 트리거가 그것을 읽어 실제로 막고 있다.** 없던 것은 «화면이 그걸 보는 일» 뿐이라 새 설정을 만들지 않고 `csCanEditField()` 하나를 뒀다. 앞 판(d)에서 master·manager 로 코드에 박아 둔 것을 걷어냈다. ★★ **09-04 «필수» 와 정확히 같은 모양의 일이다** — 그때도 설정 화면과 트리거는 있는데 화면만 안 읽고 있었다. 새 자리를 만들기 전에 «그 자리에 무엇이 이미 서 있나» 를 보는 것이 이 프로젝트에서 세 번째 배우는 것이다. ★★ 판정을 트리거와 «글자 그대로» 맞췄다(master 는 늘 통과 · edit 가 없으면 전원) — 화면이 더 조이면 «버튼은 없는데 API 로는 되는» 반대 짝이 생기고, 더 풀면 눌렀을 때 DB 오류가 튀어나온다. ⚠ **그래서 기본값이 «전원» 이다** — 지금 설정에 담당자 edit 가 없으면 crew 에게도 고르는 칸이 보인다. 좁히려면 CS 설정 > 칸 에서 끄면 된다(제니가 원한 «설정에서 정한다» 가 이것이다). ★ dev 전용. -->
 <!-- v20260908e_head_band_navy -->
@@ -22944,33 +22946,42 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
         settle_fee: money(edit.settle_fee),
         settle_shipping_fee: money(edit.settle_shipping_fee),
         memo: edit.memo || null,
-        // ★ 담당자는 «그 티켓만» 이다 — 아래 grpRow(묶음에 함께 적용하는 값)에 넣지
-        //   않는다. 품목마다 처리하는 사람이 갈릴 수 있고, 묶어서 옮기고 싶으면
-        //   목록의 일괄 편집이 이미 그 일을 한다.
+        // ★★ 담당자는 **묶음에 함께 적용한다**(제니 2026-09-08 — 아래 grpRow).
+        //   처음에는 «그 티켓만» 으로 뒀는데 제니가 바로잡았다: 한 사건을 한 사람이
+        //   끝까지 본다. 절반만 옮기면 «내 것» 칩에서 형제가 갈라진다.
         // ★ 빈 값으로는 못 만든다 — 고르는 칸에 빈 선택지를 두지 않았다.
         assignee: edit.assignee || t.assignee || currentUserEmail,
         updated_by: currentUserEmail,
       };
       const {error} = await sb.from('cs_tickets').update(row).eq('id', ticketId);
       if(sbFail('티켓 수정', error)){ setBusy(false); return false; }
-      // ★★ 묶음이면 «단계·리체크» 는 형제 티켓에도 함께 적용한다(제니 결정 2026-09-01).
+      // ★★ 묶음이면 «단계·리체크·담당자» 는 형제 티켓에도 함께 적용한다
+      //   (단계·리체크는 제니 2026-09-01 · **담당자는 제니 2026-09-08**).
       //   공급사 접수도 회신도 «묶음 단위» 로 일어나기 때문이다 — 한 건만 옮기면
-      //   나머지가 옛 단계로 남아 목록에서 따로 떠돈다.
+      //   나머지가 옛 값으로 남아 목록에서 따로 떠돈다.
+      //   ★ 담당자가 여기 들어오는 이유도 같다: 한 사건을 한 사람이 끝까지 본다.
+      //     묶음의 절반만 배정을 옮기면 «내 것» 칩에서 형제가 갈라져, 회신이 왔을 때
+      //     누가 처리할 차례인지가 티켓마다 달라진다.
       // ★ 반대로 유형·방향·정산 금액은 «그 티켓만» 이다. 품목마다 다를 수 있다
       //   (한 품목은 불량, 다른 품목은 누락 / 정산 금액도 품목별로 다르다).
       const sibs = group.filter(g=>g.id!==t.id).map(g=>g.id);
       const grpRow = {};
-      if(st !== (t.stage||''))                   grpRow.stage = st;
-      if(edit.recheck_at !== (t.recheck_at||'')) grpRow.recheck_at = edit.recheck_at || null;
-      if(sibs.length && Object.keys(grpRow).length){
+      // ★ 이력에 적을 이름을 «같은 자리에서» 모은다 — 따로 적어 두면 항목을 더할 때
+      //   한쪽만 늘어나 이력이 사실과 다른 말을 한다(문구가 「단계·리체크」 로 박혀
+      //   있던 것을 이번에 함께 고쳤다).
+      const grpNames = [];
+      if(st !== (t.stage||''))                   { grpRow.stage = st; grpNames.push('단계'); }
+      if(edit.recheck_at !== (t.recheck_at||'')) { grpRow.recheck_at = edit.recheck_at || null; grpNames.push('리체크'); }
+      if(String(edit.assignee||'') !== String(t.assignee||'')) { grpRow.assignee = row.assignee; grpNames.push('담당자'); }
+      if(sibs.length && grpNames.length){
         grpRow.updated_by = currentUserEmail;
         const {error:e3} = await sb.from('cs_tickets').update(grpRow).in('id', sibs);
         if(e3) console.error('[묶음 적용] 실패:', e3);
       }
       // ★ 바뀐 것을 «줄바꿈» 으로 모아 한 사건에 담는다(제니) — 가운뎃점으로 이으면
       //   항목 구분이 안 된다. 이력 화면이 pre-wrap 이라 줄바꿈이 그대로 보인다.
-      const grpHint = (group.length>1 && Object.keys(grpRow).length)
-        ? '\n(단계·리체크는 묶음 '+group.length+'건에 함께 적용)' : '';
+      const grpHint = (group.length>1 && grpNames.length)
+        ? '\n('+grpNames.join('·')+'는 묶음 '+group.length+'건에 함께 적용)' : '';
       evs.push({ticket_id:ticketId, side:'원룸만들기', action:'수정', actor:currentUserEmail,
         note: chg.join('\n')+grpHint, stage_after: st, direction_after: edit.direction||null});
     } else {
@@ -23708,6 +23719,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               ★ 자리·라벨·옷은 등록 화면 그대로다(두 화면의 틀은 같아야 한다).
               ★ 1단의 다른 값과 같은 규칙 — 바로 저장하지 않고 [저장] 때 한 번에 가고,
                 이력에는 «담당자 : 옛 -> 새» 한 줄이 값 변경으로 남는다.
+              ★★ 묶음이면 **형제 티켓에도 함께 적용된다**(제니 2026-09-08) — 단계·리체크와
+                같은 무리다. 한 사건을 한 사람이 끝까지 보기 때문이다.
               ★ 바꿀 수 있는 사람은 **설정**이 정한다(CS 설정 > 칸 > 담당자). */}
           <div style={{marginTop:12}}>
             <label style={lbl}>담당자</label>
