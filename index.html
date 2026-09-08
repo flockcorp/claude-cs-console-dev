@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zt_draft_vars_c24 -->
+<!-- (2026-09-08) **«운송장만 특별 취급» 을 걷어내고 규칙으로 바꿨다**(제니: 「문안에 송장을 넣는 것도 필수가 아니라 내가 선택해서 설정하는 거라, 꼭 운송장이 아니더라도 내가 문안에 넣고자 한다면… **문안 설정에서 변수를 추가하고 카페24 연동에서도 값을 연동하도록 2번 설정을 거쳐서** 작업하는 게 맞는 것 같다」). ★★★ 맞는 말이다 — 직전 판에서 나는 송장번호를 `always` 로 박았는데, 그러면 **다음에 다른 값을 넣고 싶을 때 또 나를 불러야 한다.** 규칙은 «운송장은 늘» 이 아니라 **«내가 고른 것이 담긴다»** 여야 한다. → always 를 되돌렸다. ①**카페24 연동 목록의 값이 전부 «문안 치환자» 가 된다** — 이름은 라벨 그대로(`{송장번호}`·`{주문일}`·`{결제수단}`…). 그전에는 넣을 수 있는 카페24 값이 `{운송장}` 하나뿐이라 «꼭 운송장이 아니더라도» 가 애초에 불가능했다. ★ 이미 있는 이름과 겹치면 더하지 않는다 — **이름을 고치는 일과 남의 글을 깨뜨리는 일은 다르다.** ②**두 설정이 어긋나면 양쪽 화면이 말해 준다.** 두 설정을 가른 대가는 «한쪽만 하면 조용히 안 나오는 것» 이고, 그것이 오늘 운송장에서 실제로 일어난 일이다(값이 있는데 줄이 사라졌다). → 문안 설정에는 「문안에 썼는데 연동에서 꺼진 값 N개」 경고 + 치환자 목록에 「연동 꺼짐」 표시 + 저장할 때 한 번 더. 카페24 연동에는 「문안이 씀」 뱃지(꺼져 있으면 ⚠). **조용한 실패를 남기지 않는 것이 두 설정을 가른 조건이다.** ★ dev 전용. -->
 <!-- v20260908zs_draft_tracking -->
 <!-- (2026-09-08) 🔴 **접수 문안에서 «운송장 번호» 줄이 값이 있는데도 빠졌다**(제니 제보). 원인이 둘이었다. ①**티켓 등록 화면이 문안에 넘기는 임시 객체에 그 칸이 아예 없었다.** 치환자는 티켓의 칸을 읽는데 칸이 없으면 «값이 빈 것» 으로 판정되고, 빈 치환자만 든 줄은 통째로 빠진다(09-04 규칙) — 그래서 **값이 있는데 줄이 사라졌다.** ★★★ 여기서 만드는 것은 «티켓처럼 생긴 것» 이다: **문안이 티켓에서 읽는 칸은 여기에도 다 있어야 한다.** 저장 뒤 상세에서 누른 것과 같은 글이 나와야 하기 때문이다(운송장·주문번호·공급사·수령인 연락처를 함께 채웠다). ②**송장번호를 담을지 말지를 «설정» 이 정하고 있었다** — 카페24 연동에서 안 켜면 스냅샷에 안 담기고, 그러면 문안의 운송장 줄이 조용히 사라진다. → **always 로 바꿔 늘 담는다.** ★★★ 배운 것: **다른 기능이 쓰는 값은 그 기능이 필요로 하는 만큼 늘 있어야 한다.** 골라서 끄게 두면 «설정 하나가 다른 화면을 조용히 망가뜨리는» 자리가 된다. 설정 화면에도 그 까닭을 적었다(「공급사 접수 문안이 쓰는 값이라 늘 담습니다」). ★ `csTrackingNo` 는 스냅샷을 먼저 보고 없으면 평평한 칸을 본다 — «등록에서는 안 나오고 상세에서만 나오는» 자리를 없앤다. ★ dev 전용. -->
 <!-- v20260908zr_order_link_new -->
@@ -20232,14 +20234,15 @@ const CS_CAFE24_FIELDS = [
   {g:'품목', id:'supplier_name',   label:'공급사명'},
   {g:'품목', id:'supplier_product_name', label:'공급사 상품명'},
   {g:'품목', id:'individual_shipping_fee', label:'개별 배송비'},
-  // ★★★ 2026-09-08 — 송장번호는 «항상 담는다»(제니 제보: 「운송장 번호 값이 비지
-  //   않았는데 문안에 안 뜬다」). 원인은 **접수 문안이 이 값을 쓰는데, 담을지 말지를
-  //   설정이 정하고 있었던 것**이다 — 설정에서 안 켜면 문안의 「운송장 번호」 줄이
-  //   조용히 사라진다. 값이 «있는데 안 나오는» 것이라 사람은 이것을 고장으로 읽는다.
-  //   ★★ **다른 기능이 쓰는 값은 그 기능이 필요로 하는 만큼 늘 있어야 한다.**
-  //     골라서 끄게 두면 «설정 하나가 다른 화면을 조용히 망가뜨리는» 자리가 된다.
-  {g:'배송', id:'tracking_no',     label:'송장번호', always:true,
-   note:'공급사 접수 문안이 쓰는 값이라 늘 담습니다'},
+  // ★★★ 2026-09-08 — 한때 이 값을 always 로 박았다가 **되돌렸다**(제니 판단).
+  //   「문안에 송장을 넣는 것도 필수가 아니라 내가 선택해서 설정하는 거라, 꼭 운송장이
+  //    아니더라도 내가 문안에 넣고자 한다면 … 문안 설정에서 변수를 추가하고 카페24
+  //    연동에서도 값을 연동하도록 **2번 설정을 거쳐서** 작업하는 게 맞는 것 같다」.
+  //   ★★ 맞는 말이다: 값 하나를 특별 취급하면 **다음에 다른 값을 넣고 싶을 때 또 나를
+  //     불러야 한다.** 규칙은 «운송장은 늘» 이 아니라 «내가 고른 것이 담긴다» 여야 한다.
+  //   ★★★ 대신 **어긋나면 양쪽 화면이 말해 준다** — 문안에 썼는데 연동에서 안 켰으면
+  //     그 줄은 조용히 사라진다. 조용한 실패를 남기지 않는 것이 두 설정을 가른 대가다.
+  {g:'배송', id:'tracking_no',     label:'송장번호'},
   {g:'배송', id:'shipping_company_name', label:'택배사'},
   {g:'배송', id:'shipped_date',    label:'출고일'},
   {g:'배송', id:'delivered_date',  label:'배송완료일'},
@@ -20858,6 +20861,13 @@ function CsCafe24Settings({currentUserEmail}){
   const [extraOrder,setExtraOrder] = useState({});  // cs_detail_order 의 다른 묶음
 
   const defOf = (id)=> CS_CAFE24_FIELDS.find(f=>f.id===id);
+  // ★ 접수 문안 틀이 «쓰고 있는» 카페24 값 — 끄기 전에 그 사실을 알려 주려고 읽는다.
+  //   ★ 틀은 App 이 로그인 때 한 번 읽어 둔 모듈 값(csTpl)이라 여기서는 그냥 본다.
+  const [usedByDraft,setUsedByDraft] = useState([]);
+  useEffect(()=>{ let alive=true;
+    csLoadDraftTpl().then(()=>{ if(alive) setUsedByDraft(csDraftUsedC24()); });
+    return ()=>{ alive=false; };
+  },[]);
   useEffect(()=>{ (async()=>{
     const [rf,ro] = [await csLoadSetting('cs_cafe24_fields'),
                      await csLoadSetting('cs_detail_order')];
@@ -20967,6 +20977,19 @@ function CsCafe24Settings({currentUserEmail}){
                   <span style={{fontSize:12,color:'var(--text)'}}>{f.label}</span>
                   {f.pii && <span style={{fontSize:9.5,color:'#F6AD09',opacity:.85,
                     border:'1px solid rgba(246,173,9,.4)',borderRadius:8,padding:'0 5px'}}>개인정보</span>}
+                  {/* ★★ 「접수 문안이 이 값을 쓴다」 — 끄면 문안의 그 줄이 통째로 빠진다.
+                      두 설정을 가른 대가는 «한쪽만 하면 조용히 안 나오는 것» 이라,
+                      끄는 자리에서 그 사실을 미리 말해 준다(제니 2026-09-08). */}
+                  {usedByDraft.indexOf(f.id)>=0 && (
+                    <span data-tip={on(f.id)
+                        ? '접수 문안이 이 값을 씁니다 — 끄면 문안의 그 줄이 빠집니다'
+                        : '접수 문안이 이 값을 쓰는데 꺼져 있습니다 — 문안의 그 줄이 빠집니다'}
+                      style={{fontSize:9.5,borderRadius:8,padding:'0 5px',
+                        color: on(f.id) ? 'var(--accent)' : '#F6AD09',
+                        border:'1px solid '+(on(f.id)?'rgba(120,170,255,.45)':'rgba(246,173,9,.55)'),
+                        background: on(f.id)?'transparent':'rgba(246,173,9,.14)'}}>
+                      {on(f.id) ? '문안이 씀' : '⚠ 문안이 씀'}</span>
+                  )}
                   <span style={{marginLeft:'auto',fontFamily:'monospace',fontSize:11.5,
                     color:'var(--sub)',opacity:.72}}>{f.id}</span>
                 </label>
@@ -21184,6 +21207,17 @@ function CsDraftTplSettings({currentUserEmail}){
     order_qty:2, cs_qty:1, cafe24_snapshot:{tracking_no:'1234567890'},
   };
   const SAMPLE_EV = [{id:1, ticket_id:0, side:'고객', note:'모서리가 찢어져 왔어요'}];
+  // ★ 「카페24 연동」에서 지금 켜 둔 값 — 두 설정이 어긋났는지 여기서 잰다.
+  const [c24On,setC24On] = useState([]);
+  useEffect(()=>{ let alive=true;
+    csLoadSetting('cs_cafe24_fields').then(r=>{
+      if(!alive) return;
+      const on = (r && r.value && Array.isArray(r.value.on)) ? r.value.on : [];
+      setC24On(CS_CAFE24_FIELDS.filter(f=>f.always).map(f=>f.id)
+        .concat(on.filter(id=>!CS_CAFE24_FIELDS.some(f=>f.always && f.id===id))));
+    });
+    return ()=>{ alive=false; };
+  },[]);
   const [row,setRow]     = useState(null);
   const [loaded,setLoaded] = useState(false);
   const [d,setD]         = useState(null);     // 고치는 중인 틀
@@ -21234,6 +21268,8 @@ function CsDraftTplSettings({currentUserEmail}){
   // ★ 미리보기도 **실제 메일과 같은 함수**로 조각을 나눈다(csDraftMailParts) —
   //   여기서 따로 그리면 «미리보기와 실제가 다른» 자리가 생긴다.
   const prevParts   = withDraft(()=>csDraftMailParts(SAMPLE_EV));
+  // ★ «지금 고치고 있는 틀» 을 기준으로 잰다 — 저장 뒤에야 알려 주면 이미 늦다.
+  const missC24 = csDraftUsedC24(d).filter(id=>c24On.indexOf(id)<0);
 
   const dirty = JSON.stringify(norm(row && row.value)) !== JSON.stringify(d);
   const save = async ()=>{
@@ -21246,6 +21282,16 @@ function CsDraftTplSettings({currentUserEmail}){
     setD(norm(clean));
     // ★ 저장하면 «지금 화면» 도 새 틀로 돌아야 한다 — 모듈 변수를 다시 읽는다.
     await csLoadDraftTpl();
+    // ★ 저장은 막지 않는다 — 아직 연동을 안 켰을 뿐 «틀린 문안» 은 아니다.
+    //   다만 그대로 두면 그 줄이 조용히 빠지므로, 저장한 자리에서 한 번 더 말해 준다.
+    const miss = csDraftUsedC24(clean).filter(id=>c24On.indexOf(id)<0);
+    if(miss.length){
+      const names = miss.map(id=>{
+        const f = CS_CAFE24_FIELDS.find(x=>x.id===id); return (f&&f.label)||id;
+      }).join(' · ');
+      toast('저장했습니다. 다만 «'+names+'» 은(는) 카페24 연동에서 꺼져 있어 그 줄이 빠집니다.','warn');
+      return;
+    }
     toast('접수 문안 틀을 저장했습니다.','ok');
   };
 
@@ -21277,16 +21323,50 @@ function CsDraftTplSettings({currentUserEmail}){
             «무엇이 있나» 를 이름만으로 먼저 훑고, 필요한 것만 오른쪽을 읽게 된다. */}
         <div style={{display:'grid',gridTemplateColumns:'max-content 1fr',
           columnGap:14,rowGap:5,alignItems:'baseline'}}>
-          {CS_DRAFT_VARS.map(v=>(
+          {CS_DRAFT_VARS_ALL.map(v=>{
+            // ★ 카페24 값은 «연동에서 켜야 담기는» 것이라, 지금 켜져 있는지를 그 자리에서
+            //   말해 준다. 이름만 늘어놓으면 「썼는데 왜 안 나오지」를 여기서 못 푼다.
+            const need = !!v.c24 && c24On.indexOf(v.c24)<0;
+            return (
             <React.Fragment key={v.k}>
               <span style={{fontSize:11,fontFamily:MONO,padding:'2px 7px',borderRadius:5,
                 background:'var(--hover)',border:'1px solid var(--border)',
-                color:'var(--text)',whiteSpace:'nowrap'}}>{'{'+v.k+'}'}</span>
-              <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>{v.d}</span>
+                color:'var(--text)',whiteSpace:'nowrap',opacity:need?.6:1}}>{'{'+v.k+'}'}</span>
+              <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
+                {v.d}
+                {need && <b style={{color:'#F6AD09'}}> · 연동 꺼짐</b>}
+              </span>
             </React.Fragment>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      {/* ── 두 설정이 어긋났을 때 (제니 2026-09-08) ────────────────────────
+          ★★★ 제니 결정: 「문안 설정에서 변수를 추가하고, 카페24 연동에서도 값을
+            연동하도록 **2번 설정을 거쳐서** 작업하는 게 맞다」. 맞는 말이다 —
+            값 하나를 특별 취급하면 다음 값을 넣고 싶을 때 또 나를 불러야 한다.
+          ★★ 다만 **두 설정을 가른 대가는 «한쪽만 하면 조용히 안 나오는 것»** 이다.
+            그것이 오늘 운송장에서 실제로 일어난 일이다(값이 있는데 줄이 사라졌다).
+            → 어긋나면 **여기서 말해 준다.** 조용한 실패를 남기지 않는 것이 조건이다. */}
+      {missC24.length>0 && (
+        <div style={{...card, borderColor:'rgba(246,173,9,.55)',
+          background:'rgba(246,173,9,.10)'}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#F6AD09',marginBottom:6}}>
+            ⚠ 문안에 썼는데 <b>카페24 연동에서 꺼져 있는</b> 값이 {missC24.length}개 있습니다
+          </div>
+          <div style={{fontSize:11,color:'var(--text)',lineHeight:1.8}}>
+            {missC24.map(id=>{
+              const f = CS_CAFE24_FIELDS.find(x=>x.id===id);
+              return <span key={id} style={{fontFamily:MONO,marginRight:8}}>
+                {'{'+((f&&f.label)||id)+'}'}</span>;
+            })}
+            <br/>
+            이 값들은 티켓에 <b>담기지 않아</b>, 그 치환자만 든 줄은 문안에서 <b>통째로 빠집니다</b>.
+            <br/><b>CS 설정 &gt; 카페24 연동</b>에서 켜 주세요.
+          </div>
+        </div>
+      )}
 
       {/* ── 메일 ────────────────────────────────────────────────────── */}
       <div style={card}>
@@ -21311,7 +21391,7 @@ function CsDraftTplSettings({currentUserEmail}){
                   줄글에 적는 치환자 이름이라, 이름을 바꾸면 이미 적어 둔 문안이 깨진다. */}
             <select value={c.v} onChange={e=>setCol(i,'v',e.target.value)}
               style={{...inp,flex:'1 1 300px'}}>
-              {CS_DRAFT_VARS.map(v=>(
+              {CS_DRAFT_VARS_ALL.map(v=>(
                 <option key={v.k} value={v.k}>{'{'+v.k+'}'} — {v.d}</option>
               ))}
               {/* ★ 설정에 이미 «문장» 이 들어 있으면 그것도 고를 수 있게 남긴다 —
@@ -25879,12 +25959,47 @@ const CS_DRAFT_VARS = [
   // ★ o:true = «없을 수 있는 값». 비면 빈 글자가 되고, **그 치환자만 든 줄은 통째로 빠진다.**
   //   「운송장 번호 : —」 같은 줄을 공급사에 보내면 «무엇을 적으라는 건가» 로 읽힌다.
   {k:'접수사유',       d:'고객이 한 말(★로 고른 이력) · 없으면 그 줄이 빠진다', o:true, g:(t,ev)=>csIntakeReason(t,ev)},
-  {k:'운송장',         d:'운송장 번호 · 없으면 그 줄이 빠진다', o:true, g:(t)=>csTrackingNo(t)},
+  // ★ c24 = «카페24 연동에서 켜야 담기는 값» 임을 적어 둔다. 설정 화면이 이 표시를
+  //   보고 「연동에서 켜야 합니다」를 알린다(아래 csDraftNeedC24).
+  {k:'운송장',         d:'운송장 번호 · 없으면 그 줄이 빠진다', o:true, c24:'tracking_no',
+                       g:(t)=>csTrackingNo(t)},
 ];
+// ── 카페24 값도 «문안 치환자» 로 쓴다 (제니 2026-09-08) ──────────────────────
+// 「꼭 운송장이 아니더라도 내가 문안에 넣고자 한다면」 — 그러려면 넣을 수 있는 값이
+// 운송장 하나뿐이어선 안 된다. **카페24 연동 목록에 있는 값은 전부 치환자가 된다.**
+// ★★ 이름은 그 값의 **라벨 그대로**다(`{송장번호}`·`{주문일}`·`{결제수단}`) — 설정
+//   화면에서 고른 이름과 문안에 적는 이름이 다르면 매번 표를 찾아봐야 한다.
+// ★★ 이미 있는 치환자와 **이름이 겹치면 더하지 않는다.** 옛 이름이 이기게 두어야
+//   이미 적어 둔 문안이 안 깨진다 — 이름을 고치는 일과 남의 글을 깨뜨리는 일은 다르다.
+// ★ 전부 o:true 다 — 카페24가 안 준 값이면 그 줄은 빠진다(운송장과 같은 규칙).
+const CS_DRAFT_VARS_C24 = CS_CAFE24_FIELDS
+  .filter(f=>!CS_DRAFT_VARS.some(v=> v.k===f.label || (v.a && v.a.indexOf(f.label)>=0)))
+  .map(f=>({
+    k: f.label, c24: f.id, o: true,
+    d: '카페24 '+f.g+' · 연동에서 켜야 담깁니다',
+    g: (t)=>csCafe24Show(f.id, ((t && t.cafe24_snapshot) || {})[f.id]),
+  }));
+const CS_DRAFT_VARS_ALL = CS_DRAFT_VARS.concat(CS_DRAFT_VARS_C24);
 // 이름으로 찾는다 — 옛 이름(a)도 함께 본다.
 function csDraftVar(name){
   const n = String(name).trim();
-  return CS_DRAFT_VARS.find(x=> x.k===n || (x.a && x.a.indexOf(n)>=0));
+  return CS_DRAFT_VARS_ALL.find(x=> x.k===n || (x.a && x.a.indexOf(n)>=0));
+}
+// ★★ 지금 틀이 «쓰고 있는» 카페24 값의 id 들. 두 설정이 어긋났는지 재는 자리다.
+//   ★ 틀 전체를 본다 — 제목·본문·표의 열·메신저 머리말·줄 구성 어디에 적혀 있든
+//     그 값은 담겨야 한다. 한 군데만 보면 «표에서는 되는데 줄글에서는 안 되는» 일이 생긴다.
+function csDraftUsedC24(tpl){
+  const t = tpl || csTpl();
+  const src = [t.mail_subject, t.mail_body, t.msg_head]
+    .concat((t.mail_cols||[]).map(c=>c && c.v))
+    .concat(t.msg_lines||[]).filter(Boolean).join('\n');
+  const out = [];
+  String(src).replace(/\{([^}]+)\}/g, (m,name)=>{
+    const v = csDraftVar(name);
+    if(v && v.c24 && out.indexOf(v.c24)<0) out.push(v.c24);
+    return m;
+  });
+  return out;
 }
 // ★★ 기본값은 **지금 나가고 있는 문안 그대로**다(제니가 2026-09-04 에 준 문안).
 //   설정을 아직 저장하지 않은 콘솔은 오늘과 한 글자도 다르지 않게 돌아야 한다.
