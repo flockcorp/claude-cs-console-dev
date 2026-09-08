@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908w_cs_contacts_first -->
+<!-- (2026-09-08) 연락망 둘(제니). ①**펼친 항목이 모든 공급사에서 «같은 줄, 같은 자리» 가 되게 했다** — 값이 없어도 「—」로 줄을 그린다. 그전에는 빈 칸이 아예 빠져 **공급사마다 줄 수가 달랐고**, 그러면 같은 것을 찾을 때마다 처음부터 다시 읽어야 한다. 자리가 늘 같으면 두 번째 공급사부터는 «그 자리» 만 보면 된다. ②★★★ **CS 연락망을 맨 위에 «따로 선 판» 으로 세웠다**(제니: 「실무자가 콘솔에서 연락망을 통해 확인하고자 하는 정보는 **결국 공급사의 CS 관련 연락망**이기 때문」). **이 화면을 여는 이유가 그 칸들**인데 서른 칸 사이에 섞여 있으면 매번 눈으로 찾아야 한다 — 판을 씌우는 것이 «여기부터 여기까지가 그것» 을 알리는 가장 싼 방법이다. ★ 「CS」가 붙은 셋에 **소통방법·메모를 함께** 담았다: 실측한 표에서 그 둘이 사실상 «CS 를 어떻게 넣는가» 다(「카톡으로 6시전까지」·「cs 메일로 접수」·「내선번호 1번 누르면 직원 연결」). 표에서도 CS 세 칸 바로 뒤에 붙어 있어 갈라 놓으면 한 덩어리가 둘로 찢어진다 — **빼길 원하면 상수에서 두 이름만 지우면 된다.** ★ 색은 새로 짓지 않았다(콘솔의 옅은 강조 배경 `--brand-soft`). ③겸해 **CS 연락처를 «접힌 줄» 에도 띄웠다** — 가장 자주 찾는 값이라 펼치지 않고 읽히면 그만큼 일이 준다(여러 개면 첫 번째만). ★ dev 전용. -->
 <!-- v20260908v_modal_size_and_order -->
 <!-- (2026-09-08) 제니 둘. ①**공급사 모달 크기를 고정했다**(「검색값 입력할 때 사이즈가 너무 확확 바뀐다. 처음 전체값이 나올 때의 사이즈를 고정으로」). 원인은 `maxHeight:88vh` — 그건 «넘지 마라» 일 뿐이라 **줄이 줄면 창이 따라 줄었다.** ★★ **«최대» 와 «고정» 은 다르다.** 목록이 처음부터 88vh 를 넘으므로 그 값으로 고정하면 곧 «처음 전체값이 나올 때의 크기» 이고, 안쪽 목록이 스크롤을 맡으므로 결과가 한 줄이어도 창은 그대로 선다. ★ 겸해 **세로 스크롤 자리를 늘 비워 뒀다**(overflowY:scroll) — auto 로 두면 결과가 줄어 스크롤이 사라지는 순간 내용이 5px 옆으로 튄다. **창을 고정해 놓고도 이것이 남으면 여전히 «흔들린다» 로 읽힌다.** ②🔴 **연락망 항목 차례가 공급사마다 달랐다**(제니 물음: 「항목 순서는 모든 공급사가 동일한가?」). **아니었다** — `Object.keys()` 로 그리고 있었는데 **jsonb 는 넣은 차례를 기억하지 않는다**(키 길이·바이트 순으로 다시 늘어놓는다). 게다가 값이 빈 칸은 아예 없어서 공급사마다 줄이 들쭉날쭉했다. → **정산 시스템 표의 칸 차례**로 그린다. ★★ 여러 공급사를 잇달아 펼쳐 볼 때 **같은 것이 늘 같은 자리에 있어야 눈이 그 자리를 기억한다** — 그것이 표를 읽는 방식이다. ★ 우리가 모르는 칸(정산 시스템이 새로 더한 것)은 맨 뒤에 붙인다 — 모른다고 버리지 않는다(이 표를 jsonb 로 둔 이유가 그것이다). ★ dev 전용. -->
 <!-- v20260908u_contacts_in_modal -->
@@ -6038,6 +6040,14 @@ const SUP_CONTACT_COLS_DEFAULT = ['공급사코드','공급사명','담당자','
   '발주 담당자','발주 연락처','발주 이메일','영업 담당자','영업 담당자 연락처','영업 담당자 이메일'];
 // ★★ 화면이 «가리는» 칸 — 계좌·사업자번호·정산은 master 만 본다(제니에게 확인 필요).
 //   DB 는 jsonb 한 칸이라 칼럼으로 못 자른다 → **가리는 일은 화면이 한다.**
+// ★★★ **이 화면을 여는 이유가 이 칸들이다**(제니 2026-09-08: 「실무자가 콘솔에서
+//   연락망을 통해 확인하고자 하는 정보는 **결국 공급사의 CS 관련 연락망**이기 때문」).
+//   그래서 «찾아서 읽는» 것이 아니라 **맨 위에 따로 세운다.**
+// ★ 「CS」가 붙은 셋에 **소통방법·메모를 함께** 둔다 — 실측한 표에서 그 둘이 사실상
+//   «CS 를 어떻게 넣는가» 다(「카톡으로 6시전까지」·「cs 메일로 접수」·「내선번호 1번」).
+//   표에서도 CS 세 칸 바로 뒤에 붙어 있어, 갈라 놓으면 한 덩어리가 둘로 찢어진다.
+//   ⚠ 소통방법·메모를 빼길 원하면 이 목록에서 두 이름만 지우면 된다.
+const SUP_CONTACT_CS_COLS = ['CS 담당자','CS 연락처','CS 이메일','소통방법','메모'];
 const SUP_CONTACT_MONEY_COLS = ['사업자번호','상호명','대표자','은행명','은행코드',
   '계좌번호','예금주','사업장주소','업태','종목','정산 담당자','정산 연락처',
   '정산 이메일','세금계산서 이메일','정산주기'];
@@ -6241,11 +6251,25 @@ function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact
         //     늘 같은 자리**에 있어야 눈이 그 자리를 기억한다. 그것이 표를 읽는 방식이다.
         //   ★ 우리가 모르는 칸(정산 시스템이 새로 더한 것)은 «맨 뒤» 에 붙인다 —
         //     모른다고 버리지 않는다(이 표를 jsonb 로 둔 이유가 그것이다).
-        const known = SUP_CONTACT_COLS_DEFAULT.filter(k=>d[k]!=null);
+        //   ★★★ 그리고 **값이 없어도 줄을 그린다**(제니: 「모든 공급사에 대해 펼쳤을 때
+        //     나오는 항목이 동일해야 확인에 불편이 없다」). 그전에는 빈 칸이 아예 빠져
+        //     **공급사마다 줄 수가 달랐다** — 같은 것을 찾으려면 매번 처음부터 읽어야 했다.
+        //     자리가 늘 같으면 두 번째 공급사부터는 «그 자리» 만 보면 된다.
         const extra = Object.keys(d).filter(k=>SUP_CONTACT_COLS_DEFAULT.indexOf(k)<0);
-        const keys = known.concat(extra)
+        const keys = SUP_CONTACT_COLS_DEFAULT.concat(extra)
           .filter(k=>k!=='공급사코드' && k!=='공급사명')
           .filter(k=> isMaster || SUP_CONTACT_MONEY_COLS.indexOf(k)<0);
+        const csKeys   = keys.filter(k=>SUP_CONTACT_CS_COLS.indexOf(k)>=0);
+        const restKeys = keys.filter(k=>SUP_CONTACT_CS_COLS.indexOf(k)<0);
+        const row2 = (k)=>(
+          <React.Fragment key={k}>
+            <span style={{fontSize:11,color:'var(--sub)',whiteSpace:'nowrap'}}>{k}</span>
+            <span style={{fontSize:12,color:d[k]?'var(--text)':'var(--sub)',whiteSpace:'pre-wrap',
+              overflowWrap:'anywhere',lineHeight:1.7}}>{d[k]||'—'}</span>
+          </React.Fragment>
+        );
+        const grid = {display:'grid',gridTemplateColumns:'max-content 1fr',
+          columnGap:14,rowGap:6,alignItems:'baseline'};
         return (
           <div key={r.code} style={{...card,marginBottom:8,padding:'11px 14px'}}>
             <div onClick={()=>setOpen(o=>o===r.code?null:r.code)}
@@ -6254,25 +6278,34 @@ function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact
               <span style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{r.name||'—'}</span>
               {d['판매상태'] && <CsChipTiny text={d['판매상태']}/>}
               {d['소통방법'] && <CsChipTiny text={d['소통방법']}/>}
+              {/* ★ CS 연락처는 «접힌 줄» 에서도 보인다 — 가장 자주 찾는 값이라
+                  펼치지 않고 읽히면 그만큼 일이 줄어든다. 여러 개면 첫 번째만. */}
+              {d['CS 연락처'] && (
+                <span style={{fontFamily:MONO,fontSize:11,color:'var(--text)'}}>
+                  {String(d['CS 연락처']).split(/[,\n]/)[0].trim()}</span>
+              )}
               {stale && <CsChipTiny text="이번 목록에 없음" warn/>}
               <div style={{flex:1}}></div>
               <span style={{fontSize:11,color:'var(--sub)'}}>{open===r.code?'접기 ∧':'펼치기 ∨'}</span>
             </div>
             {open===r.code && (
-              <div style={{marginTop:10,display:'grid',gridTemplateColumns:'max-content 1fr',
-                columnGap:14,rowGap:6,alignItems:'baseline'}}>
-                {keys.map(k=>(
-                  <React.Fragment key={k}>
-                    <span style={{fontSize:11,color:'var(--sub)',whiteSpace:'nowrap'}}>{k}</span>
-                    <span style={{fontSize:12,color:'var(--text)',whiteSpace:'pre-wrap',
-                      overflowWrap:'anywhere',lineHeight:1.7}}>{d[k]}</span>
-                  </React.Fragment>
-                ))}
+              <div style={{marginTop:10}}>
+                {/* ★★ CS 연락망을 «맨 위 · 따로 선 판» 으로 세운다 — 이 화면을 여는
+                    이유가 그것이라(제니), 나머지 서른 칸 사이에 섞여 있으면 매번
+                    눈으로 찾아야 한다. 판을 씌우는 것은 «여기부터 여기까지가 그것» 을
+                    한눈에 알리는 가장 싼 방법이다.
+                    ★ 색은 새로 짓지 않는다 — 콘솔의 «옅은 강조 배경»(--brand-soft). */}
+                <div style={{background:'var(--brand-soft)',border:'1px solid var(--border)',
+                  borderRadius:8,padding:'10px 12px',marginBottom:10}}>
+                  <div style={{fontSize:11,fontWeight:700,color:'var(--text)',marginBottom:7,
+                    letterSpacing:'.02em'}}>📞 CS 연락망</div>
+                  <div style={grid}>{csKeys.map(row2)}</div>
+                </div>
+                <div style={grid}>{restKeys.map(row2)}</div>
                 {!isMaster && (
-                  <>
-                    <span style={{fontSize:11,color:'var(--sub)'}}>정산 · 계좌</span>
-                    <span style={{fontSize:11,color:'var(--sub)'}}>master 만 볼 수 있습니다.</span>
-                  </>
+                  <div style={{fontSize:11,color:'var(--sub)',marginTop:8}}>
+                    정산 · 계좌 정보는 master 만 볼 수 있습니다.
+                  </div>
                 )}
               </div>
             )}
