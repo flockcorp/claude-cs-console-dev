@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908n_draft_names_and_body -->
+<!-- (2026-09-08) 접수 문안 설정 피드백 둘. ①**치환자 «이름» 을 값 그대로 바꿨다**(제니: 「'연락처'는 주문자인지 수령자인지 표기 · '연락처+수령인'은 실제 값이 «주문자연락처(수령인 연락처)» 이니 항목명도 그대로 · 수량은 티켓의 항목명 기준으로 주문수량·CS접수수량을 구분해서」). ★★★ **이름이 곧 «무엇이 들어가는가» 여야 한다** — 앞 판에서 나는 설명만 늘렸는데, 설명을 읽어야 아는 이름은 이미 진 것이다. 「연락처」→`{주문자연락처}` · 「연락처+수령인」→`{주문자연락처(수령인연락처)}` · 「주문자」→`{주문자명(수령인명)}` · 「상품」→`{상품명/옵션}` · 「수량」→`{주문수량중 CS접수수량}` · 「수량숫자」→`{주문수량/CS접수수량}`. **괄호가 붙는 값은 이름에도 괄호를 적는다** — 이름을 보면 결과가 보인다. 겸해 `{주문수량}`·`{CS접수수량}` 을 따로 뒀다(티켓의 칸 이름 그대로). ★★ **옛 이름도 그대로 통한다**(`a:[…]` 별칭) — 이름을 고치는 일과 남의 글을 깨뜨리는 일은 다르다. 설정 화면을 열면 옛 이름이 지금 이름으로 바뀌어 뜬다: 그러지 않으면 드롭박스에 그 값이 없어 **select 가 첫 항목으로 «조용히» 바뀌고 저장하는 순간 열의 뜻이 통째로 달라진다.** ②**메일 «본문» 을 만들었다**(제니: 「표 외에 메일 내용 텍스트도 넣고, 표 위치를 정해서 미리보기·실제에 반영되게」). 본문에 **`{표}`** 를 적은 자리에 표가 들어간다(안 적으면 맨 아래). ★★★ **자리도 문안의 일부다** — 「표는 늘 맨 위」로 코드가 정해 두면 인사말을 위에 두고 싶을 때 손댈 데가 없다. ★★ **미리보기·붙여넣기용 글·메일 HTML 셋이 «같은 함수» 로 조각을 나눈다**(csDraftMailParts) — 따로 그리면 «미리보기와 실제가 다른» 자리가 반드시 생긴다. ★ 본문에서 바뀌는 것은 `{날짜}` 뿐이다: 한 통이 여러 건을 담으므로 «그 건» 의 값이 없다 — 넣어 두면 무엇의 값인지 모를 «—» 가 박힌다. 안 바뀌는 치환자는 글자 그대로 남겨 미리보기에서 «안 통하는구나» 가 보이게 했다. ★ 빈 줄은 `<br>` 로 낸다 — `<div></div>` 는 높이가 0 이 되는 메일 클라이언트가 있어 일부러 띄운 줄이 조용히 사라진다. ★ 본문의 기본값은 `{표}` 하나라 **지금 나가는 메일과 한 글자도 다르지 않다**(파일에서 함수를 잘라 node 로 세 경우를 돌려 확인 — 기본 · 본문 넣음 · 표 자리 안 적음). ★ dev 전용. -->
 <!-- v20260908m_draft_var_labels -->
 <!-- (2026-09-08) 접수 문안 설정의 **«값» 드롭박스 표기를 고쳤다**(제니: 「우측 칸에 들어갈 값 드롭박스 값 중 표기가 헷갈리게 된 게 있다」). ★★★ 원인이 분명하다 — 「주문자」와 「주문자명」, 「수량」과 「수량숫자」, 「연락처」와 「연락처+수령인」처럼 **이름만으로는 못 가르는 짝**이 있는데, 위쪽 «넣을 수 있는 값» 에는 설명이 붙어 있고 **정작 고르는 자리에는 이름뿐**이었다. 고르려면 위를 다시 봐야 했다. → 드롭박스에 **`{이름} — 설명`** 을 함께 적고, 설명을 전부 **«무엇인가 · 예) 값»** 한 벌로 다시 썼다. ★★ **예시 값은 아래 미리보기의 견본 건과 «같은 값» 이다** — 고른 것이 미리보기에 그대로 보여야 «내가 맞게 골랐나» 를 그 자리에서 확인할 수 있다. 설명과 미리보기가 다른 건을 말하면 둘 다 못 믿는다. ★ **이름(치환자)은 안 바꿨다** — 저장되는 값이자 줄글에 적는 이름이라, 바꾸면 이미 적어 둔 문안이 조용히 깨진다. 바꾼 것은 «보이는 글자» 뿐이다. ★ 겸해 «넣을 수 있는 값» 목록을 칩에서 **«치환자 | 설명» 두 칸**으로 세웠다 — 설명이 길어지면서 칩이 들쭉날쭉해져 훑을 수가 없었다. 왼쪽 열이 세로로 맞으면 이름만으로 먼저 훑고 필요한 것만 오른쪽을 읽게 된다. ★ dev 전용. -->
 <!-- v20260908l_draft_templates -->
@@ -20253,9 +20255,15 @@ function CsDraftTplSettings({currentUserEmail}){
   const [busy,setBusy]   = useState(false);
   const norm = (v)=>({
     mail_subject: (v&&v.mail_subject) || CS_DRAFT_TPL_DEFAULT.mail_subject,
+    // ★ 옛 이름으로 저장돼 있으면 **지금 이름으로 바꿔 놓고 연다.** 안 그러면
+    //   드롭박스에 그 값이 없어 select 가 첫 항목으로 «조용히» 바뀌고, 저장하는 순간
+    //   열의 뜻이 통째로 달라진다(문안은 되돌릴 수 없는 자리로 나간다).
     mail_cols: Array.isArray(v&&v.mail_cols) && v.mail_cols.length
-      ? v.mail_cols.map(c=>({label:String(c.label||''), v:String(c.v||'')}))
+      ? v.mail_cols.map(c=>({label:String(c.label||''),
+                             v:(csDraftVar(c.v)||{}).k || String(c.v||'')}))
       : CS_DRAFT_TPL_DEFAULT.mail_cols.map(c=>({...c})),
+    // ★ 본문은 «빈 글» 도 뜻이 있다(표만 보낸다) — `||` 로 기본값을 덮으면 비울 수가 없다.
+    mail_body: (v && typeof v.mail_body==='string') ? v.mail_body : CS_DRAFT_TPL_DEFAULT.mail_body,
     msg_head: (v&&v.msg_head) || CS_DRAFT_TPL_DEFAULT.msg_head,
     msg_lines: Array.isArray(v&&v.msg_lines) && v.msg_lines.length
       ? v.msg_lines.slice() : CS_DRAFT_TPL_DEFAULT.msg_lines.slice(),
@@ -20288,6 +20296,9 @@ function CsDraftTplSettings({currentUserEmail}){
   const prevCols    = withDraft(()=>csDraftCols());
   const prevRow     = withDraft(()=>csDraftRow(SAMPLE, SAMPLE_EV));
   const prevMsg     = withDraft(()=>csDraftMessenger([SAMPLE], SAMPLE_EV));
+  // ★ 미리보기도 **실제 메일과 같은 함수**로 조각을 나눈다(csDraftMailParts) —
+  //   여기서 따로 그리면 «미리보기와 실제가 다른» 자리가 생긴다.
+  const prevParts   = withDraft(()=>csDraftMailParts(SAMPLE_EV));
 
   const dirty = JSON.stringify(norm(row && row.value)) !== JSON.stringify(d);
   const save = async ()=>{
@@ -20370,7 +20381,7 @@ function CsDraftTplSettings({currentUserEmail}){
               ))}
               {/* ★ 설정에 이미 «문장» 이 들어 있으면 그것도 고를 수 있게 남긴다 —
                   목록에 없다고 select 가 첫 항목으로 조용히 바꿔 버리면 안 된다. */}
-              {!CS_DRAFT_VARS.some(v=>v.k===c.v) && <option value={c.v}>{c.v}</option>}
+              {!csDraftVar(c.v) && <option value={c.v}>{c.v}</option>}
             </select>
             <button onClick={()=>moveCol(i,-1)} disabled={i===0} title="위로"
               style={{padding:'5px 8px',borderRadius:6,fontSize:11,fontFamily:'inherit',
@@ -20390,6 +20401,25 @@ function CsDraftTplSettings({currentUserEmail}){
           style={{marginTop:4,padding:'5px 11px',borderRadius:6,fontSize:11,fontFamily:'inherit',
             background:'transparent',border:'1px dashed var(--border)',
             color:'var(--sub)',cursor:'pointer'}}>+ 열 추가</button>
+
+        {/* ── 메일 본문 (제니 2026-09-08) ─────────────────────────────────
+            ★★★ 표가 들어갈 «자리» 를 사람이 정한다 — 「표는 늘 맨 위」처럼 코드가
+              정해 버리면 인사말을 위에 두고 싶을 때 손댈 데가 없다.
+              **자리도 문안의 일부다.** */}
+        <div style={{...h,marginTop:18}}>메일 — 본문 내용</div>
+        <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.7,marginBottom:8}}>
+          제목 아래에 들어갈 글입니다. <b style={{fontFamily:MONO}}>{CS_MAIL_TABLE_MARK}</b> 를 적은
+          자리에 위에서 만든 <b>표</b>가 들어갑니다(안 적으면 맨 아래에 붙습니다).
+          <br/>★ 본문은 <b>여러 건을 함께 담는 글</b>이라 한 건의 값은 넣을 수 없습니다 —
+          여기서 바뀌는 것은 <b style={{fontFamily:MONO}}>{'{날짜}'}</b> 뿐이고, 그 밖의 치환자는 글자 그대로 남습니다.
+        </div>
+        <textarea value={d.mail_body} onChange={e=>set('mail_body',e.target.value)}
+          rows={6} placeholder={CS_MAIL_TABLE_MARK}
+          style={{...inp,fontFamily:MONO,lineHeight:1.8,resize:'vertical'}}/>
+        <button onClick={()=>set('mail_body', (d.mail_body ? d.mail_body+'\n' : '')+CS_MAIL_TABLE_MARK)}
+          style={{marginTop:6,padding:'5px 11px',borderRadius:6,fontSize:11,fontFamily:'inherit',
+            background:'transparent',border:'1px dashed var(--border)',
+            color:'var(--sub)',cursor:'pointer'}}>+ 맨 아래에 {CS_MAIL_TABLE_MARK} 넣기</button>
       </div>
 
       {/* ── 메신저 ──────────────────────────────────────────────────── */}
@@ -20413,17 +20443,24 @@ function CsDraftTplSettings({currentUserEmail}){
           · 견본 한 건으로 그립니다(저장 전 값 그대로)</span></div>
         <div style={{fontSize:11,color:'var(--sub)',marginBottom:6}}>메일</div>
         <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>{prevSubject}</div>
-        <div style={{overflowX:'auto',marginBottom:16}}>
-          <table style={{borderCollapse:'collapse',fontSize:11.5}}>
-            <thead><tr>{prevCols.map((c,i)=>(
-              <th key={i} style={{border:'1px solid var(--border)',padding:'5px 8px',
-                textAlign:'left',color:'var(--head-ink)',whiteSpace:'nowrap'}}>{c}</th>
-            ))}</tr></thead>
-            <tbody><tr>{prevRow.map((v,i)=>(
-              <td key={i} style={{border:'1px solid var(--border)',padding:'5px 8px',
-                color:'var(--text)',verticalAlign:'top'}}>{v}</td>
-            ))}</tr></tbody>
-          </table>
+        <div style={{marginBottom:16}}>
+          {prevParts.map((p,pi)=> p.t==='table' ? (
+            <div key={pi} style={{overflowX:'auto',margin:'8px 0'}}>
+              <table style={{borderCollapse:'collapse',fontSize:11.5}}>
+                <thead><tr>{prevCols.map((c,i)=>(
+                  <th key={i} style={{border:'1px solid var(--border)',padding:'5px 8px',
+                    textAlign:'left',color:'var(--head-ink)',whiteSpace:'nowrap'}}>{c}</th>
+                ))}</tr></thead>
+                <tbody><tr>{prevRow.map((v,i)=>(
+                  <td key={i} style={{border:'1px solid var(--border)',padding:'5px 8px',
+                    color:'var(--text)',verticalAlign:'top'}}>{v}</td>
+                ))}</tr></tbody>
+              </table>
+            </div>
+          ) : (
+            <div key={pi} style={{fontSize:12,color:'var(--text)',lineHeight:1.8,
+              minHeight: p.s.trim()==='' ? 14 : undefined, whiteSpace:'pre-wrap'}}>{p.s}</div>
+          ))}
         </div>
         <div style={{fontSize:11,color:'var(--sub)',marginBottom:6}}>메신저</div>
         <pre style={{margin:0,fontFamily:MONO,fontSize:11.5,lineHeight:1.75,
@@ -24639,24 +24676,48 @@ function csTodayMD(){
 //   있어서, 예시 값이 없으면 둘 중 무엇을 골라야 할지 이름을 아무리 읽어도 모른다.
 //   ★ 예시는 아래 미리보기의 견본 건과 «같은 값» 이다 — 고른 것이 미리보기에서
 //     그대로 보여야 «내가 맞게 골랐나» 를 그 자리에서 확인할 수 있다.
+// ★★★ 2026-09-08 (제니) — **이름이 곧 «무엇이 들어가는가» 여야 한다.**
+//   「연락처」는 주문자 것인지 수령인 것인지 이름만으로 알 수 없었고, 「수량」·「수량숫자」는
+//   무엇이 주문이고 무엇이 CS 접수인지 이름 어디에도 없었다.
+//   → **이름을 값 그대로 적는다.** 괄호가 붙는 값은 이름에도 괄호를 적고
+//     (`주문자연락처(수령인연락처)`), 수량은 **티켓의 칸 이름**(주문수량 · CS접수수량)을 쓴다.
+//   ★★ 설명은 «무엇인가 · 예) 값» 한 벌이고, **예시는 아래 미리보기의 견본 건과 같은 값**이다 —
+//     고른 것이 미리보기에 그대로 보여야 «맞게 골랐나» 를 그 자리에서 확인할 수 있다.
+//   ★★ `a:[…]` 는 **옛 이름**이다. 이름을 바꾸면 이미 적어 둔 문안이 조용히 깨지므로
+//     옛 이름도 그대로 통하게 둔다 — **이름을 고치는 일과 남의 글을 깨뜨리는 일은 다르다.**
 const CS_DRAFT_VARS = [
-  {k:'날짜',          d:'오늘 날짜 · 예) 9/8',                       g:(t)=>csTodayMD()},
-  {k:'유형·방향',     d:'CS 유형과 방향 · 예) 불량 교환',            g:(t)=>csClaimLabel(t)},
-  {k:'품목별주문번호',d:'품목까지 붙은 번호 · 예) 20260908-0001234-01', g:(t)=>t.order_item_code||'—'},
-  {k:'주문번호',      d:'주문 번호만 · 예) 20260908-0001234',        g:(t)=>t.order_id||'—'},
-  {k:'공급사',        d:'공급사 이름 · 예) ○○침구',                  g:(t)=>t.supplier_name||'—'},
-  {k:'주문자',        d:'주문자명 + 수령인이 다르면 괄호 · 예) 김하늘(김바다)', g:(t)=>csOrdererLabel(t)},
-  {k:'주문자명',      d:'주문자명만(수령인 없음) · 예) 김하늘',       g:(t)=>t.orderer_name||'—'},
-  {k:'연락처',        d:'주문자 연락처만 · 예) 010-1234-5678',        g:(t)=>t.orderer_phone||'—'},
-  {k:'연락처+수령인', d:'주문자 연락처 + 수령인이 다르면 괄호 · 예) 010-1234-5678 (010-9876-5432)', g:(t)=>csPhonePair(t)},
-  {k:'상품',          d:'상품명 / 옵션 · 예) 극세사 차렵이불 / 본품=그레이 Q', g:(t)=>csProductLabel(t)},
-  {k:'수량',          d:'말로 적은 꼴 · 예) 2개중 1개 접수.',         g:(t)=>csQtyWords(t)},
-  {k:'수량숫자',      d:'숫자만(주문/CS) · 예) 2 / 1',                g:(t)=>csQtyPair(t)},
+  // n:true = «티켓이 없어도 되는 값». 메일 «본문» 은 여러 건을 함께 담는 글이라 한 건의
+  //   값을 넣을 수 없다 — 본문에서는 이 표시가 있는 것만 바뀌고 나머지는 글자 그대로 남는다.
+  {k:'날짜', n:true,   d:'오늘 날짜 · 예) 9/8',                        g:(t)=>csTodayMD()},
+  {k:'유형·방향',      d:'CS 유형과 방향 · 예) 불량 교환',             g:(t)=>csClaimLabel(t)},
+  {k:'품목별주문번호', d:'품목까지 붙은 번호 · 예) 20260908-0001234-01', g:(t)=>t.order_item_code||'—'},
+  {k:'주문번호',       d:'주문 번호만 · 예) 20260908-0001234',         g:(t)=>t.order_id||'—'},
+  {k:'공급사',         d:'공급사 이름 · 예) ○○침구',                   g:(t)=>t.supplier_name||'—'},
+  {k:'주문자명',       d:'주문자 이름만 · 예) 김하늘',                  g:(t)=>t.orderer_name||'—'},
+  {k:'주문자명(수령인명)', a:['주문자'],
+                       d:'수령인이 다를 때만 괄호가 붙는다 · 예) 김하늘(김바다)', g:(t)=>csOrdererLabel(t)},
+  {k:'주문자연락처',   a:['연락처'],
+                       d:'주문자 연락처만 · 예) 010-1234-5678',         g:(t)=>t.orderer_phone||'—'},
+  {k:'주문자연락처(수령인연락처)', a:['연락처+수령인'],
+                       d:'수령인 연락처가 다를 때만 괄호가 붙는다 · 예) 010-1234-5678 (010-9876-5432)', g:(t)=>csPhonePair(t)},
+  {k:'상품명/옵션',    a:['상품'],
+                       d:'상품명과 옵션 · 예) 극세사 차렵이불 / 본품=그레이 Q', g:(t)=>csProductLabel(t)},
+  {k:'주문수량',       d:'주문한 개수만 · 예) 2',                       g:(t)=>(t.order_qty==null?'—':String(t.order_qty))},
+  {k:'CS접수수량',     d:'CS 로 접수한 개수만 · 예) 1',                 g:(t)=>(t.cs_qty==null?'—':String(t.cs_qty))},
+  {k:'주문수량/CS접수수량', a:['수량숫자'],
+                       d:'두 개수를 빗금으로 · 예) 2 / 1',              g:(t)=>csQtyPair(t)},
+  {k:'주문수량중 CS접수수량', a:['수량'],
+                       d:'두 개수를 말로 · 예) 2개중 1개 접수.',        g:(t)=>csQtyWords(t)},
   // ★ o:true = «없을 수 있는 값». 비면 빈 글자가 되고, **그 치환자만 든 줄은 통째로 빠진다.**
   //   「운송장 번호 : —」 같은 줄을 공급사에 보내면 «무엇을 적으라는 건가» 로 읽힌다.
-  {k:'접수사유',      d:'고객이 한 말(★로 고른 이력) · 없으면 그 줄이 빠진다', o:true, g:(t,ev)=>csIntakeReason(t,ev)},
-  {k:'운송장',        d:'운송장 번호 · 없으면 그 줄이 빠진다', o:true, g:(t)=>csTrackingNo(t)},
+  {k:'접수사유',       d:'고객이 한 말(★로 고른 이력) · 없으면 그 줄이 빠진다', o:true, g:(t,ev)=>csIntakeReason(t,ev)},
+  {k:'운송장',         d:'운송장 번호 · 없으면 그 줄이 빠진다', o:true, g:(t)=>csTrackingNo(t)},
 ];
+// 이름으로 찾는다 — 옛 이름(a)도 함께 본다.
+function csDraftVar(name){
+  const n = String(name).trim();
+  return CS_DRAFT_VARS.find(x=> x.k===n || (x.a && x.a.indexOf(n)>=0));
+}
 // ★★ 기본값은 **지금 나가고 있는 문안 그대로**다(제니가 2026-09-04 에 준 문안).
 //   설정을 아직 저장하지 않은 콘솔은 오늘과 한 글자도 다르지 않게 돌아야 한다.
 const CS_DRAFT_TPL_DEFAULT = {
@@ -24664,18 +24725,21 @@ const CS_DRAFT_TPL_DEFAULT = {
   mail_cols: [
     {label:'유형 · 방향',        v:'유형·방향'},
     {label:'품목별 주문번호',    v:'품목별주문번호'},
-    {label:'주문자명(수령자명)', v:'주문자'},
-    {label:'연락처',             v:'연락처'},
-    {label:'상품명',             v:'상품'},
-    {label:'수량(주문/CS)',      v:'수량숫자'},
+    {label:'주문자명(수령자명)', v:'주문자명(수령인명)'},
+    {label:'연락처',             v:'주문자연락처'},
+    {label:'상품명',             v:'상품명/옵션'},
+    {label:'수량(주문/CS)',      v:'주문수량/CS접수수량'},
     {label:'접수 사유',          v:'접수사유'},
     {label:'운송장',             v:'운송장'},
   ],
+  // ★ 기본은 «표 하나» 다 — 지금 나가는 메일이 제목 + 표뿐이라, 기본값이 그것과
+  //   한 글자도 달라선 안 된다. 인사말·서명은 제니가 넣고 싶을 때 넣는다.
+  mail_body: '{표}',
   msg_head: '[원룸만들기 CS 접수 {날짜}]',
   msg_lines: [
     '{유형·방향} / {품목별주문번호}',
-    '{주문자} / {연락처+수령인}',
-    '{상품} / {수량}',
+    '{주문자명(수령인명)} / {주문자연락처(수령인연락처)}',
+    '{상품명/옵션} / {주문수량중 CS접수수량}',
     '운송장 번호 : {운송장}',
     '접수 사유 : {접수사유}',
   ],
@@ -24698,7 +24762,7 @@ function csTpl(){ return {...CS_DRAFT_TPL_DEFAULT, ...(CS_DRAFT_TPL||{})}; }
 function csFillTpl(str, t, ev){
   let had=false, any=false;
   const out = String(str==null?'':str).replace(/\{([^}]+)\}/g, (m,name)=>{
-    const v = CS_DRAFT_VARS.find(x=>x.k===String(name).trim());
+    const v = csDraftVar(name);
     if(!v) return m;
     had = true;
     const s = String(v.g(t||{}, ev) ?? '');
@@ -24718,6 +24782,38 @@ function csQtyWords(t){
   return o+'개중 '+c+'개 접수.';
 }
 function csDraftCols(){ return (csTpl().mail_cols||[]).map(c=>c.label); }
+// ── 메일 «본문» — 표 둘레에 사람이 적는 글 (제니 2026-09-08) ─────────────────
+// ★★★ 표가 들어갈 자리를 **`{표}` 로 찍는다.** 「표는 늘 맨 위」처럼 자리를 코드가
+//   정해 버리면 인사말을 위에 두고 싶을 때 손댈 데가 없다 — **자리도 문안의 일부다.**
+// ★★ 본문에서는 **`{날짜}` 만 바뀐다**(n:true). 한 통의 메일이 여러 건을 담으므로
+//   «그 건» 의 값이 없다 — 넣어 두면 무엇의 값인지 알 수 없는 «—» 가 박힌다.
+//   ★ 안 바뀌는 치환자는 **글자 그대로 남긴다** — 미리보기에서 «안 통하는구나» 가 보인다.
+const CS_MAIL_TABLE_MARK = '{표}';
+function csFillBody(str, events){
+  return String(str==null?'':str).replace(/\{([^}]+)\}/g,(m,name)=>{
+    const v = csDraftVar(name);
+    if(!v || !v.n) return m;
+    return String(v.g({}, events) ?? '');
+  });
+}
+// 본문을 «글 조각» 과 «표» 로 가른다 — 메일 HTML·붙여넣기용 글·미리보기 셋이 함께 쓴다.
+// ★★ 셋이 같은 함수를 써야 «미리보기와 실제가 다른» 일이 안 생긴다(이 콘솔에서
+//   되풀이해 배운 것이다 — 같은 것을 보여 주면 같은 함수로 그린다).
+// ★ 표 자리를 안 적었으면 맨 아래에 붙인다. 표가 통째로 사라지는 것이 가장 나쁘다.
+function csDraftMailParts(events){
+  const out = []; let marked = false;
+  csFillBody(csTpl().mail_body, events).split('\n').forEach(l=>{
+    const i = l.indexOf(CS_MAIL_TABLE_MARK);
+    if(i < 0){ out.push({t:'text', s:l}); return; }
+    marked = true;
+    const a = l.slice(0, i), b = l.slice(i + CS_MAIL_TABLE_MARK.length);
+    if(a.trim()) out.push({t:'text', s:a});
+    out.push({t:'table'});
+    if(b.trim()) out.push({t:'text', s:b});
+  });
+  if(!marked) out.push({t:'table'});
+  return out;
+}
 // 이력에서 「접수 사유」로 쓸 고객의 말을 고른다.
 // ★★ 별(★)을 켠 줄이 있으면 그것들, 없으면 «가장 이른» 고객 이력 한 줄이다 —
 //   처음 신청한 내용이 곧 접수 사유이기 때문이다. 여러 줄이 쌓인 티켓에서 무엇을
@@ -24860,10 +24956,14 @@ function csAutoGrow(el, max){
 // ★ 표는 한 줄이 한 건이라 «접수 사유» 안의 줄바꿈은 칸 안에서 지운다 —
 //   그대로 두면 탭으로 나눈 표가 그 자리에서 무너진다.
 function csDraftMailPlain(rows, events){
-  return [csDraftSubject(), '',
-    csDraftCols().join('\t'),
-    ...rows.map(t=>csDraftRow(t, events)
-      .map(v=>String(v).replace(/\s*\n\s*/g,' ')).join('\t'))].join('\n');
+  const tbl = [csDraftCols().join('\t')].concat(
+    rows.map(t=>csDraftRow(t, events)
+      .map(v=>String(v).replace(/\s*\n\s*/g,' ')).join('\t')));
+  const body = [];
+  csDraftMailParts(events).forEach(p=>{
+    if(p.t==='table') body.push(...tbl); else body.push(p.s);
+  });
+  return [csDraftSubject(), ''].concat(body).join('\n');
 }
 function csDraftMailHtml(rows, events){
   const esc = (s)=>String(s==null?'':s)
@@ -24883,9 +24983,14 @@ function csDraftMailHtml(rows, events){
   const tr = rows.map(t=>'<tr>'+csDraftRow(t, events)
     .map(v=>'<td style="border:1px solid #999;padding:6px 9px;color:#222;vertical-align:top">'+esc(v)+'</td>')
     .join('')+'</tr>').join('');
-  return '<div>'+esc(csDraftSubject())+'</div><br>'
-    + '<table style="border-collapse:collapse;font-size:13px">'
+  const table = '<table style="border-collapse:collapse;font-size:13px">'
     + '<thead><tr>'+th+'</tr></thead><tbody>'+tr+'</tbody></table>';
+  // ★ 빈 줄은 <br> 다 — 메일 클라이언트에서 <div></div> 는 높이가 0 이 되는 곳이 있어
+  //   사람이 일부러 띄운 줄이 조용히 사라진다.
+  const body = csDraftMailParts(events).map(p=>
+    p.t==='table' ? table
+    : (p.s.trim()==='' ? '<br>' : '<div>'+esc(p.s)+'</div>')).join('');
+  return '<div>'+esc(csDraftSubject())+'</div><br>' + body;
 }
 
 // 공급사 접수 문안 창 — 고른 건을 «공급사별로» 묶어 보여 준다.
