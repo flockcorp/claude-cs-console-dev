@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908j_col_ratio_and_head_ink -->
+<!-- (2026-09-08) 제니 피드백 셋. ①🔴🔴 **CS 목록의 열 너비를 «비율» 로 바꿨다.** 앞 판에서 나는 «넘칠 때만 눌러 담기» 로 만들었는데 **반쪽이었다** — 제니: 「다른 메뉴의 목록처럼 **설정한 값 기준으로 비율로 늘림·줄임**이 되어야 하는데 목록 내 너비가 고정이라 접었다 폈다 하면 가로 스크롤이 생긴다」. ★★★ **조건을 하나씩 막는 것과 전제를 바꾸는 것은 다르다** — 저장값이 px 인 한 그릇이 커지면 오른쪽이 남고 작아지면 넘친다. 이제 저장값은 **«비율의 재료»** 이고 서로의 크기 관계만 뜻한다. 그래서 접었다 펴도 맞춰 둔 비율 그대로 돌아오고, 넘칠 수가 없다(열을 아주 많이 켜서 «최소 폭의 합» 조차 넘으면 그때만 구른다 — 그건 그릇 탓이 아니라 켠 열이 많아서다). ★★ 폭이 비율이 되면 **끄는 방식도 달라져야 한다**: 합이 그릇에 딱 맞으므로 한 열을 넓히면 어디선가 그만큼 좁아지는데, 그걸 안 정하면 브라우저가 «모든 열에서 조금씩» 가져가 **2026-09-04 에 제니가 짚은 「한 열을 조정하면 앞쪽 너비도 같이 바뀐다」가 그대로 돌아온다.** → **바로 «다음» 열에서만 주고받는다.** 잡은 경계의 좌·우 둘만 움직이고 앞쪽은 한 픽셀도 안 움직인다 — 경계를 끄는 손의 뜻과도 맞는다. 마지막 열은 다음이 없으므로 예전처럼 «남는 빈 폭» 이 상대다. ②**메일 문안 표의 제목행 줄바꿈**(제니). 열 폭을 안 주면 메일 클라이언트가 제 마음대로 나눠 「주문자명(수령 / 자명)」처럼 **말 가운데가 갈린다** → `white-space:nowrap` + (그걸 못 읽는 클라이언트를 위한) `word-break:keep-all`. 겸해 **제목행 글자색을 박았다** — 회색 바탕에 색을 안 주면 어두운 테마의 메일함에서 흰 글자가 되어 사라진다. **배경을 정했으면 그 위의 글자도 함께 정해야 한다.** 값 칸은 위로 붙여 그린다(사유가 두 줄이 되면 그 칸만 가운데로 떠 옆 칸과 어긋나 보인다). ③**«네이비 밴드 위의 안 보이는 글자» 를 전수로 훑었다**(제니: 「설정 메뉴에 이런 부분이 더 있는 것 같은데」). 여는 태그를 중괄호 깊이로 정확히 끊어 `<th>` 를 전수 검사했고 **세 자리**를 고쳤다: 공급사 접수 문안 «미리보기» 표 · **CS 설정 표 머리글(csSetTh)** · 변경 이력 표 머리글(제 배경·글자를 인라인으로 깔아 규칙 자체를 이기고 있었다 → 둘 다 걷어 규칙에 맡겼다). 겸해 설정 표의 줄 사이 선이 «흰색 반투명» 이라 **라이트에서 흰 종이 위 흰 선**이 되던 것도 고쳤다. ★★ **09-08 에 --head-bg 를 진한 남색으로 바꾼 뒤 이런 자리가 줄줄이 나왔다 — 밴드를 밝히면 그 위에 얹힌 글자를 «전부» 다시 봐야 한다.** 🔴 **오늘 세 번째로 «식 자리의 JSX 주석»** 을 밟았다(`.map(c=>(` 바로 뒤). **`(`·`=>(`·`return(`·`&& (` 다음에는 JSX 주석을 두지 않는다.** ★ dev 전용. -->
 <!-- v20260908i_collapse_fixes -->
 <!-- (2026-09-08) 앞 판(h) 사이드바 접기에 대한 제니 피드백 다섯. ①**로고를 접힌 상태에서도 남긴다**(가운데 정렬 · 단추와 사이 간격). 나는 「64px 에 44px 그림과 26px 단추가 나란히 서면 둘 다 누르기 어렵다」고 보고 그림을 지우려 했는데, **둘을 «세로로» 세우면 그 문제가 아예 없다** — 자리가 좁으면 먼저 «쌓을 수 없나» 를 본다. 🔴 그리고 그때 그림은 **실제로는 안 지워졌다** — img 에 인라인 `display:'block'` 이 박혀 있어 CSS 의 display:none 을 이겼다(콘솔에서 되풀이해 밟는 그 함정이다). 인라인 값 넷을 `.sidebar-logo-img` 클래스로 옮겨 한 곳에서 다루게 했고, 블록이라 text-align 으로는 안 가운데 오므로 좌우 여백을 auto 로 줬다(34px 로 줄이고 단추 아래 12px). ②**하단 계정 정보** — 접으면 **아바타와 권한 뱃지만** 세로로 가운데 선다. 이메일은 64px 에 들어갈 길이가 아니라 툴팁으로 내렸다. ★ 뱃지는 남긴다: «내가 어떤 권한으로 들어와 있나» 는 접혀 있어도 한눈에 보여야 하고 아바타 글자 하나로는 그것까지 말하지 못한다. ⚠ 뱃지의 `alignSelf:'flex-start'` 도 인라인이라 CSS 로는 못 이겨 그 자리에서 갈랐다(오늘 두 번째다). ③**자식 패널의 상위 메뉴명을 네이비 배경 + 밝은 글자로**(제니 제안). 새 색을 짓지 않고 콘솔의 «머리» 한 쌍(--head-bg/--head-ink)을 그대로 쓴다 — 상위와 하위가 «층» 으로 갈린다. ④🔴🔴 **대시보드가 메뉴를 펼치면 가로로 밀렸다.** 원인은 두 겹이었다. **㉠`.charts-grid{1fr 1fr}`** — `1fr` 은 사실 `minmax(auto,1fr)` 이고 그 `auto` 최소는 «칸 안 내용의 최소 폭» 이다. 칸 안에는 Chart.js 가 **그렸을 때의 픽셀 폭을 그대로 가진 캔버스**가 있어, 본문이 좁아져도 격자가 그 아래로 안 줄었다 → `minmax(0,1fr)`. ★★ **폭을 못 줄이는 원인은 대개 «안에 든 것» 이 아니라 «격자가 허락하지 않는 것» 이다.** **㉡앞 판에서 window 에 resize 를 쏘아 놓고 «차트에 알렸다» 고 적었는데 — 아무 일도 안 일어났다.** Chart.js 는 v3 부터 **창 크기가 아니라 «캔버스 부모» 를 ResizeObserver 로 지켜본다.** ★★★ **«알렸다» 와 «들었다» 는 다른 말이다**(09-03 «배포됐다 ≠ 동작한다» 와 같은 계열) — 신호를 보내는 쪽만 보고 됐다고 하면 받는 쪽이 안 듣는 경우를 영영 못 본다. → 살아 있는 차트를 만드는 곳 하나(ChartComp)에서 모아 두고 `resize()` 를 직접 부른다(지울 때 목록에서도 뺀다). ⑤🔴 **CS 목록에서 접은 채 열 너비를 맞춰 두고 펴면 가로 스크롤이 생기던 것**(제니). **px 로 잡은 값과 «변하는 그릇» 은 언젠가 반드시 어긋난다.** → 표를 담은 칸을 ResizeObserver 로 지켜보다가, 폭의 합이 넘으면 **그리는 폭만** 눌러 담는다. ★★★ **저장값은 안 바꾼다** — 다시 접으면 맞춰 둔 폭으로 그대로 돌아와야 한다(저장까지 줄이면 «한 번 좁혔더니 내가 정한 폭이 사라진» 것이 된다). ★★ 폭에 비례가 아니라 **«줄일 수 있는 여유»(폭 − 그 열의 최소)에 비례**로 깎는다 — 폭 기준이면 이미 최소에 붙은 열까지 깎여 머리글이 뭉개진다. 여유가 없으면 정직하게 구른다. ★ **늘리지는 않는다** — 늘리면 «줄임 → 스크롤바 사라짐 → 폭 늘어남 → 다시 스크롤» 로 화면이 떨린다. ★ 끌기의 출발점과 상한도 «보이는 폭» 으로 바꿨다(저장값에서 출발하면 잡는 순간 경계가 튄다). ★ dev 전용. -->
 <!-- v20260908h_sidebar_collapse -->
@@ -2008,7 +2010,10 @@ function AuditLogPage() {
   const people = Array.from(new Set(rows.map(r=>r.user_label).filter(Boolean))).sort();
 
   const cell = {padding:'9px 12px',borderBottom:'1px solid var(--border)',fontSize:12,verticalAlign:'top'};
-  const head = {...cell,background:'var(--bg)',fontWeight:700,fontSize:11,color:'var(--sub)',whiteSpace:'nowrap'};
+  // ★ 2026-09-08 — 배경·글자를 인라인으로 깔고 있어 콘솔의 «제목 행» 규칙
+  //   (thead th = --head-bg + --head-ink)을 이기고 있었다. 둘 다 걷어 규칙에 맡긴다 —
+  //   제니가 09-07 에 「이걸 기본으로 잡고 모든 메뉴에 동일하게」라고 못 박은 자리다.
+  const head = {...cell,fontWeight:700,fontSize:11,whiteSpace:'nowrap'};
 
   return (
     <div style={{padding:'28px 32px'}}>
@@ -18583,38 +18588,41 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
       const base = colWAll[chip] || colWAll._default || {};
       const n = {...base}; delete n[k]; putColW(n); return;
     }
-    // ★ 열마다 «더는 못 좁히는» 값이 다르다(csColMinW) — 머리글이 … 로 줄지 않는
-    //   폭, 그리고 날짜처럼 내용이 요구하는 폭 중 큰 쪽이다.
+    // ★★★ 2026-09-08 — 폭이 «비율» 이 되면서 끄는 방식도 달라져야 했다.
+    //   합이 그릇에 딱 맞으므로, **한 열을 넓히면 어디선가는 그만큼 좁아진다** —
+    //   그걸 안 정해 두면 브라우저가 «모든 열에서 조금씩» 가져가고, 그러면
+    //   2026-09-04 에 제니가 짚은 「한 열을 조정하면 앞쪽 너비도 같이 바뀐다」가 된다.
+    //   → **바로 «다음» 열에서만 주고받는다.** 잡은 경계의 왼쪽·오른쪽 둘만 움직이고
+    //     앞쪽 열은 한 픽셀도 안 움직인다 — 경계를 끄는 손의 뜻과도 맞는다.
+    // ★ 마지막 열에는 다음 열이 없다 — 그때는 남는 폭을 먹는 빈 열이 상대다(예전과 같다).
+    // ★ 끄는 순간 «보이는 폭» 을 통째로 저장값으로 삼는다(rebase). 비율만 뜻이 있으므로
+    //   값이 지금 화면 기준으로 다시 적히는 것뿐이고, 그래야 합이 어긋나지 않는다.
+    const idx  = colKeys.indexOf(k);
+    const nk   = colKeys[idx+1] || null;
     const minw = csColMinW(k);
-    // ★★★ **오른쪽 끝 라인은 어느 열을 끌어도 넘지 않는다**(제니 2026-09-04).
-    //   처음엔 «맨 오른쪽 열» 에만 상한을 걸었는데 그것으로는 모자랐다 — 가운데 열을
-    //   넓혀도 표 전체가 그만큼 넓어져 맨 오른쪽 열이 화면 밖으로 밀려 나간다.
-    //   **밀어내는 것은 «마지막 열» 이 아니라 «폭의 합» 이다.**
-    //   → 상한을 «지금 남아 있는 폭» 까지로 두되 **모든 열에** 건다. 좁히는 쪽은 자유고,
-    //     좁혀서 여유가 생기면 그만큼 다시 늘릴 수 있다.
-    //   ★ 그래도 «상대 너비» 로 돌아가는 것이 아니다 — 다른 열은 한 픽셀도 안 움직인다.
-    //     움직이는 것은 남는 폭을 먹는 빈 열뿐이다.
-    //   ★ 열을 많이 켜서 «최소 폭의 합» 만으로 화면을 넘으면 그때는 가로로 구른다.
-    //     그건 사람이 끌어서 만든 것이 아니라 켠 열이 많아서다.
-    let maxw = Infinity;
-    if(wrapRef.current){
-      // ★ 고르는 칸도 폭을 차지한다 — 빼놓으면 그만큼 오른쪽 끝을 넘는다.
-      // ★ «지금 화면에 그려진» 폭으로 센다(2026-09-08). 좁은 화면에서 눌러 담긴
-      //   상태라면 저장값이 아니라 그 눌린 폭이 사실이다 — 저장값으로 재면 이미
-      //   화면에 다 들어와 있는데도 «더 못 늘린다» 가 된다.
-      const total = CS_SEL_W + colKeys.reduce((s,x)=>s+shownWidth(x),0);
-      maxw = shownWidth(k) + Math.max(0, wrapRef.current.clientWidth - total - 1);
+    const minn = nk ? csColMinW(nk) : 0;
+    const base = {};                       // 지금 «보이는» 폭 한 벌
+    colKeys.forEach(x=>{ base[x] = shownWidth(x); });
+    const w0 = base[k], n0 = nk ? base[nk] : 0;
+    // 다음 열이 없으면 늘릴 수 있는 한도는 «남는 빈 폭» 이다.
+    let solo = Infinity;
+    if(!nk && wrapRef.current){
+      const total = CS_SEL_W + colKeys.reduce((s,x)=>s+base[x],0);
+      solo = w0 + Math.max(0, wrapRef.current.clientWidth - total - 2);
     }
-    // ★ 끌기의 출발점도 «보이는 폭» 이다 — 저장값에서 출발하면 잡는 순간 경계가 튄다.
-    const x0 = e.clientX, w0 = shownWidth(k);
+    const x0 = e.clientX;
     // ★ 마지막 값을 지역 변수로 들고 있다가 놓을 때 저장한다 — setState 안에서
     //   localStorage 를 쓰면 updater 가 두 번 불릴 때 같이 두 번 쓰인다.
     let last = null;
     const move = (ev)=>{
-      last = Math.min(maxw, Math.max(minw, Math.round(w0 + (ev.clientX - x0))));
-      // ★ 이 칩에 아직 표가 없으면 _default 를 바탕으로 시작한다 — 안 그러면 끄는
-      //   순간 나머지 열이 코드 기본으로 «툭» 돌아간다.
-      setColWAll(p=>({...p, [chip]: {...(p[chip] || p._default || {}), [k]:last}}));
+      let d = Math.round(ev.clientX - x0);
+      // 양쪽의 «더는 못 좁히는» 값이 함께 한도를 만든다.
+      if(nk) d = Math.max(minw - w0, Math.min(d, n0 - minn));
+      else   d = Math.max(minw - w0, Math.min(d, solo - w0));
+      const next = {...base, [k]: w0 + d};
+      if(nk) next[nk] = n0 - d;
+      last = next;
+      setColWAll(p=>({...p, [chip]: next}));
     };
     const up = ()=>{
       document.removeEventListener('mousemove', move);
@@ -18622,8 +18630,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
       document.body.style.userSelect = '';
       if(last!=null){
         // ★ 저장은 화면 state 가 아니라 «방금 끈 값» 으로 만든다(경합을 안 탄다).
-        const base = colWAll[chip] || colWAll._default || {};
-        const n = {...colWAll, [chip]: {...base, [k]:last}};
+        const n = {...colWAll, [chip]: last};
         try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(n)); }catch(_e){}
       }
     };
@@ -18753,32 +18760,26 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
     const conf = (settings && settings.cs_list_columns) || {};
     return csExpandCols(conf[chip] || conf['_default'] || CS_COLS_FALLBACK);
   },[settings,chip]);
-  // ── 표가 «지금 폭» 에 들어가게 (제니 2026-09-08) ────────────────────────────
-  // 제니: 「사이드바를 접고 열 너비를 맞춰 놨다가 다시 펼치면 가로 스크롤이 생긴다.
-  //   안 생기게 할 수 없나?」 — 저장된 폭은 px 이고 본문 폭은 사이드바를 따라 변한다.
-  //   **px 로 잡은 값과 «변하는 그릇» 은 언젠가 반드시 어긋난다.**
-  // ★★★ 저장값은 **안 바꾼다.** 다시 접으면 맞춰 둔 폭으로 그대로 돌아와야 한다 —
-  //   저장까지 줄이면 «한 번 좁혔더니 내가 정한 폭이 사라진» 것이 된다.
-  //   그리는 폭만 «줄일 수 있는 만큼» 눌러 담는다.
-  // ★★ 폭에 비례로 걸지 않고 **«줄일 수 있는 여유»(폭 − 그 열의 최소)에 비례**로 건다 —
-  //   폭 기준으로 깎으면 이미 최소에 붙어 있는 열까지 깎여 머리글이 … 로 뭉개진다.
-  //   여유가 없으면(다 최소면) 그때는 정직하게 가로로 구른다.
-  // ★ **늘리지는 않는다** — 늘리면 «줄임 → 스크롤바 사라짐 → 폭 늘어남 → 다시 스크롤»
-  //   로 화면이 떨린다. 줄이기만 하므로 한 번에 멎는다.
+  // ── 열 너비는 «비율» 이다 (제니 2026-09-08, 두 번째 판) ──────────────────────
+  // 제니: 「다른 메뉴의 목록처럼 **설정한 값 기준으로 비율로 늘림·줄임**이 되어야 하는데,
+  //   목록 내 너비가 고정이라 메뉴를 접었다 폈다 하면 가로 스크롤이 생긴다.」
+  // ★★★ 앞 판에서 나는 «넘칠 때만 눌러 담기» 로 만들었다 — **반쪽이었다.**
+  //   저장값이 px 인 한, 그릇이 커지면 오른쪽이 남고 작아지면 넘친다. 조건을 하나씩
+  //   막는 대신 **«폭» 을 «비율» 로 바꾸면 넘칠 수가 없다.** 예외를 덧대는 것과
+  //   전제를 바꾸는 것은 다르다.
+  // ★★ 저장값(px)은 이제 **«비율의 재료»** 다 — 서로의 크기 관계만 뜻한다.
+  //   그래서 접었다 펴도 «맞춰 둔 비율» 그대로 돌아온다.
+  // ★ 최소 폭은 그대로 지킨다. 열을 아주 많이 켜서 최소의 합조차 넘으면 그때는
+  //   정직하게 가로로 구른다 — 그건 그릇 탓이 아니라 켠 열이 많아서다.
+  // ★ 2px 은 테두리·반올림 여유다. 이것 없이 딱 맞추면 1px 때문에 스크롤바가 뜬다.
   const shownW = useMemo(()=>{
     const m = {};
     colKeys.forEach(k=>{ m[k] = widthOf(k); });
-    const total = CS_SEL_W + colKeys.reduce((s,k)=>s+m[k],0);
-    const over  = total - availW;
-    if(!(availW > 0) || over <= 0) return m;
-    let room = 0;
-    colKeys.forEach(k=>{ room += Math.max(0, m[k] - csColMinW(k)); });
-    if(room <= 0) return m;
-    const ratio = Math.min(1, over / room);
-    colKeys.forEach(k=>{
-      const r = Math.max(0, m[k] - csColMinW(k));
-      m[k] = m[k] - Math.round(r * ratio);
-    });
+    const sum = colKeys.reduce((s,k)=>s+m[k],0);
+    const box = availW - CS_SEL_W - 2;
+    if(!(availW > 0) || sum <= 0) return m;
+    const scale = box / sum;
+    colKeys.forEach(k=>{ m[k] = Math.max(csColMinW(k), Math.round(m[k]*scale)); });
     return m;
   },[colKeys, colWAll, chip, availW]);
   const shownWidth = (k)=> shownW[k] || widthOf(k);
@@ -19585,10 +19586,16 @@ function CsSetNote({children}){
       border:'1px solid var(--border)',borderRadius:8}}>{children}</div>
   );
 }
-const csSetTh = {fontSize:11,color:'var(--sub)',fontWeight:600,textAlign:'left',
+// 🔴 2026-09-08 — 설정 표의 머리글도 `var(--sub)` 라 **전역 `thead th` 의 --head-ink 를
+//   인라인이 이기고 있었다**(제니: 「설정 메뉴에 이런 부분이 더 있는 것 같은데 텍스트가
+//   안 보이는 경우 조정해 달라」). 배경은 규칙대로 네이비가 깔리는데 글자만 회색이라
+//   통째로 안 보였다. **밴드를 밝히면 그 위에 얹힌 글자를 전부 다시 봐야 한다.**
+const csSetTh = {fontSize:11,color:'var(--head-ink)',fontWeight:600,textAlign:'left',
   padding:'7px 10px',borderBottom:'1px solid var(--border)'};
+// ★ 줄 사이 선이 «흰색 반투명» 이라 **라이트에서는 흰 종이 위에 흰 선** 이 되어
+//   줄 구분이 통째로 사라졌다. 콘솔의 기본 경계색으로 옮긴다(두 모드 다 보인다).
 const csSetTd = {fontSize:12,color:'var(--text)',padding:'7px 10px',
-  borderBottom:'1px solid rgba(255,255,255,.05)'};
+  borderBottom:'1px solid var(--border)'};
 const csChk = {width:15,height:15,accentColor:'#78AAFF',cursor:'pointer',margin:0};
 
 // 칩이 «무엇을 보여 주나» 를 사람 말로. 목록 화면의 match() 와 «짝» 이다.
@@ -24522,10 +24529,20 @@ function csDraftMailPlain(rows, events){
 function csDraftMailHtml(rows, events){
   const esc = (s)=>String(s==null?'':s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const th = CS_DRAFT_COLS.map(c=>'<th style="border:1px solid #999;padding:5px 8px;'
-    +'background:#f2f2f2;text-align:left">'+esc(c)+'</th>').join('');
+  // ★★ 제목행은 **줄바꿈을 막는다**(제니 2026-09-08: 「메일에 붙여넣으면 제목행이
+  //   부자연스럽게 떨어진다」). 표에 열 폭을 안 주면 메일 클라이언트가 제 마음대로
+  //   나누는데, 그러면 「주문자명(수령」 / 「자명)」 처럼 **말 가운데가 갈린다.**
+  //   ★ `white-space:nowrap` 을 못 읽는 클라이언트가 있어 `word-break:keep-all` 을 함께
+  //     준다 — 그쪽은 적어도 «낱말 안에서» 는 안 자른다.
+  //   ★ 글자색을 박아 둔다: 회색 바탕에 색을 안 주면 **어두운 테마의 메일함에서 흰 글자가
+  //     되어 사라진다.** 배경을 정했으면 그 위의 글자도 함께 정해야 한다.
+  const th = CS_DRAFT_COLS.map(c=>'<th style="border:1px solid #999;padding:6px 9px;'
+    +'background:#f2f2f2;color:#222;text-align:left;white-space:nowrap;word-break:keep-all;'
+    +'font-weight:700">'+esc(c)+'</th>').join('');
+  // ★ 값은 위로 붙여 그린다 — 접수 사유가 길어 두 줄이 되면 그 줄만 가운데로 떠서
+  //   옆 칸의 한 줄짜리 값들과 높이가 어긋나 보인다.
   const tr = rows.map(t=>'<tr>'+csDraftRow(t, events)
-    .map(v=>'<td style="border:1px solid #999;padding:5px 8px">'+esc(v)+'</td>')
+    .map(v=>'<td style="border:1px solid #999;padding:6px 9px;color:#222;vertical-align:top">'+esc(v)+'</td>')
     .join('')+'</tr>').join('');
   return '<div>'+esc(csDraftSubject())+'</div><br>'
     + '<table style="border-collapse:collapse;font-size:13px">'
@@ -24793,9 +24810,16 @@ function CsSupplierDraft({rows, events, supMap, busy, onSent, onBack, goTicket})
                     {csDraftSubject()}</div>
                   <div style={{overflowX:'auto'}}>
                     <table style={{borderCollapse:'collapse',fontSize:11.5,minWidth:520}}>
+                      {/* 🔴 아래 th 의 color 가 `var(--sub)` 라 **전역 `thead th` 의
+                          --head-ink 를 인라인이 이기고 있었다** — 배경은 규칙대로 네이비가
+                          깔리는데 글자만 회색이라 통째로 안 보였다(제니 2026-09-08).
+                          ★ --head-bg 를 브랜드 남색으로 진하게 바꾸면서 드러난 자리다:
+                            **밴드를 밝히면 그 위에 얹힌 글자를 전부 다시 봐야 한다.**
+                          ⚠ 주석을 `.map(c=>(` 바로 뒤에 두지 않는다 — 거기는 «식» 자리라
+                            JSX 주석이 문법 오류가 된다(오늘 세 번째다). */}
                       <thead><tr>{CS_DRAFT_COLS.map(c=>(
                         <th key={c} style={{border:'1px solid '+CS_LINE,padding:'5px 8px',
-                          textAlign:'left',color:'var(--sub)',whiteSpace:'nowrap'}}>{c}</th>
+                          textAlign:'left',color:'var(--head-ink)',whiteSpace:'nowrap'}}>{c}</th>
                       ))}</tr></thead>
                       <tbody>{(cur?cur.list:[]).map(t=>(
                         <tr key={t.id}>{csDraftRow(t, events).map((v,i)=>(
