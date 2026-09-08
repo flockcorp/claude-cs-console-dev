@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zw_key_fields -->
+<!-- (2026-09-08) 카페24 연동 셋. ①**주문번호·품목별 주문번호를 «검색값» 으로 예외 처리했다**(제니: 「'주문번호'가 필수인데 실제 티켓에서는 주문번호로 검색을 하므로 모순된다 · 티켓 필드 순서 조정 항목에 뜨면 안 되는 거지」). ★★★ 맞는 지적이다 — 이 둘은 카페24에서 «끌어오는» 값이 아니라 **카페24에 물어보려고 우리가 넣는 값**이고, 티켓은 이미 제 칸으로 갖고 있다. 그런데 나는 order_id 를 `always`(끌 수 없는 필수)로 두어 **«반드시 끌어오는 값»** 인 것처럼 보이게 했다. → `key:true` 로 바꿔 **고를 수 없고 · 차례에 안 서고 · 스냅샷에도 안 담는다.** 옛 설정에 남아 있던 것도 걷어낸다. ★ 목록에서 «없애지는» 않았다: 없으면 「주문번호는 왜 없지」를 설정 화면 어디에서도 못 푼다 — 「검색값」 뱃지로 남긴다. ②**품목별 주문번호도 같은 자리**다(제니 물음): 등록에서 이것으로 조회하고, 상세 머리말·①에 이미 티켓 칸으로 찍힌다. **켜고 끌 값이 아니다.** ③**「클레임 사유(고객이 쓴 원문)」은 티켓 화면에서 «클레임 사유» 로 줄인다**(제니: 항목명이 길어 내용과 겹친다). ★ 설정 화면에서는 긴 이름 그대로 둔다 — 거기서는 «무엇인지» 를 정확히 알아야 고를 수 있다. `short` 를 두어 **한 곳에서 두 이름**을 갖게 했다. ★ dev 전용. -->
 <!-- v20260908zv_var_pick -->
 <!-- (2026-09-08) 접수 문안 설정 셋. ①**「넣을 수 있는 값」을 두 칸으로 나눴다**(제니: 「세로로 길어졌는데 가로 여백이 있으니 이분할」). 판은 860px 인데 이름·설명이 그 절반도 안 쓰고 있었다 — **남는 가로를 쓰면 세로가 반이 되고, 세로가 짧아야 «무엇이 있나» 를 한눈에 훑는다.** ★ 두 덩어리를 «각자» 격자로 뒀다: 한 격자에 네 칸을 세우면 좌우 이름 열의 폭이 서로 끌려다녀 둘 다 삐뚤어진다. ②**메일 「표의 열」에는 «지금 쓸 수 있는 값» 만 둔다**(제니) — 연동이 꺼진 카페24 값은 골라 봐야 표에 「—」로만 찍힌다. **고를 수 있는데 안 되는 것이 목록에 있으면 그 목록을 못 믿게 된다.** ③**그 자리를 네이티브 select 에서 콘솔 목록 판으로 바꿨다**(제니: 「변수 우측 설명은 좀 더 연하게, 변수명이랑 구분되게」). ★★★ `<option>` «안» 의 일부만 색을 바꾸는 것은 **브라우저가 무시한다**(옵션 하나에 한 색뿐이다) — 요청을 그대로 들으려면 그 조각을 바꿀 수밖에 없었다. 이제 변수명은 진하게(MONO), 설명은 한 단 연하게 선다. ★ 검색칸은 안 뒀다: 값이 «이름 그대로» 라 훑는 편이 빠르고, 검색칸이 있으면 지금 값이 지워진 채 창을 닫는 사고가 난다(CsPick 이 그 모양이라 안 썼다). ★ 지금 값이 목록에 없으면(연동을 껐다) **지우지 않고 그대로 이고 「⚠ 연동 꺼짐」으로 적는다.** ★ dev 전용. -->
 <!-- v20260908zu_draft_vars_2col -->
@@ -20225,9 +20227,20 @@ function useCsFieldRules(){
 //   그래서 백업 마스킹(tools/mask_dump.py)도 키마다 따로 적지 않고 통째로 지운다 —
 //   여기서 개인정보를 더 골라도 마스킹 목록이 밀리지 않는다.
 const CS_CAFE24_FIELDS = [
-  {g:'품목', id:'order_id',        label:'주문번호', always:true,
-   note:'티켓이 이미 갖고 있는 값이라 끌 수 없습니다'},
-  {g:'품목', id:'order_item_code', label:'품목별 주문번호'},
+  // ★★★ 2026-09-08 제니 — **이 둘은 «검색값» 이라 연동 대상이 아니다.**
+  //   「'주문번호'가 필수인데 실제 티켓에서는 주문번호로 검색을 하므로 모순된다.
+  //    기본 디폴트가 아니라 예외 처리를 해야 할 것 같다. 티켓 필드 순서 조정 항목에
+  //    뜨면 안 되는 거지.」 — 맞다. 카페24에서 «끌어오는» 값이 아니라 **카페24에
+  //    물어보려고 우리가 넣는 값**이고, 티켓은 이미 제 칸으로 갖고 있다.
+  //   ★★ 품목별 주문번호도 같은 자리다(제니 물음): 등록 화면에서 이것으로 조회하고,
+  //     상세 머리말·① 에 이미 티켓 칸으로 찍힌다. **켜고 끌 값이 아니다.**
+  //   → key:true = 목록에는 «검색값» 으로 남기되 **고를 수 없고, 차례에도 안 서고,
+  //     스냅샷에도 안 담는다.** 지우지 않고 남기는 이유: 없애 버리면 「주문번호는 왜
+  //     없지」를 설정 화면 어디에서도 못 푼다.
+  {g:'품목', id:'order_id',        label:'주문번호', key:true,
+   note:'티켓을 만들 때 이 번호로 카페24에 물어봅니다 — 티켓이 제 칸으로 갖습니다'},
+  {g:'품목', id:'order_item_code', label:'품목별 주문번호', key:true,
+   note:'등록 화면의 조회값입니다 — 티켓이 제 칸으로 갖습니다'},
   {g:'품목', id:'item_no',         label:'품목 번호'},
   {g:'품목', id:'product_code',    label:'상품코드'},
   {g:'품목', id:'option_value',    label:'옵션'},
@@ -20257,7 +20270,10 @@ const CS_CAFE24_FIELDS = [
   //   제니가 잡아 줬다(2026-09-02) — 실측한 한 건의 말을 그대로 이름으로 옮기면
   //   그 건에만 맞는 이름이 된다.
   //   ⏳ 취소·교환 건에서도 이 칸에 값이 «실제로 오는지» 는 아직 안 쟀다(배포 뒤 실측).
-  {g:'클레임', id:'claim_reason',  label:'클레임 사유(고객이 쓴 원문)',
+  // ★ short = 티켓 ① 에서 쓸 «짧은 이름»(제니 2026-09-08: 「항목명이 길어 내용과
+  //   겹친다 — 티켓 화면에서는 '클레임 사유'로 줄여 달라」). 설정 화면에서는 긴 이름을
+  //   그대로 둔다: 거기서는 «무엇인지» 를 정확히 알아야 고를 수 있다.
+  {g:'클레임', id:'claim_reason',  label:'클레임 사유(고객이 쓴 원문)', short:'클레임 사유',
    note:'★ 접수할 때 끌어오면 상담원이 사유를 다시 옮겨 적지 않아도 됩니다'},
   {g:'클레임', id:'claim_reason_type', label:'클레임 사유 분류'},
   {g:'클레임', id:'return_request_date',   label:'반품 신청일'},
@@ -20317,20 +20333,21 @@ const CS_CAFE24_FALLBACK = {
 // ★★ **담는 키는 «접수할 때 고른 것» 그대로다** — 값이 비어도 키를 남긴다.
 //   그래야 나중에 「이 티켓은 그 값을 안 담은 것인가, 카페24가 안 준 것인가」를
 //   가를 수 있다. 설정은 언제든 바뀌는데 티켓은 그날의 것으로 남아야 한다.
+const csCafe24IsKey = (id)=> CS_CAFE24_FIELDS.some(f=>f.id===id && f.key);
 function csCafe24Snapshot(res, onIds){
   if(!res) return {};
   const always = CS_CAFE24_FIELDS.filter(f=>f.always).map(f=>f.id);
   const ids = Array.isArray(onIds) ? onIds : [];
-  const want = always.concat(ids.filter(id=>always.indexOf(id)<0));
+  // ★ «검색값»(주문번호·품목별 주문번호)은 담지 않는다 — 티켓이 제 칸으로 갖고 있어
+  //   스냅샷에 또 담으면 같은 값이 두 곳에 남고, 둘이 어긋날 자리가 생긴다.
+  const want = always.concat(ids.filter(id=>always.indexOf(id)<0))
+    .filter(id=>!csCafe24IsKey(id));
   const src = (res.cafe24 && typeof res.cafe24==='object') ? res.cafe24 : null;
   const out = {};
   want.forEach(id=>{
     let v;
     if(src && Object.prototype.hasOwnProperty.call(src, id)) v = src[id];
     else { const k = CS_CAFE24_FALLBACK[id]; v = k ? res[k] : undefined; }
-    if((v===undefined || v==='' || v===null) && id==='order_id'){
-      v = csOrderNo({order_item_code: res.order_item_code || res.code});
-    }
     out[id] = (v===undefined || v==='') ? null : v;
   });
   return out;
@@ -20386,8 +20403,10 @@ function csCafe24Rows(snap, order, pane, ro){
     return csCafe24Show(id, snap[id])!=='';
   }).map(id=>{
     const def = CS_CAFE24_FIELDS.find(f=>f.id===id);
+    // ★ 티켓 화면에서는 «짧은 이름» 을 쓴다 — 이름 칸의 폭이 정해져 있어서 긴 이름은
+    //   값과 겹쳐 읽힌다(제니 2026-09-08). 설정 화면은 긴 이름 그대로다.
     return <React.Fragment key={'c24:'+id}>
-      {ro(def ? def.label : id, csCafe24Show(id, snap[id]),
+      {ro(def ? (def.short || def.label) : id, csCafe24Show(id, snap[id]),
           CS_CAFE24_COPY.indexOf(id)>=0)}
     </React.Fragment>;
   });
@@ -20876,8 +20895,12 @@ function CsCafe24Settings({currentUserEmail}){
     const [rf,ro] = [await csLoadSetting('cs_cafe24_fields'),
                      await csLoadSetting('cs_detail_order')];
     setRowF(rf); setRowO(ro); setLoaded(true);
-    const on  = (rf && rf.value && Array.isArray(rf.value.on)) ? rf.value.on : [];
-    const ord = (ro && ro.value && Array.isArray(ro.value.order)) ? ro.value.order : [];
+    // ★ «검색값» 은 켠 적이 있어도 걷어낸다(제니 2026-09-08) — 예전 설정에 남아 있으면
+    //   차례 목록에 다시 서고, 그러면 「뜨면 안 되는 것」이 계속 뜬다.
+    const on0 = (rf && rf.value && Array.isArray(rf.value.on)) ? rf.value.on : [];
+    const on  = on0.filter(id=>!csCafe24IsKey(id));
+    const ord0= (ro && ro.value && Array.isArray(ro.value.order)) ? ro.value.order : [];
+    const ord = ord0.filter(id=>!csCafe24IsKey(id));
     // 켠 것 = on 목록 + «항상 있는 값». 차례는 cs_detail_order 를 먼저 따르고,
     // 거기 없는 것은 뒤에 붙인다 — 두 설정이 어긋나 있어도 아무것도 잃지 않는다.
     const always = CS_CAFE24_FIELDS.filter(f=>f.always).map(f=>f.id);
@@ -20894,7 +20917,7 @@ function CsCafe24Settings({currentUserEmail}){
   const on = (id)=> order.indexOf(id)>=0;
   // 켜면 차례의 «맨 뒤» 에 붙는다. 가운데 끼워 넣으면 방금 켠 것이 어디 갔는지 못 찾는다.
   const toggle = (f)=>{
-    if(f.always) return;
+    if(f.always || f.key) return;
     setOrder(p=> p.indexOf(f.id)>=0 ? p.filter(x=>x!==f.id) : p.concat([f.id]));
   };
   // 차례는 «손잡이를 잡고 끌어» 바꾼다(제니 2026-09-02). ↑↓ 버튼은 한 칸씩만 움직여
@@ -20922,10 +20945,10 @@ function CsCafe24Settings({currentUserEmail}){
 
   const save = async ()=>{
     const always = CS_CAFE24_FIELDS.filter(f=>f.always).map(f=>f.id);
-    const onIds  = order.filter(id=>always.indexOf(id)<0);
+    const onIds  = order.filter(id=>always.indexOf(id)<0 && !csCafe24IsKey(id));
     // ★ 모르는 값(설정에만 있던 것)은 off 로 밀지 않고 그대로 둔다.
     const oldOff = (rowF && rowF.value && Array.isArray(rowF.value.off)) ? rowF.value.off : [];
-    const offIds = CS_CAFE24_FIELDS.filter(f=>!f.always && onIds.indexOf(f.id)<0).map(f=>f.id)
+    const offIds = CS_CAFE24_FIELDS.filter(f=>!f.always && !f.key && onIds.indexOf(f.id)<0).map(f=>f.id)
       .concat(oldOff.filter(id=>!defOf(id) && onIds.indexOf(id)<0));
     setBusy(true);
     const ok1 = await csSaveSetting('cs_cafe24_fields', {on:onIds, off:offIds}, currentUserEmail);
@@ -20972,13 +20995,20 @@ function CsCafe24Settings({currentUserEmail}){
               <div style={{fontSize:11,color:'var(--sub)',fontWeight:600,padding:'8px 12px 5px',
                 background:'rgba(255,255,255,.02)'}}>{g}</div>
               {CS_CAFE24_FIELDS.filter(f=>f.g===g).map(f=>(
-                <label key={f.id} title={f.note||undefined}
+                <label key={f.id} data-tip={f.note||undefined}
                   style={{display:'flex',alignItems:'center',gap:9,padding:'5px 12px',
-                    cursor:f.always?'default':'pointer'}}>
+                    cursor:(f.always||f.key)?'default':'pointer', opacity:f.key?.62:1}}>
                   <input type="checkbox" style={{...csChk,
-                      cursor:f.always?'not-allowed':'pointer', opacity:f.always?.5:1}}
-                    checked={on(f.id)} disabled={!!f.always} onChange={()=>toggle(f)}/>
+                      cursor:(f.always||f.key)?'not-allowed':'pointer',
+                      opacity:(f.always||f.key)?.5:1}}
+                    checked={!f.key && on(f.id)} disabled={!!f.always || !!f.key}
+                    onChange={()=>toggle(f)}/>
                   <span style={{fontSize:12,color:'var(--text)'}}>{f.label}</span>
+                  {/* ★ «검색값» — 카페24에서 끌어오는 값이 아니라 카페24에 물어보려고
+                      우리가 넣는 값이다. 켜고 끌 것이 아니라서 잠가 두되, 목록에서
+                      없애지는 않는다: 없으면 「주문번호는 왜 없지」를 여기서 못 푼다. */}
+                  {f.key && <span style={{fontSize:9.5,color:'var(--sub)',
+                    border:'1px solid var(--border)',borderRadius:8,padding:'0 5px'}}>검색값</span>}
                   {f.pii && <span style={{fontSize:9.5,color:'#F6AD09',opacity:.85,
                     border:'1px solid rgba(246,173,9,.4)',borderRadius:8,padding:'0 5px'}}>개인정보</span>}
                   {/* ★★ 「접수 문안이 이 값을 쓴다」 — 끄면 문안의 그 줄이 통째로 빠진다.
@@ -26049,6 +26079,7 @@ const CS_DRAFT_VARS = [
 //   이미 적어 둔 문안이 안 깨진다 — 이름을 고치는 일과 남의 글을 깨뜨리는 일은 다르다.
 // ★ 전부 o:true 다 — 카페24가 안 준 값이면 그 줄은 빠진다(운송장과 같은 규칙).
 const CS_DRAFT_VARS_C24 = CS_CAFE24_FIELDS
+  .filter(f=>!f.key)   // «검색값» 은 이미 {주문번호}·{품목별주문번호} 로 있다
   .filter(f=>!CS_DRAFT_VARS.some(v=> v.k===f.label || (v.a && v.a.indexOf(f.label)>=0)))
   .map(f=>({
     k: f.label, c24: f.id, o: true,
