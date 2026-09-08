@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zb_mtag_from_setting -->
+<!-- (2026-09-08) **사이드바 「M」 뱃지를 설정에서 읽는다**(제니: 「고정이 아니라 계정 설정 > 메뉴 권한에서 **master 만 체크된 메뉴에만** 표시되도록. master 만 있다가 manager 가 체크돼 권한이 열리면 M 뱃지는 없어지는 것」). ★★★ 그전에는 **어느 메뉴에 뱃지를 다는지가 화면에 손으로 박혀 있었다.** 그래서 설정에서 manager 를 열어 줘도 뱃지는 그대로 「M」이라고 말했다 — **설정과 화면이 서로 다른 말을 하면 사람은 둘 다 안 믿게 된다.** 이건 오늘만 세 번째로 만나는 계열이다(09-04 «필수»·카페24 연동·담당자 권한 — 설정은 있는데 화면이 안 읽던 자리들). ★★ 판정은 **`csMenuAllows` 와 «같은 자리» 를 본다**: 설정에 적혀 있으면 그것, 없으면 코드 기본. 둘이 다른 것을 보면 «열렸는데 뱃지가 남는» 일이 또 생긴다. ★★ 뱃지가 **설정을 직접 읽지 않는다** — 사이드바가 그리는 동안 설정이 아직 안 왔을 수 있고, 그때 조각마다 따로 읽으면 «어떤 메뉴는 붙고 어떤 메뉴는 안 붙은» 절름발이 상태가 보인다. **한 곳(App)에서 한 번 읽어 내려 준다.** ★ 「CS 관리 > 설정」에도 붙였다 — **규칙을 세웠으면 그 규칙이 맞는 자리에는 다 붙어야 한다.** 여기만 빼 두면 «M 이 없으니 나도 되겠지» 로 읽힌다. 🔴 **`&& (` 안에 JSX 주석을 또 뒀다 — 오늘만 다섯 번째다.** ★ dev 전용. -->
 <!-- v20260908za_tabs_unify -->
 <!-- (2026-09-08) **화면 안의 «탭» 을 콘솔에 하나뿐인 조각으로 모았다**(제니 승인). 그전에는 하위 화면 전환이 **세 가지 꼴**로 흩어져 있었다: 탭(배송지연·디지털 발송) · 칩(CS 설정·공급사 관리·계정 정보) · **단추**(데이터 입력). ★★★ **탭으로 통일한 이유** — 칩은 이 콘솔에서 이미 «목록을 좁히는» 뜻을 갖고 있다(CS 목록의 상태 칩·필터 칩). 화면 전환도 칩으로 그리면 **같은 꼴이 두 가지 일**을 하게 되고, 그러면 누르기 전에 «이건 어느 쪽이지» 를 매번 생각해야 한다. → **화면을 바꾸는 것은 탭 · 목록을 좁히는 것은 칩.** 뜻이 꼴로 갈린다. ★ 단추도 뺐다(데이터 입력) — «단추» 는 «누르면 무슨 일이 일어난다» 는 뜻이라 화면 전환에 쓰면 저장·발송과 같은 꼴이 되어 무게가 잘못 실린다. ★★ 꼴은 **제니가 «기준» 이라 한 세 화면에서 그대로 재 왔다**(아래 선 한 줄 + 2px 밑줄 + 굵은 글자). **이미 좋다고 한 화면에서 값을 재 오면 지어낼 필요가 없다** — 오늘 밴드 색에서도 같은 방법을 썼다. ★ 기준 화면 둘도 같은 컴포넌트를 쓰게 바꿨다 — «기준» 이 코드로도 하나여야 다음에 또 갈라지지 않는다. ⚠ 글자는 `--warn-ink` 다: 흰 바탕에서 #F6AD09 글자는 거의 안 읽힌다(밑줄은 --yellow 그대로 — 선은 굵어서 옅어도 보인다). 겸해 제니 셋을 더 고쳤다: ①**목록 둥근 모서리 뒤의 네모** — 앞 판에서 줄(tr) 배경을 걷었는데 **표 자신의 흰 배경**이 또 네모로 남아 있었다(감싼 판이 이미 흰색이라 지워도 보이는 색은 같다) → 투명으로. **깎은 것 뒤에 네모난 것이 하나 더 있었다.** ②공급사 «로드 중» 문구를 화면 가운데로. ③**공급사 접수 머리말**을 「공급사 접수 문안」 → 「📋 공급사 접수」·20px 로 — 사이드바에도 「공급사 접수」로 서 있어 **눌러 들어온 화면의 이름이 다르면 «다른 데로 왔나» 를 한 번 생각하게 된다.** ④부연을 «제목 오른쪽 한 줄» 로 함축했다(공급사 관리·상담원 분석·계정 정보) — 문장형을 걷고 CS 관리처럼 짧은 말로. **머리말은 «여기가 어디인가» 를 말하는 자리이지 화면을 설명하는 자리가 아니다.** ★ dev 전용. -->
 <!-- v20260908z_head_unify -->
@@ -26025,6 +26027,20 @@ const CS_MENU_DEFS = [
 ];
 const CS_MENU_BASE = (()=>{ const m={}; CS_MENU_DEFS.forEach(d=>{ m[d.id]=d.base; }); return m; })();
 // 설정을 못 읽었으면 «코드 기본» 으로 돈다 — 못 읽었다고 다 열리면 그게 사고다.
+// ★★★ 그 메뉴가 «지금» master 만인가 — M 뱃지는 이것을 보고 붙는다(제니 2026-09-08:
+//   「고정이 아니라 메뉴 권한에서 master 만 체크된 메뉴에만 표시되도록」).
+//   ★★ 그전에는 어느 메뉴에 뱃지를 다는지가 **화면에 손으로 박혀 있었다.** 그래서
+//     설정에서 manager 를 열어 줘도 뱃지는 그대로 「M」이라고 말했다 —
+//     **설정과 화면이 서로 다른 말을 하면, 사람은 둘 다 안 믿게 된다.**
+//   ★ 판정 규칙은 csMenuAllows 와 «같은 자리» 를 본다: 설정에 적혀 있으면 그것,
+//     없으면 코드 기본. 둘이 다른 것을 보면 «열렸는데 뱃지가 남는» 일이 또 생긴다.
+//   ★ 목록에 없는 메뉴는 «전원» 이라 뱃지가 없다(csMenuAllows 가 true 를 주는 그 자리다).
+function csMenuIsMasterOnly(settings, id){
+  const conf = (settings && settings.menu_roles) || null;
+  const arr = (conf && Array.isArray(conf[id])) ? conf[id] : CS_MENU_BASE[id];
+  if(!Array.isArray(arr)) return false;
+  return arr.length===1 && arr[0]==='master';
+}
 function csMenuAllows(settings, id, role){
   if(!role) return false;
   const conf = (settings && settings.menu_roles) || null;
@@ -26110,9 +26126,14 @@ class PageErrorBoundary extends React.Component {
    ★ 반드시 «권한 조건과 같은 자리» 에 둔다. isMaster/isManager 조건이 사이드바 곳곳에
      흩어져 있어서, 조건과 떨어진 표를 따로 두면 조건을 바꿀 때 뱃지가 남는다.
    ★ 색으로 알리지 않는다 — 빨강은 «지남/위험», 노랑은 «지금 보는 메뉴» 로 이미 쓰고 있다. */
-function RoleTag() {
+function RoleTag({on=true}) {
   /* ★ 「M」 한 글자인 이유는 자리다 — 220px 사이드바에서 「master」(약 39px)를 달면
-     이름이 긴 메뉴가 잘린다. 뜻은 마우스를 올렸을 때 뜬다. */
+     이름이 긴 메뉴가 잘린다. 뜻은 마우스를 올렸을 때 뜬다.
+     ★★ 2026-09-08 — 붙일지 말지를 **부르는 쪽이 정한다**(설정을 읽어 넘긴다).
+       여기서 설정을 직접 읽지 않는 이유: 사이드바가 그리는 동안 설정이 아직
+       안 왔을 수 있고, 그때 조각마다 따로 읽으면 «어떤 메뉴는 붙고 어떤 메뉴는
+       안 붙은» 절름발이 상태가 보인다. 한 곳(App)에서 한 번 읽어 내려 준다. */
+  if(!on) return null;
   return <span className="nav-tag" title="master 전용 메뉴입니다">M</span>;
 }
 
@@ -27359,6 +27380,8 @@ function App() {
   // 이 계정이 그 메뉴를 볼 수 있나. 사이드바와 라우팅이 «같은 함수» 를 쓴다 —
   // 두 곳에 따로 적으면 «메뉴는 보이는데 눌러도 안 열리는» 자리가 생긴다.
   const canMenu=(id)=>csMenuAllows({menu_roles:menuCfg}, id, role);
+  // M 뱃지 — 지금 설정에서 «master 만» 인 메뉴에만 붙는다(제니 2026-09-08).
+  const masterOnly=(id)=>csMenuIsMasterOnly({menu_roles:menuCfg}, id);
   // 메뉴 «안» 의 동작 권한(2026-09-07). 메뉴 권한과 같은 모양으로 읽는다 —
   // 읽는 법을 새로 배울 것이 없어야 한다.
   const [actionCfg,setActionCfg]=useState(null);
@@ -27617,7 +27640,7 @@ function App() {
                       )}
                       {canMenu('agentAnalysis') && (
                         <div className={`nav-child ${page==='agentAnalysis'?'active':''}`} onClick={()=>navigateTo('agentAnalysis')}>
-                          <span className="nav-label">상담원 분석</span><RoleTag/>
+                          <span className="nav-label">상담원 분석</span><RoleTag on={masterOnly('agentAnalysis')}/>
                         </div>
                       )}
                     </div>
@@ -27688,9 +27711,13 @@ function App() {
               </div>
               {/* ★ 설정은 master 만 본다 — 여기서 정하는 것이 «남이 무엇을 볼 수 있나» 라,
                      상담원에게 메뉴가 보이면 그 자체로 잘못된 신호다. */}
+              {/* ★ 규칙을 세웠으면 그 규칙이 맞는 자리에는 다 붙어야 한다 —
+                  설정도 «지금» master 만이라 M 이 뜬다. 여기만 빼 두면 «M 이 없으니
+                  나도 되겠지» 로 읽힌다(2026-09-08).
+                  ⚠ 주석은 `&& (` 안이 아니라 «밖» 에 — 오늘만 다섯 번째다. */}
               {canMenu('csSettings') && (
                 <div className={`nav-child ${page==='csSettings'?'active':''}`} onClick={()=>navigateTo('csSettings')}>
-                  설정
+                  <span className="nav-label">설정</span><RoleTag on={masterOnly('csSettings')}/>
                 </div>
               )}
             </div>
@@ -27705,7 +27732,7 @@ function App() {
               title={navCollapsed?'환불 관리':undefined}
               style={page==='refunds' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
             >
-              {Icon.refunds}<span className="nav-label">환불 관리</span><RoleTag/>
+              {Icon.refunds}<span className="nav-label">환불 관리</span><RoleTag on={masterOnly('refunds')}/>
             </div>
           )}
 
@@ -27730,7 +27757,7 @@ function App() {
                 title={navCollapsed?'비용 비교 도구':undefined}
                 style={page==='costs'&&costState.view==='dashboard' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}
               >
-                {Icon.costs}<span className="nav-label">비용 비교 도구</span><RoleTag/>
+                {Icon.costs}<span className="nav-label">비용 비교 도구</span><RoleTag on={masterOnly('costs')}/>
                 <span
                   className={`chevron ${openGroups.costs?'expanded':''}`}
                   onClick={(e)=>{ e.stopPropagation(); toggleGroup('costs'); }}
@@ -27782,13 +27809,13 @@ function App() {
           {canMenu('auditLog') && (
             <div className={`nav-item ${page==='auditLog'?'active':''}`} onClick={()=>navigateTo('auditLog')}
               title={navCollapsed?'변경 이력':undefined} style={{marginBottom:8}}>
-              <span style={{width:18,display:'inline-block',textAlign:'center'}}>🕘</span><span className="nav-label">변경 이력</span><RoleTag/>
+              <span style={{width:18,display:'inline-block',textAlign:'center'}}>🕘</span><span className="nav-label">변경 이력</span><RoleTag on={masterOnly('auditLog')}/>
             </div>
           )}
           {canMenu('agents') && (
             <div className={`nav-item ${page==='agents'?'active':''}`} onClick={()=>navigateTo('agents')}
               title={navCollapsed?'인력 관리':undefined} style={{marginBottom:8}}>
-              {Icon.agents}<span className="nav-label">인력 관리</span><RoleTag/>
+              {Icon.agents}<span className="nav-label">인력 관리</span><RoleTag on={masterOnly('agents')}/>
             </div>
           )}
           {/* ★ 창이 아니라 «화면» 으로 간다(제니 지시 2026-08-26). 계정 정보 밑에
