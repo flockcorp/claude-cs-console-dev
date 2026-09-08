@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zl_macro_edit_btn -->
+<!-- (2026-09-08) CS 설정 > 매크로 목록의 **[수정] 테두리를 진하게**(제니). 옆의 [끄기]·[지우기] 는 제 색을 옅게 깐 테두리라 또렷한데 이 단추만 흐린 하늘빛 «고정값»(rgba .50)이어서 두 모드 어디서도 흐렸다. → **값이 아니라 «뜻»(var(--accent))을 쓴다** — 다크·라이트에서 각각 제 밝기로 따라온다(이 콘솔에서 되풀이해 세운 규칙이다). 옅은 바탕도 함께 깔아 옆 단추들과 같은 꼴로 맞췄다. ★ dev 전용. -->
 <!-- v20260908zk_macro_symbolbar -->
 <!-- (2026-09-08) **CS 설정 > 매크로의 «내용» 칸 아래에도 기호 줄**을 달았다(제니: 「티켓에 있는 것과 동일하게」). ★ **같은 조각(CsSymbolBar)을 그대로 쓴다** — 여기서 만드는 글이 곧 티켓에 들어갈 글인데 기호를 넣는 방법이 두 자리에서 다르면 그때마다 다시 배워야 한다. ★★ 다만 **[⚡ 매크로] 단추는 뺐다**(`macro={false}`): 매크로를 만드는 자리에서 매크로를 부르는 것은 뜻이 안 맞고, 넣어 봐야 «그 문구가 통째로 박힌» 사본이 되어 **원본이 바뀌어도 안 따라온다.** ★ dev 전용. -->
 <!-- v20260908zj_macro_use -->
@@ -21636,9 +21638,14 @@ function CsMacroSettings({currentUserEmail}){
                 borderColor: r.is_active ? 'rgba(248,113,113,.55)' : 'rgba(34,211,160,.55)',
                 background: r.is_active ? 'rgba(248,113,113,.12)' : 'rgba(34,211,160,.12)'}}>
               {r.is_active?'끄기':'켜기'}</button>
+            {/* ★ 테두리를 «글자와 같은 색» 으로 준다(제니 2026-09-08: 「좀 더 진하게」).
+                옆의 [끄기]·[지우기] 는 제 색을 옅게 깐 테두리라 또렷한데, 이 단추만
+                흐린 하늘빛 고정값(.50)이라 두 모드 어디서도 흐렸다.
+                ★ 값이 아니라 «뜻»(var(--accent))을 쓴다 — 다크·라이트에서 각각 제
+                  밝기로 따라온다. 이 콘솔에서 되풀이해 세운 규칙이다. */}
             <button onClick={()=> editId===r.id ? setEditId(null) : open(r)} disabled={busy}
               style={{...miniBtn, fontWeight:600, color:'var(--accent)',
-                borderColor:'rgba(210,229,255,.50)'}}>
+                borderColor:'var(--accent)', background:'rgba(120,170,255,.12)'}}>
               {editId===r.id?'닫기':'수정'}</button>
             <button onClick={()=>remove(r)} disabled={busy}
               style={{...miniBtn, fontWeight:600, color:'var(--red)',
