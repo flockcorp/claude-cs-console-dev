@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908p_stage_pill_sweep -->
+<!-- (2026-09-08) 제니 둘. ①**상태 뱃지를 콘솔 «하나뿐인 조각» 으로 모았다.** 제니 지시: 「'상태 뱃지'라는 건 **1개의 항목**인데 이 뱃지가 노출되는 화면마다 따로 수정해야 하는 건 비효율적이다. **뱃지 수정을 요청했을 때는 뱃지가 노출되는 전체 화면을 훑고 적용해 줘.**」 → 전수로 훑어 두 자리를 CsStagePill 로 바꿨다: **㉠공급사 접수 화면 좌측 목록** — 제 색표를 따로 들고 「티켓 등록이면 하늘색, 아니면 초록」으로 칠하고 있었다. **단계가 여섯인데 두 색으로 뭉갠 것**이라 같은 건을 보면서도 티켓 목록과 다른 그림이 됐다. 건수는 알약 «밖» 에 뒀다 — 안에 숫자를 넣으면 그 순간 이 화면의 뱃지만 다른 모양이 된다. **㉡티켓 등록 화면의 「이미 있는 티켓」 줄** — 여기는 상태를 «글자» 로만 적고 있었다. ★★ 여기서 남길 것: **뱃지를 훑을 때는 «뱃지로 그린 곳» 만이 아니라 «같은 값을 다른 꼴로 보여 주는 곳» 까지 함께 본다.** 값이 같아도 꼴이 다르면 사람은 «다른 것인가» 를 매번 생각한다(제니가 09-07 에 환불 사유 뱃지에서 이미 말한 규칙이다). ②**공급사 채널이 «미설정» 이면 메일로 문다**(제니). 그전에는 「메일이 아니면 메신저」로 적어 두어 채널을 안 정한 공급사가 전부 줄글로 갔다. 08-31 에는 «표가 깨지는 쪽이 더 나쁘다» 고 봤는데, 실제로는 **모르는 공급사에 메신저로 보낼 창구 자체가 없다** — 창구를 모르면 사람이 메일로 보낸다. ★★ **물러서는 자리는 «가장 흔한 쪽» 이어야 한다.** 판정도 뒤집어 적었다: **메신저인 것만 줄글**(kakao·nateon), 나머지는 다 메일 — 목록에 없는 새 코드가 생겨도 조용히 줄글이 되지 않는다. ★ dev 전용. -->
 <!-- v20260908o_draft_page_body -->
 <!-- (2026-09-08) **공급사 접수 화면의 미리보기에만 메일 «본문» 이 안 나오던 것을 고쳤다**(제니: 「티켓 상세의 문안 버튼은 맞게 뜨는데 CS 관리 > 공급사 접수 메뉴에서는 안 뜬다」). ★ **복사되는 글은 원래부터 맞았다** — 틀린 것은 «보여 주는 쪽» 이었다(그 화면만 «제목 + 표» 를 제 코드로 그리고 있었다). ★★★ **두 화면이 같은 것을 보여 준다면 같은 함수로 그려야 한다** — 이 콘솔에서 되풀이해 배운 규칙인데, 오늘 «설정 미리보기 + 실제 메일» 을 한 함수(csDraftMailParts)로 묶으면서 **세 번째 자리인 여기를 빠뜨렸다.** ★★ 여기서 남길 것: **묶을 때는 «그것을 쓰는 곳» 을 전수로 세어야 한다.** 두 곳을 묶고 «했다» 고 보고하면, 세 번째 자리는 사람이 쓰다가 발견한다. ★ dev 전용. -->
 <!-- v20260908n_draft_names_and_body -->
@@ -23054,7 +23056,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   <span style={{flex:1,minWidth:0}}>
                     <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{d.id}</span>
                     {' '}…{String(d.order_item_code||'').slice(-3)}
-                    {' '}{(CS_STAGE_LABEL[d.stage]||{}).label||d.stage}
+                    {/* ★ 여기도 상태를 «글자» 로만 적고 있었다 — 같은 뜻의 것이 화면마다
+                        다른 꼴이면 사람은 «다른 것인가» 를 매번 생각한다(제니 규칙).
+                        뱃지를 훑을 때는 «뱃지로 그린 곳» 만이 아니라 **같은 값을 다른
+                        꼴로 보여 주는 곳** 까지 함께 본다. */}
+                    {' '}<CsStagePill stage={d.stage}/>
                     {' '}<span style={{opacity:.7}}>{csDate(d.created_at)}</span>
                   </span>
                   <button onClick={()=>{
@@ -24906,10 +24912,17 @@ function csDraftMessenger(rows, events){
 //   메일이면 제목 + 빈 줄 + 표, 메신저면 줄글. 건별이라고 늘 줄글로 두면, 메일로
 //   접수하는 공급사에는 표 없이 나가 일괄로 보낸 것과 모양이 달라진다.
 //   ★ 창구를 모르면 메신저로 물러선다 — 표를 붙여 넣어 줄이 깨지는 쪽이 더 나쁘다.
+// ★★★ 2026-09-08 제니 — **«미설정» 은 메일로 문다.** 그전에는 「메일이 아니면 메신저」라
+//   적어 두어 채널을 안 정한 공급사가 전부 줄글로 갔다. 08-31 에는 «표가 깨지는 쪽이 더
+//   나쁘다» 고 봤는데, 실제로는 **모르는 공급사에 메신저로 보낼 창구 자체가 없다** —
+//   창구를 모르면 사람이 메일로 보낸다. 물러서는 자리는 «가장 흔한 쪽» 이어야 한다.
+// ★ 그래서 판정을 뒤집어 적는다: **메신저인 것만 줄글**, 나머지는 다 메일.
+//   («모르는 값» 이 새로 생겨도 메일로 간다 — 목록에 없는 코드가 조용히 줄글이 되지 않는다.)
+const CS_MSG_CHANNELS = ['kakao','nateon'];
 function csDraftFor(channelCode, list, events){
-  return (channelCode==='email')
-    ? {text: csDraftMailPlain(list, events), html: csDraftMailHtml(list, events), isMail:true}
-    : {text: csDraftMessenger(list, events), html: null, isMail:false};
+  return (CS_MSG_CHANNELS.indexOf(channelCode) >= 0)
+    ? {text: csDraftMessenger(list, events), html: null, isMail:false}
+    : {text: csDraftMailPlain(list, events), html: csDraftMailHtml(list, events), isMail:true};
 }
 async function csDraftCopy(d){
   try{
@@ -25102,10 +25115,14 @@ function CsSupplierDraft({rows, events, supMap, busy, onSent, onBack, goTicket})
   const [pick,setPick] = useState(0);
   const cur = groups[pick] || null;
   const code = cur ? supMap[cur.name] : null;
-  // ★ 채널을 모르면 «메신저» 로 물러선다 — 표를 붙여 넣어 깨지는 쪽이 더 나쁘다.
+  // ★★★ 2026-09-08 제니 — **채널을 모르면 «메일» 이다.** 08-31 에는 «표가 깨지는 쪽이
+  //   더 나쁘다» 고 보아 메신저로 물러섰는데, 실제로는 **모르는 공급사에 메신저로 보낼
+  //   창구 자체가 없다** — 창구를 모르면 사람이 메일로 보낸다.
+  //   ★ 물러서는 자리는 «가장 흔한 쪽» 이어야 한다. 판정도 뒤집어 적는다:
+  //     **메신저인 것만 줄글**, 나머지(메일·미설정·모르는 코드)는 다 메일.
   const known = code && SUP_CHANNELS[code] && code!=='none' ? code : null;
   const [tab,setTab] = useState('auto');
-  const isMail = tab==='auto' ? (known==='email') : (tab==='mail');
+  const isMail = tab==='auto' ? (CS_MSG_CHANNELS.indexOf(known)<0) : (tab==='mail');
   const [copied,setCopied] = useState(false);
 
   const copy = async ()=>{
@@ -25206,18 +25223,23 @@ function CsSupplierDraft({rows, events, supMap, busy, onSent, onBack, goTicket})
                       background:ch.bg,color:ch.color,whiteSpace:'nowrap'}}>{ch.label}</span>
                     <span style={{fontFamily:MONO,fontSize:10.5,opacity:.8}}>{g.list.length}</span>
                   </div>
-                  <div style={{display:'flex',gap:4,marginTop:4,flexWrap:'wrap'}}>
-                    {stages.map(st=>{
-                      const s = CS_STAGE_LABEL[st] || {label:st};
-                      const done = st!=='received';   // 「티켓 등록」 말고는 이미 넘어간 것
-                      return (
-                        <span key={st} style={{fontSize:9,padding:'1px 6px',borderRadius:9,
-                          lineHeight:1.6,whiteSpace:'nowrap',fontWeight:600,
-                          background: done?'rgba(34,211,160,.16)':'rgba(210,229,255,.14)',
-                          color: done?'var(--green)':'var(--sub)'}}>
-                          {s.label}{g.list.length>1 && ' '+byStage[st]}</span>
-                      );
-                    })}
+                  {/* ★★★ 상태 뱃지는 **콘솔에 하나뿐인 조각(CsStagePill)** 이다
+                      (제니 2026-09-08: 「'상태 뱃지'라는 건 1개의 항목인데 화면마다
+                      따로 고치는 건 비효율적이다」). 여기는 제 색표를 따로 들고
+                      「티켓 등록이면 하늘색, 아니면 초록」으로 칠하고 있었다 —
+                      **단계가 여섯인데 두 색으로 뭉갠 것**이라, 같은 목록을 보면서도
+                      티켓 목록과 다른 그림이 됐다.
+                      ★ 건수는 알약 «밖» 에 둔다 — 알약 안에 숫자를 넣으면 그 순간
+                        이 화면의 뱃지만 다른 모양이 된다. 뱃지는 어디서나 같아야 한다. */}
+                  <div style={{display:'flex',gap:5,marginTop:5,flexWrap:'wrap',alignItems:'center'}}>
+                    {stages.map(st=>(
+                      <span key={st} style={{display:'inline-flex',alignItems:'center',gap:3}}>
+                        <CsStagePill stage={st}/>
+                        {g.list.length>1 && (
+                          <span style={{fontFamily:MONO,fontSize:10,color:'var(--sub)'}}>{byStage[st]}</span>
+                        )}
+                      </span>
+                    ))}
                   </div>
                 </div>
               );
