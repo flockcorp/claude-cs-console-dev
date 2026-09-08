@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908t_supplier_contacts -->
+<!-- (2026-09-08) **공급사 «연락망» 을 만들었다**(제니: 「정산 시스템에 있는 걸 그대로 복붙 형태로 저장. 주 1회 전체를 다시 붙여 수기 업데이트. 공급사 검색 시 그 공급사의 연락망이 나오는 방식」). 공급사 관리 화면을 **탭 둘**(기본 정보 · 연락망)로 나눴다. ★★★ **붙여넣는 표를 우리가 만들지 않았다** — 칸이 33개이고 언제든 늘거나 이름이 바뀐다(정산 시스템은 우리 것이 아니다). 칸마다 컬럼을 만들면 그때마다 SQL 을 돌려야 하고 **그 사이에 붙여넣은 값이 조용히 버려진다** → 머리글 이름을 그대로 키로 쓰는 `jsonb` 한 칸(supplier_contacts.data)에 담고, **원본 한 줄(raw)도 함께** 둔다(우리가 못 알아본 칸이 있어도 값 자체는 잃지 않는다). ★★ 키는 **공급사코드**다(S0000XXX) — 공급사명은 바뀌고 «퇴점» 으로 갈리기도 한다. 콘솔의 `suppliers.cafe24_supplier_code` 가 이미 UNIQUE 라 그대로 이어 붙는다. 🔴🔴 **실측에서 가장 중요했던 것: 셀 안에 줄바꿈이 있다**(메모·CS 이메일 — 「카톡으로 6시전까지 ⏎ 조나래 담당자님」). 「한 줄 = 한 공급사」로 자르면 그 공급사부터 통째로 어긋난다 → **줄이 공급사코드로 시작할 때만 새 공급사**로 보고 나머지 줄은 앞 공급사의 마지막 칸에 이어 붙인다. ★ 따옴표도 몇 군데 짝이 안 맞아 엄격한 CSV 파서는 오히려 실패한다 — 이 방식은 따옴표를 아예 안 본다. ★★ 붙여넣기는 **미리보기를 거쳐 저장한다**(몇 곳이 들어오나 · 콘솔 공급사 이름과 못 맞춘 곳은 어디인가). 통째로 갈아 끼우는 일이라 잘못 붙이면 되돌리기가 어렵다. ★★★ **이번 목록에 없는 공급사를 지우지 않는다** — 정산 시스템에서 한 줄이 잠깐 빠지는 일과 «거래가 끝난 것» 은 다르다. 화면이 「이번 목록에 없음」으로 말해 준다(synced_at 을 가장 최근 것과 견준다). ★ 검색은 **담긴 값 전체**에서 찾는다 — 사람은 공급사명으로도 담당자 이름으로도 전화 뒷자리로도 찾는다. 무엇으로 찾을지 우리가 정하지 않는다. 🔴 **개인정보** — 담당자 이름·휴대폰·메일·계좌번호·사업자번호가 한 표에 들어온다. ①**주간 백업 마스킹을 «같이» 넣었다**(`tools/mask_dump.py` — data/raw 통째로 비우기). 표를 더하면 그 스크립트가 밀리는 것이 이 프로젝트의 되풀이되는 함정이고(2026-08-31 두 주 연속 실패), 이번에는 표를 만드는 그 자리에서 함께 했다. 자체 검사도 통과했다. ②읽기는 콘솔 등록자, **쓰기는 master** 다. ③⚠ **정산·계좌 칸은 화면이 master 에게만 그린다** — jsonb 한 칸이라 DB 로는 칼럼을 못 자른다. **이 경계가 맞는지는 제니 확인이 필요하다.** ★ dev SQL 적용 완료(`sql/supplier_contacts.sql`). ⏳ 상품 정보 «거래중 총 공급사» 모달의 연락망 탭은 다음 판. ★ dev 전용. -->
 <!-- v20260908s_products_light -->
 <!-- (2026-09-08) 상품 정보 화면 넷(제니). ①**«마지막 동기화» 문구를 권한 상관없이 보여 준다.** 그전에는 화면도 조회도 master 로 막혀 있었다(표의 RLS 도 master 전용이라 화면만 풀면 «동기화 기록 없음» 이라는 거짓말이 된다). → 읽기 정책을 **콘솔 등록자 전원**으로 열고(`sql/ops_sync_status_read_all.sql` · dev 적용 완료) 화면의 두 자리(조회·표시)에서 master 판정을 걷었다. ★★★ **이 화면을 매일 보는 사람이 상담원인데 master 만 보게 해 두면 «동기화가 멈추면 카드가 스스로 눈에 띈다» 는 장치가 절반만 작동한다** — 2026-08-18 에 8일간 아무도 몰랐던 그 일이다. 담는 것은 «언제 돌았고 성공했나» 뿐이고 쓰기는 그대로 워크플로(service_role)만이다. ②**«거래중 총 공급사» 카드에 마우스를 올리면 글자가 사라지던 것** — hover 배경이 `#1a2e55`(어두운 남색)로 박혀 있어 라이트에서 «어두운 판 + 어두운 글자» 가 됐다 → `--hover`. ③**모달 «공급사 관리» 제목이 안 보이던 것** — `#fff` 로 박혀 있었다. 09-07 에 모달 머리말 띠를 `--panel-bg` 로 옮겨 라이트에서 옅어졌는데, **그 위의 글자를 같이 안 옮겼다**(배경과 글자는 한 쌍이다 — 오늘만 세 번째다) → `--text`. ④**탭 줄이 어색하게 어둡던 것** — 줄 배경 `#0f1933`·고른 탭 `#162244`·고른 탭 글자 `#fff` 셋 다 박혀 있었다. 뜻대로 옮긴다: 줄은 «한 단 들어간 바탕»(`--bg`), 고른 탭은 «앞으로 나온 판»(`--card`), 글자는 `--text`. **뜻으로 적으면 두 모드가 저절로 맞는다.** ⑤배송비 관리의 «구매금액 조건·메모» 가 못 쓰는 칸일 때 배경이 `#1a2240` 이었다 → `--panel-bg`(다크는 바탕보다 밝고, 라이트는 흰 칸보다 어둡다 — 두 모드에서 «잠긴 칸» 으로 읽힌다). ★ dev 전용. -->
 <!-- v20260908r_field_tab_and_notes -->
@@ -5984,8 +5986,276 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false}){
 
 
 // ── SUPPLIERS MANAGEMENT PAGE ───────────────────
-function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
+// ══ 공급사 «연락망» ══════════════════════════════════════════════════════════
+// 제니 2026-09-08: 「정산 시스템에 있는 걸 그대로 복붙 형태로 저장. 주 1회 전체를
+//   다시 붙여 수기 업데이트. 공급사 검색 시 그 공급사의 연락망이 나오는 방식.」
+//
+// ★★★ **붙여넣는 표를 우리가 만들지 않았다** — 칸이 33개이고 언제든 늘거나 이름이
+//   바뀐다. 그래서 칸마다 코드를 두지 않고 **머리글 이름을 그대로 키로** 담는다
+//   (supplier_contacts.data jsonb). 원본 한 줄(raw)도 함께 둬서, 우리가 못 알아본
+//   칸이 있어도 값 자체는 잃지 않는다.
+//
+// 🔴🔴 **셀 안에 줄바꿈이 있다**(메모·CS 이메일). 실측한 표에서 실제로 그렇다 —
+//   「카톡으로 6시전까지 ⏎ 조나래 담당자님」처럼. 그래서 «한 줄 = 한 공급사» 로
+//   자르면 그 공급사부터 통째로 어긋난다.
+//   → **줄이 «공급사코드» 로 시작할 때만 새 공급사**로 본다(S + 7자). 나머지 줄은
+//     앞 공급사의 마지막 칸에 이어 붙인다.
+//   ★ 따옴표가 몇 군데 짝이 안 맞아(…nate.com") 엄격한 CSV 파서는 오히려 실패한다.
+//     이 방식은 따옴표를 아예 안 본다.
+const SUP_CODE_RE = /^S[0-9A-Z]{7}\t/;
+// 붙여넣은 글 → [{code, name, cells:{머리글:값}, raw}]
+// ★ 머리글 줄이 있으면 그것을 칸 이름으로 쓰고, 없으면 아래 기본 이름을 쓴다 —
+//   제니가 머리글을 빼고 붙일 수도 있다. 그때 칸이 이름 없이 사라지면 안 된다.
+const SUP_CONTACT_COLS_DEFAULT = ['공급사코드','공급사명','담당자','브랜드명','판매상태',
+  '정산주기','정산 담당자','정산 연락처','정산 이메일','세금계산서 이메일','사업자번호',
+  '상호명','대표자','은행명','은행코드','계좌번호','예금주','사업장주소','업태','종목',
+  'CS 담당자','CS 연락처','CS 이메일','소통방법','메모','비상 이메일','비상 연락처',
+  '발주 담당자','발주 연락처','발주 이메일','영업 담당자','영업 담당자 연락처','영업 담당자 이메일'];
+// ★★ 화면이 «가리는» 칸 — 계좌·사업자번호·정산은 master 만 본다(제니에게 확인 필요).
+//   DB 는 jsonb 한 칸이라 칼럼으로 못 자른다 → **가리는 일은 화면이 한다.**
+const SUP_CONTACT_MONEY_COLS = ['사업자번호','상호명','대표자','은행명','은행코드',
+  '계좌번호','예금주','사업장주소','업태','종목','정산 담당자','정산 연락처',
+  '정산 이메일','세금계산서 이메일','정산주기'];
+function csParseSupplierContacts(text){
+  const lines = String(text||'').replace(/\r\n?/g,'\n').split('\n');
+  let cols = null;
+  const rows = [];
+  lines.forEach(line=>{
+    if(!line.trim() && !rows.length) return;
+    if(SUP_CODE_RE.test(line)){
+      const cells = line.split('\t');
+      rows.push({raw:line, cells});
+      return;
+    }
+    // 머리글 줄 — 「공급사코드」로 시작하는 첫 줄
+    if(!cols && line.indexOf('공급사코드')===0){ cols = line.split('\t').map(s=>s.trim()); return; }
+    // 이어지는 줄 — 앞 공급사의 «마지막 칸» 에 줄바꿈째 붙인다.
+    if(rows.length){
+      const r = rows[rows.length-1];
+      r.raw += '\n'+line;
+      const parts = line.split('\t');
+      r.cells[r.cells.length-1] += '\n'+parts[0];
+      for(let i=1;i<parts.length;i++) r.cells.push(parts[i]);
+    }
+  });
+  const names = cols && cols.length ? cols : SUP_CONTACT_COLS_DEFAULT;
+  return rows.map(r=>{
+    const o = {};
+    names.forEach((n,i)=>{ const v=(r.cells[i]==null?'':String(r.cells[i])).trim(); if(v) o[n]=v; });
+    return {code:(r.cells[0]||'').trim(), name:(r.cells[1]||'').trim(), cells:o, raw:r.raw};
+  }).filter(r=>r.code);
+}
+
+// ── 연락망 탭 ────────────────────────────────────────────────────────────────
+// ★★ 붙여넣기는 **미리보기를 거쳐 저장한다.** 통째로 갈아 끼우는 일이라 잘못 붙이면
+//   되돌리기가 어렵다 — 몇 곳이 들어오고 콘솔 공급사와 몇 곳이 이어지는지 먼저 보인다.
+// ★★★ **이번 목록에 없는 공급사를 지우지 않는다.** 정산 시스템에서 한 줄이 잠깐
+//   빠지는 일과 «거래가 끝난 것» 은 다르다. 화면이 «이번 목록에 없음» 으로 말해 준다.
+function SupplierContactsTab({isMaster, supplierNames, currentUserEmail}){
+  const [rows,setRows]     = useState(null);   // 저장돼 있는 연락망
+  const [q,setQ]           = useState('');
+  const [open,setOpen]     = useState(null);   // 펼쳐 보는 code
+  const [paste,setPaste]   = useState('');
+  const [prev,setPrev]     = useState(null);   // 미리보기
+  const [busy,setBusy]     = useState(false);
+  const [showPaste,setShowPaste] = useState(false);
+
+  const load = async ()=>{
+    const {data,error} = await sb.from('supplier_contacts')
+      .select('code,name,data,synced_at,updated_at,updated_by').order('name');
+    if(sbFail('공급사 연락망 조회', error)){ setRows([]); return; }
+    setRows(data||[]);
+  };
+  useEffect(()=>{ load(); },[]);
+
+  // 붙여넣은 글을 읽어 «무엇이 들어오는가» 를 먼저 보여 준다.
+  const makePreview = ()=>{
+    const parsed = csParseSupplierContacts(paste);
+    // ★ 콘솔이 아는 공급사 이름과 맞춰 본다 — 이름이 다르면 사람이 알아야 한다.
+    //   ★ 못 맞춰도 «저장은 한다» — 콘솔에 아직 없는 공급사일 수 있고,
+    //     연락망은 공급사 표와 별개로 그 자체가 값이다.
+    const known = new Set((supplierNames||[]).map(n=>String(n).trim()));
+    const unmatched = parsed.filter(r=>r.name && !known.has(r.name)).map(r=>r.name);
+    setPrev({rows:parsed, unmatched});
+  };
+  const save = async ()=>{
+    if(!prev || !prev.rows.length) return;
+    if(!window.confirm(prev.rows.length+'곳의 연락망을 저장합니다.\n\n'
+      +'같은 공급사코드가 있으면 덮어씁니다.\n이번 목록에 없는 공급사는 지우지 않습니다.\n\n진행할까요?')) return;
+    setBusy(true);
+    const now = new Date().toISOString();
+    const payload = prev.rows.map(r=>({code:r.code, name:r.name||null, data:r.cells,
+      raw:r.raw, synced_at:now, updated_at:now, updated_by:currentUserEmail||null}));
+    // ★ 한 번에 다 보내면 요청이 너무 커진다 — 200곳씩 나눠 보낸다.
+    let done = 0, failed = null;
+    for(let i=0;i<payload.length && !failed;i+=200){
+      const {error} = await sb.from('supplier_contacts')
+        .upsert(payload.slice(i,i+200), {onConflict:'code'});
+      if(error) failed = error; else done += Math.min(200, payload.length-i);
+    }
+    setBusy(false);
+    if(failed){ sbFail('연락망 저장', failed, {write:true}); return; }
+    toast(done+'곳의 연락망을 저장했습니다.','ok');
+    setPaste(''); setPrev(null); setShowPaste(false);
+    load();
+  };
+
+  if(rows===null) return <div style={{fontSize:12,color:'var(--sub)',padding:'30px 0'}}>읽는 중…</div>;
+
+  // ★ 검색은 «담긴 값 전체» 에서 찾는다 — 사람은 공급사명으로도, 담당자 이름으로도,
+  //   전화번호 뒷자리로도 찾는다. 무엇으로 찾을지 우리가 정하지 않는다.
+  const kw = q.trim().toLowerCase();
+  const list = !kw ? rows : rows.filter(r=>{
+    if(String(r.code||'').toLowerCase().indexOf(kw)>=0) return true;
+    if(String(r.name||'').toLowerCase().indexOf(kw)>=0) return true;
+    const d = r.data||{};
+    return Object.keys(d).some(k=>String(d[k]).toLowerCase().indexOf(kw)>=0);
+  });
+  // 이번 붙여넣기에 들어 있었나 — 가장 최근 synced_at 과 견준다.
+  const newest = rows.reduce((m,r)=>{ const t=r.synced_at||''; return t>m?t:m; },'');
+  const card = {background:'var(--card)',border:'1px solid var(--border)',
+    borderRadius:10,padding:'14px 16px',marginBottom:14};
+  const inp = {width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
+    border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+    fontFamily:'inherit',boxSizing:'border-box'};
+
+  return (
+    <div>
+      <div style={{...card,fontSize:11.5,color:'var(--sub)',lineHeight:1.75}}>
+        정산 시스템의 <b>연락망 표를 통째로</b> 붙여넣어 두는 곳입니다 — 공급사코드로 갈라 담고,
+        공급사를 검색하면 그 공급사의 연락망이 나옵니다.
+        <br/>★ 주 1회 전체를 다시 붙이면 됩니다. <b>같은 코드는 덮어쓰고, 이번 목록에 없는
+        공급사는 지우지 않습니다</b>(「이번 목록에 없음」으로 표시됩니다).
+        {!isMaster && <><br/>★ <b>정산·계좌 정보는 master 만 볼 수 있습니다.</b></>}
+      </div>
+
+      {isMaster && (
+        <div style={card}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:showPaste?10:0}}>
+            <div style={{fontSize:12.5,fontWeight:700,color:'var(--text)',flex:1}}>연락망 붙여넣기</div>
+            <button onClick={()=>{ setShowPaste(v=>!v); setPrev(null); }}
+              style={{padding:'6px 13px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+                cursor:'pointer',background:'transparent',border:'1px solid var(--border)',
+                color:'var(--sub)'}}>{showPaste?'닫기':'열기'}</button>
+          </div>
+          {showPaste && (
+            <>
+              <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.7,marginBottom:8}}>
+                머리글 줄까지 <b>그대로</b> 붙여 주세요. 메모처럼 <b>칸 안에 줄바꿈이 있어도</b> 됩니다 —
+                줄이 공급사코드(S…)로 시작할 때만 새 공급사로 봅니다.
+              </div>
+              <textarea value={paste} onChange={e=>setPaste(e.target.value)} rows={7}
+                placeholder="정산 시스템에서 복사한 연락망을 여기에 붙여넣으세요"
+                style={{...inp,fontFamily:MONO,lineHeight:1.7,resize:'vertical'}}/>
+              <div style={{display:'flex',gap:8,marginTop:8,alignItems:'center'}}>
+                <button onClick={makePreview} disabled={!paste.trim()}
+                  style={{padding:'6px 13px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+                    cursor:paste.trim()?'pointer':'default',background:'transparent',
+                    border:'1px solid var(--border)',
+                    color:paste.trim()?'var(--text)':'var(--sub)'}}>먼저 확인하기</button>
+                <div style={{flex:1}}></div>
+                {prev && (
+                  <button onClick={save} disabled={busy||!prev.rows.length}
+                    style={{padding:'6px 15px',borderRadius:7,fontSize:11.5,fontWeight:600,
+                      fontFamily:'inherit',border:'none',color:'#fff',
+                      background: prev.rows.length?'var(--primary)':'var(--border)',
+                      cursor:(busy||!prev.rows.length)?'default':'pointer'}}>
+                    {busy?'저장 중…':prev.rows.length+'곳 저장'}</button>
+                )}
+              </div>
+              {prev && (
+                <div style={{marginTop:10,fontSize:11.5,color:'var(--text)',lineHeight:1.8}}>
+                  읽은 공급사 <b>{prev.rows.length}곳</b>
+                  {prev.unmatched.length>0 && (
+                    <div style={{color:'var(--warn-ink)',marginTop:4}}>
+                      ⚠ 콘솔 공급사 이름과 못 맞춘 곳 <b>{prev.unmatched.length}곳</b> — 그래도 저장됩니다.
+                      <div style={{color:'var(--sub)',marginTop:3,fontSize:11}}>
+                        {prev.unmatched.slice(0,12).join(' · ')}{prev.unmatched.length>12?' …':''}</div>
+                    </div>
+                  )}
+                  {prev.rows.length===0 && (
+                    <div style={{color:'var(--red-ink)'}}>한 곳도 못 읽었습니다 — 공급사코드(S…)로 시작하는 줄이 있는지 봐 주세요.</div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:10}}>
+        <input value={q} onChange={e=>setQ(e.target.value)}
+          placeholder="공급사명 · 담당자 · 연락처 · 메일 어느 것으로든 검색"
+          style={{...inp,maxWidth:420}}/>
+        <div style={{fontSize:11.5,color:'var(--sub)'}}>
+          {rows.length}곳 저장됨{kw && <> · <b style={{color:'var(--text)'}}>{list.length}곳</b> 찾음</>}
+        </div>
+      </div>
+
+      {list.length===0 ? (
+        <div style={{fontSize:12,color:'var(--sub)',padding:'40px 0',textAlign:'center'}}>
+          {rows.length===0 ? '아직 붙여넣은 연락망이 없습니다.' : '찾은 공급사가 없습니다.'}
+        </div>
+      ) : list.slice(0,200).map(r=>{
+        const d = r.data||{};
+        const stale = newest && r.synced_at && r.synced_at < newest;
+        const keys = Object.keys(d).filter(k=>k!=='공급사코드' && k!=='공급사명')
+          .filter(k=> isMaster || SUP_CONTACT_MONEY_COLS.indexOf(k)<0);
+        return (
+          <div key={r.code} style={{...card,marginBottom:8,padding:'11px 14px'}}>
+            <div onClick={()=>setOpen(o=>o===r.code?null:r.code)}
+              style={{display:'flex',alignItems:'center',gap:9,cursor:'pointer'}}>
+              <span style={{fontFamily:MONO,fontSize:11,color:'var(--sub)'}}>{r.code}</span>
+              <span style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>{r.name||'—'}</span>
+              {d['판매상태'] && <CsChipTiny text={d['판매상태']}/>}
+              {d['소통방법'] && <CsChipTiny text={d['소통방법']}/>}
+              {stale && <CsChipTiny text="이번 목록에 없음" warn/>}
+              <div style={{flex:1}}></div>
+              <span style={{fontSize:11,color:'var(--sub)'}}>{open===r.code?'접기 ∧':'펼치기 ∨'}</span>
+            </div>
+            {open===r.code && (
+              <div style={{marginTop:10,display:'grid',gridTemplateColumns:'max-content 1fr',
+                columnGap:14,rowGap:6,alignItems:'baseline'}}>
+                {keys.map(k=>(
+                  <React.Fragment key={k}>
+                    <span style={{fontSize:11,color:'var(--sub)',whiteSpace:'nowrap'}}>{k}</span>
+                    <span style={{fontSize:12,color:'var(--text)',whiteSpace:'pre-wrap',
+                      overflowWrap:'anywhere',lineHeight:1.7}}>{d[k]}</span>
+                  </React.Fragment>
+                ))}
+                {!isMaster && (
+                  <>
+                    <span style={{fontSize:11,color:'var(--sub)'}}>정산 · 계좌</span>
+                    <span style={{fontSize:11,color:'var(--sub)'}}>master 만 볼 수 있습니다.</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {list.length>200 && (
+        <div style={{fontSize:11,color:'var(--sub)',padding:'8px 0'}}>
+          …{list.length-200}곳 더 있습니다. 검색으로 좁혀 주세요.
+        </div>
+      )}
+    </div>
+  );
+}
+// 작은 알약 하나 — 연락망 카드에서 «판매상태·소통방법» 같은 한 낱말을 보여 준다.
+function CsChipTiny({text, warn}){
+  return (
+    <span style={{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:9,
+      whiteSpace:'nowrap', lineHeight:1.5,
+      background: warn?'rgba(246,173,9,.16)':'var(--hover)',
+      color: warn?'var(--warn-ink)':'var(--sub)'}}>{text}</span>
+  );
+}
+
+function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserEmail=''}){
   const canManage = isMaster || isManager;
+  // 탭 — 기존 화면은 «기본 정보», 새로 만든 것은 «연락망»(제니 2026-09-08).
+  const [supTab,setSupTab]=useState('basic');
   const [suppliers,setSuppliers]=useState([]);     // [{name,channel,fee,cond,threshold,memo}]
   const [productCounts,setProductCounts]=useState({}); // {supplier_name: count}
   const [loading,setLoading]=useState(true);
@@ -6458,7 +6728,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
           </div>
           <div style={{fontSize:11,color:'var(--sub)',marginTop:5}}>ℹ️ 카페24에 등록된 공급사 data 전체를 가져옵니다.</div>
         </div>
-        {canManage&&(
+        {canManage&&supTab==='basic'&&(
           <label style={{display:'inline-flex',alignItems:'center',gap:6,padding:'8px 14px',background:'#2A478D',border:'1px solid #2A478D',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
             📤 카페24 CSV 업로드
             <input type="file" accept=".csv" style={{display:'none'}}
@@ -6467,6 +6737,25 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
         )}
       </div>
 
+      {/* ── 탭 (제니 2026-09-08) ────────────────────────────────────────
+          기존 화면을 「기본 정보」로 두고 「연락망」을 새로 만들었다.
+          ★ 꼴은 CS 설정 탭과 같다 — 콘솔 안에서 «탭» 은 한 모양이어야 한다. */}
+      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
+        {[{k:'basic',label:'기본 정보'},{k:'contacts',label:'연락망'}].map(t=>(
+          <div key={t.k} onClick={()=>setSupTab(t.k)}
+            style={{padding:'6px 14px',borderRadius:16,fontSize:12,cursor:'pointer',
+              userSelect:'none',
+              border:'1px solid '+(supTab===t.k?'var(--accent)':'var(--border)'),
+              background: supTab===t.k?'var(--accent)':'transparent',
+              color: supTab===t.k?'var(--on-accent)':'var(--sub)',
+              fontWeight: supTab===t.k?700:400}}>{t.label}</div>
+        ))}
+      </div>
+
+      {supTab==='contacts' ? (
+        <SupplierContactsTab isMaster={isMaster} currentUserEmail={currentUserEmail}
+          supplierNames={suppliers.map(s=>s.name)}/>
+      ) : (<>
       {/* KPI */}
       {/* ── KPI 카드 = 필터 버튼 (2026-08-31 제니 요청) ─────────────────────────
           숫자만 보여 주면 «그래서 어느 공급사인데?» 가 남는다. 눌러서 그 목록으로
@@ -6893,6 +7182,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false}){
           </div>
         </div>
       )}
+      </>)}
     </div>
   );
 }
@@ -27495,7 +27785,7 @@ function App() {
           onMenuSaved={()=>csLoadSetting('menu_roles').then(r=>setMenuCfg((r&&r.value)||null))}
           onActionSaved={()=>csLoadSetting('action_roles').then(r=>setActionCfg((r&&r.value)||null))}/>}
         {page==='products'&&<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
-        {page==='suppliers'&&<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager}/>}
+        {page==='suppliers'&&<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager} can={canAction}/>}
         {page==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='csTickets'&&<CsTicketsPage currentUserEmail={session.user.email} role={role}
