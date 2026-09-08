@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- v20260908zv_var_pick -->
+<!-- (2026-09-08) 접수 문안 설정 셋. ①**「넣을 수 있는 값」을 두 칸으로 나눴다**(제니: 「세로로 길어졌는데 가로 여백이 있으니 이분할」). 판은 860px 인데 이름·설명이 그 절반도 안 쓰고 있었다 — **남는 가로를 쓰면 세로가 반이 되고, 세로가 짧아야 «무엇이 있나» 를 한눈에 훑는다.** ★ 두 덩어리를 «각자» 격자로 뒀다: 한 격자에 네 칸을 세우면 좌우 이름 열의 폭이 서로 끌려다녀 둘 다 삐뚤어진다. ②**메일 「표의 열」에는 «지금 쓸 수 있는 값» 만 둔다**(제니) — 연동이 꺼진 카페24 값은 골라 봐야 표에 「—」로만 찍힌다. **고를 수 있는데 안 되는 것이 목록에 있으면 그 목록을 못 믿게 된다.** ③**그 자리를 네이티브 select 에서 콘솔 목록 판으로 바꿨다**(제니: 「변수 우측 설명은 좀 더 연하게, 변수명이랑 구분되게」). ★★★ `<option>` «안» 의 일부만 색을 바꾸는 것은 **브라우저가 무시한다**(옵션 하나에 한 색뿐이다) — 요청을 그대로 들으려면 그 조각을 바꿀 수밖에 없었다. 이제 변수명은 진하게(MONO), 설명은 한 단 연하게 선다. ★ 검색칸은 안 뒀다: 값이 «이름 그대로» 라 훑는 편이 빠르고, 검색칸이 있으면 지금 값이 지워진 채 창을 닫는 사고가 난다(CsPick 이 그 모양이라 안 썼다). ★ 지금 값이 목록에 없으면(연동을 껐다) **지우지 않고 그대로 이고 「⚠ 연동 꺼짐」으로 적는다.** ★ dev 전용. -->
+<!-- v20260908zu_draft_vars_2col -->
+<!-- (2026-09-08) 접수 문안 설정 둘. ①**「넣을 수 있는 값」을 두 칸으로 나눴다**(제니: 「값이 많이 추가되어 세로로 길어졌는데 가로 여백이 있으니 이분할」). 판은 860px 인데 치환자 이름과 설명이 그 절반도 안 쓰고 있었다 — **남는 가로를 쓰면 세로가 반이 되고, 세로가 짧아야 «무엇이 있나» 를 한눈에 훑는다.** ★ 두 덩어리를 «각자» 격자로 뒀다: 한 격자에 네 칸을 세우면 왼쪽 이름 열과 오른쪽 이름 열의 폭이 서로 끌려다녀 둘 다 삐뚤어진다. ②**메일 「표의 열」 드롭박스에는 «지금 쓸 수 있는 값» 만 둔다**(제니). 카페24 값 중 연동이 꺼진 것은 골라 봐야 표에 「—」로만 찍힌다 — **고를 수 있는데 안 되는 것이 목록에 있으면 그 목록을 못 믿게 된다.** 켜는 길은 위쪽 「넣을 수 있는 값」이 «연동 꺼짐» 으로 알려 준다. ★ 지금 들어 있는 값이 목록에서 빠졌으면(연동을 끈 경우) **그 줄을 «⚠ 연동 꺼짐» 으로 남긴다** — select 가 첫 항목으로 조용히 바꿔 버리면 안 된다. ★ dev 전용. -->
 <!-- v20260908zt_draft_vars_c24 -->
 <!-- (2026-09-08) **«운송장만 특별 취급» 을 걷어내고 규칙으로 바꿨다**(제니: 「문안에 송장을 넣는 것도 필수가 아니라 내가 선택해서 설정하는 거라, 꼭 운송장이 아니더라도 내가 문안에 넣고자 한다면… **문안 설정에서 변수를 추가하고 카페24 연동에서도 값을 연동하도록 2번 설정을 거쳐서** 작업하는 게 맞는 것 같다」). ★★★ 맞는 말이다 — 직전 판에서 나는 송장번호를 `always` 로 박았는데, 그러면 **다음에 다른 값을 넣고 싶을 때 또 나를 불러야 한다.** 규칙은 «운송장은 늘» 이 아니라 **«내가 고른 것이 담긴다»** 여야 한다. → always 를 되돌렸다. ①**카페24 연동 목록의 값이 전부 «문안 치환자» 가 된다** — 이름은 라벨 그대로(`{송장번호}`·`{주문일}`·`{결제수단}`…). 그전에는 넣을 수 있는 카페24 값이 `{운송장}` 하나뿐이라 «꼭 운송장이 아니더라도» 가 애초에 불가능했다. ★ 이미 있는 이름과 겹치면 더하지 않는다 — **이름을 고치는 일과 남의 글을 깨뜨리는 일은 다르다.** ②**두 설정이 어긋나면 양쪽 화면이 말해 준다.** 두 설정을 가른 대가는 «한쪽만 하면 조용히 안 나오는 것» 이고, 그것이 오늘 운송장에서 실제로 일어난 일이다(값이 있는데 줄이 사라졌다). → 문안 설정에는 「문안에 썼는데 연동에서 꺼진 값 N개」 경고 + 치환자 목록에 「연동 꺼짐」 표시 + 저장할 때 한 번 더. 카페24 연동에는 「문안이 씀」 뱃지(꺼져 있으면 ⚠). **조용한 실패를 남기지 않는 것이 두 설정을 가른 조건이다.** ★ dev 전용. -->
 <!-- v20260908zs_draft_tracking -->
@@ -21197,6 +21201,64 @@ function CsPaneBar({onMouseDown}){
 //   치환자를 잘못 적으면 저장한 뒤 공급사에 보낼 때야 알게 되는데, 그건 되돌릴 수 없다.
 //   ★ 미리보기의 견본 건은 제니가 준 문안 예시 그대로다(김하늘/김바다) — 무엇이 어디에
 //     들어가는지 한눈에 맞춰 볼 수 있다.
+// ── 치환자 고르기 (제니 2026-09-08: 「변수명이랑 설명이 구분되게 연하게」) ──────
+// ★★★ 네이티브 `<select>` 로는 못 한다 — `<option>` 안의 «일부만» 색을 바꾸는 것을
+//   브라우저가 무시한다(옵션 하나에 한 가지 색뿐이다). 그래서 이 한 자리만 콘솔이
+//   이미 쓰는 «목록 판» 꼴로 바꾼다.
+// ★★ 검색칸을 두지 않는다 — 값이 «이름 그대로» 라 훑어서 찾는 편이 빠르고, 검색칸을
+//   두면 지금 값이 지워진 채로 창을 닫는 사고가 생긴다(CsPick 이 그 모양이라 안 썼다).
+// ★ 지금 값이 목록에 없으면(연동을 껐다) **그 값을 지우지 않고 그대로 이고 있는다.**
+//   고르지 않은 것을 화면이 조용히 바꾸면 안 된다.
+function CsVarPick({value, options, onChange, style}){
+  const [open,setOpen] = useState(false);
+  const boxRef = useRef(null);
+  useEffect(()=>{
+    if(!open) return;
+    const away = (e)=>{ if(boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
+    const esc  = (e)=>{ if(e.key==='Escape') setOpen(false); };
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', esc);
+    return ()=>{ document.removeEventListener('mousedown', away);
+                 document.removeEventListener('keydown', esc); };
+  },[open]);
+  const cur = options.find(o=>o.k===value);
+  return (
+    <div ref={boxRef} style={{position:'relative',...(style||{})}}>
+      <button type="button" onClick={()=>setOpen(o=>!o)}
+        style={{width:'100%',boxSizing:'border-box',display:'flex',alignItems:'baseline',
+          gap:7,textAlign:'left',fontSize:12,padding:'7px 9px',background:'var(--bg)',
+          border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,
+          fontFamily:'inherit',cursor:'pointer'}}>
+        <span style={{fontFamily:MONO,whiteSpace:'nowrap'}}>{'{'+value+'}'}</span>
+        <span style={{flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',
+          whiteSpace:'nowrap',fontSize:11,color:'var(--sub)',opacity:.72}}>
+          {cur ? cur.d : '⚠ 연동 꺼짐'}</span>
+        <span style={{color:'var(--sub)',fontSize:10}}>▾</span>
+      </button>
+      {open && (
+        <div style={{position:'absolute',top:'100%',left:0,right:0,marginTop:3,zIndex:60,
+          maxHeight:280,overflowY:'auto',background:'var(--card)',
+          border:'1px solid var(--border)',borderRadius:7,
+          boxShadow:'0 10px 24px rgba(11,22,45,.38)'}}>
+          {options.map(o=>(
+            <div key={o.k} onClick={()=>{ onChange(o.k); setOpen(false); }}
+              style={{display:'flex',alignItems:'baseline',gap:8,padding:'6px 10px',
+                cursor:'pointer',
+                background: o.k===value ? 'var(--hover)' : 'transparent'}}>
+              {/* ★ 변수명은 진하게, 설명은 «한 단 연하게» — 두 가지를 한 줄에 두면
+                  같은 밝기일 때 어디까지가 이름인지 눈이 매번 다시 가른다. */}
+              <span style={{fontFamily:MONO,fontSize:11.5,color:'var(--text)',
+                whiteSpace:'nowrap'}}>{'{'+o.k+'}'}</span>
+              <span style={{flex:1,minWidth:0,fontSize:10.5,lineHeight:1.5,
+                color:'var(--sub)',opacity:.72}}>{o.d}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CsDraftTplSettings({currentUserEmail}){
   const SAMPLE = {
     id:0, order_id:'20260908-0001234', order_item_code:'20260908-0001234-01',
@@ -21270,6 +21332,8 @@ function CsDraftTplSettings({currentUserEmail}){
   const prevParts   = withDraft(()=>csDraftMailParts(SAMPLE_EV));
   // ★ «지금 고치고 있는 틀» 을 기준으로 잰다 — 저장 뒤에야 알려 주면 이미 늦다.
   const missC24 = csDraftUsedC24(d).filter(id=>c24On.indexOf(id)<0);
+  // 표의 열에서 «지금 고를 수 있는» 값 — 카페24 값은 연동이 켜진 것만이다.
+  const pickable = CS_DRAFT_VARS_ALL.filter(v=>!v.c24 || c24On.indexOf(v.c24)>=0);
 
   const dirty = JSON.stringify(norm(row && row.value)) !== JSON.stringify(d);
   const save = async ()=>{
@@ -21321,22 +21385,37 @@ function CsDraftTplSettings({currentUserEmail}){
         {/* ★ 설명이 «예)» 까지 담으면서 길어졌다 — 칩으로 늘어놓으면 줄이 들쭉날쭉해
             훑을 수가 없다. **치환자 | 설명 두 칸으로 세운다**: 왼쪽 열이 세로로 맞으면
             «무엇이 있나» 를 이름만으로 먼저 훑고, 필요한 것만 오른쪽을 읽게 된다. */}
-        <div style={{display:'grid',gridTemplateColumns:'max-content 1fr',
-          columnGap:14,rowGap:5,alignItems:'baseline'}}>
-          {CS_DRAFT_VARS_ALL.map(v=>{
-            // ★ 카페24 값은 «연동에서 켜야 담기는» 것이라, 지금 켜져 있는지를 그 자리에서
-            //   말해 준다. 이름만 늘어놓으면 「썼는데 왜 안 나오지」를 여기서 못 푼다.
-            const need = !!v.c24 && c24On.indexOf(v.c24)<0;
+        {/* ★★ 카페24 값을 치환자로 열면서 목록이 두 배로 길어졌다(제니 2026-09-08:
+            「세로로 길어졌는데 가로 여백이 있으니 이분할 해 달라」). 판은 860px 인데
+            치환자 이름과 설명은 그 절반도 안 쓰고 있었다 — **남는 가로를 쓰면 세로가
+            반이 되고, 세로가 짧아야 «무엇이 있나» 를 한눈에 훑는다.**
+            ★ 두 덩어리를 «각자» 격자로 둔다: 한 격자에 네 칸을 세우면 왼쪽 이름 열과
+              오른쪽 이름 열의 폭이 서로 끌려다녀 둘 다 삐뚤어진다. */}
+        <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)',
+          columnGap:22}}>
+          {[0,1].map(half=>{
+            const n = Math.ceil(CS_DRAFT_VARS_ALL.length/2);
+            const part = half===0 ? CS_DRAFT_VARS_ALL.slice(0,n) : CS_DRAFT_VARS_ALL.slice(n);
             return (
-            <React.Fragment key={v.k}>
-              <span style={{fontSize:11,fontFamily:MONO,padding:'2px 7px',borderRadius:5,
-                background:'var(--hover)',border:'1px solid var(--border)',
-                color:'var(--text)',whiteSpace:'nowrap',opacity:need?.6:1}}>{'{'+v.k+'}'}</span>
-              <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
-                {v.d}
-                {need && <b style={{color:'#F6AD09'}}> · 연동 꺼짐</b>}
-              </span>
-            </React.Fragment>
+            <div key={half} style={{display:'grid',gridTemplateColumns:'max-content minmax(0,1fr)',
+              columnGap:12,rowGap:5,alignItems:'baseline'}}>
+              {part.map(v=>{
+                // ★ 카페24 값은 «연동에서 켜야 담기는» 것이라, 지금 켜져 있는지를 그 자리에서
+                //   말해 준다. 이름만 늘어놓으면 「썼는데 왜 안 나오지」를 여기서 못 푼다.
+                const need = !!v.c24 && c24On.indexOf(v.c24)<0;
+                return (
+                <React.Fragment key={v.k}>
+                  <span style={{fontSize:11,fontFamily:MONO,padding:'2px 7px',borderRadius:5,
+                    background:'var(--hover)',border:'1px solid var(--border)',
+                    color:'var(--text)',whiteSpace:'nowrap',opacity:need?.6:1}}>{'{'+v.k+'}'}</span>
+                  <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
+                    {v.d}
+                    {need && <b style={{color:'#F6AD09'}}> · 연동 꺼짐</b>}
+                  </span>
+                </React.Fragment>
+                );
+              })}
+            </div>
             );
           })}
         </div>
@@ -21389,15 +21468,12 @@ function CsDraftTplSettings({currentUserEmail}){
                 정작 고르는 자리에는 없어서, 고르려면 위를 다시 봐야 했다.
                 ★ 이름은 그대로 두고 «보이는 글자» 만 늘린다 — 저장되는 값이자
                   줄글에 적는 치환자 이름이라, 이름을 바꾸면 이미 적어 둔 문안이 깨진다. */}
-            <select value={c.v} onChange={e=>setCol(i,'v',e.target.value)}
-              style={{...inp,flex:'1 1 300px'}}>
-              {CS_DRAFT_VARS_ALL.map(v=>(
-                <option key={v.k} value={v.k}>{'{'+v.k+'}'} — {v.d}</option>
-              ))}
-              {/* ★ 설정에 이미 «문장» 이 들어 있으면 그것도 고를 수 있게 남긴다 —
-                  목록에 없다고 select 가 첫 항목으로 조용히 바꿔 버리면 안 된다. */}
-              {!csDraftVar(c.v) && <option value={c.v}>{c.v}</option>}
-            </select>
+            {/* ★★ 고르는 자리에는 «지금 쓸 수 있는 값» 만 둔다(제니 2026-09-08).
+                카페24 값 중 연동이 꺼진 것은 골라 봐야 표에 「—」로만 찍힌다 —
+                **고를 수 있는데 안 되는 것이 목록에 있으면 그 목록을 못 믿게 된다.**
+                ★ 켜는 길은 위쪽 「넣을 수 있는 값」이 «연동 꺼짐» 으로 알려 준다. */}
+            <CsVarPick value={c.v} options={pickable}
+              onChange={v=>setCol(i,'v',v)} style={{flex:'1 1 300px'}}/>
             <button onClick={()=>moveCol(i,-1)} disabled={i===0} title="위로"
               style={{padding:'5px 8px',borderRadius:6,fontSize:11,fontFamily:'inherit',
                 background:'transparent',border:'1px solid var(--border)',
