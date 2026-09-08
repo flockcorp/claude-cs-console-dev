@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908c_refund_warn_photo_col -->
+<!-- (2026-09-08) 제니 확인·요청 둘. ①**카페24 실제 환불액이 «품목 몫» 이 아닐 때 경고 문구**(제니가 09-03 의 실측을 확인해 주고 정한 문구: 「품목 환불 값이 아니므로 품목 환불 금액을 확인해야 한다」). 카페24는 환불액을 **«환불 건» 단위로만** 주고 품목별로 쪼개 주지 않는다 — 품목 하나로 좁혀도 주문 전체 금액이 그대로 나온다. 그동안도 «넣지 않고 보여만» 주긴 했는데 **경고로 안 읽혔다**: 문구가 엣지 함수의 note 라 무엇이 뜰지 화면 쪽에서 모르고, 정작 «확인해야 한다» 는 말이 가장 흐린 회색으로 맨 아래에 있었다. → **한 줄로 못 박아 맨 위에 굵게 세우고(⚠ 포함) 근거를 아래 회색으로 내렸다.** 순서가 «해야 할 일 → 왜» 여야 하는 자리다. ★ 겸해 이 칸의 `#F6AD09`·`var(--green)` 셋을 `--warn-ink`·`--ok-ink` 로 옮겼다 — 흰 바탕에서 원래 값은 거의 안 읽힌다. ②**목록에 «사진 첨부 여부» 열**(제니: 「사진이 첨부된 티켓은 목록에서도 간단하게 알 수 있었으면 — 클립 이모지가 있다든지」). [보기 설정] 의 «티켓» 묶음에 들어간다(기본은 꺼짐 · 켜면 📎 와 장수). ★★★ **이 값은 티켓 표에 없다** — 사진은 이력(cs_ticket_events.attachments)에 붙으므로 목록을 그리기 전에 따로 세어 얹는다. **그리고 이력은 «메인 티켓에» 쌓인다**: `ticket_id === t.id` 로만 셌으면 **서브 티켓은 언제나 «없음»** 이 됐을 것이다 — 09-04 에 접수 사유에서 똑같이 밟은 자리라 처음부터 메인 번호로 셌다. ★ 본문(note)은 안 받는다(500줄 목록이 알아야 할 것은 «몇 장인가» 뿐이다). ★ `attachments` 는 `not null default '[]'` 라 «is null» 로는 한 줄도 못 거른다 — 빈 배열과 견주고, 그 필터가 안 먹으면 필터 없이 한 번 더 물어본다. 세는 데 실패해도 목록은 그대로 그린다. 🔴 **밟은 것: `&&` 의 오른쪽 «가지 안» 에 `{/* */}` 주석을 뒀다가 문법이 깨졌다** — 거기는 JSX 자식 자리가 아니라 식 자리다. 09-07 에 삼항에서 같은 것을 밟았고 또 밟았다. **주석은 괄호 «밖» 에.** ★ dev 전용. -->
 <!-- v20260908b_head_band_and_panel -->
 <!-- (2026-09-08) 제니 피드백 둘 — **두 건 다 «09-07 에 값을 한곳으로 모으다 놓친 자리»** 다. ①🔴 **다크에서 CS 관리 목록의 제목 행이 내용과 같은 색**(제니). 실측해 보니 `--head-bg` 가 **`--card` 와 글자 그대로 같은 `#162244`** 였다 — 목록의 줄이 카드 위에 그려지므로 밴드가 통째로 사라진다. ★★★ 어쩌다 이렇게 됐나: 09-07 에 흩어진 값을 쌍으로 묶으면서 **«모달·카드의 머리말 띠»(#162244)와 «목록의 제목 행»(#1d2e54)을 같은 것으로 봤다.** 원래 상품 정보·공급사 목록이 쓰던 값은 #1d2e54 다. **라이트에서는 --card 가 흰색이라 이 겹침이 드러나지 않아** 그대로 넘어갔다 — 한쪽 모드만 보고 «됐다» 하면 다른 쪽에서 이렇게 나온다. → `--head-bg:#1d2e54`(다크만). `--panel-bg` 는 «값을 안 담는 띠» 라 #162244 그대로 둔다. **«띠» 와 «제목 행» 은 다른 것이다.** ②**라이트에서 [⚙ 보기 설정] 패널만 통째로 다크**였다(제니: 「텍스트가 어두워졌는데 배경은 여전히 어두워서 글자가 안 보인다」). 이 판은 09-04 에 «화면 바탕과 갈라져 보이게» 하려고 값을 손으로 박아 둔 자리(#1E2B4E)라 팔레트가 바뀌어도 안 따라왔고, 안의 글자만 var(--text)/var(--sub) 라 함께 어두워졌다. ★ **--card 로 갈아 끼우지 않았다** — 라이트는 --bg(#F2F5FA)와 --card(#FFFFFF)가 가까워 흰 판만으로는 09-04 에 고쳤던 «화면에 뚫린 구멍» 이 그대로 돌아온다. 흰 판 + 또렷한 남색 테두리 + 짙은 그림자로 띄운다(토스트와 같은 판단). ★★ **판을 뒤집으면 그 «안» 을 전부 다시 본다** — 여섯을 다시 봤다: 구분선 · 버튼 테두리 · 체크박스 accentColor(#5B8DEF 의 «한 단계 밝게» 는 어두운 판에서만 맞는 방향이다) · 끌고 있는 줄의 배경 · [저장] 버튼(#3A63C4 는 흰 판 위에서 오히려 뜬다) · 노란 알림 글자(#F6AD09 는 흰 바탕에서 거의 안 읽힌다 → --warn-ink). 판 하나를 `P` 객체로 모아 두어 다음에 또 흩어지지 않게 했다. ★ dev 전용. -->
 <!-- v20260908a_light_contrast3 -->
@@ -17372,6 +17374,38 @@ function csAddrText(z,a1,a2){
 // ★★ 개인정보는 목록에서 «가려» 그린다(계좌번호 — csMaskAcct). 상세는 한 건을 열어
 //   보는 자리지만 목록은 여러 건이 한 화면에 깔린 채로 오래 떠 있는 자리다.
 //   이력에 가린 값을 적기로 한 것과 같은 계열이다.
+// ── 목록의 «사진 첨부 여부» — 티켓에 몇 장이 붙어 있나 (제니 2026-09-08) ──────────
+// ★★★ **이력은 «메인 티켓에» 쌓인다**(묶음 설계). 그래서 서브 티켓의 사진도 메인에
+//   달려 있다 — `ticket_id === t.id` 로만 세면 **서브는 언제나 «없음»** 이 된다.
+//   09-04 에 접수 사유에서 똑같이 밟았던 자리라 처음부터 메인 번호로 센다.
+//   **«어디에 쌓이는가» 를 정해 놓고 «어디서 읽는가» 를 그 규칙에 맞추지 않으면
+//   오류 없이 조용히 빈 값이 나간다.**
+// ★ 본문(note)은 안 받는다 — 목록이 알아야 할 것은 «몇 장인가» 뿐이고, 500줄짜리
+//   목록에서 이력 본문까지 끌어오면 화면이 뜨는 데 그만큼 걸린다.
+// ★ 사진이 붙은 줄만 받는다(attachments 는 not null default '[]' 라 «is null» 로는
+//   하나도 못 거른다 — 빈 배열과 견줘야 한다). 이 필터를 DB 가 못 알아들으면
+//   조용히 «사진 0장» 이 되어 버리므로, 그때는 필터 없이 한 번 더 물어본다.
+// ★ 세는 데 실패해도 목록은 그대로 그린다 — 곁다리 열 하나 때문에 화면이 비면 안 된다.
+async function csWithPhotoCount(list){
+  const put = (rows)=>{
+    const cnt = {};
+    (rows||[]).forEach(r=>{
+      const n = Array.isArray(r.attachments) ? r.attachments.length : 0;
+      if(n>0) cnt[r.ticket_id] = (cnt[r.ticket_id]||0) + n;
+    });
+    return list.map(t=>({...t, _photos: cnt[t.main_ticket_id || t.id] || 0}));
+  };
+  let {data,error} = await sb.from('cs_ticket_events')
+    .select('ticket_id,attachments').neq('attachments','[]');
+  if(error){
+    console.warn('[사진 첨부 세기] 빈 배열 필터가 안 먹어 전체로 다시 셉니다:', error.message);
+    const r2 = await sb.from('cs_ticket_events').select('ticket_id,attachments');
+    if(r2.error){ console.warn('[사진 첨부 세기] 실패:', r2.error.message); return list; }
+    data = r2.data;
+  }
+  return put(data);
+}
+
 const CS_COLS = {
   stage:     {label:'상태',  g:'티켓',  w:96,  cell:(t)=><CsStagePill stage={t.stage}/>,
               sv:(t)=>CS_STAGE_ORDER[t.stage] ?? 99},
@@ -17397,6 +17431,21 @@ const CS_COLS = {
   //     공백 하나가 글자 하나 폭이라, 그 둘만 걷어내도 13px 이 남는다.
   recheck:   {label:'리체크', g:'분류', w:88, cell:(t)=><CsRecheck at={t.recheck_at} stage={t.stage}/>,
               sv:(t)=>t.recheck_at||''},
+  // ★★ «사진 첨부 여부»(제니 2026-09-08: 「사진이 첨부된 티켓은 목록에서도 간단하게
+  //   알 수 있었으면 좋겠어 — 클립 이모지가 있다든지」).
+  // ★★★ 이 값은 **티켓 표에 없다** — 사진은 이력(cs_ticket_events.attachments)에 붙는다.
+  //   목록을 그리기 전에 따로 세어 `_photos` 로 얹어 둔다(load 참고). 화면에 계산을
+  //   두지 않는 이유는 목록이 500줄까지 그려지는 자리이기 때문이다.
+  // ★ 없는 건을 «빈칸» 으로 두지 않고 «—» 로 그린다 — 빈칸이면 «아직 안 읽었나» 로 읽힌다.
+  // ★ 이모지는 12px 이상으로 그린다(09-03 에 정한 것) — 그보다 작으면 획이 뭉개져
+  //   무슨 그림인지 안 보인다. 장수는 MONO 로 붙여 줄마다 같은 자리에 선다.
+  photos:    {label:'사진', plabel:'사진 첨부 여부', g:'티켓', w:60, align:'center',
+              cell:(t)=> (t._photos>0
+                ? <span title={t._photos+'장 첨부'} style={{fontSize:12,lineHeight:1}}>📎{t._photos>1
+                    ? <span style={{fontFamily:MONO,fontSize:10,marginLeft:1}}>{t._photos}</span>
+                    : null}</span>
+                : <span style={{color:'var(--sub)',opacity:.5}}>—</span>),
+              sv:(t)=>t._photos||0},
 
   // ── ① «주문» ────────────────────────────────────────────────────────
   // ★ 주문번호 둘은 고정폭 글꼴로 그린다 — 숫자·하이픈이 줄마다 같은 자리에 서야
@@ -18411,7 +18460,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
     const {data,error} = await sb.from('cs_tickets').select('*')
       .order('updated_at',{ascending:false}).limit(500);
     if(sbFail('CS 티켓 조회', error)) { setRows([]); return; }
-    setRows(data||[]);
+    setRows(await csWithPhotoCount(data||[]));
   };
   useEffect(()=>{ load(); },[]);
 
@@ -21270,24 +21319,40 @@ function CsRefundFetch({orderRef, current, onPick}){
 
       {err && <div style={{...box,color:'var(--red)'}}>{err}</div>}
 
+      {/* ★ 경고색은 --warn-ink 다 — 흰 바탕에서 #F6AD09 글자는 거의 안 읽힌다
+          (라이트 모드를 위해 09-07 에 만들어 둔 변수다). 초록도 같은 이유로 --ok-ink.
+          ⚠ 이 주석은 && 의 «오른쪽 가지 안» 에 두면 안 된다 — 거기는 JSX 자식 자리가
+            아니라 식(expression) 자리라 {/* */} 가 그대로 문법 오류가 된다.
+            09-07 에 삼항에서 같은 것을 밟았고 여기서 또 밟았다: **주석은 괄호 «밖» 에.** */}
       {res && res.found && (
-        <div style={{...box,color: (!exact || diff) ? '#F6AD09' : 'var(--green)'}}>
+        <div style={{...box,color: (!exact || diff) ? 'var(--warn-ink)' : 'var(--ok-ink)'}}>
           {/* ★★ 이 품목 «혼자» 의 금액이 아닐 때 — 넣지 않고 사실만 알린다.
               숫자는 보여 준다(참고는 되니까). 다만 «넣기» 는 사람이 누를 때만이고,
               버튼 이름도 「그대로 넣기」 로 두어 무엇을 하는지가 이름에 남게 했다. */}
           {!exact ? (
             <>
-              {res.note || '이 금액은 이 품목 혼자의 것이 아닙니다.'}
+              {/* ★★★ 2026-09-08 제니 확정 문구 — 「품목 환불 값이 아니므로 품목 환불
+                  금액을 확인해야 한다」. 그전에는 엣지 함수가 준 note 를 그대로 띄우고
+                  «직접 적어 주세요» 를 회색으로 아래 달아 뒀는데, **경고로 안 읽혔다**:
+                  ①문구가 함수에서 오니 화면마다 무엇이 뜰지 우리가 모르고
+                  ②정작 «확인해야 한다» 는 말이 가장 흐린 회색으로 맨 아래에 있었다.
+                  → **한 줄로 못 박아 맨 위에 세운다.** 근거(함수의 note)는 그 아래 회색으로
+                  내린다 — 순서가 «해야 할 일 → 왜» 여야 하는 자리다.
+                  ★ ⚠ 를 붙인다: 이 칸의 다른 상태(같음·넣었음)와 색만으로는 안 갈린다. */}
+              <div style={{fontWeight:700}}>
+                ⚠ 품목 환불 값이 아닙니다 — <b>품목 환불 금액을 확인</b>해 주세요.
+              </div>
               <div style={{marginTop:2}}>
                 카페24 환불액 <b>{won(amt)}</b>
                 {res.covers_item_count>1 && <> · 품목 {res.covers_item_count}건 합계</>}
                 <button onClick={()=>take(amt)}
                   style={{marginLeft:6,padding:'2px 7px',borderRadius:5,fontSize:10,
                     fontFamily:'inherit',cursor:'pointer',background:'transparent',
-                    border:'1px solid #F6AD09',color:'#F6AD09'}}>그대로 넣기</button>
+                    border:'1px solid var(--warn-ink)',color:'var(--warn-ink)'}}>그대로 넣기</button>
               </div>
               <div style={{color:'var(--sub)',marginTop:2}}>
-                이 티켓 몫만 넣으려면 직접 적어 주세요.
+                {res.note || '카페24는 환불액을 «환불 건» 단위로 줍니다 — 품목별로 쪼개 주지 않습니다.'}
+                {' '}이 티켓 몫만 넣으려면 직접 적어 주세요.
               </div>
             </>
           ) : diff ? (
@@ -21296,7 +21361,7 @@ function CsRefundFetch({orderRef, current, onPick}){
               <button onClick={()=>take(amt)}
                 style={{marginLeft:6,padding:'2px 7px',borderRadius:5,fontSize:10,
                   fontFamily:'inherit',cursor:'pointer',background:'transparent',
-                  border:'1px solid #F6AD09',color:'#F6AD09'}}>카페24 값으로 바꾸기</button>
+                  border:'1px solid var(--warn-ink)',color:'var(--warn-ink)'}}>카페24 값으로 바꾸기</button>
             </>
           ) : filled ? <>카페24 실제 환불액 <b>{won(amt)}</b> 을 넣었습니다.</>
              : same  ? <>카페24 실제 환불액과 같습니다 — <b>{won(amt)}</b></>
