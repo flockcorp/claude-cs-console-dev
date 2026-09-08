@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908zk_macro_symbolbar -->
+<!-- (2026-09-08) **CS 설정 > 매크로의 «내용» 칸 아래에도 기호 줄**을 달았다(제니: 「티켓에 있는 것과 동일하게」). ★ **같은 조각(CsSymbolBar)을 그대로 쓴다** — 여기서 만드는 글이 곧 티켓에 들어갈 글인데 기호를 넣는 방법이 두 자리에서 다르면 그때마다 다시 배워야 한다. ★★ 다만 **[⚡ 매크로] 단추는 뺐다**(`macro={false}`): 매크로를 만드는 자리에서 매크로를 부르는 것은 뜻이 안 맞고, 넣어 봐야 «그 문구가 통째로 박힌» 사본이 되어 **원본이 바뀌어도 안 따라온다.** ★ dev 전용. -->
 <!-- v20260908zj_macro_use -->
 <!-- (2026-09-08) **매크로를 «쓰는» 자리를 만들었다**(제니 09-07 목록의 1번 · 티켓 등록·상세 둘 다). CS 설정에 «만드는 자리» 는 있었는데 쓰는 자리가 없어, 만들어 둔 문구가 아무 데서도 안 불렸다 — **설정만 있고 쓰이지 않는 기능은 «있는 줄도 모르는» 기능이다.** ★★ 넣는 길이 «둘» 이다(제니가 정한 것): ①기호 줄의 **[⚡ 매크로]** 를 눌러 **분류별로 묶인 목록**에서 고른다(이름·단축어·내용 검색 · 내용 두 줄 미리보기). ②작성칸에 **`/단축어`** 를 치면 목록이 뜨고 **↑↓ 로 골라 Enter**. ★★★ 왜 둘인가: **①은 «무엇이 있는지 모를 때», ②는 «무엇을 넣을지 이미 알 때»** 다. 같은 기능의 두 벌이 아니라 서로 다른 순간을 맡는다 — 하나만 두면 외운 사람은 매번 목록을 열어야 하고 모르는 사람은 영영 못 찾는다. ★★★ 키 입력을 **React 가 아니라 textarea 에 직접(capture) 걸었다.** 두 화면의 textarea 는 저마다 제 onKeyDown 을 들고 있고 거기에 Ctrl+Enter=저장이 걸려 있다 — JSX 를 고쳐 손대면 **두 화면을 따로 고치게 되고 언젠가 한쪽만 고쳐진다.** 그래서 조각이 taRef 로 받은 요소에 스스로 붙는다: **두 화면은 한 글자도 안 바뀌었다.** ⚠ **Ctrl/⌘+Enter 는 뺏지 않는다**(그것은 저장이다). ★★ 「/」 판정은 **낱말 한가운데를 걸러야 한다** — 9/8·주소·URL 이 전부 「/」 를 쓴다. 앞이 글 처음이거나 공백·여는 괄호일 때만 본다(24자 넘으면 단축어가 아니다). ★ 목록은 **아래로** 연다: 작성칸이 바로 위라 위로 열면 지금 치는 글자를 덮는다. ★ 맞는 것이 없으면 아무것도 안 띄운다 — 빈 판은 «고장» 으로 읽힌다. ★ 못 읽어도 화면은 그대로 돈다(단추가 ⚠ 로 말한다) — 매크로는 거들어 주는 것이지 없으면 못 쓰는 것이 아니다. ★ dev 전용. -->
 <!-- v20260908zi_nav_bottom_gap2 -->
@@ -18561,7 +18563,10 @@ const CS_SYMBOLS = [
 //   두면 밝은 바탕에 옅은 회색 글자가 되어 기호가 안 보인다.
 // ★ 오른쪽 끝에 조각을 하나 받는다(right) — 특수문자 줄이 이미 한 줄을 쓰고 있어
 //   [공급사 접수 문안] 을 그 아래 또 두면 작성칸 위가 두 줄이 된다(제니 2026-09-04).
-function CsSymbolBar({taRef, value, onChange, light, right}){
+// macro: 기본은 «있다». CS 설정 > 매크로의 «내용» 칸에서만 끈다 — 매크로를 만드는
+//   자리에서 매크로를 부르는 것은 뜻이 안 맞는다(2026-09-08 제니 요청으로 그 칸에도
+//   기호 줄을 달면서 갈랐다).
+function CsSymbolBar({taRef, value, onChange, light, right, macro}){
   const put = (ch,caret)=>{
     const el = taRef && taRef.current;
     const v = String(value||'');
@@ -18591,7 +18596,7 @@ function CsSymbolBar({taRef, value, onChange, light, right}){
           드롭박스」). 오른쪽 끝(right)이 아니라 왼쪽 무리에 붙인다 — 기호와 매크로는
           둘 다 «작성칸에 무엇을 넣는» 조각이고, 오른쪽 끝은 [공급사 접수 문안] 처럼
           «다른 일을 하는» 단추의 자리다. */}
-      <CsMacroTools taRef={taRef} value={value} onChange={onChange} light={light}/>
+      {macro!==false && <CsMacroTools taRef={taRef} value={value} onChange={onChange} light={light}/>}
       {right && <><div style={{flex:1}}></div>{right}</>}
     </div>
   );
@@ -21774,6 +21779,9 @@ function CsCatPick({value, cats, inp, onPick, onAdd, onRemove}){
 }
 
 function CsMacroForm({draft, setD, inp, lbl, cats, onAddCat, onRemoveCat, busy, onSave, onCancel, isNew}){
+  // ★ 티켓의 기호 줄과 «같은 조각» 이다(제니 2026-09-08). 여기서 만드는 글이 곧 티켓에
+  //   들어갈 글인데, 기호를 넣는 방법이 두 자리에서 다르면 그때마다 다시 배워야 한다.
+  const bodyRef = useRef(null);
   if(!draft) return null;
   return (
     <div style={{background: isNew?'var(--card)':'transparent',
@@ -21813,8 +21821,13 @@ function CsMacroForm({draft, setD, inp, lbl, cats, onAddCat, onRemoveCat, busy, 
              「무엇을 넣는 자리지」로 계속 걸린다.
              ★ DB 칸(title_body)은 남겨 둔다 — 지우는 것은 되돌릴 수 없고 안 쓰면 그만이다. */}
         <label style={lbl}>내용 <span style={{opacity:.7}}>· 티켓에서 이력에 입력되는 내용입니다</span></label>
-        <textarea value={draft.body} onChange={e=>setD('body',e.target.value)} rows={7}
+        <textarea ref={bodyRef} value={draft.body} onChange={e=>setD('body',e.target.value)} rows={7}
           style={{...inp, lineHeight:1.7, resize:'vertical'}}/>
+        {/* ★ 매크로 단추는 뺀다(macro={false}) — 매크로를 만드는 자리에서 매크로를
+            부르는 것은 뜻이 안 맞고, 여기서 넣어 봐야 «그 문구가 통째로 박힌» 문구가
+            된다(원본이 바뀌어도 안 따라오는 사본이다). */}
+        <CsSymbolBar taRef={bodyRef} value={draft.body}
+          onChange={v=>setD('body',v)} macro={false}/>
       </div>
       {/* ★★ 켜고 끄기를 이 칸에서 뺐다(제니 2026-09-01). 목록의 [켜기]·[끄기] 와
            일괄 처리가 이미 같은 값(is_active)을 만진다 — 한 가지를 두 곳에서 만지면
