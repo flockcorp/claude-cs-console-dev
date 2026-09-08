@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260908za_tabs_unify -->
+<!-- (2026-09-08) **화면 안의 «탭» 을 콘솔에 하나뿐인 조각으로 모았다**(제니 승인). 그전에는 하위 화면 전환이 **세 가지 꼴**로 흩어져 있었다: 탭(배송지연·디지털 발송) · 칩(CS 설정·공급사 관리·계정 정보) · **단추**(데이터 입력). ★★★ **탭으로 통일한 이유** — 칩은 이 콘솔에서 이미 «목록을 좁히는» 뜻을 갖고 있다(CS 목록의 상태 칩·필터 칩). 화면 전환도 칩으로 그리면 **같은 꼴이 두 가지 일**을 하게 되고, 그러면 누르기 전에 «이건 어느 쪽이지» 를 매번 생각해야 한다. → **화면을 바꾸는 것은 탭 · 목록을 좁히는 것은 칩.** 뜻이 꼴로 갈린다. ★ 단추도 뺐다(데이터 입력) — «단추» 는 «누르면 무슨 일이 일어난다» 는 뜻이라 화면 전환에 쓰면 저장·발송과 같은 꼴이 되어 무게가 잘못 실린다. ★★ 꼴은 **제니가 «기준» 이라 한 세 화면에서 그대로 재 왔다**(아래 선 한 줄 + 2px 밑줄 + 굵은 글자). **이미 좋다고 한 화면에서 값을 재 오면 지어낼 필요가 없다** — 오늘 밴드 색에서도 같은 방법을 썼다. ★ 기준 화면 둘도 같은 컴포넌트를 쓰게 바꿨다 — «기준» 이 코드로도 하나여야 다음에 또 갈라지지 않는다. ⚠ 글자는 `--warn-ink` 다: 흰 바탕에서 #F6AD09 글자는 거의 안 읽힌다(밑줄은 --yellow 그대로 — 선은 굵어서 옅어도 보인다). 겸해 제니 셋을 더 고쳤다: ①**목록 둥근 모서리 뒤의 네모** — 앞 판에서 줄(tr) 배경을 걷었는데 **표 자신의 흰 배경**이 또 네모로 남아 있었다(감싼 판이 이미 흰색이라 지워도 보이는 색은 같다) → 투명으로. **깎은 것 뒤에 네모난 것이 하나 더 있었다.** ②공급사 «로드 중» 문구를 화면 가운데로. ③**공급사 접수 머리말**을 「공급사 접수 문안」 → 「📋 공급사 접수」·20px 로 — 사이드바에도 「공급사 접수」로 서 있어 **눌러 들어온 화면의 이름이 다르면 «다른 데로 왔나» 를 한 번 생각하게 된다.** ④부연을 «제목 오른쪽 한 줄» 로 함축했다(공급사 관리·상담원 분석·계정 정보) — 문장형을 걷고 CS 관리처럼 짧은 말로. **머리말은 «여기가 어디인가» 를 말하는 자리이지 화면을 설명하는 자리가 아니다.** ★ dev 전용. -->
 <!-- v20260908z_head_unify -->
 <!-- (2026-09-08) 제니 셋. ①**화면 머리말을 한 꼴로 맞췄다**(「메뉴별로 제목의 사이즈와 위치, 이모티콘 여부가 각기 다르다. 배송지연 관리·디지털상품 발송·CS 관리를 기준으로」). ★★ 실측하니 머리말이 **두 집안**으로 있었다: ㉠`.page-header`(대시보드·인력 관리·데이터 입력·상품 정보·데이터 내역) — 제목 위 부연 아래로 **쌓고** 부연 13px. ㉡`.section` 안의 인라인 h1(배송지연·디지털 발송·CS 관리·환불) — 제목과 부연이 **한 줄에 나란히**, 부연 12px. ← 제니가 «기준» 이라 한 쪽. ★★★ **한쪽을 «CSS 에서» 옮겼다** — 화면마다 JSX 를 고쳐 돌아다니면 언젠가 한 곳이 빠지고 **그 한 곳이 다음 «제각각» 의 시작**이 된다. 껍데기 구조는 두고 «보이는 꼴» 만 기준에 맞춘다(제목 20px·부연 12px·한 줄·좌우 32px). ★ 어긋나 있던 h1 넷(변경 이력·공급사 관리·상담원 분석·계정 정보)을 18→20px·여백·색까지 맞췄다. ★ **이모지는 두 모드에서 다 또렷한 것**으로 골랐다: 📊 대시보드 · ✍️ 데이터 입력 · 📋 데이터 내역 · 📈 상담원 분석 · 📦 상품 정보 · 🏢 공급사 관리 · 🕐 변경 이력 · 👥 인력 관리 · 👤 계정 정보 · 📝 새 티켓 등록(기존 🚚·📧·🎫·💸·⚙ 는 그대로). ②🔴 **사이드바 권한 뱃지가 라이트에서 글자만 안 보였다** — 오늘만 세 번째로 만나는 «옅은 바탕 + 밝은 글자 한 벌» 이다. 「색감은 그대로」(제니) → **`csInk()`** 를 쓴다(09-07 에 바로 이 목적으로 만든 함수 · **색상은 손대지 않고 밝기만 내린다**). 바탕·테두리는 안 건드렸다 — 사라진 것은 글자뿐이다. ③**연락망에 «등록 시점» 을 띄웠다**(제니: 검색칸 우측 끝). 주 1회 손으로 붙이는 값이라 **낡았을 수 있다는 것 자체가 정보다** — 연락처가 안 될 때 «언제 것인지» 를 모르면 그게 옛 번호인지 판단할 수 없다. 연도까지 적는다(`csStampFull`) — 월-일만 적으면 «작년 것» 이 올해 것처럼 보인다. ⏳ 다음: **칩/탭 혼용 통일**(공급사·CS 설정·데이터 입력이 칩, 배송지연·디지털 발송이 탭). ★ dev 전용. -->
 <!-- v20260908y_panebar_and_corner -->
@@ -2636,14 +2638,12 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
         <div><div className="page-title">✍️ 데이터 입력</div><div className="page-sub">일별 운영 현황 데이터 입력 및 내역 관리</div></div>
       </div>
       <div className="section" style={{paddingBottom:0}}>
-        <div style={{display:'flex',gap:8,marginBottom:16}}>
-          {['form','history'].map(t=>(
-            <button key={t} onClick={()=>setEntryTab(t)} style={{padding:'8px 18px',borderRadius:8,border:'1px solid '+(entryTab===t?'var(--primary)':'var(--border)'),fontFamily:'inherit',fontWeight:600,fontSize:13,cursor:'pointer',
-              background:entryTab===t?'var(--primary)':'var(--card)',color:entryTab===t?'#fff':'var(--sub)'}}>
-              {t==='form'?(editDate?'데이터 수정':'데이터 입력'):'데이터 내역'}
-            </button>
-          ))}
-        </div>
+        {/* ★ 단추 꼴이던 것을 탭으로 옮겼다(2026-09-08) — 화면을 바꾸는 것은 탭이다.
+            «단추» 는 «누르면 무슨 일이 일어난다» 는 뜻이라, 화면 전환에 쓰면
+            저장·발송 같은 것과 같은 꼴이 되어 무게가 잘못 실린다. */}
+        <CsPageTabs value={entryTab} onChange={setEntryTab}
+          tabs={[{id:'form',label:editDate?'데이터 수정':'데이터 입력'},
+                 {id:'history',label:'데이터 내역'}]}/>
       </div>
       {entryTab==='history'&&<EntryHistorySection onEdit={d=>{setLocalEditDate(d);setEntryTab('form');}}/>}
       {entryTab==='form'&&<div className="section">
@@ -4613,7 +4613,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                  (실제로 밟았다 — 주석은 삼항 «밖», 곧 여기에 둔다.) */}
           {loading?<div className="loading">{search?'🔍 검색 중입니다...':'불러오는 중...'}</div>:products.length===0?<div className="empty-state">등록된 상품이 없습니다</div>:
             <div style={{background:'#fff',borderRadius:8,overflow:'visible',border:'1px solid #c8d8f0'}}>
-              <table className="hist" style={{background:'#fff',width:'100%',borderCollapse:'collapse'}}>
+              <table className="hist" style={{background:'transparent',width:'100%',borderCollapse:'collapse'}}>
                 {/* ★ 여기 박혀 있던 #2A478D 가 곧 --head-bg 다(2026-09-08 에 두 모드 값을
                     이 색으로 맞췄다) — 제니가 «상품 정보처럼» 이라고 가리킨 밴드가 이것이다.
                     같은 값을 두 벌로 두지 않는다.
@@ -6842,20 +6842,21 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
     none:channelUnsetCount,
   };
 
-  if(loading) return <div style={{padding:30,textAlign:'center',color:'var(--sub)'}}>📦 공급사 정보 로드 중...</div>;
+  if(loading) return <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'60vh',color:'var(--sub)',fontSize:13}}>📦 공급사 정보 로드 중...</div>;
 
   return (
     <div style={{padding:'20px 28px'}}>
       {/* 페이지 헤더 */}
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end',marginBottom:18}}>
-        <div>
-          <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>🏢 공급사 관리</h1>
-          <div style={{fontSize:11,color:'var(--sub)'}}>
-            공급사별 소통 채널과 기본 배송비를 관리합니다
-            {!canManage&&<span style={{color:'#F6AD09',marginLeft:8}}>· 읽기 전용 (master/manager만 편집 가능)</span>}
-          </div>
-          <div style={{fontSize:11,color:'var(--sub)',marginTop:5}}>ℹ️ 카페24에 등록된 공급사 data 전체를 가져옵니다.</div>
-        </div>
+      {/* ★ 부연을 «제목 오른쪽 한 줄» 로 함축했다(제니 2026-09-08: 「문장형 말고
+          CS 관리 메뉴처럼」). 세 줄이던 것을 한 마디로 줄인다 — 머리말은 «여기가
+          어디인가» 를 말하는 자리이지 화면을 설명하는 자리가 아니다.
+          ★ 「카페24에서 전체를 가져온다」는 KPI 카드가 이미 숫자로 말하고 있고,
+            「읽기 전용」은 권한이 없을 때만 붙는다(그때는 알아야 하는 말이다). */}
+      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>🏢 공급사 관리</h1>
+        <span style={{fontSize:12,color:'var(--sub)'}}>소통 채널·배송비·연락망 관리</span>
+        {!canManage&&<span style={{fontSize:12,color:'var(--warn-ink)'}}>· 읽기 전용</span>}
+        <div style={{flex:1}}></div>
         {canManage&&supTab==='basic'&&(
           <label style={{display:'inline-flex',alignItems:'center',gap:6,padding:'8px 14px',background:'#2A478D',border:'1px solid #2A478D',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
             📤 카페24 CSV 업로드
@@ -6868,17 +6869,8 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
       {/* ── 탭 (제니 2026-09-08) ────────────────────────────────────────
           기존 화면을 「기본 정보」로 두고 「연락망」을 새로 만들었다.
           ★ 꼴은 CS 설정 탭과 같다 — 콘솔 안에서 «탭» 은 한 모양이어야 한다. */}
-      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
-        {[{k:'basic',label:'기본 정보'},{k:'contacts',label:'연락망'}].map(t=>(
-          <div key={t.k} onClick={()=>setSupTab(t.k)}
-            style={{padding:'6px 14px',borderRadius:16,fontSize:12,cursor:'pointer',
-              userSelect:'none',
-              border:'1px solid '+(supTab===t.k?'var(--accent)':'var(--border)'),
-              background: supTab===t.k?'var(--accent)':'transparent',
-              color: supTab===t.k?'var(--on-accent)':'var(--sub)',
-              fontWeight: supTab===t.k?700:400}}>{t.label}</div>
-        ))}
-      </div>
+      <CsPageTabs value={supTab} onChange={setSupTab}
+        tabs={[{id:'basic',label:'기본 정보'},{id:'contacts',label:'연락망'}]}/>
 
       {supTab==='contacts' ? (
         <SupplierContactsTab isMaster={isMaster} currentUserEmail={currentUserEmail}
@@ -10131,9 +10123,9 @@ function AgentAnalysisPage(){
   return (
     <div style={{padding:'20px 28px'}}>
       {/* 헤더 */}
-      <div style={{marginBottom:18}}>
+      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>📈 상담원 분석</h1>
-        <div style={{fontSize:11,color:'var(--sub)'}}>기간별 상담원 처리량 비교 · master 전용</div>
+        <span style={{fontSize:12,color:'var(--sub)'}}>기간별 처리량 비교 · master 전용</span>
       </div>
 
       {/* 기간 선택 */}
@@ -10301,37 +10293,10 @@ function DelayedProductsPage({isMaster=false,isManager=false,can}){
         <span style={{fontSize:12,color:'var(--sub)'}}>지연 상품 마킹 및 알림톡 자동 발송 관리</span>
       </div>
 
-      {/* 탭 네비게이션 */}
-      <div style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',marginBottom:24}}>
-        {tabs.map(t=>(
-          <div key={t.id}
-            onClick={()=>setTab(t.id)}
-            style={{
-              padding:'12px 20px',
-              cursor:'pointer',
-              fontSize:13,
-              fontWeight: tab===t.id ? 700 : 500,
-              color: tab===t.id ? '#F6AD09' : 'var(--sub)',
-              borderBottom: tab===t.id ? '2px solid #F6AD09' : '2px solid transparent',
-              marginBottom:'-1px',
-              transition:'color .15s, border-color .15s',
-              userSelect:'none',
-              display:'flex',
-              alignItems:'center',
-              gap:6
-            }}>
-            {t.label}
-            {t.id==='register' && activeCount!==null && (
-              <span style={{
-                background: tab===t.id ? '#F6AD09' : 'var(--border)',
-                color: tab===t.id ? '#fff' : 'var(--sub)',
-                fontSize:10, padding:'1px 7px', borderRadius:9,
-                fontWeight:700, fontFamily:'monospace', minWidth:18, textAlign:'center'
-              }}>{activeCount}</span>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* ★ 탭은 콘솔에 하나뿐인 조각(CsPageTabs)을 쓴다 — 이 화면이 «기준» 이었으므로
+          꼴은 그대로이고, 이제 다른 화면들도 같은 함수를 본다(2026-09-08). */}
+      <CsPageTabs value={tab} onChange={setTab}
+        tabs={tabs.map(t=>t.id==='register'&&activeCount!==null?{...t,badge:activeCount}:t)}/>
 
       {/* 탭 콘텐츠 */}
       {tab==='register' && <DelayRegisterTab isMaster={isMaster} isManager={isManager}
@@ -12481,24 +12446,7 @@ function AutoDeliveryPage({ isMaster=false, isManager=false, currentUserEmail })
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>📧 디지털 상품 발송</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>결제 완료(N10) 시점에 등록된 메일을 자동으로 발송합니다.</span>
       </div>
-      <div style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',marginBottom:24}}>
-        {tabs.map(t => (
-          <div key={t.id}
-            onClick={()=>setTab(t.id)}
-            style={{
-              padding:'12px 20px',
-              cursor:'pointer',
-              fontSize:13,
-              fontWeight: tab===t.id ? 700 : 500,
-              color: tab===t.id ? '#F6AD09' : 'var(--sub)',
-              borderBottom: tab===t.id ? '2px solid #F6AD09' : '2px solid transparent',
-              marginBottom:'-1px',
-              userSelect:'none',
-            }}>
-            {t.label}
-          </div>
-        ))}
-      </div>
+      <CsPageTabs tabs={tabs} value={tab} onChange={setTab}/>
       {tab==='register' && <AutoDeliveryRegisterTab currentUserEmail={currentUserEmail}/>}
       {tab==='history'  && <AutoDeliveryHistoryTab/>}
     </div>
@@ -20673,6 +20621,51 @@ function useCsPanes(key, def){
 //   자리를 벌지 않고도 넓게 잡힌다.
 // ★ 마우스를 올리면 선이 굵고 파랗게 바뀐다 — 커서 모양만으로는 «여기가 손잡이»
 //   라는 것을 미리 알 수 없다.
+// ══ 화면 안의 «탭» — 콘솔에 하나뿐인 조각 (제니 2026-09-08) ═══════════════════
+// 제니: 「부모 메뉴 안의 하위 메뉴에서 **칩과 탭 형태를 혼용**해서 쓰고 있다.
+//   전체적인 디자인 레이아웃 통일을 위해 이것도 통일하는 게 좋지 않을까?」
+//
+// ★★★ **탭으로 통일한다** — 칩은 이 콘솔에서 이미 «목록을 좁히는» 뜻을 갖고 있다
+//   (CS 목록의 상태 칩·필터 칩). 화면 전환도 칩으로 그리면 **같은 꼴이 두 가지 일**을
+//   하게 되고, 그러면 사람은 누르기 전에 «이건 어느 쪽이지» 를 매번 생각해야 한다.
+//   → **화면을 바꾸는 것은 탭 · 목록을 좁히는 것은 칩.** 뜻이 꼴로 갈린다.
+//
+// ★★ 꼴은 제니가 «기준» 이라 한 세 화면(배송지연·디지털 발송·CS 관리)에서 그대로
+//   가져왔다 — 아래 선 한 줄 위에 2px 밑줄과 굵은 글자로 «지금 여기» 를 말한다.
+//   **이미 좋다고 한 화면에서 값을 재 오면 지어낼 필요가 없다**(오늘 밴드 색에서도 그랬다).
+// ★ 색은 노랑이다 — 이 콘솔에서 노랑은 이미 «지금 이것» 이다(사이드바 active).
+//   ⚠ 글자는 `--warn-ink` 다: 흰 바탕에서 #F6AD09 글자는 거의 안 읽힌다.
+//     밑줄은 `--yellow` 그대로 — 선은 굵어서 옅어도 보인다.
+function CsPageTabs({tabs, value, onChange}){
+  return (
+    <div style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',
+      marginBottom:24,flexWrap:'wrap'}}>
+      {tabs.map(t=>{
+        const on = value===t.id;
+        return (
+          <div key={t.id} onClick={()=>{ if(!t.soon) onChange(t.id); }}
+            title={t.soon?'아직 만드는 중입니다':undefined}
+            style={{padding:'12px 20px',cursor:t.soon?'not-allowed':'pointer',fontSize:13,
+              fontWeight: on?700:500, color: on?'var(--warn-ink)':'var(--sub)',
+              borderBottom: on?'2px solid var(--yellow)':'2px solid transparent',
+              marginBottom:'-1px', transition:'color .15s, border-color .15s',
+              userSelect:'none', display:'flex', alignItems:'center', gap:6,
+              opacity: t.soon?.45:1}}>
+            {t.label}
+            {t.badge!=null && (
+              <span style={{background:on?'var(--yellow)':'var(--border)',
+                color:on?'#3A2E00':'var(--sub)',
+                fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:9,
+                lineHeight:1.6,minWidth:14,textAlign:'center'}}>{t.badge}</span>
+            )}
+            {t.soon && <span style={{fontSize:10}}>준비 중</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CsPaneBar({onMouseDown}){
   const [hot,setHot] = useState(false);
   return (
@@ -20993,20 +20986,7 @@ function CsSettingsPage({currentUserEmail, role}){
           CS 관리 화면이 무엇을 보여 주고 무엇을 요구할지 정합니다 · master 전용</span>
       </div>
 
-      <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
-        {TABS.map(x=>(
-          <div key={x.id} onClick={()=>{ if(!x.soon) setTab(x.id); }}
-            title={x.soon?'아직 만드는 중입니다':undefined}
-            style={{padding:'6px 14px',borderRadius:16,fontSize:12,
-              cursor: x.soon?'not-allowed':'pointer', userSelect:'none',
-              border:'1px solid '+(tab===x.id?'var(--accent)':'var(--border)'),
-              background: tab===x.id?'var(--accent)':'transparent',
-              color: tab===x.id?'var(--on-accent)':'var(--sub)',
-              fontWeight: tab===x.id?700:400, opacity: x.soon?.45:1}}>
-            {x.label}{x.soon && <span style={{marginLeft:5,fontSize:10}}>준비 중</span>}
-          </div>
-        ))}
-      </div>
+      <CsPageTabs tabs={TABS} value={tab} onChange={setTab}/>
 
       {tab==='macro'  && <CsMacroSettings currentUserEmail={currentUserEmail}/>}
       {tab==='draft'  && <CsDraftTplSettings currentUserEmail={currentUserEmail}/>}
@@ -25637,8 +25617,12 @@ function CsSupplierDraft({rows, events, supMap, busy, onSent, onBack, goTicket})
         margin:'-24px -32px 8px',padding:'18px 32px 12px',
         borderBottom:'1px solid var(--border)',
         display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-        <h1 style={{fontSize:17,fontWeight:700,margin:0,color:'var(--text)'}}>
-          공급사 접수 문안</h1>
+        {/* ★ 이름을 「공급사 접수」로 줄이고 크기를 다른 머리말과 맞췄다(제니 2026-09-08).
+            «문안» 은 이 화면이 «만드는 것» 이지 «메뉴 이름» 이 아니다 —
+            사이드바에도 「공급사 접수」로 서 있어, 눌러서 들어온 화면의 이름이
+            다르면 «다른 데로 왔나» 를 한 번 생각하게 된다. */}
+        <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>
+          📋 공급사 접수</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>
           접수 대기 {rows.length}건 · 공급사 {groups.length}곳</span>
         <div style={{flex:1}}></div>
@@ -27094,11 +27078,11 @@ function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved}){
 
   return (
     <div>
-      <div className="section" style={{paddingBottom:0}}>
+      <div className="section" style={{paddingBottom:0,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>👤 계정 정보 · 설정</h1>
-        <p className="page-sub" style={{margin:0}}>
-          {isMaster?'운영 알림과 메뉴별 설정을 여기서 관리합니다':'운영 알림과 문자·알림톡 잔액을 여기서 봅니다'}
-        </p>
+        <span style={{fontSize:12,color:'var(--sub)'}}>
+          {isMaster?'내 계정 · 운영 알림 · 메뉴별 설정':'내 계정 · 운영 알림'}
+        </span>
       </div>
 
       {/* ★ 머리말과 첫 카드가 맞붙어 있었다(제니 제보 2026-08-31). 머리말 아래
@@ -27117,28 +27101,12 @@ function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved}){
               알림(읽고 판단하는 것) · 콘솔 계정(사람) · 메뉴별 설정(되돌릴 수 없는 것).
             ★ 「확인이 필요합니다」가 든 «알림» 이 기본이다: 이 화면에 들어오는
               주된 이유가 그것이다. */}
-        <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
-          {/* ★ «화면» 은 권한과 무관하다 — 어느 등급이든 제 눈에 맞는 모드를 고른다.
-                알림(읽고 판단하는 것) 다음, 관리자용 칩들 앞에 둔다. */}
-          {[['alert','알림'],['view','화면'],
-            ...(isMaster?[['account','콘솔 계정'],['menu','메뉴별 설정']]:[])].map(([id,label])=>{
-            const on = tab===id;
-            return (
-              <div key={id} onClick={()=>setTab(id)}
-                style={{padding:'6px 14px',borderRadius:16,cursor:'pointer',fontSize:12.5,
-                  userSelect:'none',whiteSpace:'nowrap',
-                  border:'1px solid '+(on?'var(--accent)':CS_LINE),
-                  background: on?'var(--accent)':'transparent',
-                  color: on?'var(--on-accent)':'var(--sub)', fontWeight: on?700:400}}>
-                {label}
-                {id==='alert' && alerts.length>0 && (
-                  <span style={{marginLeft:6,fontFamily:MONO,
-                    color:on?'#7E2620':'#F6AD09'}}>{alerts.length}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* ★ «화면» 은 권한과 무관하다 — 어느 등급이든 제 눈에 맞는 모드를 고른다.
+            알림(읽고 판단하는 것) 다음, 관리자용 탭들 앞에 둔다.
+            ★ 칩에서 탭으로 옮겼다(2026-09-08) — 화면을 바꾸는 것은 콘솔에서 탭이다. */}
+        <CsPageTabs value={tab} onChange={setTab}
+          tabs={[{id:'alert',label:'알림',badge:alerts.length||null},{id:'view',label:'화면'}]
+            .concat(isMaster?[{id:'account',label:'콘솔 계정'},{id:'menu',label:'메뉴별 설정'}]:[])}/>
 
         {/* ── 화면 모드 (제니 2026-09-07) ─────────────────────────────────── */}
         {tab==='view' && <CsThemePick card={card} head={head}/>}
