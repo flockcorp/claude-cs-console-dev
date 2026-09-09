@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909r_bulk_refund -->
+<!-- v20260909s_refund_perm -->
+<!-- (2026-09-09) 🔴 **[환불 요청 하기] 에 권한 조건이 없었다**(제니 확인 질문: 「권한이 있는 계정만 보이는 거 맞지?」 — **아니었다. 내가 안 걸었다**). DB 정책(`refunds_by_menu`)이 실제로는 막아 주지만, **버튼이 보이는 것 자체가 잘못이다** — 눌러 보고 나서 «안 되는구나» 를 알게 된다. ★★★ 고치면서 판정을 `isMaster` 로 박지 «않았다». 환불 메뉴는 **설정에서 manager 에게 열 수 있고**(`console_settings.menu_roles`) DB 정책도 그 설정을 읽는다. 화면만 master 로 박아 두면 «설정에서 열어 줬는데 버튼이 없는» 자리가 된다 — 09-07 에 배송지연에서 만난 그 함정(**설정이 거짓말을 하는 자리**)이다. → `canMenu('refunds')` 를 두 화면에 내려 **화면과 DB 가 같은 자리를 본다.** ★★ 겸해 **티켓 상세의 [환불 관리로 넘기기] 도 같은 값으로 바꿨다** — 거기는 `isMaster` 로 박혀 있어 같은 어긋남을 안고 있었다. 목록의 일괄 버튼과 상세의 단건 버튼이 이제 **같은 조건**으로 뜬다(둘이 다르면 「목록에선 되는데 상세에선 안 되네」가 생긴다). ★ 화면은 헛걸음을 없애는 자리이고 진짜 자물쇠는 DB 다 — 이 판은 앞의 것만 고쳤다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①**티켓 상세에 저장 알림**(제니) — 저장이 끝나도 아무 말이 없어 «눌린 건가» 하고 다시 누르게 되던 자리다. 어느 단계로 갔는지 함께 적는다(저장 버튼이 곧 «어디로 보내는가» 이므로 그 결과를 확인하는 것이 이 알림의 일이다). ★ 자리는 콘솔이 이미 쓰는 우측 하단(`#toastHost`)이다 — 등록 화면은 원래 있었고 **상세에만 없었다.** ②**목록에서 «환불 관리로 일괄 넘기기»**(제니). 상세의 [환불 관리로 넘기기] 는 그대로 두고, 일괄 편집 바에 [💸 환불 요청 하기] 를 더했다. ★★★ **넘기는 절차를 한 곳으로 모았다**(`csRefundFromTicket`) — 단건 모달과 일괄이 같은 함수를 쓴다. 같은 일을 두 곳에 적으면 반드시 갈리고, 오늘만 세 번 만난 자리다. 이제 단건 모달의 `go()` 는 그 함수를 부르는 다섯 줄이다. ★★ 그 함수가 **넘기기 직전에 «이미 넘어갔는지» 를 DB 에서 다시 본다** — 이것이 환불 건이 두 개 생기는 것을 막는 자물쇠이고, 여러 건을 훑는 일괄에서는 그 위험이 더 크다. ★★★ **모달은 «누를 수 있는 건과 아닌 건» 을 미리 갈라 보여 준다.** 일괄의 가장 큰 위험은 **일부가 조용히 실패하는 것**이다 — 서른 건을 눌렀는데 스물여덟만 갔고 아무도 모르면 그 둘은 며칠 뒤 「왜 환불이 안 됐지」로 돌아온다. 못 가는 건은 **까닭까지 그 줄에** 적는다(빠진 값·이미 넘어감·사유 없음). **누르기 전에 보이는 것이 누른 뒤에 보이는 것보다 백 배 낫다.** ★ 끝난 뒤에도 «건별로» 알린다 — 「N건 완료」만 띄우면 실패한 건을 찾으러 목록을 다시 훑어야 한다. ★ 환불 사유는 단건과 **같은 규칙**으로 티켓의 «유형 + 방향» 에서 자동 매칭하고, 안 맞은 것만 손대면 되게 줄마다 두되 «한꺼번에 지정» 도 뒀다. ★ 하나씩 차례로 보낸다 — 한꺼번에 던지면 어느 건이 실패했는지 짝짓기 어렵고 중간에 끊겨도 어디까지 갔는지 알 수 없다. ★★ 버튼은 **«환불 대기» 인 건이 골라져 있을 때만** 뜬다(칩이 아니라 «고른 것» 을 본다: 「전체」·검색에서도 넘길 수 있어야 하고, 대상이 없으면 버튼이 아예 없어야 «왜 여기선 안 되지» 가 생기지 않는다). 이미 넘어간 건은 세지 않는다. ★ 넘긴 뒤 목록을 다시 읽고 고름을 푼다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①🔴🔴 **복사한 접수 문안을 메일에 붙이면 표가 안 따라왔다**(제니 제보). 당연한 일이었다 — 복사가 **글자만**(writeText) 실어 보냈고, 우리 이력은 표를 «탭» 으로 짜 두므로 메일에서는 그냥 공백이 된다. → **탭으로 짠 표가 들어 있으면 «HTML 도 함께» 싣는다**(ClipboardItem 에 text/plain + text/html). 붙이는 쪽이 골라 간다: 메일 편집기는 HTML 을, 메모장은 글자를 가져간다. **원문(이력에 저장된 글)은 한 글자도 안 바뀐다.** ★★★ **화면과 복사가 «같은 함수» 로 줄을 나눈다**(`csNoteBlocks`) — 규칙을 두 곳에 적으면 «화면에서는 표인데 붙여 넣으면 아닌» 자리가 생긴다. 바로 이 제보의 뿌리이고, 09-04 에도 같은 계열을 밟았다(등록 화면이 제 코드로 그려서 거기서만 표가 아니었다). ★★ **색은 콘솔 것을 그대로 가져오지 않는다** — 붙는 자리가 메일이라 대개 흰 바탕인데, 어두운 화면용 남색 머리글을 실으면 거기서 안 읽힌다. **값이 같아도 «어디에 놓이는가» 가 다르면 같은 스타일이 아니다.** ★ 인라인 style 로 적는다(메일 편집기는 대개 `<style>` 태그를 걷어낸다). ★ ClipboardItem 이 없거나 실패하면 **글자만 싣는 옛 길로 물러선다** — 표가 안 따라올지언정 «아무것도 복사가 안 되는» 것이 훨씬 나쁘다. ②**티켓 «등록» 화면 이력에도 [복사]**(제니: 「X 버튼 아래 있으면 돼」). 이 화면의 이력은 아직 저장 전이라 머리 줄 구성이 상세와 다르지만(지우기 대신 ×), **복사는 두 화면에서 같은 일**이라 같은 조각·같은 강조꼴을 쓴다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①**이력 줄마다 [복사] 단추**(제니: 「② 영역 이력 메시지당 우측 상단 '지우기' 아래 복사 버튼 · 눈에 잘 보이게」). [지우기] 와 **세로로** 쌓았다 — 한 줄에 나란히 두면 날짜·작성자와 뒤섞여 어느 것이 무엇에 대한 단추인지 흐려진다. ★ 지우기가 없는 줄(시스템 기록·남이 쓴 글)에서는 복사만 그 자리에 선다 — 자리를 비워 두지 않으므로 **줄마다 단추 위치가 흔들리지 않는다.** ★★ **지우기 «모드» 에서는 복사를 안 그린다** — 지금 화면의 글은 지우는 중이라 곧 바뀔 값이고, 그것을 복사하면 헛것을 옮긴다. ★ 콘솔에 하나뿐인 복사 조각(`CsCopy`)을 쓰되 **강조꼴**을 더했다(테두리·글자에 강조색). 이력을 공급사에 옮겨 붙이는 일이 잦은데 조용한 회색 단추는 있는 줄도 모른다. **모양·크기는 기본꼴과 같다** — 같은 일을 하는 단추가 자리마다 다른 모양이면 그때부터 다른 것으로 읽힌다. ⚠ **티켓 «등록» 화면에는 이력 목록이 없다**(아직 쌓인 이력이 없는 새 티켓이다) — 그래서 상세에만 붙는다. ②**[티켓 필드 조정] 의 「순서」가 세로로 접히던 것**(제니) — 열 제목을 번호 칸(16px)에만 얹어 두 글자가 세로로 섰다. **끌기 손잡이(≡)와 번호를 함께 덮게** 폭을 38(16+gap 6+16)로 잡아 아래 줄과 자리를 맞췄다. ★ dev 전용. -->
@@ -19429,7 +19430,15 @@ function CsRecheck({at, stage}){
   );
 }
 
-function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
+// ★★★ canRefund — «환불 관리 메뉴를 쓸 수 있는 사람인가»(2026-09-09 제니 확인 질문:
+//   「일괄 편집 바의 «환불 요청 하기» 는 권한이 있는 계정만 보이는 거 맞지?」 — **아니었다.**
+//   내가 조건을 안 걸었다).
+//   ★★ 판정을 `isMaster` 로 박지 않는다: 환불 메뉴는 **설정에서 manager 에게 열 수 있고**
+//     (console_settings.menu_roles), DB 정책(`refunds_by_menu`)도 그 설정을 읽는다.
+//     화면만 master 로 박아 두면 «설정에서 열어 줬는데 버튼이 없는» 자리가 된다 —
+//     09-07 에 배송지연에서 만난 그 함정이다(**설정이 거짓말을 하는 자리**).
+//   ★ 화면과 DB 가 «같은 자리» 를 본다. 화면은 헛걸음을 없애고, 진짜 자물쇠는 DB 다.
+function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDraft}){
   const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
   // ★ 처음 보는 화면은 «전체» 다(제니). 「내 티켓」으로 열면 남이 만든 건이 안 보여
   //   「티켓이 없네」로 읽힌다 — 좁히는 것은 사람이 정할 일이다.
@@ -20100,6 +20109,8 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
                     ★ 색은 [일괄 접수 문안] 과 같은 흰 판이다: 둘 다 «바꾸기» 가 아니라
                       «다음 자리로 보내는» 일이라 무리가 같다. */}
                 {(()=>{
+                  // ★ 환불 메뉴를 못 쓰는 사람에게는 아예 안 보인다(제니 확인).
+                  if(!canRefund) return null;
                   const rs = pickedIds.map(id=>pageList.find(x=>x.id===id))
                     .filter(t=>t && t.stage==='refund' && !t.refund_id);
                   if(!rs.length) return null;
@@ -25211,7 +25222,8 @@ function csCafe24OrderUrl(t){
   return no ? CS_CAFE24_ORDER_URL.replace('{ORDER}', encodeURIComponent(no)) : '';
 }
 
-function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
+// ★ canRefund — 환불 관리 메뉴 권한(목록 화면과 같은 값). 자세한 것은 CsTicketsPage 주석.
+function CsTicketPage({ticketId, currentUserEmail, role, canRefund, onBack, goTicket}){
   // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
   const [t,setT]         = useState(null);
@@ -26067,7 +26079,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               {t.refund_requested_at && <span> · {csStamp(t.refund_requested_at)}</span>}
               {t.refund_requested_by && <span> · {csShortUser(t.refund_requested_by)}</span>}
             </div>
-          ) : isMaster && t.stage==='refund' ? (
+          ) : canRefund && t.stage==='refund' ? (
+            /* ★★ 2026-09-09 — `isMaster` 로 박혀 있던 것을 **환불 메뉴 권한**으로 바꿨다.
+                 환불 메뉴는 설정에서 manager 에게 열 수 있고 DB 정책도 그 설정을 읽는데,
+                 이 버튼만 master 로 박혀 있어 «설정에서 열어 줬는데 넘길 수 없는» 자리가
+                 됐다. 목록의 일괄 버튼과 **같은 값**을 본다. */
             /* ★★ 안 저장한 값이 있으면 «먼저 저장하고» 연다(제니 #18 제보).
                  넘기는 창은 저장된 티켓을 읽는데, 사람은 방금 넣은 값이 넘어갈 것으로
                  여긴다 — 그 어긋남을 「먼저 저장하세요」라는 안내로 떠넘기지 않는다.
@@ -30023,6 +30039,7 @@ function App() {
         {page==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager} can={canAction}/>}
         {page==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
         {page==='csTickets'&&(canMenu('csTickets')?<CsTicketsPage currentUserEmail={session.user.email} role={role}
+          canRefund={canMenu('refunds')}
           onNew={()=>navigateTo('csNew')} goTicket={openTicket}
           goDraft={ids=>{ setCsDraftIds(ids); setPage('csDraft'); setMobileOpen(false); }}/>:<NoAccessPage/>)}
         {page==='csDraft'&&(canMenu('csDraft')?<CsSupplierDraftPage ids={csDraftIds}
@@ -30032,7 +30049,8 @@ function App() {
           onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
           goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
-          role={role} onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
+          role={role} canRefund={canMenu('refunds')}
+          onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='costs'&&(canMenu('costs')?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
