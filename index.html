@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909e_done_stage_names -->
+<!-- v20260909f_user_name_and_c24_on -->
+<!-- (2026-09-09) 제니 피드백 둘. ①**좌측 하단 계정 정보에 이메일 대신 «이름» 을 적는다** — 주소가 길면 …으로 잘려 **어차피 전체가 안 보였다**(제니 제보). 이름은 짧아 잘릴 일이 거의 없고, 「누구로 들어와 있나」를 읽는 데도 이메일보다 빠르다. **이메일은 툴팁으로 남긴다** — 화면에서 사라진 값이라 «값을 되풀이하는 툴팁» 이 아니다(계정이 둘인 사람이 어느 쪽으로 들어왔는지 확인하는 자리다). ★ 이름은 이미 있는 `csShortUser`(console_user_names 지도)를 쓴다 — 이름이 없거나 지도가 아직 안 왔으면 예전처럼 이메일 앞부분이라 **비는 일이 없고**, 지도가 도착하면 `namesTick` 이 다시 그린다. ★ **클래스 이름도 `.user-email`→`.user-name` 으로 바꿨다**(세 곳) — 담기는 값과 이름이 어긋나면 다음 사람이 «여기 이메일이 있겠거니» 하고 읽는다. ★ 접힌 사이드바의 툴팁은 그대로 이메일을 말하고, 펼친 상태는 이름 조각이 제 툴팁으로 말한다(부모에도 넣으면 한 자리에서 두 툴팁이 겹친다). ②**CS 설정 > 접수 문안의 카페24 변수 설명**(제니 문구): 「연동에서 켜야 담깁니다」 → **「[카페24 연동]탭에서 켜야 이용 가능」**. 어느 탭에서 켜는지를 이름으로 말해 준다. 겸해 **«연동 켜짐» 을 초록으로 함께 적는다** — ★★ 꺼짐만 적으면 **«아무것도 안 적힌 줄» 이 두 뜻을 갖는다**: 「연동 값이 아니다」와 「연동이 켜져 있다」. 켜진 것도 적어야 그 애매함이 없어진다. 초록은 두 모드를 따라가는 토큰(`var(--green)`)이다. ★ dev 전용. -->
 <!-- (2026-09-09) 🔴🔴 **없는 이름을 쓰지 않기로 했다**(제니 결정). 「내 일이 끝나면 «CS 완료» 로 넘기세요」에서 **「CS 완료」라는 단계는 콘솔에 없다** — 상담원의 끝은 «확인 대기» 두 갈래(교환은 재출고 완료, 반품은 환불 대기)다. 앞 두 판(b·d)은 그 없는 이름을 «어떻게 그릴까» 만 고쳤다: 알약으로 그렸다가, 저장 버튼과 같은 점으로 바꿨다가. **꼴을 아무리 맞춰도 이름이 화면 어디에도 없다는 것은 그대로였다.** → 실제 단계 이름 둘을 그대로 적는다: 「내 일이 끝나면 ● 재출고 완료나 ● 환불 대기로 넘기세요」. ★★★ **툴팁을 없앤 것이 이 판의 핵심이다** — 실제 이름을 툴팁에 넣어 두면 **마우스를 올려야 답이 나온다.** 답이 화면에 있으면 물을 일이 없고, 그게 «직관적» 이라는 말의 뜻이다(제니 「좀더 직관적으로 표현 가능한 방법이 뭐가 있을까」). ★★ **이름도 조사도 CS_STAGES 에서 나온다 — 손으로 적은 글자가 한 자도 없다.** 조사까지 따라오게 `csIna`(나/이나)를 `csRo`(로/으로) 옆에 만들었다: 이름만 코드에서 뽑고 조사를 박아 두면, 단계 이름이 바뀌는 날 「…완료이나」 같은 말이 **조용히** 남는다. ★ 점은 저장 버튼 목록과 같은 조각(CsStageDot·09-09d)이라 색표가 한 벌이다. ★ dev 전용. -->
 <!-- (2026-09-09) 🔴 **「CS 완료」를 알약이 아니라 «상태 점» 으로 바꿨다**(제니: 「저장 버튼에서 재출고완료·환불대기 좌측에 있는 컬러칩과 동일한 느낌이 안 든다」). ★★★ **뜻이 다른 두 표현을 한 꼴로 그리려 한 것이 잘못이었다** — 상태 알약(CsStagePill)은 «지금 이 티켓의 상태» 를 말하는 자리이고, 저장 버튼 목록의 점은 «고를 수 있는 단계» 를 말하는 자리다. 안내 글의 「CS 완료」는 뒤쪽이다(고르러 가라는 말이다). 알약으로 그렸더니 실제 상태가 「진행중」인 티켓 위에 또 다른 알약이 떠서, **둘 중 어느 것이 지금인지 헷갈리는 화면**이 됐다. ★★ 그래서 **점을 조각으로 뽑았다**(CsStageDot·CS_TONE_DOT) — 그 색표는 CsStageSubmit «안» 에 지역 함수로 박혀 있어 바깥에서 쓸 수가 없었다. 저장 버튼 목록도 이제 같은 조각을 쓴다: **색표가 한 벌이라 한쪽만 바뀔 일이 없다.** ★ 툴팁에서 「실제 단계 이름」 머리말을 뺐다(제니) — 단계 이름 둘만 줄바꿈으로 뜬다. 이름은 여전히 CS_STAGES 에서 뽑는다. ★ 알약(CsStagePill)은 09-09b 에서 열었던 label·group·tip 을 **도로 닫아 원래대로 되돌렸다** — 쓰는 데가 없는 문은 다음 사람에게 «여기로 지나가도 된다» 는 잘못된 신호가 된다. ★ dev 전용. -->
 <!-- (2026-09-09) 🔴 **툴팁이 «조용히 안 뜨던» 여덟 자리를 고쳤다.** 09-03 에 공용 풍선을 되돌리며 `data-tip` 105곳을 title= 로 옮기고 **TipLayer 를 지웠는데**, 그 뒤(09-04~09-09)에 새로 쓴 코드가 계속 `data-tip` 을 달았다 — **읽는 쪽이 없으니 아무 일도 안 일어나는 죽은 속성**이었다. 여덟 자리: [⚡ 매크로] 버튼 · 카페24 연동 설정의 칸 설명과 「접수 문안이 이 값을 씁니다」 경고 · 사진 저장 버튼 · 티켓 등록/상세의 [카페24 주문서 ↗] 와 「주문서 ✕」 · 공급사 접수 창의 📎 첨부 뱃지. 전부 소문자 태그(button·label·span·a)라 title= 로 그대로 옮겼고 disabled 인 것은 없다. ★★★ **왜 못 봤나 — 「버튼엔 data-tip · title= 은 안 쓴다」는 한 줄이 남아 있었다.** 되돌린 사실은 기록 본문에 적혀 있었는데 «한 줄 요약» 이 옛 상태 그대로여서, 새 코드를 쓸 때마다 그 한 줄을 믿었다. **요약이 본문과 다른 말을 하면 사람은 요약을 믿는다** — 되돌리는 판에서는 «되돌렸다» 를 요약에도 적어야 한다. ★★ **없는 기능은 «틀렸다» 고 말해 주지 않는다** — React 는 모르는 속성을 그대로 DOM 에 붙이고 끝이라 화면도 브라우저 콘솔도 조용하다. 그래서 이런 것은 «쓴 자리» 를 세는 것이 아니라 **«읽는 자리가 있는가» 로 찾아야 한다**(dataset.tip·[data-tip] 을 찾아 0곳임을 확인하고 나서야 죽은 것인 줄 알았다). ★ dev 전용. -->
@@ -834,7 +835,7 @@
            보여야 하는 값이고, 아바타 글자 하나로는 그것까지 말하지 못한다. */
       .sidebar.collapsed .user-info{flex-direction:column;gap:7px;padding:10px 0}
       .sidebar.collapsed .user-meta{flex:none;width:100%;align-items:center;gap:0}
-      .sidebar.collapsed .user-email{display:none}
+      .sidebar.collapsed .user-name{display:none}
       /* 글자만 지우고 자리는 남긴다 — 로그아웃은 접힌 상태에서도 눌러야 하는 자리다. */
       .sidebar.collapsed .btn-logout{font-size:0;padding:8px 0}
       .sidebar.collapsed .btn-logout::after{content:'⏻';font-size:14px}
@@ -873,7 +874,11 @@
     .user-info{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:background .15s}
     .user-info:hover{background:var(--hover)}
     .user-avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
-    .user-email{font-size:11px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    /* ★ 2026-09-09 이메일 → 이름으로 바뀌었다(제니). 클래스 이름도 함께 바꾼다 —
+         이름과 담기는 값이 어긋나면 다음 사람이 «여기 이메일이 있겠거니» 하고 읽는다.
+       ★ ellipsis 는 남긴다: 이름이 짧아 대개 안 잘리지만, 긴 이름을 넣는 날
+         레이아웃이 밀리는 것보다 잘리는 편이 낫다(잘리면 툴팁에 이메일이 뜬다). */
+    .user-name{font-size:11px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .btn-logout{width:100%;padding:9px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--sub);font-size:12px;cursor:pointer;margin-top:8px;font-family:inherit;transition:all .15s}
     .btn-logout:hover{border-color:var(--red);color:var(--red)}
     /* 상품 동기화가 멈췄을 때 «총 상품» 카드가 스스로 눈에 띄게 한다.
@@ -21639,7 +21644,13 @@ function CsDraftTplSettings({currentUserEmail}){
                     color:'var(--text)',whiteSpace:'nowrap',opacity:need?.6:1}}>{'{'+v.k+'}'}</span>
                   <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
                     {v.d}
-                    {need && <b style={{color:'#F6AD09'}}> · 연동 꺼짐</b>}
+                    {/* ★★ 꺼짐만 적으면 «아무것도 안 적힌 줄» 이 두 뜻을 갖는다 —
+                        「연동 값이 아니다」와 「연동이 켜져 있다」. 켜진 것도 적어
+                        그 애매함을 없앤다(제니 2026-09-09). 초록은 콘솔의 «되어
+                        있다» 색이고, 두 모드를 따라가는 토큰(var(--green))이다. */}
+                    {!!v.c24 && (need
+                      ? <b style={{color:'#F6AD09'}}> · 연동 꺼짐</b>
+                      : <b style={{color:'var(--green)'}}> · 연동 켜짐</b>)}
                   </span>
                 </React.Fragment>
                 );
@@ -26344,7 +26355,9 @@ const CS_DRAFT_VARS_C24 = CS_CAFE24_FIELDS
   .filter(f=>!CS_DRAFT_VARS.some(v=> v.k===f.label || (v.a && v.a.indexOf(f.label)>=0)))
   .map(f=>({
     k: f.label, c24: f.id, o: true,
-    d: '카페24 '+f.g+' · 연동에서 켜야 담깁니다',
+    // ★ 문구는 제니가 정한 그대로다(2026-09-09) — «어느 탭에서 켜는가» 를 이름으로
+    //   말해 준다. 「연동에서 켜야」는 그 탭을 아는 사람에게만 통하는 말이었다.
+    d: '카페24 '+f.g+' · [카페24 연동]탭에서 켜야 이용 가능',
     g: (t)=>csCafe24Show(f.id, ((t && t.cafe24_snapshot) || {})[f.id]),
   }));
 const CS_DRAFT_VARS_ALL = CS_DRAFT_VARS.concat(CS_DRAFT_VARS_C24);
@@ -29185,8 +29198,9 @@ function App() {
           )}
           {/* ★ 창이 아니라 «화면» 으로 간다(제니 지시 2026-08-26). 계정 정보 밑에
               메뉴별 설정이 붙을 자리라 창 크기로는 감당이 안 된다. */}
-          {/* ★ 접으면 이메일이 화면에서 사라지므로 툴팁이 그것까지 말한다 —
-              펼친 상태에서는 바로 옆에 적혀 있으니 넣지 않는다(값을 되풀이하지 않는다). */}
+          {/* ★ 접으면 이름이 화면에서 사라지므로 툴팁이 이메일까지 말한다.
+              ★ 펼친 상태의 이메일은 «이름» 조각이 제 툴팁으로 말한다(바로 아래) —
+                여기(부모)에도 넣으면 같은 자리에서 두 툴팁이 겹친다. */}
           <div className={"user-info"+(page==='account'?' active':'')} onClick={()=>navigateTo('account')}
             title={navCollapsed ? (session.user.email+' · 계정 정보 · 설정') : '계정 정보 · 설정'}>
             <div className="user-avatar">{session.user.email?.[0]?.toUpperCase()}</div>
@@ -29195,7 +29209,15 @@ function App() {
                 클래스를 붙인 이유: 자리(:nth-child)로 지우면 안에 조각을 하나 더
                 넣는 날 엉뚱한 것이 사라진다. */}
             <div className="user-meta" style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:3}}>
-              <div className="user-email">{session.user.email}</div>
+              {/* ★★ 이메일이 아니라 «이름» 이다(제니 2026-09-09) — 주소가 길면 …으로
+                  잘려 어차피 전체가 안 보였다. 이름은 짧아 잘릴 일이 거의 없고,
+                  «누구로 들어와 있나» 를 읽는 데도 이메일보다 이름이 빠르다.
+                ★ 이메일은 툴팁으로 남긴다 — 화면에서 사라진 값이라 «되풀이» 가 아니다.
+                  계정이 둘인 사람이 «어느 쪽으로 들어왔나» 를 확인하는 자리다.
+                ★ 이름이 없거나 지도가 아직 안 왔으면 csShortUser 가 이메일 앞부분을
+                  준다 — 비는 일은 없다. 지도가 도착하면 namesTick 이 다시 그린다. */}
+              <div className="user-name" title={session.user.email}>
+                {csShortUser(session.user.email)}</div>
               {(()=>{
                 // 🔴 2026-09-08 제니 — 라이트에서 이 뱃지의 «글자가 안 보였다».
                 //   원인은 오늘만 세 번째로 만나는 그것이다: **옅은 바탕 + 밝은 글자 한 벌뿐.**
