@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909b_done_stage_pill -->
+<!-- v20260909c_dead_tips_fix -->
+<!-- (2026-09-09) 🔴 **툴팁이 «조용히 안 뜨던» 여덟 자리를 고쳤다.** 09-03 에 공용 풍선을 되돌리며 `data-tip` 105곳을 title= 로 옮기고 **TipLayer 를 지웠는데**, 그 뒤(09-04~09-09)에 새로 쓴 코드가 계속 `data-tip` 을 달았다 — **읽는 쪽이 없으니 아무 일도 안 일어나는 죽은 속성**이었다. 여덟 자리: [⚡ 매크로] 버튼 · 카페24 연동 설정의 칸 설명과 「접수 문안이 이 값을 씁니다」 경고 · 사진 저장 버튼 · 티켓 등록/상세의 [카페24 주문서 ↗] 와 「주문서 ✕」 · 공급사 접수 창의 📎 첨부 뱃지. 전부 소문자 태그(button·label·span·a)라 title= 로 그대로 옮겼고 disabled 인 것은 없다. ★★★ **왜 못 봤나 — 「버튼엔 data-tip · title= 은 안 쓴다」는 한 줄이 남아 있었다.** 되돌린 사실은 기록 본문에 적혀 있었는데 «한 줄 요약» 이 옛 상태 그대로여서, 새 코드를 쓸 때마다 그 한 줄을 믿었다. **요약이 본문과 다른 말을 하면 사람은 요약을 믿는다** — 되돌리는 판에서는 «되돌렸다» 를 요약에도 적어야 한다. ★★ **없는 기능은 «틀렸다» 고 말해 주지 않는다** — React 는 모르는 속성을 그대로 DOM 에 붙이고 끝이라 화면도 브라우저 콘솔도 조용하다. 그래서 이런 것은 «쓴 자리» 를 세는 것이 아니라 **«읽는 자리가 있는가» 로 찾아야 한다**(dataset.tip·[data-tip] 을 찾아 0곳임을 확인하고 나서야 죽은 것인 줄 알았다). ★ dev 전용. -->
 <!-- (2026-09-09) **안내 문구의 「«CS 완료»」를 상태 뱃지로 그린다**(제니 제보). master 가 아닌 사람이 티켓 상세 ② 하단에서 보는 글은 「내 일이 끝나면 «CS 완료» 로 넘기세요」인데, 정작 그 티켓의 상태 뱃지는 「재출고 완료」나 「환불 대기」라 **글과 화면이 다른 말을 했다.** ★★★ 원인은 **«CS 완료» 가 단계 이름이 아니라는 것** — 상담원의 끝은 «확인 대기» 그룹 두 갈래(교환은 재출고 완료, 반품은 환불 대기)이고, 그 말은 둘을 한꺼번에 부르는 이름이다. 그래서 말을 지우는 대신 **뱃지로 그려 «이것은 상태를 가리키는 말» 임을 꼴로 알리고, 실제 이름 둘은 툴팁이 말하게 했다**(줄바꿈으로 「재출고 완료 / 환불 대기」). ★★ **새 알약을 만들지 않았다** — 상태 뱃지는 콘솔에 하나뿐인 조각(CsStagePill)이고, 거기에 label·group·tip 을 받는 길만 열었다(09-08 에 세운 규칙: 뱃지는 한 항목이다). ★★ **툴팁의 단계 이름을 손으로 적지 않는다**(CS_DONE_TIP) — CS_STAGES 에서 «확인 대기» 그룹을 뽑아 만든다. 단계가 늘거나 이름이 바뀌면 안내가 저절로 따라오고, **지어낸 이름이 남을 자리가 없다.** ★ 툴팁은 브라우저 기본(title=)이다 — 09-03 에 공용 풍선(data-tip)을 통째로 되돌려 지금 콘솔에 TipLayer 가 없다. ★ 화면에 «CS 완료» 를 글로 쓰는 자리는 전수로 훑어 이 한 곳뿐임을 확인했다(칩 이름 「CS 완료 · 확인 대기」는 필터라 그대로 둔다). ★ dev 전용. -->
 <!-- (2026-09-08) **「클레임 사유 분류 이름표」를 설정에 만들었다**(제니 승인). 카페24가 이 값을 **알파벳 코드**로 주는데(「A」), **공개 문서 어디에도 코드표가 없다** — 개발자센터 API 문서는 필드 설명만 두고 값 목록이 없으며, 헬프센터는 사유를 「상점관리 > 운영방식 설정」의 값이라고만 한다(쇼핑몰마다 다를 수 있다는 뜻이다). 문서를 훑어 확인했다. ★★★ 그래서 **내가 표를 코드에 박지 않는다.** 짐작으로 한글을 붙이면 틀렸을 때 **CS 판단 자체가 틀어지고, 아무도 그것이 지어낸 값인지 모른다.** PG사 코드에 세운 규칙과 같은 자리다 — **모르는 코드는 코드 그대로.** ★★ 대신 **사람이 채운다**: 콘솔이 «지금까지 티켓에 실제로 들어온 코드» 를 세어 보여 주고, 한글 이름을 적으면 티켓 화면이 「A · 단순변심」으로 그린다. 카페24가 코드를 늘려도 설정만 채우면 되고 내가 안 나와도 된다. ★ **이름을 붙인 뒤에도 코드를 함께 보여 준다** — 어느 코드에 붙인 이름인지 알아야 나중에 틀린 짝을 찾을 수 있다. ★ 목록은 «들어온 코드 + 이름을 적어 둔 코드» 를 합친다: 카페24가 코드를 바꿔도 지난 티켓의 이름을 잃지 않는다. ★ **본 적 없는 코드를 «있을 법한» 이름으로 미리 채우지 않는다** — 빈 채로 두면 사람이 채우지만, 틀린 이름이 채워져 있으면 아무도 그것이 틀렸는지 모른다. ★ dev 전용. -->
 <!-- v20260908zz_tracking_dedup -->
@@ -18863,7 +18864,7 @@ function CsMacroTools({taRef, value, onChange, light}){
 
   return (
     <div ref={boxRef} style={{position:'relative',display:'inline-flex'}}>
-      <button type="button" data-tip={data===null ? '매크로를 읽지 못했습니다'
+      <button type="button" title={data===null ? '매크로를 읽지 못했습니다'
           : '자주 쓰는 문구를 넣습니다 — 작성칸에 «/단축어» 를 쳐도 됩니다'}
         onClick={()=>{ setOpen(o=>!o); setQ(''); }}
         style={{...btn, opacity: data===undefined ? .6 : 1}}>
@@ -21042,7 +21043,7 @@ function CsCafe24Settings({currentUserEmail}){
               <div style={{fontSize:11,color:'var(--sub)',fontWeight:600,padding:'8px 12px 5px',
                 background:'rgba(255,255,255,.02)'}}>{g}</div>
               {CS_CAFE24_FIELDS.filter(f=>f.g===g).map(f=>(
-                <label key={f.id} data-tip={f.note||undefined}
+                <label key={f.id} title={f.note||undefined}
                   style={{display:'flex',alignItems:'center',gap:9,padding:'5px 12px',
                     cursor:(f.always||f.key)?'default':'pointer', opacity:f.key?.62:1}}>
                   <input type="checkbox" style={{...csChk,
@@ -21062,7 +21063,7 @@ function CsCafe24Settings({currentUserEmail}){
                       두 설정을 가른 대가는 «한쪽만 하면 조용히 안 나오는 것» 이라,
                       끄는 자리에서 그 사실을 미리 말해 준다(제니 2026-09-08). */}
                   {usedByDraft.indexOf(f.id)>=0 && (
-                    <span data-tip={on(f.id)
+                    <span title={on(f.id)
                         ? '접수 문안이 이 값을 씁니다 — 끄면 문안의 그 줄이 빠집니다'
                         : '접수 문안이 이 값을 쓰는데 꺼져 있습니다 — 문안의 그 줄이 빠집니다'}
                       style={{fontSize:9.5,borderRadius:8,padding:'0 5px',
@@ -23077,7 +23078,7 @@ function CsPhotoStrip({list, nameBase}){
                 style={{width:64,height:64,objectFit:'cover',display:'block'}}/>
             </a>
             {fn && (
-              <button type="button" data-tip={'«'+fn+'» 으로 저장'}
+              <button type="button" title={'«'+fn+'» 으로 저장'}
                 onClick={e=>{ e.preventDefault(); e.stopPropagation(); csDownloadPhoto(url, fn); }}
                 style={{position:'absolute',top:4,right:4,width:19,height:19,
                   display:'flex',alignItems:'center',justifyContent:'center',
@@ -23890,7 +23891,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                 <span>주문</span>
                 <div style={{flex:1}}></div>
                 <a href={csCafe24OrderUrl({order_id:no})} target="_blank" rel="noreferrer"
-                  data-tip={'카페24 어드민에서 주문 '+no+' 를 새 창으로 엽니다'}
+                  title={'카페24 어드민에서 주문 '+no+' 를 새 창으로 엽니다'}
                   style={{fontSize:10.5,fontWeight:600,color:'var(--accent)',
                     textDecoration:'none',padding:'3px 8px',borderRadius:5,
                     border:'1px solid var(--accent)',background:'rgba(120,170,255,.12)',
@@ -25194,13 +25195,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             <div style={{flex:1}}></div>
             {csOrderNo(t) ? (
               <a href={csCafe24OrderUrl(t)} target="_blank" rel="noreferrer"
-                data-tip={'카페24 어드민에서 주문 '+csOrderNo(t)+' 를 새 창으로 엽니다'}
+                title={'카페24 어드민에서 주문 '+csOrderNo(t)+' 를 새 창으로 엽니다'}
                 style={{fontSize:10.5,fontWeight:600,color:'var(--accent)',
                   textDecoration:'none',padding:'3px 8px',borderRadius:5,
                   border:'1px solid var(--accent)',background:'rgba(120,170,255,.12)',
                   whiteSpace:'nowrap'}}>카페24 주문서 ↗</a>
             ) : (
-              <span data-tip="주문번호가 없어 주문서를 열 수 없습니다"
+              <span title="주문번호가 없어 주문서를 열 수 없습니다"
                 style={{fontSize:10.5,fontWeight:400,color:'var(--sub)',opacity:.75,
                   whiteSpace:'nowrap'}}>주문서 ✕</span>
             )}
@@ -26890,7 +26891,7 @@ function CsSupplierDraft({rows, events, photoMap, supMap, busy, onSent, onBack, 
                     <span style={{fontSize:9,padding:'2px 6px',borderRadius:4,
                       background:ch.bg,color:ch.color,whiteSpace:'nowrap'}}>{ch.label}</span>
                     {photoByGroup[g.name]>0 && (
-                      <span data-tip={'첨부 사진 '+photoByGroup[g.name]+'장 — 내용 아래에 있습니다'}
+                      <span title={'첨부 사진 '+photoByGroup[g.name]+'장 — 내용 아래에 있습니다'}
                         style={{fontSize:9.5,padding:'2px 5px',borderRadius:4,whiteSpace:'nowrap',
                           background:'rgba(246,173,9,.16)',color:'var(--warn-ink)',fontWeight:700}}>
                         📎 {photoByGroup[g.name]}</span>
