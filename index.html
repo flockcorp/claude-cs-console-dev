@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909u_hint_fixed_revert_note -->
+<!-- v20260909v_custom_chips -->
+<!-- (2026-09-09) 🔴🔴 **칩을 사람이 만들 수 있게 했다**(제니: 「칩별 상태가 고정으로 들어갔는데 내가 설정할 수 있게 · 칩 자체를 새로 추가하고 그 칩에서 보고 싶은 티켓을 **티켓 1번 영역의 값과 티켓 상태**로 고를 수 있게」). CS 설정 > 칩 권한에서 [+ 칩 추가] → 이름을 적고 [조건] 을 펼쳐 고른다. ★★★ **조건으로 쓸 수 있는 칸은 «값 목록이 정해진 것» 뿐이다** — 상태·유형·방향·접수 경로·정산 대상 다섯. 상품명·메모처럼 사람이 자유롭게 적는 칸까지 열면 설정 화면이 «검색창» 이 되고, **오타 하나로 조용히 0건이 되는 칩**이 생긴다. 고르는 칸만 두면 **틀린 조건을 만들 길이 없다.** ★★ 셈법은 **목록 필터와 같다** — 한 칸 안은 «또는», 칸끼리는 «그리고». 사람이 이미 아는 규칙을 그대로 쓰고, 그 말을 조건 판에 적어 둔다(격자만 보여 주면 «둘 다인가 하나만인가» 를 매번 다시 생각한다). ★ 아무 조건도 없으면 «전부» 다 — 만들다 만 칩이 조용히 0건이 되는 것보다, 전부 보이고 설정 화면이 「조건 없음」이라고 말해 주는 편이 낫다. ★★ **권한과 «다른 설정» 에 담는다**(`cs_chips_custom` · 권한은 `cs_chip_roles`): 권한은 «누가 보나», 이쪽은 «무엇이 보이나» 라 뜻이 다르고, 한 줄에 섞으면 한쪽을 고치다 다른 쪽을 지운다. ★ 기본 칩과 **같은 표**에 세운다 — 따로 두면 「내가 만든 것은 권한이 다른가」를 매번 생각하게 된다. 권한 격자도 그대로 쓴다. ★ 새 칩은 **권한을 다 켠 채** 만들어진다: 만들자마자 아무에게도 안 보이면 「왜 안 뜨지」를 설정에서 다시 찾아야 한다. 좁히는 것은 그다음 일이다. ★ 이름이 빈 칩은 저장하지 않는다(누를 수는 있는데 무엇인지 알 길이 없는 칩이 목록에 선다). ★ 지우기는 한 번 묻고, **그 칩에 걸어 둔 권한도 함께 사라진다**는 것을 함께 적는다. ★ 사람이 만든 칩은 «전체» 바로 앞에 선다 — 「전체」가 늘 마지막이어야 «여기까지가 좁혀 보는 것들» 이라는 줄이 안 흐트러진다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①🔴 **「필수 시점」의 「?」 풍선이 가려져 제대로 안 떴다**(제니 제보). 원인은 **오늘 매크로 목록에서 만난 것과 같은 것**이다 — 그 표를 감싼 상자에 `overflow:hidden`(모서리를 둥글게 자르려고 둔 것)이 걸려 있고, **overflow 가 걸린 조상 안에서는 absolute 로 띄운 것이 그 상자에 잘린다.** → 풍선을 **화면 기준(fixed)** 으로 띄워 조상의 overflow 를 벗어난다. 자리는 「?」를 **그 순간에 재서** 정하고(표는 구르고 창은 크기가 바뀐다), **위에 자리가 없으면 아래로** 연다(화면 맨 위 줄의 머리글에서는 위가 없다). 좌우로도 화면을 안 넘게 묶고 꼬리는 「?」를 향한다. ⚠ 09-03 에 되돌린 «공용 풍선» 과는 다른 이야기다 — 그때 문제는 fixed 가 아니라 **지나가기만 해도 즉시 뜨던 것**이었고, 이건 「?」에 올려야 뜬다. ★★ **오늘 세 번째로 만난 같은 함정이다**(매크로 목록 · 이 풍선). `overflow` 를 둔 상자 안에서 무언가를 «띄우려» 하면 늘 이걸 먼저 볼 것. ②**환불 «환불 대기로 원복» 안내**(제니 결정) — 티켓 상태는 **되돌리지 않는다**: 완료된 뒤 사람이 티켓을 종결로 옮겼을 수도 있고, **그 판단을 화면이 되짚어 지우면 안 된다.** 되돌리는 것은 «환불 건» 이지 그 사이에 사람이 한 일이 아니다. → 대신 그 자리에서 「티켓의 상태는 원복 되지 않습니다. 원복이 필요한 경우, 직접 상태를 변경해주세요.」(제니 문구)와 **[티켓 #N 으로 이동 →]** 를 준다. ★ 안내는 **연동으로 넘어온 건에만** 뜬다 — 티켓이 없는 환불 건에 그 말을 적으면 없는 걱정을 만든다. ★ 창을 닫지 «않고» 덮어서 띄운다: 닫아 버리면 읽을 자리가 사라지고, 토스트로는 [티켓으로 이동] 을 줄 수 없다(토스트는 글자만 담는다). ★ 티켓이 여럿일 수 있어 번호마다 버튼을 둔다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 셋. ①🔴🔴 **환불 완료 → CS 티켓 «환불 완료» 연동**(제니). 환불 관리에서 «환불 완료 처리» 를 하면 그 건으로 넘어온 티켓이 «환불 대기» → «환불 완료» 로 옮겨지고, ② 영역에 **시스템 이력 「환불이 완료되었습니다.」** 가 남는다. ★★★ **«환불 대기» 인 티켓만 옮긴다** — 이미 종결·철회된 건을 되살리거나 사람이 손으로 옮겨 둔 상태를 덮으면 **화면이 사람의 판단을 지우는 셈**이다. 연동은 «아직 아무도 안 건드린 것» 을 대신 옮겨 주는 자리다. ★★ 환불 완료 경로가 **둘**(수정 창 · 목록 일괄)이라 **함수 하나(`csTicketsOnRefundDone`)로 모았다** — 두 곳에 적으면 한쪽만 고쳐지는 날이 온다(오늘만 네 번째로 만나는 자리다). ★ 이력은 **«시스템»** 이 남긴다: 사람이 CS 화면에서 한 일이 아니라 **다른 화면에서 일어난 일이 여기로 옮겨 온 것**이라, 작성자를 사람으로 적으면 「내가 안 했는데」가 된다. ★ 묶음이면 이력은 메인에 쌓는다(콘솔 규칙 그대로). ★★ **실패해도 «환불 완료» 자체는 되돌리지 않는다** — 환불이 실제로 나간 것이 사실이고 티켓 상태는 사람이 고칠 수 있다. 대신 **조용히 넘어가지 않게** 「티켓에서 직접 옮겨 주세요」로 알린다. ★ `환불완료` 는 이미 이력 action 허용값이라 SQL 변경이 없다. ②**이력 문구**(제니): 「환불 관리로 넘겼습니다」 → **「환불을 요청했습니다」**. 「넘겼습니다」는 «자리를 옮겼다» 는 말이라 무엇이 일어났는지 흐리다. ③**일괄 편집 바 색을 라이트에 맞췄다**(제니: 「다크에선 좋은데 라이트에서 붕 뜬다 · 눈에는 들되 화면 전체와 어우러지게」). ★★★ 다크의 «진한 붉은 채움» 이 라이트에서 뜨는 것은 당연하다 — 어두운 화면에서 그 색은 «한 톤 밝은 판» 이지만 흰 종이 위에서는 **가장 어두운 덩어리**가 되어 혼자 튀어나온다(09-07 상태 알약과 같은 자리: **같은 값이 두 바탕에서 정반대의 세기로 읽힌다**). → 라이트에서는 **뒤집는다**: 옅은 붉은 «바탕» 에 진한 붉은 «테두리·글자». 색상(hue)은 그대로라 «주의» 라는 뜻은 유지되고 세기만 판에 맞춘다. ★★ **판을 바꾸면 그 안의 조각을 전부 다시 봐야 한다** — 다크에서 흰 판이던 주 동작 단추는 옅은 붉은 위에서 오히려 묻히므로, 라이트에서는 그것이 «진한 붉은 채움» 이 된다(다크와 정확히 반대다). ★ 색을 **한 표(`csBulkBarPalette`)에 모아** 바와 그 안의 `CsBulkPanel` 이 같은 것을 본다 — 두 곳에 적으면 판만 바뀌고 단추는 그대로인 화면이 나온다. ★ **체크한 행 표시는 그대로 뒀다**(제니 지시). ★ dev 전용. -->
 <!-- (2026-09-09) 🔴 **[환불 요청 하기] 에 권한 조건이 없었다**(제니 확인 질문: 「권한이 있는 계정만 보이는 거 맞지?」 — **아니었다. 내가 안 걸었다**). DB 정책(`refunds_by_menu`)이 실제로는 막아 주지만, **버튼이 보이는 것 자체가 잘못이다** — 눌러 보고 나서 «안 되는구나» 를 알게 된다. ★★★ 고치면서 판정을 `isMaster` 로 박지 «않았다». 환불 메뉴는 **설정에서 manager 에게 열 수 있고**(`console_settings.menu_roles`) DB 정책도 그 설정을 읽는다. 화면만 master 로 박아 두면 «설정에서 열어 줬는데 버튼이 없는» 자리가 된다 — 09-07 에 배송지연에서 만난 그 함정(**설정이 거짓말을 하는 자리**)이다. → `canMenu('refunds')` 를 두 화면에 내려 **화면과 DB 가 같은 자리를 본다.** ★★ 겸해 **티켓 상세의 [환불 관리로 넘기기] 도 같은 값으로 바꿨다** — 거기는 `isMaster` 로 박혀 있어 같은 어긋남을 안고 있었다. 목록의 일괄 버튼과 상세의 단건 버튼이 이제 **같은 조건**으로 뜬다(둘이 다르면 「목록에선 되는데 상세에선 안 되네」가 생긴다). ★ 화면은 헛걸음을 없애는 자리이고 진짜 자물쇠는 DB 다 — 이 판은 앞의 것만 고쳤다. ★ dev 전용. -->
@@ -18174,6 +18175,40 @@ function csBulkBarPalette(){
   };
 }
 
+// ── 사람이 만드는 칩 (제니 2026-09-09) ───────────────────────────────────────
+// 「칩별 상태가 고정으로 들어갔는데 내가 설정할 수 있게 해 줘. 칩 자체를 새로 추가하고
+//   그 칩에서 보고 싶은 티켓을 **티켓 1번 영역의 값과 티켓 상태**로 고를 수 있게.」
+// ★★★ **조건으로 쓸 수 있는 칸은 «값 목록이 정해진 것» 뿐이다.** 상품명·메모처럼
+//   사람이 자유롭게 적는 칸을 조건으로 열면, 설정 화면이 «검색창» 이 되고 오타 하나로
+//   조용히 0건이 되는 칩이 생긴다. 고르는 칸만 두면 **틀린 조건을 만들 길이 없다.**
+// ★ 그래서 다섯이다 — 상태 · 유형 · 방향 · 접수 경로 · 정산 대상.
+const CS_CHIP_FIELDS = [
+  {k:'stage',       label:'상태',      opts:()=>CS_STAGES.map(s=>({v:s.id, label:s.label}))},
+  {k:'cs_type',     label:'유형',      opts:()=>CS_TYPES.map(v=>({v, label:v}))},
+  {k:'direction',   label:'방향',      opts:()=>CS_DIRECTIONS.map(v=>({v, label:v}))},
+  {k:'intake_path', label:'접수 경로', opts:()=>CS_INTAKE.map(v=>({v, label:v}))},
+  {k:'cost_bearer', label:'정산 대상', opts:()=>CS_BEARERS.map(v=>({v, label:v}))},
+];
+// ★★ 한 칸 안에서 고른 것끼리는 «또는», 칸과 칸 사이는 «그리고» — 목록 필터와 **같은
+//   규칙**이다. 사람이 이미 아는 셈법을 그대로 쓴다.
+// ★ 아무 조건도 없으면 «전부» 다. 만들다 만 칩이 조용히 0건이 되는 것보다,
+//   전부 보이고 «조건이 없다» 를 설정 화면이 말해 주는 편이 낫다.
+function csChipWhereMatch(t, where){
+  if(!where) return true;
+  return CS_CHIP_FIELDS.every(f=>{
+    const want = where[f.k];
+    if(!Array.isArray(want) || !want.length) return true;   // 안 고른 칸은 안 본다
+    return want.indexOf((t||{})[f.k] || '') >= 0;
+  });
+}
+// 설정에서 읽은 «사람이 만든 칩» — 모양이 깨진 줄은 조용히 버린다(화면이 죽지 않게).
+function csCustomChips(settings){
+  const v = settings && settings.cs_chips_custom;
+  if(!Array.isArray(v)) return [];
+  return v.filter(c=>c && typeof c==='object' && c.id && c.label)
+          .map(c=>({id:String(c.id), label:String(c.label), where:c.where||{}}));
+}
+
 const CS_CHIPS = [
   {id:'mine',      label:'내 티켓'},
   {id:'recheck',   label:'오늘의 리체크'},
@@ -19734,7 +19769,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
   // 설정(칩 권한·열 구성)을 한 번 읽는다. 못 읽으면 기본값으로 돈다.
   useEffect(()=>{ (async()=>{
     const {data,error} = await sb.from('console_settings').select('key,value')
-      .in('key',['cs_chip_roles','cs_list_columns']);
+      .in('key',['cs_chip_roles','cs_list_columns','cs_chips_custom']);
     if(error){ console.warn('[CS 설정] 기본값으로 돕니다:', error.message); setSettings({}); return; }
     const m = {};
     (data||[]).forEach(r=>{ m[r.key] = r.value; });
@@ -19761,11 +19796,24 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
     // ★ «st:» 는 단계 하나, «g:» 는 그룹. 칩 이름이 단계 이름과 같으니 대부분 st: 다.
     if(id.indexOf('st:')===0) return t.stage === id.slice(3);
     if(id.indexOf('g:')===0)  return csGroupOf(t.stage) === id.slice(2);
+    // ★ 사람이 만든 칩 — 조건은 설정에서 온다(csChipWhereMatch).
+    if(id.indexOf('u:')===0){
+      const c = csCustomChips(settings).find(x=>x.id===id);
+      return c ? csChipWhereMatch(t, c.where) : true;
+    }
     return true;
   };
 
   const chipRoles = (settings && settings.cs_chip_roles) || CS_CHIP_ROLES_FALLBACK;
-  const visibleChips = CS_CHIPS.filter(c=>{
+  // ★ 사람이 만든 칩은 «전체» 바로 앞에 선다 — 「전체」는 늘 마지막이어야
+  //   «여기까지가 좁혀 보는 것들» 이라는 줄이 안 흐트러진다.
+  const customChips = csCustomChips(settings);
+  const allChips = (()=>{
+    const i = CS_CHIPS.findIndex(c=>c.id==='all');
+    if(i<0) return CS_CHIPS.concat(customChips);
+    return CS_CHIPS.slice(0,i).concat(customChips, CS_CHIPS.slice(i));
+  })();
+  const visibleChips = allChips.filter(c=>{
     const allowed = chipRoles[c.id];
     return !allowed || (Array.isArray(allowed) && allowed.indexOf(role)>=0);
   });
@@ -20985,6 +21033,26 @@ function csChipShows(id){
   }
   return '—';
 }
+// 사람이 만든 칩의 조건을 «사람 말» 로. 위 함수와 같은 자리에 두어 두 종류의 칩이
+// 표에서 같은 꼴로 읽히게 한다.
+// ★ 「그리고 / 또는」을 글자로 적는다 — 격자만 보여 주면 «둘 다 만족인가 하나만인가»
+//   를 매번 다시 생각하게 된다.
+function csChipShowsCustom(where){
+  const parts = CS_CHIP_FIELDS.map(f=>{
+    const want = (where||{})[f.k];
+    if(!Array.isArray(want) || !want.length) return null;
+    const opts = f.opts();
+    const names = want.map(v=>(opts.find(o=>o.v===v)||{}).label || v);
+    return f.label+' : '+names.join(' 또는 ');
+  }).filter(Boolean);
+  return parts.length ? parts.join('  그리고  ') : '조건 없음 — 모든 티켓';
+}
+// ★ 지울 때 묻는 말. 되돌릴 수 없고 그 칩에 걸어 둔 «권한» 도 함께 사라진다는 것을
+//   같이 적는다 — 사라지는 것이 하나가 아닐 때는 그걸 말해 줘야 한다.
+function csChipDelMsg(label){
+  return '«'+(String(label||'').trim() || '이름 없는 칩')+'» 칩을 지웁니다.\n'
+       + '이 칩에 걸어 둔 권한도 함께 사라지고, 되돌릴 수 없습니다.';
+}
 
 // ── ① 칩 권한 ──────────────────────────────────────────────────────────────
 // 어느 권한이 목록에서 어떤 칩을 보나. cs_chip_roles.
@@ -20997,14 +21065,20 @@ function CsChipRoleSettings({currentUserEmail}){
   const [draft,setDraft] = useState({});
   const [extra,setExtra] = useState([]);   // 화면에 없는 칩 id (설정에만 있는 것)
   const [busy,setBusy]   = useState(false);
+  // ★★ 사람이 만든 칩(제니 2026-09-09). 권한(cs_chip_roles)과 «다른 설정» 에 담는다 —
+  //   권한은 «누가 보나», 이쪽은 «무엇이 보이나» 라 뜻이 다르고, 한 줄에 섞으면
+  //   한쪽을 고치다 다른 쪽을 지우는 일이 생긴다.
+  const [custom,setCustom]         = useState([]);
+  const [baseCustom,setBaseCustom] = useState([]);
+  const [openId,setOpenId]         = useState(null);   // 조건을 펼쳐 둔 칩
 
   // 저장된 값을 «화면이 아는 칩» 기준으로 편다.
   // ★★ 칩 id 가 없으면 «전원에게 보인다» 가 목록 화면의 규칙이다(!allowed). 편집칸도
   //   똑같이 읽어야 한다 — 화면에서 체크가 다 빠져 보이는데 실제로는 다 보이면
   //   설정을 볼수록 헷갈린다.
-  const spread = (v)=>{
+  const spread = (v, cs)=>{
     const out = {};
-    CS_CHIPS.forEach(c=>{
+    CS_CHIPS.concat(cs||[]).forEach(c=>{
       // ★ 「전체」는 화면에서 늘 켜진 채로 잠가 두었으니 값도 늘 전원이어야 한다.
       //   저장된 값이 좁아도 화면은 켜져 보이는데 저장은 좁은 채로 나가면,
       //   화면이 거짓말을 하는 자리가 된다.
@@ -21015,15 +21089,21 @@ function CsChipRoleSettings({currentUserEmail}){
     return out;
   };
   useEffect(()=>{ (async()=>{
-    const r = await csLoadSetting('cs_chip_roles');
+    const [r, rc] = [await csLoadSetting('cs_chip_roles'),
+                     await csLoadSetting('cs_chips_custom')];
     setRow(r); setLoaded(true);
     const v = (r && r.value) || {};
-    const s = spread(v);
+    const cs = csCustomChips({cs_chips_custom: rc && rc.value});
+    setCustom(cs); setBaseCustom(cs);
+    const s = spread(v, cs);
     setBase(s); setDraft(s);
-    setExtra(Object.keys(v).filter(k=>!CS_CHIPS.some(c=>c.id===k)));
+    // ★ 사람이 만든 칩의 id 는 «모르는 칩» 이 아니다 — extra 에서 뺀다.
+    setExtra(Object.keys(v).filter(k=>
+      !CS_CHIPS.some(c=>c.id===k) && !cs.some(c=>c.id===k)));
   })(); },[]);
 
-  const dirty = JSON.stringify(base)!==JSON.stringify(draft);
+  const dirty = JSON.stringify(base)!==JSON.stringify(draft)
+             || JSON.stringify(baseCustom)!==JSON.stringify(custom);
   const has = (chip,role)=> (draft[chip]||[]).indexOf(role)>=0;
   const toggle = (chip,role)=>{
     setDraft(p=>{
@@ -21036,16 +21116,21 @@ function CsChipRoleSettings({currentUserEmail}){
     // ★ 설정에만 있던 칩 id 는 «지우지 않고» 그대로 다시 담는다. 내가 모른다고
     //   남의 값을 지우면, 다음 판에서 그 칩을 만들었을 때 설정이 사라져 있다.
     const out = {};
-    CS_CHIPS.forEach(c=>{ out[c.id] = draft[c.id]||[]; });
+    CS_CHIPS.concat(custom).forEach(c=>{ out[c.id] = draft[c.id]||[]; });
     const old = (row && row.value) || {};
     extra.forEach(k=>{ out[k] = old[k]; });
+    // ★ 이름이 빈 칩은 저장하지 않는다 — 목록에 «이름 없는 칩» 이 서면 누를 수는
+    //   있는데 무엇인지 알 길이 없다.
+    const cleanCustom = custom.filter(c=>String(c.label||'').trim())
+      .map(c=>({id:c.id, label:String(c.label).trim(), where:c.where||{}}));
     setBusy(true);
-    const ok = await csSaveSetting('cs_chip_roles', out, currentUserEmail);
+    const ok1 = await csSaveSetting('cs_chip_roles', out, currentUserEmail);
+    const ok2 = ok1 && await csSaveSetting('cs_chips_custom', cleanCustom, currentUserEmail);
     setBusy(false);
-    if(!ok) return;
-    setBase(draft);
+    if(!ok1 || !ok2) return;
+    setBase(draft); setCustom(cleanCustom); setBaseCustom(cleanCustom);
     setRow({value:out, updated_at:new Date().toISOString(), updated_by:currentUserEmail});
-    toast('칩 권한을 저장했습니다.','ok');
+    toast('칩 설정을 저장했습니다.','ok');
   };
 
   if(!loaded) return <div style={{fontSize:12,color:'var(--sub)',padding:'30px 0'}}>읽는 중…</div>;
@@ -21053,7 +21138,9 @@ function CsChipRoleSettings({currentUserEmail}){
   return (
     <div style={{width:'100%',maxWidth:'max(680px, 68%)'}}>
       <CsSetNote>
-        목록 위의 <b>칩</b>을 어느 권한에게 보일지 정합니다.
+        목록 위의 <b>칩</b>을 어느 권한에게 보일지 정하고, <b>칩을 새로 만들 수</b> 있습니다.
+        <br/>★ 새 칩은 [+ 칩 추가] 로 만들고, <b>[조건]</b> 에서 상태·유형·방향·접수 경로·
+        정산 대상으로 «무엇이 보일지» 를 고릅니다.
         <br/>★ <b>티켓 자체의 노출 설정이 아닙니다.</b> 어떤 목록 칩을 보여줄지를 설정합니다.
         <br/>★ 「전체」는 끌 수 없습니다.
       </CsSetNote>
@@ -21103,11 +21190,109 @@ function CsChipRoleSettings({currentUserEmail}){
                 </tr>
               );
             })}
+            {/* ── 사람이 만든 칩 (제니 2026-09-09) ─────────────────────────
+                ★ 기본 칩과 «같은 표» 에 세운다 — 따로 두면 「내가 만든 것은 권한이
+                  다른가」를 매번 생각하게 된다. 권한 격자도 그대로 쓴다.
+                ★ 이름은 그 자리에서 고친다(칸이 곧 입력칸이다) — 이름 하나 바꾸려고
+                  창을 여는 것은 무겁다. */}
+            {custom.map(c=>(
+              <React.Fragment key={c.id}>
+                <tr>
+                  <td style={csSetTd}>
+                    <input value={c.label}
+                      onChange={e=>setCustom(p=>p.map(x=>x.id===c.id
+                        ? {...x, label:e.target.value} : x))}
+                      placeholder="칩 이름"
+                      style={{width:'100%',boxSizing:'border-box',fontSize:12,
+                        padding:'5px 8px',background:'var(--bg)',borderRadius:6,
+                        border:'1px solid '+(String(c.label||'').trim()
+                          ? 'var(--border)' : 'var(--red)'),
+                        color:'var(--text)',fontFamily:'inherit'}}/>
+                  </td>
+                  <td style={{...csSetTd,color:'var(--sub)',fontSize:11.5}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{flex:1,minWidth:0}}>{csChipShowsCustom(c.where)}</span>
+                      <button onClick={()=>setOpenId(o=>o===c.id?null:c.id)}
+                        style={{padding:'3px 9px',borderRadius:6,fontSize:10.5,
+                          fontFamily:'inherit',cursor:'pointer',whiteSpace:'nowrap',
+                          background:'transparent',border:'1px solid var(--accent)',
+                          color:'var(--accent)'}}>
+                        {openId===c.id?'접기':'조건'}</button>
+                      {/* ★ 지우기는 한 번 묻는다 — 되돌릴 수 없고, 그 칩에 걸어 둔
+                          권한도 함께 사라진다. */}
+                      <button onClick={()=>{
+                          if(!confirm(csChipDelMsg(c.label))) return;
+                          setCustom(p=>p.filter(x=>x.id!==c.id));
+                          setDraft(p=>{ const nx={...p}; delete nx[c.id]; return nx; });
+                          if(openId===c.id) setOpenId(null);
+                        }}
+                        style={{padding:'3px 9px',borderRadius:6,fontSize:10.5,
+                          fontFamily:'inherit',cursor:'pointer',whiteSpace:'nowrap',
+                          background:'transparent',border:'1px solid rgba(248,113,113,.5)',
+                          color:'var(--red)'}}>지우기</button>
+                    </div>
+                  </td>
+                  {CS_ROLES.map(r=>(
+                    <td key={r.id} style={{...csSetTd,textAlign:'center'}}>
+                      <input type="checkbox" style={{...csChk,cursor:'pointer'}}
+                        checked={has(c.id,r.id)} onChange={()=>toggle(c.id,r.id)}/>
+                    </td>
+                  ))}
+                </tr>
+                {openId===c.id && (
+                  <tr>
+                    <td colSpan={2+CS_ROLES.length}
+                      style={{...csSetTd,background:'var(--bg)',padding:'10px 12px'}}>
+                      {/* ★★ 한 칸 안은 «또는», 칸끼리는 «그리고» — 목록 필터와 같은
+                          규칙이라 새로 배울 것이 없다. 그 말을 여기 적어 둔다. */}
+                      <div style={{fontSize:10.5,color:'var(--sub)',marginBottom:8,
+                        lineHeight:1.7}}>
+                        한 칸에서 고른 것끼리는 <b>또는</b>, 칸과 칸 사이는 <b>그리고</b> 입니다.
+                        <br/>아무것도 안 고르면 그 칸은 <b>보지 않습니다</b>.
+                      </div>
+                      <div style={{display:'grid',
+                        gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:10}}>
+                        {CS_CHIP_FIELDS.map(f=>(
+                          <div key={f.k} style={{border:'1px solid var(--border)',
+                            borderRadius:7,padding:'8px 10px',background:'var(--card)'}}>
+                            <div style={{fontSize:11,fontWeight:700,color:'var(--text)',
+                              marginBottom:6}}>{f.label}</div>
+                            <div style={{display:'flex',flexWrap:'wrap',gap:'5px 10px'}}>
+                              {f.opts().map(o=>{
+                                const cur = (c.where||{})[f.k] || [];
+                                const on = cur.indexOf(o.v)>=0;
+                                return (
+                                  <label key={o.v} style={{display:'flex',alignItems:'center',
+                                    gap:5,fontSize:11,color:'var(--text)',cursor:'pointer'}}>
+                                    <input type="checkbox" checked={on}
+                                      style={{...csChk,cursor:'pointer'}}
+                                      onChange={()=>setCustom(p=>p.map(x=>{
+                                        if(x.id!==c.id) return x;
+                                        const w = {...(x.where||{})};
+                                        const list = (w[f.k]||[]).slice();
+                                        const i = list.indexOf(o.v);
+                                        if(i>=0) list.splice(i,1); else list.push(o.v);
+                                        w[f.k] = list;
+                                        return {...x, where:w};
+                                      }))}/>
+                                    {o.label}
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            ))}
             <tr>
               <td colSpan={2} style={{...csSetTd,fontSize:11,color:'var(--sub)',borderBottom:'none'}}>
                 권한마다 보이는 칩 수</td>
               {CS_ROLES.map(r=>{
-                const n = CS_CHIPS.filter(c=>c.id==='all'||has(c.id,r.id)).length;
+                const n = CS_CHIPS.concat(custom).filter(c=>c.id==='all'||has(c.id,r.id)).length;
                 return (
                   <td key={r.id} style={{...csSetTd,textAlign:'center',borderBottom:'none',
                     fontFamily:'monospace',color:n<=1?'#F6AD09':'var(--sub)'}}>{n}</td>
@@ -21116,6 +21301,20 @@ function CsChipRoleSettings({currentUserEmail}){
             </tr>
           </tbody>
         </table>
+      </div>
+
+      {/* ★ 새 칩은 «권한을 다 켠 채» 로 만든다 — 만들자마자 아무에게도 안 보이면
+          「왜 안 뜨지」를 설정에서 다시 찾아야 한다. 좁히는 것은 그다음 일이다. */}
+      <div style={{marginTop:10}}>
+        <button onClick={()=>{
+            const id = 'u:'+Date.now().toString(36);
+            setCustom(p=>p.concat([{id, label:'', where:{}}]));
+            setDraft(p=>({...p, [id]:CS_ROLE_IDS.slice()}));
+            setOpenId(id);
+          }}
+          style={{padding:'6px 12px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+            cursor:'pointer',background:'transparent',border:'1px dashed var(--accent)',
+            color:'var(--accent)',fontWeight:600}}>+ 칩 추가</button>
       </div>
 
       {!!extra.length && (
