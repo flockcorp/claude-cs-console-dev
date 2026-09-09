@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909zb_csv_download -->
+<!-- v20260909zc_after_save -->
+<!-- (2026-09-09) **티켓 저장 다음에 무엇을 할지 고른다**(제니) — 「저장 후 화면 유지 / 다음 티켓 / 목록으로」 셋. 자리는 **저장 단추 바로 옆**이다: 무슨 일이 일어날지는 누르기 직전에 보여야 하고, 설정 화면에 두면 그 값을 기억하는 사람만 쓰게 된다. ★★★ **«다음 티켓» 은 목록의 차례를 알아야 한다** — 상세 화면은 제 티켓 하나만 알고 있으므로, **목록이 티켓을 열 때 그 시점의 차례를 함께 넘긴다.** 칩·필터·검색·정렬이 이미 반영된 배열이라 «내가 보던 그 차례» 가 그대로 따라온다(제니: 「이전 화면에서 내가 설정한 정렬 기준으로」). ★★ «다음» 은 **목록에서 위쪽**이다(제니가 못 박았다) — 아래가 아니라 위. ★ **맨 위 티켓이면 화면을 그대로 두고 말해 준다** — 목록으로 튕기면 «저장이 안 됐나» 를 의심하게 된다. 끝이라는 것을 알리는 편이 낫다. ★ 목록에서 연 것이 아니면(이력·묶음에서 눌러 들어온 경우) 차례가 비어 있고, 그때도 «다음» 이 없는 것이 맞다 — 어느 목록의 다음인지 말할 수 없기 때문이다. ★ 고른 값은 **이 브라우저에만** 남는다 — 사람마다 일하는 방식이 다른 «취향» 이지 모두가 같아야 하는 «운영 기준» 이 아니다(사이드바 접힘·① 묶음 접힘과 같은 규칙). ★ dev 전용. -->
 <!-- (2026-09-09) 🔴 **CS 목록 CSV 내려받기**(제니). [+ 티켓 등록] 옆에 [⬇ CSV]. ★★★ **화면이 보여 주는 것을 그대로 내려받는다** — 열도 차례도 «지금 이 칩의 보기 설정» 그대로이고, 칩·필터·검색·정렬이 다 반영된 목록이다. 파일이 화면과 다르면 둘을 대조하는 일이 새로 생긴다. ★★ **고른 것이 있으면 그것만, 없으면 지금 보이는 전체**(제니). 그 건수를 단추 글자에 적는다 — 누르기 전에 몇 건이 나갈지 보여야 «어? 다 나왔네» 가 없다. ★ 값은 정렬용 값(`sv`)에서 꺼낸다(화면 칸은 JSX 라 글자로 못 꺼낸다). **sv 는 정렬을 위해 빈 값을 -1 로 채운 열이 있어** 그대로 쓰면 «-1» 이 찍힌다 → 숫자 -1 은 빈 칸으로 돌린다. ★ **BOM 을 붙인다** — 없으면 엑셀이 한글을 깨뜨린다(엑셀은 UTF-8 을 스스로 못 알아본다). 쉼표·따옴표·줄바꿈이 든 값은 따옴표로 싸고 안의 따옴표는 두 번(이력·메모에 줄바꿈이 실제로 들어온다). ★★ **[보기 설정] 에 «공란» 을 더할 수 있다**(제니: 「여러 개 추가할 수 있게 하고, 콘솔 목록에는 반영되지 않고 엑셀 다운로드 때 빈 열로」). ★★★ 그래서 이 열은 **보기 설정과 파일에만 있고 화면에는 없다** — 목록에 빈 칸을 그리면 그 자리가 «값이 없는 칸» 으로 읽혀 사람이 무엇을 못 채웠나 찾게 된다. 파일에서는 반대로 «받아서 손으로 적을 자리» 라 있어야 한다. ★ 차례를 지키려고 **열 목록 «안»** 에 둔다(따로 뒀으면 몇 번째에 넣을지 정할 수 없다) → 화면용(`viewKeys`)과 파일·설정용(`colKeys`)을 갈랐다. ★ 공란 줄은 체크가 아니라 [지우기] 다 — 끄기를 두면 «꺼 둔 공란» 이라는 아무 뜻 없는 상태가 하나 더 생긴다. ★ dev 전용. -->
 <!-- (2026-09-09) **오른쪽 정렬 칸의 여백을 12→18px 로 늘렸다**(제니). 겸해 그 값을 `CS_CELL_PAD_R` 한 곳으로 뺐다 — 값 칸과 머리글이 **이 한 값을 함께 본다.** ★ 앞 판에서 값에만 주고 머리글을 빠뜨려 그 열의 오른쪽 끝이 어긋났다: **짝으로 움직여야 하는 값은 처음부터 한 자리에 둔다.** ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①🔴 **일괄 편집 바를 «호박» 으로 바꿨다**(제니: 「목록에 반영되는 색이랑 동일한 색이라 눈에 잘 안 들어온다」). ★★★ 원인이 분명하다 — **체크된 행의 배경이 `rgba(248,113,113,.13)`, 곧 옅은 붉은**이다. 바를 붉은 계열로 두면 «고른 줄» 과 «지금 무엇을 하려는 중» 이 같은 색이 되어, **정작 둘을 갈라 보라고 만든 바가 목록에 녹아 버린다.** ★★ 09-04 에 «남색 화면에서 눈에 띄려면 색상(hue)을 바꿔야 한다» 를 배웠는데, 이번 것은 그 규칙의 **다음 문장**이다: **바꾼 색이 화면의 다른 무엇과 겹치면 안 된다.** 남색(화면)·붉은(고른 줄)을 둘 다 피하면 호박이 남고, 콘솔이 이미 «주의·지금 이것» 에 쓰는 색이라 뜻도 맞는다. ★ 다크는 «어두운 갈호박» 판(#4A3208)에 밝은 호박 테두리, 라이트는 «옅은 호박» 판에 진한 호박 — **밝은 호박으로 채우면 어두운 화면에서 혼자 발광한다**(라이트와 정확히 반대다). ★ 색이 한 표(`csBulkBarPalette`)에 모여 있어 **이 판은 그 함수 하나만 고쳤다** — 09-09 에 모아 둔 값어치가 여기서 나왔다. ②**오른쪽 정렬 열의 «머리글» 에도 같은 여백**(제니 제보 이어서). 앞 판에서 값 칸에만 12px 을 줬더니 머리글과 숫자의 오른쪽 끝이 어긋나 그 열만 삐뚤어 보였다 — **여백은 값과 머리글이 짝으로 움직여야 한다.** ★ dev 전용. -->
@@ -19637,6 +19638,31 @@ function CsStageDot({tone, size}){
     background:CS_TONE_DOT[tone] || 'var(--sub)'}}></span>;
 }
 
+// ── 저장 다음에 무엇을 하나 (제니 2026-09-09) ────────────────────────────────
+// 「저장 후 목록으로 / 저장 후 화면 유지 / 저장 후 다음 티켓」 셋.
+// ★★★ **«다음 티켓» 은 목록의 차례를 알아야 한다** — 상세 화면은 제 티켓 하나만
+//   알고 있으므로, 목록이 티켓을 열 때 **그 시점의 차례를 함께 넘긴다.**
+//   칩·필터·정렬이 이미 반영된 배열이라 «내가 보던 그 차례» 가 그대로 따라온다
+//   (제니: 「이전 화면에서 내가 설정한 정렬 기준으로」).
+// ★★ «다음» 은 **목록에서 위쪽**이다(제니). 아래가 아니라 위 — 대개 새로 들어온
+//   것이 위에 쌓이고, 훑는 방향이 그렇다.
+// ★ 고른 값은 **이 브라우저에** 남긴다(localStorage) — 사람마다 일하는 방식이
+//   다른 «취향» 이지 모두가 같아야 하는 «운영 기준» 이 아니다.
+const CS_AFTER_SAVE = [
+  {id:'stay', label:'화면 유지'},
+  {id:'next', label:'다음 티켓'},
+  {id:'list', label:'목록으로'},
+];
+function csAfterSaveGet(){
+  try{
+    const v = localStorage.getItem('cs_after_save');
+    return CS_AFTER_SAVE.some(x=>x.id===v) ? v : 'stay';
+  }catch(e){ return 'stay'; }
+}
+function csAfterSaveSet(v){
+  try{ localStorage.setItem('cs_after_save', v); }catch(e){}
+}
+
 function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
   const [open,setOpen] = useState(false);
   const [pos,setPos]   = useState(null);
@@ -20638,7 +20664,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                      함께 바뀐다.** 작은 글자에 붙어 있던 말이 줄·칸 전체로 가면 같은
                      문구라도 성격이 달라진다 — 문자열만 대조하면 이 변화가 안 보인다.
                    ★ 누를 수 있다는 것은 cursor:pointer 와 hover 색이 이미 말한다. */
-                <tr key={t.id} onClick={()=>goTicket(t.id)}
+                <tr key={t.id} onClick={()=>goTicket(t.id, list.map(x=>x.id))}
                   className="cs-row"
                   style={{borderTop:'1px solid var(--border)',cursor:'pointer',
                     background: picked[t.id] ? 'rgba(248,113,113,.13)' : undefined}}>
@@ -25933,7 +25959,7 @@ function csCafe24OrderUrl(t){
 }
 
 // ★ canRefund — 환불 관리 메뉴 권한(목록 화면과 같은 값). 자세한 것은 CsTicketsPage 주석.
-function CsTicketPage({ticketId, currentUserEmail, role, canRefund, onBack, goTicket}){
+function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack, goTicket}){
   // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
   const [t,setT]         = useState(null);
@@ -25955,6 +25981,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, onBack, goTi
   //   목록이 그 안에 갇히는데, 늘어나야 하는 것은 목록이 뜨는 자리가 아니라
   //   **목록을 담는 박스** 다. 조각은 높이만 알리고(onSpace) 자리는 여기서 만든다.
   const [macroSpace,setMacroSpace] = useState(0);
+  // ★ 저장 다음에 무엇을 하나 — 고른 값은 브라우저에 남는다(csAfterSaveGet).
+  const [afterSave,setAfterSave] = useState(csAfterSaveGet);
   const [fold,setFold] = useState(()=>{
     try{ return JSON.parse(localStorage.getItem('cs_detail_fold')||'{}') || {}; }
     catch(e){ return {}; }
@@ -26361,7 +26389,28 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, onBack, goTi
     //   ★ 자리는 이미 우측 하단이다(#toastHost) — 콘솔이 쓰는 그 자리를 그대로 쓴다.
     toast(((CS_STAGE_LABEL[st]||{}).label||st)+csRo((CS_STAGE_LABEL[st]||{}).label||st)
       +' 저장했습니다.','success');
+    runAfterSave();
     return true;
+  };
+
+  // ★★ 저장이 «끝난 뒤» 무엇을 할지(제니 2026-09-09).
+  //   ★★★ «다음» 은 **목록에서 위쪽**이다(제니가 못 박았다). 그 차례는 목록이
+  //     열 때 넘겨준 배열(seq)이고, 칩·필터·정렬이 이미 반영돼 있다.
+  //   ★ 위가 없으면(맨 위 티켓이면) **화면을 그대로 두고 말해 준다** — 목록으로
+  //     튕기면 «저장이 안 됐나» 를 의심하게 된다. 끝이라는 것을 알리는 편이 낫다.
+  //   ★ 목록에서 연 것이 아니면 seq 가 비어 있다 — 그때도 «다음» 이 없는 것이 맞다
+  //     (어느 목록의 다음인지 말할 수 없다).
+  const runAfterSave = ()=>{
+    if(afterSave==='list'){ onBack(); return; }
+    if(afterSave!=='next') return;
+    const arr = Array.isArray(seq) ? seq : [];
+    const i = arr.indexOf(ticketId);
+    const prev = (i>0) ? arr[i-1] : null;
+    if(prev==null){
+      toast('목록의 맨 위 티켓입니다 — 화면을 그대로 둡니다.','info');
+      return;
+    }
+    goTicket(prev);
   };
 
   const inp = {width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
@@ -27232,6 +27281,20 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, onBack, goTi
             {/* ★★ 저장 버튼이 곧 «어느 단계로 보내는가» 다(제니 · 젠데스크 방식).
                 단계를 고르는 목록이 버튼 안에 들어와서 화면에 드롭박스가 하나만 남는다.
                 ★ light 를 뗐다 — 이제 어두운 바탕 위에 선다(등록 화면과 같다). */}
+            {/* ★★ 저장 «다음» 을 고르는 자리는 저장 단추 «바로 옆» 이다 — 무슨 일이
+                일어날지는 누르기 직전에 보여야 한다. 설정 화면에 있으면 그 값을
+                기억하는 사람만 쓰게 된다.
+                ★ 이 값은 이 브라우저에만 남는다(사람마다 일하는 방식이 다르다). */}
+            <select value={afterSave}
+              onChange={e=>{ setAfterSave(e.target.value); csAfterSaveSet(e.target.value); }}
+              title="저장한 다음에 할 일"
+              style={{fontSize:11,padding:'7px 8px',background:'var(--bg)',
+                border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,
+                fontFamily:'inherit',colorScheme:'dark',maxWidth:120}}>
+              {CS_AFTER_SAVE.map(o=>(
+                <option key={o.id} value={o.id}>저장 후 {o.label}</option>
+              ))}
+            </select>
             <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
               onSave={()=>saveAll()}
               onPick={id=>{ setE('stage', id); saveAll(id); }}
@@ -30311,7 +30374,14 @@ function App() {
   const [csTicketId,setCsTicketId] = useState(null);
   // 접수 문안 화면이 다룰 티켓 번호들 — 목록에서 고른 것을 넘겨받는다.
   const [csDraftIds,setCsDraftIds] = useState([]);
-  const openTicket = (id)=>{ setCsTicketId(id); setPage('csTicket'); setMobileOpen(false); };
+  // ★★ 티켓을 열 때 «그 시점 목록의 차례» 를 함께 받아 둔다 — 상세의 [다음 티켓]이
+  //   이것을 본다. 목록에서 연 것이 아니면(이력·묶음 등) 비어 있고, 그때는 다음이
+  //   없는 것이 맞다(어느 목록의 다음인지 말할 수 없으므로).
+  const [ticketSeq,setTicketSeq] = useState([]);
+  const openTicket = (id, seq)=>{
+    if(Array.isArray(seq)) setTicketSeq(seq);
+    setCsTicketId(id); setPage('csTicket'); setMobileOpen(false);
+  };
   const [mobileOpen,setMobileOpen] = useState(false);
   // ── 사이드바 접기 (제니 요청 · 2026-09-08) ───────────────────────────────────
   // ★★ **«취향» 이라 localStorage 다** — 기기마다 다르게 두는 것이 맞다(열 너비와 같은
@@ -30834,7 +30904,7 @@ function App() {
           onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
           goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
-          role={role} canRefund={canMenu('refunds')}
+          role={role} canRefund={canMenu('refunds')} seq={ticketSeq}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket}/>:<NoAccessPage/>)}
