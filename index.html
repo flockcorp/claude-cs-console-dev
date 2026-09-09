@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909m_sticky_head_tabs -->
+<!-- v20260909n_sticky_tabs_only -->
+<!-- (2026-09-09) 🔴🔴 **탭«만» 위에 붙는다 — 머리말은 함께 올라간다**(제니 확정: 「머리말까지 묶어서 고정이면 상단에서 잡아먹는 영역 때문에 실제 보는 화면 영역이 줄어드니, 스크롤 내리면 **탭만** 상단에 붙어서 고정되는 형태면 되겠어」). ★★★ **앞 두 판이 왜 틀렸나** — ①`m` 판: 머리말과 탭에 **따로** sticky 를 걸었다. 탭이 «탭만 담은 짧은 `.section`» 안에 있는 화면(인력 관리·데이터 입력·상품 정보)에서는 **붙어 있을 자리가 처음부터 없었고**(sticky 는 제 부모 «높이» 안에서만 붙는다), 머리말이 안 붙는 화면에서는 탭의 top 만 머리말 높이로 잡혀 **탭이 빈자리에 떠 있었다**(제니 제보 그대로다). ②그 다음 판: 제니 제안대로 둘을 한 상자로 묶었더니 붙기는 하는데 **위쪽을 그만큼 잡아먹었다** — 제니가 바로 그 대가를 짚어 «탭만» 으로 정했다. ★★★ **남길 것: «고정하면 그만큼 화면을 잃는다».** 무엇을 고정할지는 «있으면 좋은가» 가 아니라 **«스크롤하는 동안 계속 필요한가»** 로 고른다. 머리말은 「여기가 어디인가」라 처음 한 번이면 되고, 탭은 「다른 것을 보러 가는 길」이라 내내 필요하다. ★ 그래서 `CsPageTabs` 가 `top:0` 으로 스스로 붙고, **짧은 `.section` 안에 있는 세 화면만 그 래퍼에 `cs-tabbar-wrap`** 을 붙였다(래퍼의 부모가 화면 루트라 자리가 넉넉하다). ★ `cs-page-head` 클래스는 남긴다 — 이번엔 안 쓰지만 머리말 «두 집안» 을 한 이름으로 묶어 둔 값어치가 있다(다음에 머리말을 손댈 때 셀렉터 하나면 된다). ★ 겸해 **유입처 표시 두 가지**: 아이콘이 글자보다 내려앉던 것을 줄 전체 `inline-flex`+`align-items:center` 로 고쳤다(제니 — verticalAlign 을 픽셀로 맞추면 글꼴·크기가 바뀔 때마다 다시 틀어진다) · **「네이버페이」면 [주문형] 뱃지**(제니). 스마트스토어와 «다른 유입처» 라 N 이 아니라 이름을 적고, 색만 네이버 초록이라 계열은 읽힌다. ★ 판정 차례는 스마트스토어 → 네이버페이 → 카카오다(두 낱말이 함께 오는 꼴에서 나중 것이 이기지 않게). ★ dev 전용. -->
 <!-- (2026-09-09) **화면 머리말과 탭을 위에 고정했다**(제니: 「메뉴 화면에서 상단 머리말, 탭 부분은 스크롤 내려도 상단에 있도록」). ★★ 콘솔의 머리말이 아직 «두 집안» 이라 한 셀렉터로 못 잡았다 — `.page-header`(대시보드·인력 관리·데이터 입력·상품 정보 …)와 `.section` 안의 인라인 머리말(공급사·환불·데이터 내역·배송지연·디지털 발송·CS 티켓 목록). 후자 여섯에 **`cs-page-head` 클래스를 붙여 두 집안을 한 이름으로 묶었다**: 09-08 에 «보이는 꼴» 을 맞췄으니 이번엔 «부를 이름» 을 맞춘 것이고, 다음에 머리말을 손댈 때는 셀렉터 하나면 된다. ★ 여섯 곳을 손으로 고치지 않고 **라인으로 짚는 스크립트**로 한 번에 붙였다(`tools/patch_head_class.js` · 줄 내용이 예상과 다르면 멈춘다) — 거의 같은 인라인 스타일이 여섯 줄이라 눈으로 집으면 한 곳이 조용히 빠진다. ★★★ **탭이 붙을 자리(top)는 «그 화면의 머리말 높이» 인데 화면마다 다르다** — 제목만 있는 곳, 부연이 두 줄인 곳, 오른쪽에 단추가 선 곳(공급사)이 다 다르다. 그래서 값을 박지 않고 **그 화면의 머리말을 찾아 실제 높이를 잰다.** 박아 두면 어느 화면에서는 탭이 머리말을 파고들고 어느 화면에서는 떠 있는다. 창 크기가 바뀌면 부연이 접혀 높이가 달라지므로 resize 에서 다시 잰다. ★ 머리말이 없는 화면(CS 설정처럼 안쪽에 있는 탭)은 0 이라 제자리에 붙는다 — 그것이 맞다. ★★ **배경을 반드시 준다**(`var(--bg)`) — 투명하면 밑을 지나가는 표가 글자에 겹쳐 읽힌다. 고정 머리말에서 가장 흔한 사고다. ★ z-index 는 머리말(30) > 탭(20) — 탭이 머리말 아래로 들어가야 스크롤할 때 탭이 제목을 덮지 않는다. ★ 계정 정보 화면은 머리말이 `.section` 자체라 이번에 안 건드렸다(제니 확인 뒤). ★ dev 전용. -->
 <!-- (2026-09-09) 🔴🔴 **티켓의 「상품 금액」을 «최종 결제 상품가» 로 바꿨다**(제니). 발단은 「품목 4건의 상품 금액이 일괄 반영됐다」는 제보였는데, **실측해 보니 값은 틀리지 않았다** — 주문 20260907-0006860 의 품목 여섯을 카페24에서 직접 읽으니 -01~-04 의 product_price 는 실제로 넷 다 4,800 이고, **다른 것은 옵션 금액(-200·-400·-200·0)** 이었다. 곧 실제 품목가는 4,600·4,400·4,600·4,800 이다. **값이 아니라 «보여 주는 칸» 이 틀린 것이었다.** ★★★ 제니가 그 자리에서 설계를 짚었다: 「**가져오는 값의 기준과 표기하는 기준이 달라서 헷갈린다**」 — 카페24가 주는 것은 «조각»(상품가·옵션가)이고 상담원이 볼 것은 «한 값» 인데, 둘을 같은 설정 목록에 나란히 두면 그 혼란이 계속된다. → **층을 갈랐다**: ①엣지 함수가 조각을 합쳐 `item_amount`(최종 결제 상품가)를 준다 — 식은 카페24 상품구매금액 공식이고, 함수 안에 이미 있던 `itemPurchase` 와 **같은 것을 쓴다**(두 곳에 다른 식을 두면 언젠가 갈린다). ②콘솔은 「상품 금액」=`item_amount` 하나를 **always** 로 세운다(제니: 「고정으로 넣어 줘」 — 끄고 켤 것이 아니다). ③조각 둘은 **잠근다**(제니: 「둘 다 검색값으로 처리」) — 고르기·차례·스냅샷에서 빠지는 계산 재료다. ★ 조각을 목록에서 «없애지는» 않는다: 없으면 「상품 금액이 왜 4,600 이지」를 그 화면에서 못 푼다(검색값을 남겨 둔 것과 같은 이유). ★ **잠금 딱지 글자를 필드마다 달리 했다** — 주문번호는 「검색값」(우리가 넣는 값), 상품가·옵션가는 「계산 재료」. **잠금은 같아도 같은 말로 부르면 «왜 못 켜는지» 를 못 읽는다.** ★ 옛 티켓의 스냅샷은 그대로다(접수 시점 고정값) — 「상품가 (옵션 전) 4,800」으로 남는다. ★★ 이 판은 **엣지 함수 `refund-fetch-order` 의 dev 배포와 한 몸**이다. 함수가 옛 판이면 값이 없어 줄이 안 뜬다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 넷 중 셋. ①🔴 **등록 화면이 «첫 품목» 을 보여 주면서 저장은 «메인» 으로 하고 있었다**(제니: 「등록 화면에서 뜨는 상품 금액은 메인 티켓 기준으로」). ★★★ 메인 판정(「본품」이 든 옵션명 → 없으면 번호가 가장 낮은 것)이 **save 안에만 있었다.** 화면은 `chosen[0]` 을 봤다 — **본품이 -02 인 주문에서는 화면이 보여 준 값과 메인 티켓에 담기는 값이 서로 달랐다**(실측 주문에 그런 것이 있었다. 2026-08-31). → 판정을 컴포넌트에서 «한 번만» 하고 화면·저장이 그것을 함께 쓴다. **같은 규칙을 두 곳에 적으면 언젠가 갈린다** — 오늘만 세 번째로 만나는 자리다(뱃지·연동 상태말·이것). 안내 문구도 「고른 첫 품목 기준」→「**메인 티켓** 기준」. ②**「이력은 메인에만 쌓입니다」를 「이력은 그룹 티켓 내에 연동 저장 됩니다」로**(제니 문구). ★★★ **틀린 말이었다** — 저장하는 자리가 메인일 뿐, 쓰는 사람에게는 서브에 적어도 메인과 다른 서브에서 다 보인다. **구현을 설명하지 말고 «쓰는 사람에게 무슨 일이 일어나는가» 를 적어야 한다.** 「메인에만」은 내부 사정이고, 그대로 읽으면 «서브에는 못 적는다» 로 오해된다. ③**유입처 표시**(제니) — 「스마트스토어」면 네이버, 「카카오톡…」이면 💬 를 값 오른쪽에. ★ 판정은 «들어 있나» 로 한다: 카페24가 「네이버 스마트스토어」·「카카오톡 선물하기」처럼 앞뒤를 붙여 주므로 «같은가» 로 보면 조용히 아무것도 안 붙는다. ★★ **네이버 N 은 이모지에 없다** — 비슷한 유니코드 글자(Ⓝ·🅽)는 글꼴에 따라 네모로 떨어진다(09-03 복사 아이콘에서 겪은 자리). 네이버의 아이덴티티대로 **초록 바탕에 흰 N** 을 그린다. 카카오톡은 **콘솔이 이미 쓰는 💬**(소통 채널)를 그대로 쓴다. ④**칸 너비 조절 줄이 다크에서 안 보이던 것**(제니 두 번째 제보) — 09-08 에 색은 이미 `--accent`(밝은 하늘)로 바꿨는데도 그랬다. 남은 원인은 **크기**다: 4px 선은 색을 아무리 밝게 해도 «켜졌나» 가 안 보이고, 평소 색(--border)이 다크 바탕과 거의 같아 **마우스를 대기 전엔 선이 어디 있는지조차 모른다.** → 다크에서만 셋을 올렸다: 평소 선 밝기·hover 두께(4→5)·**빛번짐**. 라이트는 손대지 않는다(제니가 «구분된다» 고 한 쪽을 함께 흔들면 그쪽이 도로 나빠진다). ⏳ 남은 하나(품목별 상품 금액)는 **실측 중** — dev DB 조회 결과 스냅샷은 품목별로 담겼고 네 건의 product_price 가 모두 4800 이었다. 같은 상품의 다른 옵션일 수 있어 **카페24 원본을 확인한 뒤** 고친다. ★ dev 전용. -->
@@ -949,8 +950,25 @@
          고정된 머리말에서 가장 흔한 사고다.
        ★ z-index 는 머리말(30) > 탭(20) 이다. 탭이 머리말 아래로 들어가야
          스크롤할 때 탭이 머리말을 덮지 않는다. */
-    .page-header,
-    .cs-page-head{position:sticky;top:0;z-index:30;background:var(--bg)}
+    /* ★★★ 2026-09-09 (3판) — **탭«만» 위에 붙는다. 머리말은 함께 올라간다.**
+       제니 확정: 「머리말까지 묶어서 고정이면 상단에서 잡아먹는 영역 때문에 실제
+       보는 화면 영역이 줄어드니, 스크롤 내리면 **탭만 상단에 붙어서 고정**되는
+       형태면 되겠어.」
+       🔴 앞의 두 판이 왜 틀렸나 —
+         1판: 머리말과 탭에 **따로** sticky. 탭이 «탭만 담은 짧은 `.section`» 안에
+           있는 화면에서는 **붙어 있을 자리가 처음부터 없었고**(sticky 는 제 부모
+           높이 안에서만 붙는다), 머리말이 안 붙는 화면에서는 탭만 빈자리에 떠 있었다.
+         2판: 둘을 한 상자로 묶어 고정 → 붙기는 하지만 **위쪽을 그만큼 잡아먹는다.**
+           제니가 바로 그 대가를 짚었다.
+       ★★★ **남길 것: «고정하면 그만큼 화면을 잃는다».** 무엇을 고정할지는 «있으면
+         좋은가» 가 아니라 **«스크롤하는 동안 계속 필요한가» 로 고른다.** 머리말은
+         «여기가 어디인가» 라 처음 한 번이면 되고, 탭은 «다른 것을 보러 가는 길» 이라
+         내내 필요하다.
+       ★ 그래서 CSS 는 «탭 줄을 감싼 래퍼» 하나만 맡는다 — 탭이 짧은 `.section` 안에
+         있는 화면(인력 관리·데이터 입력·상품 정보)에서 **그 래퍼 자체를 붙인다.**
+         래퍼의 부모는 화면 루트라 자리가 넉넉하다.
+       ★★ 배경을 반드시 준다 — 투명하면 밑을 지나가는 표가 탭 글자에 겹쳐 읽힌다. */
+    .cs-tabbar-wrap{position:sticky;top:0;z-index:20;background:var(--bg)}
     .page-header{padding:24px 32px 0;display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
     /* 제목과 부연을 «한 줄에 나란히» — 기준 세 화면이 그렇다. */
     .page-header > div:first-child{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
@@ -2258,7 +2276,7 @@ function AgentMgmtPage() {
   return (
     <div>
       <div className="page-header"><div><div className="page-title">👥 인력 관리</div><div className="page-sub">인원 등록 및 근태 관리</div></div></div>
-      <div className="section" style={{paddingTop:0,paddingBottom:0}}>
+      <div className="section cs-tabbar-wrap" style={{paddingTop:0,paddingBottom:0}}>
         <CsPageTabs value={tab} onChange={setTab}
           tabs={[{id:'agents',label:'인원 목록'},{id:'attendance',label:'근태 관리'}]}/>
       </div>
@@ -2743,7 +2761,7 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
       <div className="page-header">
         <div><div className="page-title">✍️ 데이터 입력</div><div className="page-sub">일별 운영 현황 데이터 입력 및 내역 관리</div></div>
       </div>
-      <div className="section" style={{paddingTop:0,paddingBottom:0}}>
+      <div className="section cs-tabbar-wrap" style={{paddingTop:0,paddingBottom:0}}>
         {/* ★ 단추 꼴이던 것을 탭으로 옮겼다(2026-09-08) — 화면을 바꾸는 것은 탭이다.
             «단추» 는 «누르면 무슨 일이 일어난다» 는 뜻이라, 화면 전환에 쓰면
             저장·발송 같은 것과 같은 꼴이 되어 무게가 잘못 실린다. */}
@@ -4658,7 +4676,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
           </div>
         );
       })()}
-      <div className="section" style={{paddingTop:0,paddingBottom:0}}>
+      <div className="section cs-tabbar-wrap" style={{paddingTop:0,paddingBottom:0}}>
         <CsPageTabs value={tab}
           onChange={(id)=>{setTab(id);setMsg('');setCheckedIds(new Set());}}
           tabs={[{id:'list',label:'상품 목록'}].concat(editId?[{id:'add',label:'상품 수정'}]:[])}/>
@@ -20535,13 +20553,25 @@ function CsOrderPlaceIcon({v}){
   if(s.indexOf('스마트스토어')>=0){
     return <span title="네이버 스마트스토어"
       style={{display:'inline-flex',alignItems:'center',justifyContent:'center',
-        width:13,height:13,marginLeft:5,borderRadius:3,background:'#03C75A',
+        width:13,height:13,borderRadius:3,background:'#03C75A',
         color:'#fff',fontSize:9,fontWeight:800,lineHeight:1,
-        fontFamily:"'Pretendard','Inter',sans-serif",verticalAlign:'-2px'}}>N</span>;
+        fontFamily:"'Pretendard','Inter',sans-serif"}}>N</span>;
+  }
+  // ★★ 「네이버페이」는 스마트스토어와 «다른 유입처» 다(제니 2026-09-09) — 같은 네이버
+  //   계열이지만 우리 쪽 일하는 방식이 달라 한눈에 갈려야 한다. 그래서 N 이 아니라
+  //   **[주문형]** 이라고 이름을 적는다. 색은 네이버 초록이라 계열은 그대로 읽힌다.
+  //   ★ 판정 차례가 중요하다 — 스마트스토어를 «먼저» 본다. 카페24가 두 낱말을 함께
+  //     담아 주는 꼴이 오면 나중 것이 이기는 일이 없어야 한다.
+  if(s.indexOf('네이버페이')>=0){
+    return <span title="네이버페이 주문형"
+      style={{fontSize:9,fontWeight:700,lineHeight:1.6,
+        padding:'0 5px',borderRadius:8,whiteSpace:'nowrap',
+        color:'#03C75A',border:'1px solid rgba(3,199,90,.5)',
+        background:'rgba(3,199,90,.12)'}}>주문형</span>;
   }
   if(s.indexOf('카카오')>=0){
     return <span title="카카오톡 선물하기"
-      style={{marginLeft:5,fontSize:11,lineHeight:1}}>💬</span>;
+      style={{fontSize:11,lineHeight:1}}>💬</span>;
   }
   return null;
 }
@@ -20561,8 +20591,13 @@ function csCafe24Rows(snap, order, pane, ro){
     // ★ 티켓 화면에서는 «짧은 이름» 을 쓴다 — 이름 칸의 폭이 정해져 있어서 긴 이름은
     //   값과 겹쳐 읽힌다(제니 2026-09-08). 설정 화면은 긴 이름 그대로다.
     // ★ 유입처만 값 오른쪽에 표시가 붙는다(제니 2026-09-09). ro 는 JSX 도 받는다.
+    // ★ 유입처만 값 오른쪽에 표시가 붙는다. **줄 전체를 inline-flex 로 감싸
+    //   가운데 정렬한다** — baseline 에 맡기면 아이콘이 글자보다 내려앉는다
+    //   (제니 2026-09-09: 「좌측 텍스트보다 아래로 쳐져 있다」).
+    //   verticalAlign 을 픽셀로 맞추려 들면 글꼴·크기가 바뀔 때마다 다시 틀어진다.
     const shown = id==='order_place_name'
-      ? <>{csCafe24Show(id, snap[id])}<CsOrderPlaceIcon v={snap[id]}/></>
+      ? <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
+          {csCafe24Show(id, snap[id])}<CsOrderPlaceIcon v={snap[id]}/></span>
       : csCafe24Show(id, snap[id]);
     return <React.Fragment key={'c24:'+id}>
       {ro(def ? (def.short || def.label) : id, shown,
@@ -21483,34 +21518,18 @@ function useCsPanes(key, def){
 //   ⚠ 글자는 `--warn-ink` 다: 흰 바탕에서 #F6AD09 글자는 거의 안 읽힌다.
 //     밑줄은 `--yellow` 그대로 — 선은 굵어서 옅어도 보인다.
 function CsPageTabs({tabs, value, onChange}){
-  // ★★★ 2026-09-09 제니 — **탭도 스크롤을 내려도 위에 남는다.**
-  //   ★★ 붙을 자리(top)는 «그 화면의 머리말 높이» 인데 **화면마다 다르다** —
-  //     제목만 있는 곳도, 부연이 두 줄인 곳도, 오른쪽에 단추가 선 곳도 있다.
-  //     그래서 값을 박지 않고 **그 화면의 머리말을 찾아 실제 높이를 잰다.**
-  //     박아 두면 어느 화면에서는 탭이 머리말을 파고들고 어느 화면에서는 떠 있는다.
-  //   ★ 머리말이 없는 화면(설정 탭처럼 안쪽에 있는 탭)은 0 이다 — 그때는 제자리에
-  //     붙으면 되고, 그것이 맞다.
-  //   ★ 창 크기가 바뀌면 부연이 접혀 높이가 달라진다 → resize 에서 다시 잰다.
-  const barRef = useRef(null);
-  const [top,setTop] = useState(0);
-  useLayoutEffect(()=>{
-    const measure = ()=>{
-      const el = barRef.current; if(!el) return;
-      // ★ «내 위에 떠 있을» 머리말만 본다 — 화면(.main) 안의 것이다.
-      const head = document.querySelector('.main .page-header, .main .cs-page-head');
-      const h = head ? Math.round(head.getBoundingClientRect().height) : 0;
-      setTop(p => p===h ? p : h);
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return ()=> window.removeEventListener('resize', measure);
-  });
+  // ★★★ **탭은 스크롤을 내려도 위에 붙는다**(제니 2026-09-09 확정). 머리말은 안 붙는다 —
+  //   고정하면 그만큼 화면을 잃는데, 머리말은 «여기가 어디인가» 라 처음 한 번이면
+  //   되고 탭은 «다른 것을 보러 가는 길» 이라 내내 필요하다. 자세한 것은
+  //   `.cs-tabbar-wrap` 의 CSS 주석(그 자리에 앞선 두 판이 왜 틀렸는지도 적어 뒀다).
+  // ★ top 은 0 이다 — 위에 함께 붙어 있을 것이 없으므로 잴 것도 없다.
+  // ★ 배경이 없으면 밑을 지나가는 표가 탭 글자에 겹친다.
+  // ⚠ **탭만 담은 짧은 `.section`** 안에 있는 화면에서는 이것만으로 안 붙는다
+  //   (sticky 는 제 부모 높이 안에서만 붙는다) → 그 래퍼에 `cs-tabbar-wrap` 을 준다.
   return (
-    <div ref={barRef}
-      style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',
+    <div style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',
       marginBottom:24,flexWrap:'wrap',
-      // ★ 배경이 없으면 밑을 지나가는 표가 탭 글자에 겹친다.
-      position:'sticky',top:top,zIndex:20,background:'var(--bg)'}}>
+      position:'sticky',top:0,zIndex:20,background:'var(--bg)'}}>
       {tabs.map(t=>{
         const on = value===t.id;
         return (
@@ -22012,7 +22031,7 @@ function CsSettingsPage({currentUserEmail, role}){
 
   return (
     <div className="section">
-      <div style={{marginBottom:18,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+      <div className="cs-page-head" style={{marginBottom:18,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>⚙ CS 설정</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>
           CS 관리 화면이 무엇을 보여 주고 무엇을 요구할지 정합니다 · master 전용</span>
