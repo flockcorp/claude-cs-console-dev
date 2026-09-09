@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909zd_csv_above -->
+<!-- v20260909ze_csv_date_green -->
+<!-- (2026-09-09) 제니 셋. ①**CSV 의 날짜를 사람이 읽는 꼴로**(제니: 「2026-09-09T07:57:06.849348+00:00 이런 형태인데 단순하게 연-월-일 00:00:00 으로」). ★★★ **화면과 같은 시각대로 편다** — 화면은 KST 로 보여 주는데 파일만 UTC 면 «다른 시각» 이 되어, 파일을 근거로 이야기할 때 서로 다른 시간을 말하게 된다. ★ ISO 꼴이 아닌 값은 손대지 않는다(날짜가 아닌 것을 날짜로 읽으면 더 나쁘다). ★★ 이 자리가 처음부터 예상된 함정이었다 — CSV 는 «정렬용 값(sv)» 을 꺼내 쓰는데, 그 값은 **화면에 보이는 꼴이 아니다**(금액의 -1 도 같은 계열이었다). **꺼내 쓰는 값이 «보여 주려고 만든 것» 이 아니면 그대로 내보내면 안 된다.** ②**등록 화면에도 저장 후 액션**(제니) — 다만 **«다음 티켓» 은 뺐다**: 방금 만든 것이라 «다음» 이라 부를 목록의 자리가 없다. ★★★ «화면 유지» 를 고르면 **방금 만든 건의 값을 비운다** — 그대로 두면 한 번 더 눌렀을 때 **같은 티켓이 두 번 만들어진다.** 이 화면에서 가장 큰 사고가 그것이다. ★ 공통 폼(유형·방향·담당자)은 남긴다: 같은 조건으로 다음 건을 넣는 일이 잦고, 품목이 비어 있으면 어차피 저장이 안 된다. ③**[⬇ CSV] 를 초록으로**(제니: 「너무 진하지 않게 · 다크는 다크에 맞게」). 채우지 않고 **테두리·글자만** — 아무것도 바꾸지 않는 일이라 주 동작과 같은 무게로 서면 안 된다. 바탕은 아주 옅게 깔되 **모드마다 값이 다르다**(같은 rgba 를 두 판에 쓰면 흰 종이 위에서만 뿌옇게 뜬다). 글자·테두리는 `--green` 토큰 하나로 끝난다 — 두 모드에 각각 정의돼 있다(다크 #22d3a0 · 라이트 #0F9D77). ★ 🔴 만들며 **주석을 여는 태그 «안»(속성 자리)에 두어 한 번 깨뜨렸다** — 이 파일에 이미 적혀 있던 경고다. ★ dev 전용. -->
 <!-- (2026-09-09) **[⬇ CSV] 를 [+ 티켓 등록] «위» 로 올렸다**(제니 정정 — 「위에 만들어 달라고 했는데 좌측 옆으로 들어갔네」). 두 단추를 세로로 쌓아 검색칸 오른쪽에 한 덩어리로 세운다. ★ 위아래로 두면 줄이 옆으로 길어지지 않고, 둘 다 «이 목록에 대해 하는 일» 이라 붙어 있는 것이 맞다. ★ dev 전용. -->
 <!-- (2026-09-09) **티켓 저장 다음에 무엇을 할지 고른다**(제니) — 「저장 후 화면 유지 / 다음 티켓 / 목록으로」 셋. 자리는 **저장 단추 바로 옆**이다: 무슨 일이 일어날지는 누르기 직전에 보여야 하고, 설정 화면에 두면 그 값을 기억하는 사람만 쓰게 된다. ★★★ **«다음 티켓» 은 목록의 차례를 알아야 한다** — 상세 화면은 제 티켓 하나만 알고 있으므로, **목록이 티켓을 열 때 그 시점의 차례를 함께 넘긴다.** 칩·필터·검색·정렬이 이미 반영된 배열이라 «내가 보던 그 차례» 가 그대로 따라온다(제니: 「이전 화면에서 내가 설정한 정렬 기준으로」). ★★ «다음» 은 **목록에서 위쪽**이다(제니가 못 박았다) — 아래가 아니라 위. ★ **맨 위 티켓이면 화면을 그대로 두고 말해 준다** — 목록으로 튕기면 «저장이 안 됐나» 를 의심하게 된다. 끝이라는 것을 알리는 편이 낫다. ★ 목록에서 연 것이 아니면(이력·묶음에서 눌러 들어온 경우) 차례가 비어 있고, 그때도 «다음» 이 없는 것이 맞다 — 어느 목록의 다음인지 말할 수 없기 때문이다. ★ 고른 값은 **이 브라우저에만** 남는다 — 사람마다 일하는 방식이 다른 «취향» 이지 모두가 같아야 하는 «운영 기준» 이 아니다(사이드바 접힘·① 묶음 접힘과 같은 규칙). ★ dev 전용. -->
 <!-- (2026-09-09) 🔴 **CS 목록 CSV 내려받기**(제니). [+ 티켓 등록] 옆에 [⬇ CSV]. ★★★ **화면이 보여 주는 것을 그대로 내려받는다** — 열도 차례도 «지금 이 칩의 보기 설정» 그대로이고, 칩·필터·검색·정렬이 다 반영된 목록이다. 파일이 화면과 다르면 둘을 대조하는 일이 새로 생긴다. ★★ **고른 것이 있으면 그것만, 없으면 지금 보이는 전체**(제니). 그 건수를 단추 글자에 적는다 — 누르기 전에 몇 건이 나갈지 보여야 «어? 다 나왔네» 가 없다. ★ 값은 정렬용 값(`sv`)에서 꺼낸다(화면 칸은 JSX 라 글자로 못 꺼낸다). **sv 는 정렬을 위해 빈 값을 -1 로 채운 열이 있어** 그대로 쓰면 «-1» 이 찍힌다 → 숫자 -1 은 빈 칸으로 돌린다. ★ **BOM 을 붙인다** — 없으면 엑셀이 한글을 깨뜨린다(엑셀은 UTF-8 을 스스로 못 알아본다). 쉼표·따옴표·줄바꿈이 든 값은 따옴표로 싸고 안의 따옴표는 두 번(이력·메모에 줄바꿈이 실제로 들어온다). ★★ **[보기 설정] 에 «공란» 을 더할 수 있다**(제니: 「여러 개 추가할 수 있게 하고, 콘솔 목록에는 반영되지 않고 엑셀 다운로드 때 빈 열로」). ★★★ 그래서 이 열은 **보기 설정과 파일에만 있고 화면에는 없다** — 목록에 빈 칸을 그리면 그 자리가 «값이 없는 칸» 으로 읽혀 사람이 무엇을 못 채웠나 찾게 된다. 파일에서는 반대로 «받아서 손으로 적을 자리» 라 있어야 한다. ★ 차례를 지키려고 **열 목록 «안»** 에 둔다(따로 뒀으면 몇 번째에 넣을지 정할 수 없다) → 화면용(`viewKeys`)과 파일·설정용(`colKeys`)을 갈랐다. ★ 공란 줄은 체크가 아니라 [지우기] 다 — 끄기를 두면 «꺼 둔 공란» 이라는 아무 뜻 없는 상태가 하나 더 생긴다. ★ dev 전용. -->
@@ -20363,6 +20364,14 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
               [+ 티켓 등록](채운 남색)과 같은 무게로 서면 안 된다. */}
         <div style={{display:'flex',flexDirection:'column',gap:6,flexShrink:0,
           alignItems:'stretch'}}>
+          {/* ★ 초록이다(제니 2026-09-09) — 내려받기는 «가져오는» 일이라 콘솔이
+              «되어 있다·좋다» 에 쓰는 색이 맞고, [+ 티켓 등록](남색 채움)과도 갈린다.
+              ★★ **채우지 않고 테두리·글자만** 쓴다(제니: 「너무 진하지 않게」) —
+                아무것도 바꾸지 않는 일이라 주 동작과 같은 무게로 서면 안 된다.
+              ★ 바탕은 아주 옅게 깔되 **모드마다 값이 다르다**: 같은 rgba 를 두 판에
+                쓰면 흰 종이 위에서만 뿌옇게 뜬다. `--green` 자체는 두 모드에
+                각각 정의돼 있어(다크 #22d3a0 · 라이트 #0F9D77) 글자·테두리는
+                토큰 하나로 끝난다. */}
         <button onClick={()=>{
             const src = pickedIds.length
               ? list.filter(t=>pickedIds.indexOf(t.id)>=0)
@@ -20377,8 +20386,10 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             csCsvDownload('CS티켓_'+chipLabel+'_'+stamp+'.csv', [head].concat(body));
             toast(src.length+'건을 내려받았습니다.','success');
           }}
-          style={{padding:'6px 12px',background:'transparent',
-            border:'1px solid '+CS_LINE,borderRadius:8,color:'var(--sub)',
+          style={{padding:'6px 12px',
+            background: csIsLight() ? 'rgba(15,157,119,.08)' : 'rgba(34,211,160,.10)',
+            border:'1px solid '+(csIsLight() ? 'rgba(15,157,119,.45)' : 'rgba(34,211,160,.45)'),
+            borderRadius:8,color:'var(--green)',
             fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
             whiteSpace:'nowrap',flexShrink:0}}>
           ⬇ CSV{pickedIds.length ? ' ('+pickedIds.length+')' : ''}</button>
@@ -24655,6 +24666,13 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   // ★ 상세 화면과 «같은 규칙» 이다 — 매크로 목록이 열린 만큼 ②를 맨 아래에서
   //   늘린다. 두 화면의 ②는 같은 sticky·overflow 구조라 같은 병을 앓는다.
   const [macroSpace,setMacroSpace] = useState(0);
+  // ★ 저장 다음에 무엇을 하나(제니 2026-09-09) — **등록 화면에는 «다음 티켓» 이 없다**
+  //   (방금 만든 것이라 «다음» 이라 부를 목록의 자리가 없다). 상세와 같은 값을 쓰되
+  //   여기서 고를 수 있는 것은 둘뿐이고, 저장된 값이 'next' 면 «화면 유지» 로 읽는다.
+  const [afterSave,setAfterSave] = useState(()=>{
+    const v = csAfterSaveGet();
+    return v==='list' ? 'list' : 'stay';
+  });
   const [raw,setRaw]       = useState('');
   const [busy,setBusy]     = useState(false);
   const [msg,setMsg]       = useState(null);
@@ -25075,7 +25093,14 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     setBusy(false);
     toast(made.length===1 ? '티켓 #'+made[0]+' 을 만들었습니다.'
       : '티켓 '+made.length+'건을 만들었습니다 — 메인 #'+mrow.id);
-    onDone();
+    if(afterSave==='list'){ onDone(); return; }
+    // ★★ «화면 유지» — 등록 화면에 남아 다음 건을 이어서 넣는다.
+    //   ★★★ **방금 만든 건의 값은 비운다.** 그대로 두면 한 번 더 눌렀을 때 같은
+    //     티켓이 두 번 만들어진다 — 이 화면에서 가장 큰 사고가 그것이다.
+    //   ★ 공통 폼(유형·방향·담당자 …)은 남긴다: 같은 조건으로 다음 건을 넣는 일이
+    //     잦고, 품목이 비어 있으면 어차피 저장이 안 되므로 위험하지 않다.
+    setRaw(''); setItems([]); setSel([]); setItemF({}); setNotes([]); setDraft('');
+    setDups(null); setByPhone(null); setCsInfo(null); setMsg(null);
   };
 
   const inp = {width:'100%',fontSize:12,padding:'7px 9px',background:'var(--bg)',
@@ -25788,6 +25813,18 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                 «여기서는 안 되나» 를 매번 생각하게 된다.
                 ★ crew·manager 에게는 환불·정산·종결을 아예 빼 준다(상세와 같은 규칙) —
                   못 누르게 막는 것보다 «어디까지가 내 일인지» 를 보이는 편이 낫다. */}
+            {/* ★ 등록 화면에는 «다음 티켓» 이 없다(제니 2026-09-09) — 방금 만든
+                것이라 «다음» 이라 부를 목록의 자리가 없다. 둘만 고른다. */}
+            <select value={afterSave}
+              onChange={e=>{ setAfterSave(e.target.value); csAfterSaveSet(e.target.value); }}
+              title="저장한 다음에 할 일"
+              style={{fontSize:11,padding:'7px 8px',background:'var(--bg)',
+                border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,
+                fontFamily:'inherit',colorScheme:'dark',maxWidth:120}}>
+              {CS_AFTER_SAVE.filter(o=>o.id!=='next').map(o=>(
+                <option key={o.id} value={o.id}>저장 후 {o.label}</option>
+              ))}
+            </select>
             <CsStageSubmit stage={newStage} busy={busy} dirty={missing.length===0}
               onSave={()=>save()}
               onPick={id=>{ setNewStage(id); save(id); }}
@@ -27423,6 +27460,21 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
 // ★★ 값은 «정렬용 값(sv)» 에서 가져온다 — 화면 칸은 JSX 라 글자로 꺼낼 수 없다.
 //   ★ sv 는 정렬을 위해 빈 값을 -1 로 채운 열이 있다(금액·수량). 파일에 그대로
 //     쓰면 «-1» 이 찍히므로 빈 칸으로 돌린다 — 금액에 -1 은 없다.
+// ★★ DB 가 주는 시각은 ISO(2026-09-09T07:57:06.849348+00:00)다 — 파일에 그대로 쓰면
+//   사람도 못 읽고 엑셀도 글자로 받는다(제니 2026-09-09).
+//   ★★★ **화면과 같은 시각대로 편다** — 화면은 KST 로 보여 주는데 파일만 UTC 면
+//     «다른 시각» 이 되어, 파일을 근거로 이야기할 때 서로 다른 시간을 말하게 된다.
+//     `new Date` 가 브라우저 시간대로 풀어 주므로 그것을 그대로 쓴다.
+//   ★ ISO 꼴이 아니면 손대지 않는다 — 날짜가 아닌 값을 날짜로 읽으면 더 나쁘다.
+function csCsvDate(v){
+  const t = String(v);
+  if(!/^\d{4}-\d{2}-\d{2}T/.test(t)) return t;
+  const d = new Date(t);
+  if(isNaN(d.getTime())) return t;
+  const p = (x)=>String(x).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())
+       + ' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+}
 function csCsvVal(k, t){
   const c = CS_COLS[k];
   if(!c) return '';
@@ -27430,7 +27482,7 @@ function csCsvVal(k, t){
   if(typeof c.sv === 'function'){
     const v = c.sv(t);
     if(typeof v === 'number') return v === -1 ? '' : v;
-    return v==null ? '' : String(v);
+    return v==null ? '' : csCsvDate(String(v));
   }
   return '';
 }
