@@ -20475,9 +20475,17 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                   </td>
                   {/* ★ 수량·금액 열은 머리글과 값이 «함께» 오른쪽으로 붙어야 한다 —
                        한쪽만 옮기면 그 열만 어긋나 보인다. */}
+                  {/* ★ 오른쪽 정렬 칸은 «오른쪽에 여백» 을 준다(제니 2026-09-09:
+                      「상품 금액과 수령인이 너무 타이트하게 붙는다」). 숫자가 칸의
+                      맨 끝에 딱 붙으면 옆 칸 글자와 한 덩어리로 읽힌다 — 칸 사이에
+                      선이 없는 표라 여백이 곧 경계다.
+                      ★★ 이 주석을 `map(k=>(` «뒤» 에 두면 식 자리라 문법이 깨진다 —
+                        오늘만 세 번째다. 주석은 괄호 «밖» 에. */}
                   {colKeys.map(k=>(
                     <td key={k} style={CS_COLS[k].align
-                        ? {...csTd, textAlign:CS_COLS[k].align} : csTd}>
+                        ? {...csTd, textAlign:CS_COLS[k].align,
+                           ...(CS_COLS[k].align==='right' ? {paddingRight:12} : {})}
+                        : csTd}>
                       {CS_COLS[k].cell(t)}</td>
                   ))}
                   <td style={{padding:0}}></td>
@@ -21081,8 +21089,20 @@ const csChk = {width:15,height:15,accentColor:'#78AAFF',cursor:'pointer',margin:
 function csChipShows(id){
   // ★ 조건이 적힌 고정 칩은 그 조건을 그대로 읽어 준다 — 여기 다시 적으면
   //   조건을 넓힌 날 설정 화면만 옛말을 하게 된다.
+  // ★★ 다만 **적는 꼴은 다른 고정 칩과 같아야 한다**(제니 2026-09-09) — 「CS 완료 ·
+  //   확인 대기」 칩이 「재출고 완료 · 환불 대기」로 적히는데 정산 대기만
+  //   「상태 : 정산 대기 또는 환불 완료」로 적히면, 같은 표 안에서 두 가지 말투가 된다.
+  //   기준이 하나뿐인 고정 칩은 **값만 «·» 로 잇는다**(무슨 기준인지는 열 이름이
+  //   이미 「보이는 티켓」이라 물을 일이 없다).
+  //   ★ 기준이 둘 이상이면 그때는 이름이 있어야 읽힌다 → 사람이 만든 칩과 같은 꼴로.
   const fixed = CS_CHIPS.find(c=>c.id===id);
-  if(fixed && fixed.where) return csChipShowsCustom(fixed.where);
+  if(fixed && fixed.where){
+    const ks = Object.keys(fixed.where);
+    if(ks.length===1){
+      return (fixed.where[ks[0]]||[]).map(v=>csChipValueLabel(ks[0], v)).join(' · ');
+    }
+    return csChipShowsCustom(fixed.where);
+  }
   if(id==='all')     return '모든 티켓';
   if(id==='mine')    return '내가 담당인 티켓 · 종결 제외';
   if(id==='recheck') return '리체크 날짜가 오늘까지인 티켓 · 종결 제외';
@@ -26574,19 +26594,14 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, onBack, goTi
             style={{...inp,fontFamily:'monospace'}}/>)}
 
           {/* ── 환불 관리로 넘기기 ──────────────────────────────────────
-              ★★ 이미 넘긴 티켓에는 버튼 대신 «어디로 넘어갔나» 를 보여 준다.
-                버튼을 그대로 두고 «누르면 안 됩니다» 라고 적는 것보다,
-                누를 것이 아예 없는 편이 실수를 덜 만든다.
+              ★★ 이미 넘긴 티켓에는 **아무것도 안 그린다**(제니 2026-09-09).
+                그전에는 「환불 관리로 넘어갔습니다 — 환불 #63 · 09-09 · 제니」를 여기
+                적었는데, **② 이력에 같은 말이 이미 남는다** — 한 화면에서 같은 사실을
+                두 번 말하면 둘 다 대충 읽게 된다.
+                ★ 버튼이 안 뜨는 것으로 «이미 넘어갔다» 는 충분히 읽힌다(누를 것이
+                  없는 자리에 설명을 붙이는 것보다, 이력을 보게 하는 편이 낫다).
                 (진짜 자물쇠는 refund_id 를 다시 확인하는 쪽이다 — 창 안에 있다.) */}
-          {t.refund_id ? (
-            <div style={{fontSize:11,color:'var(--sub)',padding:'8px 10px',marginBottom:9,
-              background:'rgba(34,211,160,.08)',border:'1px solid rgba(34,211,160,.35)',
-              borderRadius:7,lineHeight:1.6}}>
-              환불 관리로 넘어갔습니다 — <b style={{color:'var(--green)'}}>환불 #{t.refund_id}</b>
-              {t.refund_requested_at && <span> · {csStamp(t.refund_requested_at)}</span>}
-              {t.refund_requested_by && <span> · {csShortUser(t.refund_requested_by)}</span>}
-            </div>
-          ) : canRefund && t.stage==='refund' ? (
+          {t.refund_id ? null : canRefund && t.stage==='refund' ? (
             /* ★★ 2026-09-09 — `isMaster` 로 박혀 있던 것을 **환불 메뉴 권한**으로 바꿨다.
                  환불 메뉴는 설정에서 manager 에게 열 수 있고 DB 정책도 그 설정을 읽는데,
                  이 버튼만 master 로 박혀 있어 «설정에서 열어 줬는데 넘길 수 없는» 자리가
