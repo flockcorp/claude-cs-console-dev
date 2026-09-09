@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909h_macro_align_and_c24_note -->
+<!-- v20260909i_macro_space_at_bottom -->
+<!-- (2026-09-09) 🔴🔴 **매크로 목록의 «자리» 를 ② 영역 맨 아래로 옮겼다**(제니 정정: 「내가 말한 건 목록에 맞춰 **2번 영역이 아래쪽으로** 좀더 길어지길 바랬던 것 · **담당자 아래 영역이 늘어나면** 되지 않을까」). 앞 판(`h`)은 기호 줄 «안» 에 자리를 만들어 **특수문자와 사진첨부 단추 사이가 세로로 벌어졌다.** ★★★ **같은 잘못을 두 번 다른 모양으로 했다** — 판 `g` 는 자리를 목록과 같은 부모에 넣어 `top:100%` 를 밀어냈고, 판 `h` 는 층을 갈랐지만 **여전히 자리를 «목록 곁» 에 만들었다.** 그래서 이번엔 기호 줄이 부풀었다. **늘어나야 하는 것은 목록이 뜨는 자리가 아니라 «목록을 담는 박스»(② 영역) 였다.** 두 번 다 내가 «가장 가까운 곳» 에 자리를 만들려 한 것이 원인이다. → **조각은 높이를 «알리기만» 한다**(`onSpace`) · **자리는 ②를 그리는 화면이 제 맨 아래에 만든다.** 조각이 제 부모의 생김새를 짐작하지 않아도 되고, 기호 줄은 제 높이 그대로다. ★ 사라질 때 «0» 을 알린다 — 안 그러면 화면을 옮긴 뒤에도 빈 자리가 남는다. ★ **등록 화면에도 함께 걸었다** — 두 화면의 ②는 같은 sticky·overflow 구조라 같은 병을 앓는다(제니는 상세만 말했지만 «같은 꼴은 전수로»). ★ CS 설정 > 매크로의 기호 줄은 `onSpace` 를 안 주므로 예전 그대로다(그 화면은 overflow 박스가 아니다). ★ dev 전용. -->
 <!-- (2026-09-09) 제니 피드백 둘. ①🔴🔴 **매크로 목록이 어긋나 떴다 — 바로 앞 판(`g`)에서 내가 낸 사고다.** 목록은 `top:100%` 로 뜨는데 **그 100% 는 «부모 높이»** 다. ②가 늘어나게 하려고 세운 «자리 지킴이» 를 **목록과 같은 부모 안에** 넣었더니, 부모가 커진 만큼 목록의 시작점도 함께 내려가 단추에서 목록 높이만큼 떨어진 곳에 떴다. ★★★ **자리를 만드는 일과 «기준점이 되는» 일을 한 상자에 맡긴 것이 잘못이었다** — `top:100%` 는 «부모가 단추만큼만 크다» 를 말없이 전제하고 있었고, 나는 그 전제를 모르고 부모를 키웠다. → **층을 갈랐다**: 바깥 상자는 세로로 쌓아 «자리» 만 만들고, 안쪽 상자가 단추와 목록을 담아 `position:relative` 의 기준이 된다. 안쪽 높이는 늘 단추 높이라 목록이 단추 바로 아래 붙는다. ★ 세로(column)로 쌓아야 높이가 «더해진다» — 가로면 둘 중 큰 쪽이 되어 단추 높이만큼 모자란다. ★★ 남길 것: **«그 값이 무엇을 기준으로 재는가» 를 모르고 그 기준을 건드리면, 고친 자리가 아니라 엉뚱한 자리가 움직인다.** ②**카페24 변수 설명을 「카페24 주문 · [카페24 연동] 연동 켜짐」으로**(제니 문구). 꺼지면 「연동 꺼짐」(노랑), 켜지면 「연동 켜짐」(초록). ★★★ **뒷마디를 문자열(d)에 넣지 않고 조각(`CsC24OnOff`)으로 뽑았다** — 이유 둘: **색이 실려야 하고**(문자열로는 못 싣는다), **켜졌는지는 «지금 설정» 을 봐야 아는 값**이라 상수에 담을 수 없다. ★ 제니 지시대로 **그 아래 «메일 표» 의 열 드롭박스에도 같은 것이 뜬다**(고른 값 줄·목록 줄 둘 다). **두 곳에 따로 적으면 언젠가 한쪽만 바뀌고, 그때 «같은 값인데 다른 말을 하는» 두 화면이 생긴다** — 그래서 조각 하나를 함께 쓴다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 피드백 둘. ①🔴 **매크로 목록이 ② 영역 «안에 갇혀» 스크롤이 생겼다**(제니 제보 — 이력이 없어 ② 박스가 가장 짧을 때 특히). ★★★ 원인은 두 겹이다: ② 는 `overflowY:auto` 인 sticky 박스인데 **overflow 가 걸린 조상 안에서는 absolute 로 띄운 것이 그 박스에 잘리고**, absolute 는 **자리를 안 먹으므로 박스가 스스로 늘어나지도 않는다.** 잘리고, 구른다. → **열려 있는 동안만 «자리 지킴이»(빈 span)를 흐름에 세워** 그 높이만큼 ②가 함께 늘어나게 했다(제니 요청 그대로). ★ 폭은 0 이다 — 부모가 inline-flex 라 옆으로 서는데 폭을 먹으면 기호 줄의 다른 단추들을 밀어낸다. 필요한 것은 높이뿐이다. ★ **높이를 짐작하지 않고 그린 뒤에 잰다**(offsetHeight) — 검색으로 목록이 줄면 높이도 줄고, 같은 값이면 다시 그리지 않는다. ★ 목록 자체는 그대로 absolute 다: 흐름에 넣으면 340px 짜리 판이 줄 안으로 들어와 단추들이 옆으로 밀린다. ★ 부모에 `alignItems:flex-start` 를 줬다 — stretch 로는 자리 지킴이가 만든 높이만큼 **단추까지 길어진다.** ★ 「/단축어」 목록도 같은 조각이라 함께 고쳐졌다(제니는 [⚡ 매크로] 만 말했지만 **같은 꼴은 전수로**). ②**티켓 «상세» ① 영역의 묶음 다섯을 접을 수 있게 했다**(제니 · 고객·주소·분류·환불·정산). 제목 오른쪽 끝에 [접기], 접히면 [펼치기]. ★ **«주문» 은 접지 않는다**(제니) — 티켓을 열자마자 봐야 하는 값이라, 접을 수 있게 두면 접힌 채로 다음 티켓을 열어 «빈 화면» 을 보게 된다. ★★ **접힘은 localStorage 에 남긴다**: 티켓을 옮길 때마다 도로 펼쳐지면 접는 일을 티켓마다 다시 해야 해서 **접기가 오히려 일이 된다.** 기기별 취향이라 DB 가 아니라 브라우저에 둔다(사이드바 접힘과 같은 규칙). 읽기·쓰기를 다 try 로 감쌌다 — 사생활 보호 창에서 localStorage 는 빈 값이 아니라 «던진다». ★ 단추 글자는 «누르면 무슨 일이 일어나는가» 다: 접힌 줄에 [접기]가 남아 있으면 눌러도 아무 일 없는 것처럼 읽힌다. ★ **등록 화면에 «글자 그대로 같은» 제목 줄이 있어** 문자열로는 못 갈랐다 → 라인으로 짚는 패치(tools/patch_fold.js)로 상세만 고쳤다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 피드백 둘. ①**좌측 하단 계정 정보에 이메일 대신 «이름» 을 적는다** — 주소가 길면 …으로 잘려 **어차피 전체가 안 보였다**(제니 제보). 이름은 짧아 잘릴 일이 거의 없고, 「누구로 들어와 있나」를 읽는 데도 이메일보다 빠르다. **이메일은 툴팁으로 남긴다** — 화면에서 사라진 값이라 «값을 되풀이하는 툴팁» 이 아니다(계정이 둘인 사람이 어느 쪽으로 들어왔는지 확인하는 자리다). ★ 이름은 이미 있는 `csShortUser`(console_user_names 지도)를 쓴다 — 이름이 없거나 지도가 아직 안 왔으면 예전처럼 이메일 앞부분이라 **비는 일이 없고**, 지도가 도착하면 `namesTick` 이 다시 그린다. ★ **클래스 이름도 `.user-email`→`.user-name` 으로 바꿨다**(세 곳) — 담기는 값과 이름이 어긋나면 다음 사람이 «여기 이메일이 있겠거니» 하고 읽는다. ★ 접힌 사이드바의 툴팁은 그대로 이메일을 말하고, 펼친 상태는 이름 조각이 제 툴팁으로 말한다(부모에도 넣으면 한 자리에서 두 툴팁이 겹친다). ②**CS 설정 > 접수 문안의 카페24 변수 설명**(제니 문구): 「연동에서 켜야 담깁니다」 → **「[카페24 연동]탭에서 켜야 이용 가능」**. 어느 탭에서 켜는지를 이름으로 말해 준다. 겸해 **«연동 켜짐» 을 초록으로 함께 적는다** — ★★ 꺼짐만 적으면 **«아무것도 안 적힌 줄» 이 두 뜻을 갖는다**: 「연동 값이 아니다」와 「연동이 켜져 있다」. 켜진 것도 적어야 그 애매함이 없어진다. 초록은 두 모드를 따라가는 토큰(`var(--green)`)이다. ★ dev 전용. -->
@@ -18620,7 +18621,9 @@ const CS_SYMBOLS = [
 // macro: 기본은 «있다». CS 설정 > 매크로의 «내용» 칸에서만 끈다 — 매크로를 만드는
 //   자리에서 매크로를 부르는 것은 뜻이 안 맞는다(2026-09-08 제니 요청으로 그 칸에도
 //   기호 줄을 달면서 갈랐다).
-function CsSymbolBar({taRef, value, onChange, light, right, macro}){
+// ★ onSpace 는 그냥 «지나간다» — 이 줄은 자리를 만들지 않는다(만들면 줄이 세로로
+//   길어져 특수문자와 오른쪽 단추 사이가 벌어진다. 2026-09-09 에 그렇게 냈다).
+function CsSymbolBar({taRef, value, onChange, light, right, macro, onSpace}){
   const put = (ch,caret)=>{
     const el = taRef && taRef.current;
     const v = String(value||'');
@@ -18650,7 +18653,8 @@ function CsSymbolBar({taRef, value, onChange, light, right, macro}){
           드롭박스」). 오른쪽 끝(right)이 아니라 왼쪽 무리에 붙인다 — 기호와 매크로는
           둘 다 «작성칸에 무엇을 넣는» 조각이고, 오른쪽 끝은 [공급사 접수 문안] 처럼
           «다른 일을 하는» 단추의 자리다. */}
-      {macro!==false && <CsMacroTools taRef={taRef} value={value} onChange={onChange} light={light}/>}
+      {macro!==false && <CsMacroTools taRef={taRef} value={value} onChange={onChange}
+        light={light} onSpace={onSpace}/>}
       {right && <><div style={{flex:1}}></div>{right}</>}
     </div>
   );
@@ -18722,7 +18726,7 @@ function csSlashToken(el){
 }
 const csMacroNorm = (s)=>String(s||'').toLowerCase().replace(/\s+/g,'');
 
-function CsMacroTools({taRef, value, onChange, light}){
+function CsMacroTools({taRef, value, onChange, light, onSpace}){
   const [data,setData] = useState(undefined);   // undefined=아직 / null=못 읽음
   const [open,setOpen] = useState(false);       // 드롭박스
   const [q,setQ]       = useState('');          // 드롭박스 검색어
@@ -18735,18 +18739,28 @@ function CsMacroTools({taRef, value, onChange, light}){
   //   ★ 원인: ② 는 `overflowY:auto` 인 sticky 박스인데, **overflow 가 걸린 조상
   //     안에서는 absolute 로 띄운 것이 그 박스에 잘린다.** 그리고 absolute 는
   //     자리를 안 먹으므로 **박스가 스스로 늘어나지도 않는다** — 잘리고, 구른다.
-  //   ★★ 그래서 «열려 있는 동안만» 그 높이만큼 **자리 지킴이**를 흐름에 세운다.
-  //     박스가 그만큼 커지고(제 maxHeight 까지), 목록이 한눈에 들어온다.
-  //     ★ 폭은 0 이다 — 부모가 inline-flex 라 옆으로 서는데, 폭을 먹으면 기호 줄의
-  //       다른 단추들을 밀어낸다. 필요한 것은 «높이» 뿐이다.
+  //   ★★★ **자리는 «② 영역의 맨 아래» 에 만든다**(제니 2026-09-09 정정:
+  //     「담당자 아래 영역이 늘어나면 되지 않을까」).
+  //     🔴 그전에 두 번 틀렸다 — 자리를 **이 조각 «안»** 에 만들었더니
+  //       ①목록의 `top:100%` 가 밀려 어긋났고(판 `g`),
+  //       ②층을 갈라 고쳤더니 이번엔 **기호 줄 자체가 세로로 길어져** 특수문자와
+  //         사진첨부 단추 사이가 벌어졌다(판 `h`).
+  //     ★★ **둘 다 «자리를 목록 곁에» 만들려 한 탓이다.** 늘어나야 하는 것은
+  //       목록이 뜨는 자리가 아니라 **그 목록을 담는 박스** 다 — 곧 ② 영역이다.
+  //   → 이 조각은 **높이를 «알리기만» 한다.** 자리는 ②를 그리는 화면이 제 맨 아래에
+  //     만든다(onSpace). 조각이 제 부모의 생김새를 짐작하지 않아도 된다.
   //   ★ 높이를 짐작하지 않고 **그린 뒤에 잰다** — 검색으로 목록이 줄면 높이도 준다.
   const panelRef = useRef(null);
-  const [panelH,setPanelH] = useState(0);
+  const spaceRef = useRef(0);
   useEffect(()=>{
     const el = panelRef.current;
     const h  = el ? el.offsetHeight + 4 : 0;   // +4 = 패널의 marginTop
-    setPanelH(p => p===h ? p : h);             // 같은 값이면 다시 그리지 않는다
+    if(spaceRef.current === h) return;         // 같은 값이면 알리지 않는다
+    spaceRef.current = h;
+    if(onSpace) onSpace(h);
   });
+  // ★ 사라질 때는 «0» 을 알린다 — 안 그러면 화면을 옮긴 뒤에도 빈 자리가 남는다.
+  useEffect(()=>()=>{ if(onSpace) onSpace(0); },[]);
 
   useEffect(()=>{ let alive=true;
     csLoadMacros().then(r=>{ if(alive) setData(r); });
@@ -18891,23 +18905,12 @@ function CsMacroTools({taRef, value, onChange, light}){
     </div>
   );
 
-  // ★★★ 2026-09-09 제니 — **목록이 어긋나 떴다.** 내가 낸 사고다.
-  //   자리 지킴이를 «패널과 같은 부모» 안에 넣었는데, 패널은 `top:100%` 로 뜬다 —
-  //   **그 100% 는 부모 «높이» 다.** 자리 지킴이가 부모를 키운 만큼 패널의 시작점도
-  //   함께 내려가, 단추에서 목록 높이만큼 떨어진 곳에 떴다.
-  //   ★★★ **자리를 만드는 일과 기준점이 되는 일을 한 상자에 맡긴 것이 잘못이다.**
-  //     `top:100%` 는 «부모가 단추만큼만 크다» 를 말없이 전제하고 있었다.
-  //   → 층을 가른다: **바깥**은 자리를 만들고(세로로 쌓아 높이를 더한다),
-  //     **안쪽**은 단추와 목록만 담아 `position:relative` 의 기준이 된다.
-  //     안쪽 높이는 늘 «단추 높이» 라 목록이 단추 바로 아래 붙는다.
-  //   ★ 세로(column)로 쌓아야 높이가 «더해진다» — 가로로 두면 둘 중 큰 쪽이 되어
-  //     단추 높이만큼이 모자란다.
+  // ★★ 이 조각은 «제 크기» 로 돌아왔다 — 자리는 ② 영역이 만든다(위 onSpace 주석).
+  //   기호 줄 안의 한 단추로만 서 있으므로 줄의 높이를 건드리지 않는다.
   // ★★ 이 주석을 `return (` «안» 에 JSX 주석으로 두면 그 자리는 식 자리라 문법이
   //   깨진다 — 09-07·09-08 에 이미 두 번 밟았다. 괄호 «밖» 에 적는다.
   return (
-    <div ref={boxRef} style={{display:'inline-flex',flexDirection:'column',
-      alignItems:'flex-start'}}>
-      <div style={{position:'relative',display:'inline-flex'}}>
+    <div ref={boxRef} style={{position:'relative',display:'inline-flex'}}>
       <button type="button" title={data===null ? '매크로를 읽지 못했습니다'
           : '자주 쓰는 문구를 넣습니다 — 작성칸에 «/단축어» 를 쳐도 됩니다'}
         onClick={()=>{ setOpen(o=>!o); setQ(''); }}
@@ -18962,22 +18965,6 @@ function CsMacroTools({taRef, value, onChange, light}){
         </div>
       )}
 
-      </div>
-
-      {/* ── 자리 지킴이 ────────────────────────────────────────────────
-          위 두 목록은 absolute 라 «자리를 안 먹는다» — 그래서 ② 영역이 스스로
-          늘어나지 못하고, overflow 가 걸린 그 박스가 목록을 잘라 안에 스크롤을
-          만들었다(제니 2026-09-09). 열려 있는 동안만 같은 높이의 빈 자리를 세워
-          ②가 함께 늘어나게 한다.
-          ★★ **목록의 형제가 아니라 «바깥» 에 선다** — 같은 부모에 두면 부모가
-            커지고, 목록의 `top:100%` 가 그만큼 밀려 어긋난다(그렇게 한 번 냈다).
-          ★ 폭 0 — 기호 줄의 다른 단추를 밀지 않는다. 필요한 건 높이뿐이다.
-          ★ 목록 자체는 그대로 absolute 다: 흐름에 넣으면 340px 짜리 판이 줄
-            안으로 들어와 단추들이 옆으로 밀린다. */}
-      {panelH>0 && (
-        <span aria-hidden="true"
-          style={{display:'block',width:0,flex:'0 0 auto',height:panelH}}></span>
-      )}
     </div>
   );
 }
@@ -23400,6 +23387,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   설정할 수 있게」라고 해 **이미 있던 자리**로 옮겼다: CS 설정 > «칸» > 담당자 >
   //   고칠 수 있는 사람. 같은 설정을 DB 트리거도 읽으므로 화면과 DB 가 한 말을 한다.
   const canAssign = csCanEditField(fieldRules, 'assignee', role);
+  // ★ 상세 화면과 «같은 규칙» 이다 — 매크로 목록이 열린 만큼 ②를 맨 아래에서
+  //   늘린다. 두 화면의 ②는 같은 sticky·overflow 구조라 같은 병을 앓는다.
+  const [macroSpace,setMacroSpace] = useState(0);
   const [raw,setRaw]       = useState('');
   const [busy,setBusy]     = useState(false);
   const [msg,setMsg]       = useState(null);
@@ -24362,6 +24352,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   경우가 흔하고, 공급사도 그것을 한 번에 받아야 한다.
                 ★ 형식은 «그 공급사의 창구» 가 정한다(메일이면 제목+표). */}
             <CsSymbolBar taRef={noteRef} value={draft} onChange={setDraft} light
+              onSpace={setMacroSpace}
               right={
                 <button type="button" disabled={!chosen.length}
                   title={chosen.length ? (supChannel==='email'
@@ -24508,6 +24499,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               onPick={id=>{ setNewStage(id); save(id); }}
               options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
           </div>
+          {/* ★ 상세와 같은 자리·같은 뜻 — 매크로 목록이 열린 만큼 ②가 아래로 자란다. */}
+          {macroSpace>0 && <div aria-hidden="true" style={{height:macroSpace}}></div>}
         </div>
 
         <CsPaneBar onMouseDown={dragPane('r')}/>
@@ -24691,6 +24684,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   //     사이드바 접힘(cs_nav_collapsed)에서 이미 세운 규칙이다.
   //   ★ 읽기·쓰기를 다 try 로 감싼다: 사생활 보호 창이나 저장이 막힌 브라우저에서
   //     localStorage 는 «빈 값» 이 아니라 «던진다». 그때는 안 접힌 채로 그냥 돈다.
+  // ★★ 매크로 목록이 열린 만큼 ② 영역을 «맨 아래에서» 늘린다(제니 2026-09-09:
+  //   「담당자 아래 영역이 늘어나면 되지 않을까」). ②는 overflow 가 걸린 박스라
+  //   목록이 그 안에 갇히는데, 늘어나야 하는 것은 목록이 뜨는 자리가 아니라
+  //   **목록을 담는 박스** 다. 조각은 높이만 알리고(onSpace) 자리는 여기서 만든다.
+  const [macroSpace,setMacroSpace] = useState(0);
   const [fold,setFold] = useState(()=>{
     try{ return JSON.parse(localStorage.getItem('cs_detail_fold')||'{}') || {}; }
     catch(e){ return {}; }
@@ -25808,6 +25806,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 ★ 자리는 특수문자 줄의 «오른쪽 끝» 이다(제니) — 아래에 또 두면 작성칸
                   위가 두 줄이 된다. */}
             <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft} light
+              onSpace={setMacroSpace}
               right={
                 <button type="button" disabled={busy}
                   title={supChannel==='email' ? '이 공급사는 메일 창구 — 제목+표로 넣습니다'
@@ -25946,6 +25945,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               onPick={id=>{ setE('stage', id); saveAll(id); }}
               options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
           </div>
+          {/* ★ 매크로 목록이 열린 만큼 ②가 «아래로» 자란다 — 목록은 absolute 라
+              자리를 안 먹고, 그러면 overflow 가 걸린 이 박스가 목록을 잘라 낸다. */}
+          {macroSpace>0 && <div aria-hidden="true" style={{height:macroSpace}}></div>}
         </div>
 
         <CsPaneBar onMouseDown={dragPane('r')}/>
