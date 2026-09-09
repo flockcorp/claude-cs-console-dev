@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909j_macro_space_two_thirds -->
+<!-- v20260909k_main_basis_and_place_icon -->
+<!-- (2026-09-09) 제니 넷 중 셋. ①🔴 **등록 화면이 «첫 품목» 을 보여 주면서 저장은 «메인» 으로 하고 있었다**(제니: 「등록 화면에서 뜨는 상품 금액은 메인 티켓 기준으로」). ★★★ 메인 판정(「본품」이 든 옵션명 → 없으면 번호가 가장 낮은 것)이 **save 안에만 있었다.** 화면은 `chosen[0]` 을 봤다 — **본품이 -02 인 주문에서는 화면이 보여 준 값과 메인 티켓에 담기는 값이 서로 달랐다**(실측 주문에 그런 것이 있었다. 2026-08-31). → 판정을 컴포넌트에서 «한 번만» 하고 화면·저장이 그것을 함께 쓴다. **같은 규칙을 두 곳에 적으면 언젠가 갈린다** — 오늘만 세 번째로 만나는 자리다(뱃지·연동 상태말·이것). 안내 문구도 「고른 첫 품목 기준」→「**메인 티켓** 기준」. ②**「이력은 메인에만 쌓입니다」를 「이력은 그룹 티켓 내에 연동 저장 됩니다」로**(제니 문구). ★★★ **틀린 말이었다** — 저장하는 자리가 메인일 뿐, 쓰는 사람에게는 서브에 적어도 메인과 다른 서브에서 다 보인다. **구현을 설명하지 말고 «쓰는 사람에게 무슨 일이 일어나는가» 를 적어야 한다.** 「메인에만」은 내부 사정이고, 그대로 읽으면 «서브에는 못 적는다» 로 오해된다. ③**유입처 표시**(제니) — 「스마트스토어」면 네이버, 「카카오톡…」이면 💬 를 값 오른쪽에. ★ 판정은 «들어 있나» 로 한다: 카페24가 「네이버 스마트스토어」·「카카오톡 선물하기」처럼 앞뒤를 붙여 주므로 «같은가» 로 보면 조용히 아무것도 안 붙는다. ★★ **네이버 N 은 이모지에 없다** — 비슷한 유니코드 글자(Ⓝ·🅽)는 글꼴에 따라 네모로 떨어진다(09-03 복사 아이콘에서 겪은 자리). 네이버의 아이덴티티대로 **초록 바탕에 흰 N** 을 그린다. 카카오톡은 **콘솔이 이미 쓰는 💬**(소통 채널)를 그대로 쓴다. ④**칸 너비 조절 줄이 다크에서 안 보이던 것**(제니 두 번째 제보) — 09-08 에 색은 이미 `--accent`(밝은 하늘)로 바꿨는데도 그랬다. 남은 원인은 **크기**다: 4px 선은 색을 아무리 밝게 해도 «켜졌나» 가 안 보이고, 평소 색(--border)이 다크 바탕과 거의 같아 **마우스를 대기 전엔 선이 어디 있는지조차 모른다.** → 다크에서만 셋을 올렸다: 평소 선 밝기·hover 두께(4→5)·**빛번짐**. 라이트는 손대지 않는다(제니가 «구분된다» 고 한 쪽을 함께 흔들면 그쪽이 도로 나빠진다). ⏳ 남은 하나(품목별 상품 금액)는 **실측 중** — dev DB 조회 결과 스냅샷은 품목별로 담겼고 네 건의 product_price 가 모두 4800 이었다. 같은 상품의 다른 옵션일 수 있어 **카페24 원본을 확인한 뒤** 고친다. ★ dev 전용. -->
 <!-- (2026-09-09) **② 가 늘어나는 양을 «지금의 2/3» 로 줄였다**(제니: 「매크로 목록 사이즈보다 훨씬 더 많이 늘려서 ② 스크롤이 생긴다 · 1/3만 줄여줘」). ★★★ 왜 넘쳤나 — **목록은 «기호 줄 바로 아래» 에서 시작하는데, 그 아래에는 담당자 칸·안내 문구·저장 줄이 이미 자리를 차지하고 있다.** 목록은 그 위에 «겹쳐» 뜨므로 정말 모자란 것은 목록 높이 «전부» 가 아니라 **그 아래로 삐져나가는 만큼** 이다. 전부를 더하니 이미 있던 자리와 겹쳐 ②가 필요 이상으로 늘어났다. ★★ 남길 것: **«자리가 모자라다» 를 잴 때는 «필요한 크기» 가 아니라 «이미 있는 것과의 차이» 를 재야 한다.** 앞 판에서 자리를 옳은 «곳» 으로 옮기고도 «양» 을 그대로 둔 것이 이 판의 잘못이다. ★ 비율은 제니가 화면에서 재 준 값이다. 아래에 서는 것이 늘 한 벌(담당자·안내·버튼)이라 이 비율로 충분하다. ★ **식은 한 곳에 둔다**(`csMacroSpace`) — 등록·상세 두 화면이 같은 식을 따로 들고 있으면 언젠가 갈린다. ★ dev 전용. -->
 <!-- (2026-09-09) 🔴🔴 **매크로 목록의 «자리» 를 ② 영역 맨 아래로 옮겼다**(제니 정정: 「내가 말한 건 목록에 맞춰 **2번 영역이 아래쪽으로** 좀더 길어지길 바랬던 것 · **담당자 아래 영역이 늘어나면** 되지 않을까」). 앞 판(`h`)은 기호 줄 «안» 에 자리를 만들어 **특수문자와 사진첨부 단추 사이가 세로로 벌어졌다.** ★★★ **같은 잘못을 두 번 다른 모양으로 했다** — 판 `g` 는 자리를 목록과 같은 부모에 넣어 `top:100%` 를 밀어냈고, 판 `h` 는 층을 갈랐지만 **여전히 자리를 «목록 곁» 에 만들었다.** 그래서 이번엔 기호 줄이 부풀었다. **늘어나야 하는 것은 목록이 뜨는 자리가 아니라 «목록을 담는 박스»(② 영역) 였다.** 두 번 다 내가 «가장 가까운 곳» 에 자리를 만들려 한 것이 원인이다. → **조각은 높이를 «알리기만» 한다**(`onSpace`) · **자리는 ②를 그리는 화면이 제 맨 아래에 만든다.** 조각이 제 부모의 생김새를 짐작하지 않아도 되고, 기호 줄은 제 높이 그대로다. ★ 사라질 때 «0» 을 알린다 — 안 그러면 화면을 옮긴 뒤에도 빈 자리가 남는다. ★ **등록 화면에도 함께 걸었다** — 두 화면의 ②는 같은 sticky·overflow 구조라 같은 병을 앓는다(제니는 상세만 말했지만 «같은 꼴은 전수로»). ★ CS 설정 > 매크로의 기호 줄은 `onSpace` 를 안 주므로 예전 그대로다(그 화면은 overflow 박스가 아니다). ★ dev 전용. -->
 <!-- (2026-09-09) 제니 피드백 둘. ①🔴🔴 **매크로 목록이 어긋나 떴다 — 바로 앞 판(`g`)에서 내가 낸 사고다.** 목록은 `top:100%` 로 뜨는데 **그 100% 는 «부모 높이»** 다. ②가 늘어나게 하려고 세운 «자리 지킴이» 를 **목록과 같은 부모 안에** 넣었더니, 부모가 커진 만큼 목록의 시작점도 함께 내려가 단추에서 목록 높이만큼 떨어진 곳에 떴다. ★★★ **자리를 만드는 일과 «기준점이 되는» 일을 한 상자에 맡긴 것이 잘못이었다** — `top:100%` 는 «부모가 단추만큼만 크다» 를 말없이 전제하고 있었고, 나는 그 전제를 모르고 부모를 키웠다. → **층을 갈랐다**: 바깥 상자는 세로로 쌓아 «자리» 만 만들고, 안쪽 상자가 단추와 목록을 담아 `position:relative` 의 기준이 된다. 안쪽 높이는 늘 단추 높이라 목록이 단추 바로 아래 붙는다. ★ 세로(column)로 쌓아야 높이가 «더해진다» — 가로면 둘 중 큰 쪽이 되어 단추 높이만큼 모자란다. ★★ 남길 것: **«그 값이 무엇을 기준으로 재는가» 를 모르고 그 기준을 건드리면, 고친 자리가 아니라 엉뚱한 자리가 움직인다.** ②**카페24 변수 설명을 「카페24 주문 · [카페24 연동] 연동 켜짐」으로**(제니 문구). 꺼지면 「연동 꺼짐」(노랑), 켜지면 「연동 켜짐」(초록). ★★★ **뒷마디를 문자열(d)에 넣지 않고 조각(`CsC24OnOff`)으로 뽑았다** — 이유 둘: **색이 실려야 하고**(문자열로는 못 싣는다), **켜졌는지는 «지금 설정» 을 봐야 아는 값**이라 상수에 담을 수 없다. ★ 제니 지시대로 **그 아래 «메일 표» 의 열 드롭박스에도 같은 것이 뜬다**(고른 값 줄·목록 줄 둘 다). **두 곳에 따로 적으면 언젠가 한쪽만 바뀌고, 그때 «같은 값인데 다른 말을 하는» 두 화면이 생긴다** — 그래서 조각 하나를 함께 쓴다. ★ dev 전용. -->
@@ -20487,6 +20488,31 @@ const CS_CAFE24_DUP = ['order_id','order_item_code','option_value','quantity',
   'receivers.zipcode','receivers.address1','receivers.address2'];
 // ★ ro 는 화면마다 제 것을 쓴다(등록·상세가 각각 갖고 있다) — 그리는 함수를 받아
 //   쓰면 두 화면이 «같은 줄» 로 그려진다. 조각을 하나 더 만들지 않는 이유다.
+// ── 유입처 표시 (제니 2026-09-09) ────────────────────────────────────────
+// 「스마트스토어」면 네이버, 「카카오톡 선물하기」면 카카오톡 표시를 값 오른쪽에.
+// ★★ **판정은 «들어 있나» 로 한다** — 카페24가 주는 유입처 이름이 「스마트스토어」
+//   한 낱말이 아니라 「네이버 스마트스토어」·「카카오톡 선물하기」처럼 앞뒤가 붙어
+//   온다. 정확히 같은지로 보면 이름이 조금만 달라도 조용히 아무것도 안 붙는다.
+// ★★★ **네이버 N 은 이모지에 없다.** 억지로 비슷한 유니코드 글자(Ⓝ·🅽)를 쓰면
+//   글꼴에 따라 네모(□)로 떨어진다 — 09-03 복사 아이콘에서 이미 겪은 자리다.
+//   네이버의 아이덴티티는 «초록 바탕에 흰 N» 이므로 그대로 그린다(#03C75A).
+// ★ 카카오톡은 **콘솔이 이미 쓰는 아이콘(💬)** 이다(소통 채널 kakao). 같은 것을
+//   가리키는 표시가 화면마다 다르면 사람이 매번 «같은 것인가» 를 생각한다.
+function CsOrderPlaceIcon({v}){
+  const s = String(v||'');
+  if(s.indexOf('스마트스토어')>=0){
+    return <span title="네이버 스마트스토어"
+      style={{display:'inline-flex',alignItems:'center',justifyContent:'center',
+        width:13,height:13,marginLeft:5,borderRadius:3,background:'#03C75A',
+        color:'#fff',fontSize:9,fontWeight:800,lineHeight:1,
+        fontFamily:"'Pretendard','Inter',sans-serif",verticalAlign:'-2px'}}>N</span>;
+  }
+  if(s.indexOf('카카오')>=0){
+    return <span title="카카오톡 선물하기"
+      style={{marginLeft:5,fontSize:11,lineHeight:1}}>💬</span>;
+  }
+  return null;
+}
 function csCafe24Rows(snap, order, pane, ro){
   const keys = Object.keys(snap||{});
   const ord  = Array.isArray(order) ? order : [];
@@ -20502,8 +20528,12 @@ function csCafe24Rows(snap, order, pane, ro){
     const def = CS_CAFE24_FIELDS.find(f=>f.id===id);
     // ★ 티켓 화면에서는 «짧은 이름» 을 쓴다 — 이름 칸의 폭이 정해져 있어서 긴 이름은
     //   값과 겹쳐 읽힌다(제니 2026-09-08). 설정 화면은 긴 이름 그대로다.
+    // ★ 유입처만 값 오른쪽에 표시가 붙는다(제니 2026-09-09). ro 는 JSX 도 받는다.
+    const shown = id==='order_place_name'
+      ? <>{csCafe24Show(id, snap[id])}<CsOrderPlaceIcon v={snap[id]}/></>
+      : csCafe24Show(id, snap[id]);
     return <React.Fragment key={'c24:'+id}>
-      {ro(def ? (def.short || def.label) : id, csCafe24Show(id, snap[id]),
+      {ro(def ? (def.short || def.label) : id, shown,
           CS_CAFE24_COPY.indexOf(id)>=0)}
     </React.Fragment>;
   });
@@ -21447,6 +21477,7 @@ function CsPageTabs({tabs, value, onChange}){
 
 function CsPaneBar({onMouseDown}){
   const [hot,setHot] = useState(false);
+  const light = csIsLight();
   return (
     <div onMouseDown={onMouseDown}
       onMouseEnter={()=>setHot(true)} onMouseLeave={()=>setHot(false)}
@@ -21461,8 +21492,20 @@ function CsPaneBar({onMouseDown}){
             이미 있다: `--accent`(다크=밝은 하늘 · 라이트=진한 남색).
             **밝기를 손으로 올리는 대신 «뜻» 을 쓰면 두 모드가 저절로 맞는다.**
           ★ 두께도 3 → 4 로 한 픽셀 올렸다 — 얇은 선은 색을 바꿔도 «켜졌나» 가 약하다. */}
-      <div style={{width:hot?4:1,borderRadius:2,transition:'background .12s, width .12s',
-        background: hot?'var(--accent)':'var(--border)'}}></div>
+      {/* ★★★ 2026-09-09 제니 — **다크에서 마우스를 대도 구분이 안 된다**(두 번째 제보).
+          09-08 에 `--accent` 로 바꿔 «색» 은 이미 밝은 하늘(#D2E5FF)인데도 그랬다.
+          ★★ 남은 원인은 **크기** 다 — 4px 짜리 선은 색을 아무리 밝게 해도 «켜졌나» 가
+            눈에 안 들어온다. 게다가 평소 색(--border #1e3060)이 다크 바탕과 거의
+            같아서 **마우스를 대기 전에는 선이 어디 있는지조차 모른다.**
+          → 셋을 함께 올린다: 평소 선도 한 단 밝게(다크에서만) · hover 두께 4→5 ·
+            hover 에 **빛번짐**. 빛번짐은 이 콘솔이 «눈에 안 들어올 때» 쓰는 수단이다
+            ([[console-alert-visibility-trap]] 과 같은 자리).
+          ★ 라이트는 손대지 않는다 — 제니가 「라이트에서는 구분이 된다」고 했다.
+            한쪽이 좋다고 한 값을 반대쪽 고치면서 함께 흔들면 그쪽이 도로 나빠진다. */}
+      <div style={{width:hot?(light?4:5):(light?1:2),borderRadius:2,
+        transition:'background .12s, width .12s, box-shadow .12s',
+        boxShadow: (hot && !light) ? '0 0 7px 1px rgba(210,229,255,.6)' : 'none',
+        background: hot ? 'var(--accent)' : (light ? 'var(--border)' : '#35538A')}}></div>
     </div>
   );
 }
@@ -23515,8 +23558,18 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   const supChannel = useSupplierChannel(chosen.length ? chosen[0].supplier_name : null);
   // ★ 넣은 글이 한눈에 보이게 칸을 늘린다 — 글이 바뀔 때마다 다시 잰다.
   useEffect(()=>{ csAutoGrow(noteRef.current); },[draft]);
-  const head = chosen[0] || null;           // 공통 값(공급사·주문자)은 첫 품목에서 본다
-  // ★ 접수하면 담길 카페24 값 — «고른 첫 품목» 기준으로 한 벌만 미리 그린다.
+  // ★★★ 메인 판정을 **화면과 저장이 함께 쓴다**(제니 2026-09-09: 「등록 화면에서 뜨는
+  //   상품 금액은 «메인» 티켓을 기준으로 뜨도록」). 그전에는 저장할 때(save)만 메인을
+  //   가리고 화면은 «고른 첫 품목» 을 보여 줬다 — **본품이 -02 인 주문에서는 화면이
+  //   보여 준 값과 메인 티켓에 담기는 값이 서로 달랐다.**
+  //   ★★ 규칙을 두 곳에 따로 적지 않는다: 여기서 한 번 가리고 save 도 이것을 쓴다.
+  //   ①「본품」이 든 옵션명이 있으면 그것 ②없으면 품목번호가 가장 낮은 것
+  //   (실측 주문에서 본품이 -02 였던 적이 있어 번호만으로는 못 고른다. 2026-08-31)
+  const sortedChosen = [...chosen].sort((a,b)=> a.code<b.code ? -1 : 1);
+  const mainItem = sortedChosen.find(i=>
+      String((itemF[i.code]||{}).option_name||'').indexOf('본품')>=0) || sortedChosen[0] || null;
+  const head = mainItem;                    // 공통 값(공급사·주문자)도 메인에서 본다
+  // ★ 접수하면 담길 카페24 값 — «메인 품목» 기준으로 한 벌만 미리 그린다.
   //   품목마다 제 값이 담기지만(상품 금액처럼 다른 것이 있다) 세 벌을 늘어놓으면
   //   09-03 에 수령인을 세 번 찍어 «다를 수도 있는 값» 으로 읽힌 그 자리를 또 밟는다.
   const c24 = head ? csCafe24Snapshot(head, cafe24On) : {};
@@ -23720,12 +23773,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     if(missing.length) return;
     const st = stageOverride || newStage;
     setBusy(true);
-    // ★★ 메인 판정 — ①「본품」 이 든 옵션명이 있으면 그것 ②없으면 품목번호가 가장 낮은 것.
-    //   실측 주문에서 본품이 -02 였던 적이 있어(2026-08-31) 번호만으로는 못 고른다.
-    const sorted = [...chosen].sort((a,b)=> a.code<b.code ? -1 : 1);
-    const bonpum = sorted.find(i=> String((itemF[i.code]||{}).option_name||'').indexOf('본품')>=0);
-    const main = bonpum || sorted[0];
-    const rest = sorted.filter(i=>i.code!==main.code);
+    // ★★ 메인 판정은 **화면과 같은 것을 쓴다**(mainItem · 위에서 한 번만 가린다).
+    //   여기 따로 적어 두었더니 화면은 «첫 품목», 저장은 «본품» 을 봐서 둘이 갈렸다.
+    const main = mainItem;
+    const rest = sortedChosen.filter(i=>i.code!==main.code);
     // 같은 주문 + 같은 공급사 = 한 묶음. 서브가 없어도 묶음 키는 남긴다 —
     // 나중에 같은 묶음에 티켓이 하나 더 생길 수 있다.
     const gkey = baseOf(main.code)+'|'+(main.supplier_name||'');
@@ -24073,9 +24124,15 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               })}
               {sel.length>1 && (
                 <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.65,marginTop:2}}>
+                  {/* ★★ 「이력은 메인에만 쌓입니다」는 **틀린 말이었다**(제니 2026-09-09).
+                      저장하는 자리가 메인일 뿐, 쓰는 사람에게는 **서브에서 적어도
+                      메인과 다른 서브에서 다 보인다** — 곧 «묶음 안에서 이어진다».
+                      ★★★ **구현을 설명하지 말고 «쓰는 사람에게 무슨 일이 일어나는가»
+                        를 적어야 한다.** 「메인에만」은 내부 사정이고, 그대로 읽으면
+                        «서브에는 못 적는다» 로 오해된다. */}
                   ★ 티켓은 <b>품목마다 하나씩 {sel.length}건</b> 만들어집니다.
                   「본품」이 든 품목이 <b>메인</b>이 되고(없으면 번호가 가장 낮은 것),
-                  <b>이력은 메인에만</b> 쌓입니다.
+                  <b>이력은 그룹 티켓 내에 연동 저장</b> 됩니다.
                 </div>
               )}
             </div>
@@ -24097,7 +24154,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               {chosen.length>1 && csCafe24Rows(c24, detailOrder, '주문', ro).length>0 && (
                 <div style={{fontSize:10,color:'var(--sub)',lineHeight:1.6,
                   margin:'2px 0 8px',paddingLeft:8}}>
-                  ★ 위 카페24 값은 <b>고른 첫 품목</b> 기준입니다 — 티켓마다 그 품목의 값이 담깁니다.
+                  ★ 위 카페24 값은 <b>메인 티켓</b> 기준입니다 — 티켓마다 그 품목의 값이 담깁니다.
                 </div>
               )}
             </>
