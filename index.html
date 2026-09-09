@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909f_user_name_and_c24_on -->
+<!-- v20260909g_macro_room_and_fold -->
+<!-- (2026-09-09) 제니 피드백 둘. ①🔴 **매크로 목록이 ② 영역 «안에 갇혀» 스크롤이 생겼다**(제니 제보 — 이력이 없어 ② 박스가 가장 짧을 때 특히). ★★★ 원인은 두 겹이다: ② 는 `overflowY:auto` 인 sticky 박스인데 **overflow 가 걸린 조상 안에서는 absolute 로 띄운 것이 그 박스에 잘리고**, absolute 는 **자리를 안 먹으므로 박스가 스스로 늘어나지도 않는다.** 잘리고, 구른다. → **열려 있는 동안만 «자리 지킴이»(빈 span)를 흐름에 세워** 그 높이만큼 ②가 함께 늘어나게 했다(제니 요청 그대로). ★ 폭은 0 이다 — 부모가 inline-flex 라 옆으로 서는데 폭을 먹으면 기호 줄의 다른 단추들을 밀어낸다. 필요한 것은 높이뿐이다. ★ **높이를 짐작하지 않고 그린 뒤에 잰다**(offsetHeight) — 검색으로 목록이 줄면 높이도 줄고, 같은 값이면 다시 그리지 않는다. ★ 목록 자체는 그대로 absolute 다: 흐름에 넣으면 340px 짜리 판이 줄 안으로 들어와 단추들이 옆으로 밀린다. ★ 부모에 `alignItems:flex-start` 를 줬다 — stretch 로는 자리 지킴이가 만든 높이만큼 **단추까지 길어진다.** ★ 「/단축어」 목록도 같은 조각이라 함께 고쳐졌다(제니는 [⚡ 매크로] 만 말했지만 **같은 꼴은 전수로**). ②**티켓 «상세» ① 영역의 묶음 다섯을 접을 수 있게 했다**(제니 · 고객·주소·분류·환불·정산). 제목 오른쪽 끝에 [접기], 접히면 [펼치기]. ★ **«주문» 은 접지 않는다**(제니) — 티켓을 열자마자 봐야 하는 값이라, 접을 수 있게 두면 접힌 채로 다음 티켓을 열어 «빈 화면» 을 보게 된다. ★★ **접힘은 localStorage 에 남긴다**: 티켓을 옮길 때마다 도로 펼쳐지면 접는 일을 티켓마다 다시 해야 해서 **접기가 오히려 일이 된다.** 기기별 취향이라 DB 가 아니라 브라우저에 둔다(사이드바 접힘과 같은 규칙). 읽기·쓰기를 다 try 로 감쌌다 — 사생활 보호 창에서 localStorage 는 빈 값이 아니라 «던진다». ★ 단추 글자는 «누르면 무슨 일이 일어나는가» 다: 접힌 줄에 [접기]가 남아 있으면 눌러도 아무 일 없는 것처럼 읽힌다. ★ **등록 화면에 «글자 그대로 같은» 제목 줄이 있어** 문자열로는 못 갈랐다 → 라인으로 짚는 패치(tools/patch_fold.js)로 상세만 고쳤다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 피드백 둘. ①**좌측 하단 계정 정보에 이메일 대신 «이름» 을 적는다** — 주소가 길면 …으로 잘려 **어차피 전체가 안 보였다**(제니 제보). 이름은 짧아 잘릴 일이 거의 없고, 「누구로 들어와 있나」를 읽는 데도 이메일보다 빠르다. **이메일은 툴팁으로 남긴다** — 화면에서 사라진 값이라 «값을 되풀이하는 툴팁» 이 아니다(계정이 둘인 사람이 어느 쪽으로 들어왔는지 확인하는 자리다). ★ 이름은 이미 있는 `csShortUser`(console_user_names 지도)를 쓴다 — 이름이 없거나 지도가 아직 안 왔으면 예전처럼 이메일 앞부분이라 **비는 일이 없고**, 지도가 도착하면 `namesTick` 이 다시 그린다. ★ **클래스 이름도 `.user-email`→`.user-name` 으로 바꿨다**(세 곳) — 담기는 값과 이름이 어긋나면 다음 사람이 «여기 이메일이 있겠거니» 하고 읽는다. ★ 접힌 사이드바의 툴팁은 그대로 이메일을 말하고, 펼친 상태는 이름 조각이 제 툴팁으로 말한다(부모에도 넣으면 한 자리에서 두 툴팁이 겹친다). ②**CS 설정 > 접수 문안의 카페24 변수 설명**(제니 문구): 「연동에서 켜야 담깁니다」 → **「[카페24 연동]탭에서 켜야 이용 가능」**. 어느 탭에서 켜는지를 이름으로 말해 준다. 겸해 **«연동 켜짐» 을 초록으로 함께 적는다** — ★★ 꺼짐만 적으면 **«아무것도 안 적힌 줄» 이 두 뜻을 갖는다**: 「연동 값이 아니다」와 「연동이 켜져 있다」. 켜진 것도 적어야 그 애매함이 없어진다. 초록은 두 모드를 따라가는 토큰(`var(--green)`)이다. ★ dev 전용. -->
 <!-- (2026-09-09) 🔴🔴 **없는 이름을 쓰지 않기로 했다**(제니 결정). 「내 일이 끝나면 «CS 완료» 로 넘기세요」에서 **「CS 완료」라는 단계는 콘솔에 없다** — 상담원의 끝은 «확인 대기» 두 갈래(교환은 재출고 완료, 반품은 환불 대기)다. 앞 두 판(b·d)은 그 없는 이름을 «어떻게 그릴까» 만 고쳤다: 알약으로 그렸다가, 저장 버튼과 같은 점으로 바꿨다가. **꼴을 아무리 맞춰도 이름이 화면 어디에도 없다는 것은 그대로였다.** → 실제 단계 이름 둘을 그대로 적는다: 「내 일이 끝나면 ● 재출고 완료나 ● 환불 대기로 넘기세요」. ★★★ **툴팁을 없앤 것이 이 판의 핵심이다** — 실제 이름을 툴팁에 넣어 두면 **마우스를 올려야 답이 나온다.** 답이 화면에 있으면 물을 일이 없고, 그게 «직관적» 이라는 말의 뜻이다(제니 「좀더 직관적으로 표현 가능한 방법이 뭐가 있을까」). ★★ **이름도 조사도 CS_STAGES 에서 나온다 — 손으로 적은 글자가 한 자도 없다.** 조사까지 따라오게 `csIna`(나/이나)를 `csRo`(로/으로) 옆에 만들었다: 이름만 코드에서 뽑고 조사를 박아 두면, 단계 이름이 바뀌는 날 「…완료이나」 같은 말이 **조용히** 남는다. ★ 점은 저장 버튼 목록과 같은 조각(CsStageDot·09-09d)이라 색표가 한 벌이다. ★ dev 전용. -->
 <!-- (2026-09-09) 🔴 **「CS 완료」를 알약이 아니라 «상태 점» 으로 바꿨다**(제니: 「저장 버튼에서 재출고완료·환불대기 좌측에 있는 컬러칩과 동일한 느낌이 안 든다」). ★★★ **뜻이 다른 두 표현을 한 꼴로 그리려 한 것이 잘못이었다** — 상태 알약(CsStagePill)은 «지금 이 티켓의 상태» 를 말하는 자리이고, 저장 버튼 목록의 점은 «고를 수 있는 단계» 를 말하는 자리다. 안내 글의 「CS 완료」는 뒤쪽이다(고르러 가라는 말이다). 알약으로 그렸더니 실제 상태가 「진행중」인 티켓 위에 또 다른 알약이 떠서, **둘 중 어느 것이 지금인지 헷갈리는 화면**이 됐다. ★★ 그래서 **점을 조각으로 뽑았다**(CsStageDot·CS_TONE_DOT) — 그 색표는 CsStageSubmit «안» 에 지역 함수로 박혀 있어 바깥에서 쓸 수가 없었다. 저장 버튼 목록도 이제 같은 조각을 쓴다: **색표가 한 벌이라 한쪽만 바뀔 일이 없다.** ★ 툴팁에서 「실제 단계 이름」 머리말을 뺐다(제니) — 단계 이름 둘만 줄바꿈으로 뜬다. 이름은 여전히 CS_STAGES 에서 뽑는다. ★ 알약(CsStagePill)은 09-09b 에서 열었던 label·group·tip 을 **도로 닫아 원래대로 되돌렸다** — 쓰는 데가 없는 문은 다음 사람에게 «여기로 지나가도 된다» 는 잘못된 신호가 된다. ★ dev 전용. -->
@@ -18728,6 +18729,23 @@ function CsMacroTools({taRef, value, onChange, light}){
   const [idx,setIdx]   = useState(0);
   const boxRef  = useRef(null);
   const skipRef = useRef(-1);   // Esc 로 닫은 «/» 자리 — 그 자리에서는 다시 안 뜬다
+  // ★★★ 2026-09-09 제니 — **목록이 ② 영역 안에 갇혀 스크롤이 생겼다.**
+  //   이력이 없어 ② 박스가 «가장 짧은» 때가 특히 그랬다.
+  //   ★ 원인: ② 는 `overflowY:auto` 인 sticky 박스인데, **overflow 가 걸린 조상
+  //     안에서는 absolute 로 띄운 것이 그 박스에 잘린다.** 그리고 absolute 는
+  //     자리를 안 먹으므로 **박스가 스스로 늘어나지도 않는다** — 잘리고, 구른다.
+  //   ★★ 그래서 «열려 있는 동안만» 그 높이만큼 **자리 지킴이**를 흐름에 세운다.
+  //     박스가 그만큼 커지고(제 maxHeight 까지), 목록이 한눈에 들어온다.
+  //     ★ 폭은 0 이다 — 부모가 inline-flex 라 옆으로 서는데, 폭을 먹으면 기호 줄의
+  //       다른 단추들을 밀어낸다. 필요한 것은 «높이» 뿐이다.
+  //   ★ 높이를 짐작하지 않고 **그린 뒤에 잰다** — 검색으로 목록이 줄면 높이도 준다.
+  const panelRef = useRef(null);
+  const [panelH,setPanelH] = useState(0);
+  useEffect(()=>{
+    const el = panelRef.current;
+    const h  = el ? el.offsetHeight + 4 : 0;   // +4 = 패널의 marginTop
+    setPanelH(p => p===h ? p : h);             // 같은 값이면 다시 그리지 않는다
+  });
 
   useEffect(()=>{ let alive=true;
     csLoadMacros().then(r=>{ if(alive) setData(r); });
@@ -18872,8 +18890,13 @@ function CsMacroTools({taRef, value, onChange, light}){
     </div>
   );
 
+  // ★ alignItems:flex-start — 자리 지킴이가 높이를 만들면 stretch 로는 단추까지
+  //   함께 길어진다. 단추는 제 높이로 위에 붙어 있어야 한다.
+  // ★★ 이 주석을 `return (` «안» 에 JSX 주석으로 두면 그 자리는 식 자리라 문법이
+  //   깨진다 — 09-07·09-08 에 이미 두 번 밟았다. 괄호 «밖» 에 적는다.
   return (
-    <div ref={boxRef} style={{position:'relative',display:'inline-flex'}}>
+    <div ref={boxRef} style={{position:'relative',display:'inline-flex',
+      alignItems:'flex-start'}}>
       <button type="button" title={data===null ? '매크로를 읽지 못했습니다'
           : '자주 쓰는 문구를 넣습니다 — 작성칸에 «/단축어» 를 쳐도 됩니다'}
         onClick={()=>{ setOpen(o=>!o); setQ(''); }}
@@ -18882,7 +18905,7 @@ function CsMacroTools({taRef, value, onChange, light}){
       </button>
 
       {open && (
-        <div style={{...panel, top:'100%', left:0}}>
+        <div ref={panelRef} style={{...panel, top:'100%', left:0}}>
           <div style={{padding:'8px 9px',borderBottom:'1px solid '+(light?CS_WRITE.fieldBd:'var(--border)'),
             position:'sticky',top:0,background: light?'#FFFFFF':'var(--surface)'}}>
             <input autoFocus value={q} onChange={e=>setQ(e.target.value)}
@@ -18919,13 +18942,26 @@ function CsMacroTools({taRef, value, onChange, light}){
           ★ 맞는 것이 없으면 아무것도 안 띄운다: 「/」 를 쳤다고 빈 판이 뜨면
             «고장» 으로 읽힌다. */}
       {tok && matched.length>0 && (
-        <div style={{...panel, top:'100%', left:0}}>
+        <div ref={panelRef} style={{...panel, top:'100%', left:0}}>
           <div style={{padding:'5px 10px',fontSize:10,color:sub,
             borderBottom:'1px solid '+(light?CS_WRITE.fieldBd:'var(--border)')}}>
             /{tok.q} · <b>↑↓</b> 고르고 <b>Enter</b> · <b>Esc</b> 닫기
           </div>
           {matched.map((m,i)=>row(m, i===Math.min(idx, matched.length-1), x=>insert(x, tok)))}
         </div>
+      )}
+
+      {/* ── 자리 지킴이 ────────────────────────────────────────────────
+          위 두 목록은 absolute 라 «자리를 안 먹는다» — 그래서 ② 영역이 스스로
+          늘어나지 못하고, overflow 가 걸린 그 박스가 목록을 잘라 안에 스크롤을
+          만들었다(제니 2026-09-09). 열려 있는 동안만 같은 높이의 빈 자리를 세워
+          ②가 함께 늘어나게 한다.
+          ★ 폭 0 — 기호 줄의 다른 단추를 밀지 않는다. 필요한 건 높이뿐이다.
+          ★ 목록 자체는 그대로 absolute 다: 흐름에 넣으면 340px 짜리 판이 줄
+            안으로 들어와 단추들이 옆으로 밀린다. */}
+      {panelH>0 && (
+        <span aria-hidden="true"
+          style={{display:'block',width:0,flex:'0 0 0px',height:panelH}}></span>
       )}
     </div>
   );
@@ -24618,6 +24654,24 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
   const [busy,setBusy]   = useState(false);
   const [draft,setDraft] = useState('');
   const [side,setSide]   = useState('원룸만들기');
+  // ★★ ① 안의 묶음 접기 — 상세 화면만이다(제니 2026-09-09).
+  //   ★ «주문» 은 접지 않는다(제니) — 티켓을 열자마자 봐야 하는 값이라,
+  //     접을 수 있게 두면 접힌 채로 다음 티켓을 열어 «빈 화면» 을 보게 된다.
+  //   ★★ 접힘을 localStorage 에 남긴다. 티켓을 옮길 때마다 도로 펼쳐지면
+  //     «접는 일» 을 티켓마다 다시 해야 해서, 접기가 오히려 일이 된다.
+  //     기기별 취향이라 DB(console_settings)가 아니라 브라우저에 둔다 —
+  //     사이드바 접힘(cs_nav_collapsed)에서 이미 세운 규칙이다.
+  //   ★ 읽기·쓰기를 다 try 로 감싼다: 사생활 보호 창이나 저장이 막힌 브라우저에서
+  //     localStorage 는 «빈 값» 이 아니라 «던진다». 그때는 안 접힌 채로 그냥 돈다.
+  const [fold,setFold] = useState(()=>{
+    try{ return JSON.parse(localStorage.getItem('cs_detail_fold')||'{}') || {}; }
+    catch(e){ return {}; }
+  });
+  const toggleFold = (k)=>setFold(f=>{
+    const n = {...f, [k]: !f[k]};
+    try{ localStorage.setItem('cs_detail_fold', JSON.stringify(n)); }catch(e){}
+    return n;
+  });
   // 지금 적고 있는 줄에 붙일 사진(이미 Storage 에 올라간 주소들) — 2026-09-03
   const [photos,setPhotos] = useState([]);
   // ★ 사람이 남기는 이력은 전부 «기록» 이다 — 무슨 일이었는지는 글로 적히고,
@@ -25057,6 +25111,24 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
     borderTop:'1px solid rgba(255,255,255,.07)'};
   // 맨 위 묶음용 — 선 없이 이름만. 패널 제목 바로 아래라 선을 그으면 줄이 둘로 보인다.
   const secTop = {...sec, marginTop:0, paddingTop:0, borderTop:'none'};
+  // ★★ 접을 수 있는 묶음 제목 — 이름 오른쪽 끝에 [접기]/[펼치기] (제니 2026-09-09).
+  //   ★ paddingRight 는 «주문» 머리말과 같은 값이다: sec 의 오른쪽 여백이 -8px 라
+  //     그대로 두면 단추가 패널 밖으로 8px 나간다.
+  //   ★ 단추 글자는 «누르면 무슨 일이 일어나는가» 다 — 접힌 줄에 [접기]가 남아
+  //     있으면 눌러도 아무 일 없는 것처럼 읽힌다.
+  const foldHead = (k, label, extra)=>(
+    <div style={{...sec, display:'flex', alignItems:'center', gap:8,
+      paddingRight:secPad}}>
+      <span>{label}{extra}</span>
+      <div style={{flex:1}}></div>
+      <button type="button" onClick={()=>toggleFold(k)}
+        title={fold[k] ? '이 묶음을 펼칩니다' : '이 묶음을 접습니다'}
+        style={{padding:'2px 8px',borderRadius:5,fontSize:10,fontWeight:600,
+          fontFamily:'inherit',cursor:'pointer',background:'transparent',
+          border:'1px solid var(--border)',color:'var(--sub)'}}>
+        {fold[k] ? '펼치기' : '접기'}</button>
+    </div>
+  );
   // ★★ 항목 한 줄 — 읽기 전용이든 입력칸이든 «같은 틀» 을 쓴다(제니 2026-09-02:
   //   「두 화면은 기본 틀이 동일한 것이 전제」). 그전에는 읽기 값은 이름을 왼쪽에
   //   세우고 입력칸은 이름을 «위» 에 얹어, 같은 칸 안에서 값의 시작점이 두 가지였다.
@@ -25274,7 +25346,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
           {/* ★ 「카페24 연동」에서 켠 값 중 «주문에 대한 것» 이 여기 이어 붙는다. */}
           {csCafe24Rows(t.cafe24_snapshot, detailOrder, '주문', ro)}
 
-          <div style={sec}>고객</div>
+          {foldHead('고객','고객')}
+          {!fold.고객 && <>
           {/* ★★ 이름과 연락처는 «따로» 복사한다(제니가 둘을 따로 꼽았다). 한 덩어리로
               복사하면 「홍길동 · 010-…」 이 통째로 붙어, 붙여 넣은 자리에서 다시 지워야
               한다 — 복사 버튼을 둔 이유가 바로 그 손질을 없애는 것이다. */}
@@ -25297,7 +25370,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 ? ' · ' + (t.receiver_phone || t.orderer_phone) : ''))}
           {csCafe24Rows(t.cafe24_snapshot, detailOrder, '고객', ro)}
 
-          <div style={sec}>주소</div>
+          </>}
+          {foldHead('주소','주소')}
+          {!fold.주소 && <>
           {/* ★ 복사하는 값은 «보이는 그대로» 다 — 우편번호 대괄호까지 함께 간다.
               카페24·택배사 어디에 넣어도 사람이 다시 다듬을 것이 없어야 한다. */}
           {ro('배송 주소지', addr(t.ship_zipcode,t.ship_address1,t.ship_address2), true)}
@@ -25336,7 +25411,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             </>
           ))}
 
-          <div style={sec}>분류</div>
+          </>}
+          {foldHead('분류','분류')}
+          {!fold.분류 && <>
           {/* ★ 접수 경로는 «분류» 다 — 등록 화면이 이미 그 자리에 두고 있었는데 상세만
               맨 위 카페24 값들 사이에 있었다(제니 제보). 카페24가 준 값이 아니라
               사람이 고르는 값이라 자리가 틀렸던 것이다. 두 화면의 틀을 맞춘다. */}
@@ -25374,7 +25451,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
                 화면에 손으로 옮겨 적게 되고, 그 사이가 실수 나는 자리다.
               ★ 상담원도 넣는다 — 고객에게 계좌를 받는 사람이 상담원이다.
                 master 전용은 «정산» 이지 «환불 정보» 가 아니다. */}
-          <div style={sec}>환불 <span style={{opacity:.7}}>· 환불 진행 시</span></div>
+          </>}
+          {foldHead('환불','환불', <span style={{opacity:.7}}> · 환불 진행 시</span>)}
+          {!fold.환불 && <>
           {row('환불 금액', <input value={edit.refund_amount} onChange={e=>setE('refund_amount',e.target.value)}
             style={{...inp,fontFamily:'monospace',textAlign:'right'}}/>)}
           {/* ★★ 등록 화면과 «같은 컴포넌트» 다(2026-09-03). 여기는 티켓이 품목 하나를
@@ -25424,7 +25503,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
               {dirty ? '저장하고 환불 관리로 넘기기' : '환불 관리로 넘기기'}</button>
           ) : null}
 
-          <div style={sec}>정산 {!isMaster && <span style={{opacity:.7}}>· master 만</span>}</div>
+          </>}
+          {foldHead('정산','정산', !isMaster && <span style={{opacity:.7}}> · master 만</span>)}
+          {!fold.정산 && <>
           {isMaster ? (
             <>
               <div style={{marginBottom:9}}>
@@ -25454,6 +25535,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, onBack, goTicket}){
             </>
           )}
 
+          </>}
         </div>
 
         <CsPaneBar onMouseDown={dragPane('l')}/>
