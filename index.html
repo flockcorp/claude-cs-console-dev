@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909s_refund_perm -->
+<!-- v20260909t_refund_done_sync -->
+<!-- (2026-09-09) 제니 셋. ①🔴🔴 **환불 완료 → CS 티켓 «환불 완료» 연동**(제니). 환불 관리에서 «환불 완료 처리» 를 하면 그 건으로 넘어온 티켓이 «환불 대기» → «환불 완료» 로 옮겨지고, ② 영역에 **시스템 이력 「환불이 완료되었습니다.」** 가 남는다. ★★★ **«환불 대기» 인 티켓만 옮긴다** — 이미 종결·철회된 건을 되살리거나 사람이 손으로 옮겨 둔 상태를 덮으면 **화면이 사람의 판단을 지우는 셈**이다. 연동은 «아직 아무도 안 건드린 것» 을 대신 옮겨 주는 자리다. ★★ 환불 완료 경로가 **둘**(수정 창 · 목록 일괄)이라 **함수 하나(`csTicketsOnRefundDone`)로 모았다** — 두 곳에 적으면 한쪽만 고쳐지는 날이 온다(오늘만 네 번째로 만나는 자리다). ★ 이력은 **«시스템»** 이 남긴다: 사람이 CS 화면에서 한 일이 아니라 **다른 화면에서 일어난 일이 여기로 옮겨 온 것**이라, 작성자를 사람으로 적으면 「내가 안 했는데」가 된다. ★ 묶음이면 이력은 메인에 쌓는다(콘솔 규칙 그대로). ★★ **실패해도 «환불 완료» 자체는 되돌리지 않는다** — 환불이 실제로 나간 것이 사실이고 티켓 상태는 사람이 고칠 수 있다. 대신 **조용히 넘어가지 않게** 「티켓에서 직접 옮겨 주세요」로 알린다. ★ `환불완료` 는 이미 이력 action 허용값이라 SQL 변경이 없다. ②**이력 문구**(제니): 「환불 관리로 넘겼습니다」 → **「환불을 요청했습니다」**. 「넘겼습니다」는 «자리를 옮겼다» 는 말이라 무엇이 일어났는지 흐리다. ③**일괄 편집 바 색을 라이트에 맞췄다**(제니: 「다크에선 좋은데 라이트에서 붕 뜬다 · 눈에는 들되 화면 전체와 어우러지게」). ★★★ 다크의 «진한 붉은 채움» 이 라이트에서 뜨는 것은 당연하다 — 어두운 화면에서 그 색은 «한 톤 밝은 판» 이지만 흰 종이 위에서는 **가장 어두운 덩어리**가 되어 혼자 튀어나온다(09-07 상태 알약과 같은 자리: **같은 값이 두 바탕에서 정반대의 세기로 읽힌다**). → 라이트에서는 **뒤집는다**: 옅은 붉은 «바탕» 에 진한 붉은 «테두리·글자». 색상(hue)은 그대로라 «주의» 라는 뜻은 유지되고 세기만 판에 맞춘다. ★★ **판을 바꾸면 그 안의 조각을 전부 다시 봐야 한다** — 다크에서 흰 판이던 주 동작 단추는 옅은 붉은 위에서 오히려 묻히므로, 라이트에서는 그것이 «진한 붉은 채움» 이 된다(다크와 정확히 반대다). ★ 색을 **한 표(`csBulkBarPalette`)에 모아** 바와 그 안의 `CsBulkPanel` 이 같은 것을 본다 — 두 곳에 적으면 판만 바뀌고 단추는 그대로인 화면이 나온다. ★ **체크한 행 표시는 그대로 뒀다**(제니 지시). ★ dev 전용. -->
 <!-- (2026-09-09) 🔴 **[환불 요청 하기] 에 권한 조건이 없었다**(제니 확인 질문: 「권한이 있는 계정만 보이는 거 맞지?」 — **아니었다. 내가 안 걸었다**). DB 정책(`refunds_by_menu`)이 실제로는 막아 주지만, **버튼이 보이는 것 자체가 잘못이다** — 눌러 보고 나서 «안 되는구나» 를 알게 된다. ★★★ 고치면서 판정을 `isMaster` 로 박지 «않았다». 환불 메뉴는 **설정에서 manager 에게 열 수 있고**(`console_settings.menu_roles`) DB 정책도 그 설정을 읽는다. 화면만 master 로 박아 두면 «설정에서 열어 줬는데 버튼이 없는» 자리가 된다 — 09-07 에 배송지연에서 만난 그 함정(**설정이 거짓말을 하는 자리**)이다. → `canMenu('refunds')` 를 두 화면에 내려 **화면과 DB 가 같은 자리를 본다.** ★★ 겸해 **티켓 상세의 [환불 관리로 넘기기] 도 같은 값으로 바꿨다** — 거기는 `isMaster` 로 박혀 있어 같은 어긋남을 안고 있었다. 목록의 일괄 버튼과 상세의 단건 버튼이 이제 **같은 조건**으로 뜬다(둘이 다르면 「목록에선 되는데 상세에선 안 되네」가 생긴다). ★ 화면은 헛걸음을 없애는 자리이고 진짜 자물쇠는 DB 다 — 이 판은 앞의 것만 고쳤다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①**티켓 상세에 저장 알림**(제니) — 저장이 끝나도 아무 말이 없어 «눌린 건가» 하고 다시 누르게 되던 자리다. 어느 단계로 갔는지 함께 적는다(저장 버튼이 곧 «어디로 보내는가» 이므로 그 결과를 확인하는 것이 이 알림의 일이다). ★ 자리는 콘솔이 이미 쓰는 우측 하단(`#toastHost`)이다 — 등록 화면은 원래 있었고 **상세에만 없었다.** ②**목록에서 «환불 관리로 일괄 넘기기»**(제니). 상세의 [환불 관리로 넘기기] 는 그대로 두고, 일괄 편집 바에 [💸 환불 요청 하기] 를 더했다. ★★★ **넘기는 절차를 한 곳으로 모았다**(`csRefundFromTicket`) — 단건 모달과 일괄이 같은 함수를 쓴다. 같은 일을 두 곳에 적으면 반드시 갈리고, 오늘만 세 번 만난 자리다. 이제 단건 모달의 `go()` 는 그 함수를 부르는 다섯 줄이다. ★★ 그 함수가 **넘기기 직전에 «이미 넘어갔는지» 를 DB 에서 다시 본다** — 이것이 환불 건이 두 개 생기는 것을 막는 자물쇠이고, 여러 건을 훑는 일괄에서는 그 위험이 더 크다. ★★★ **모달은 «누를 수 있는 건과 아닌 건» 을 미리 갈라 보여 준다.** 일괄의 가장 큰 위험은 **일부가 조용히 실패하는 것**이다 — 서른 건을 눌렀는데 스물여덟만 갔고 아무도 모르면 그 둘은 며칠 뒤 「왜 환불이 안 됐지」로 돌아온다. 못 가는 건은 **까닭까지 그 줄에** 적는다(빠진 값·이미 넘어감·사유 없음). **누르기 전에 보이는 것이 누른 뒤에 보이는 것보다 백 배 낫다.** ★ 끝난 뒤에도 «건별로» 알린다 — 「N건 완료」만 띄우면 실패한 건을 찾으러 목록을 다시 훑어야 한다. ★ 환불 사유는 단건과 **같은 규칙**으로 티켓의 «유형 + 방향» 에서 자동 매칭하고, 안 맞은 것만 손대면 되게 줄마다 두되 «한꺼번에 지정» 도 뒀다. ★ 하나씩 차례로 보낸다 — 한꺼번에 던지면 어느 건이 실패했는지 짝짓기 어렵고 중간에 끊겨도 어디까지 갔는지 알 수 없다. ★★ 버튼은 **«환불 대기» 인 건이 골라져 있을 때만** 뜬다(칩이 아니라 «고른 것» 을 본다: 「전체」·검색에서도 넘길 수 있어야 하고, 대상이 없으면 버튼이 아예 없어야 «왜 여기선 안 되지» 가 생기지 않는다). 이미 넘어간 건은 세지 않는다. ★ 넘긴 뒤 목록을 다시 읽고 고름을 푼다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①🔴🔴 **복사한 접수 문안을 메일에 붙이면 표가 안 따라왔다**(제니 제보). 당연한 일이었다 — 복사가 **글자만**(writeText) 실어 보냈고, 우리 이력은 표를 «탭» 으로 짜 두므로 메일에서는 그냥 공백이 된다. → **탭으로 짠 표가 들어 있으면 «HTML 도 함께» 싣는다**(ClipboardItem 에 text/plain + text/html). 붙이는 쪽이 골라 간다: 메일 편집기는 HTML 을, 메모장은 글자를 가져간다. **원문(이력에 저장된 글)은 한 글자도 안 바뀐다.** ★★★ **화면과 복사가 «같은 함수» 로 줄을 나눈다**(`csNoteBlocks`) — 규칙을 두 곳에 적으면 «화면에서는 표인데 붙여 넣으면 아닌» 자리가 생긴다. 바로 이 제보의 뿌리이고, 09-04 에도 같은 계열을 밟았다(등록 화면이 제 코드로 그려서 거기서만 표가 아니었다). ★★ **색은 콘솔 것을 그대로 가져오지 않는다** — 붙는 자리가 메일이라 대개 흰 바탕인데, 어두운 화면용 남색 머리글을 실으면 거기서 안 읽힌다. **값이 같아도 «어디에 놓이는가» 가 다르면 같은 스타일이 아니다.** ★ 인라인 style 로 적는다(메일 편집기는 대개 `<style>` 태그를 걷어낸다). ★ ClipboardItem 이 없거나 실패하면 **글자만 싣는 옛 길로 물러선다** — 표가 안 따라올지언정 «아무것도 복사가 안 되는» 것이 훨씬 나쁘다. ②**티켓 «등록» 화면 이력에도 [복사]**(제니: 「X 버튼 아래 있으면 돼」). 이 화면의 이력은 아직 저장 전이라 머리 줄 구성이 상세와 다르지만(지우기 대신 ×), **복사는 두 화면에서 같은 일**이라 같은 조각·같은 강조꼴을 쓴다. ★ dev 전용. -->
@@ -7626,6 +7627,43 @@ async function logRefund(refundId, action, actor, note, createdAt){
   if(error) console.error('[환불 이력 기록] 실패:', action, error);
 }
 
+// ── 환불 완료 → CS 티켓 «환불 완료» (제니 2026-09-09) ────────────────────────
+// 「환불 관리에서 «환불 완료 처리» 가 된 경우, CS 관리에서 해당 티켓의 상태가
+//   «환불 대기» 에서 «환불 완료» 로 변경되도록 연동해 줘.」
+// ★★★ **«환불 대기» 인 티켓만 옮긴다.** 이미 종결·철회된 건을 되살리거나, 사람이
+//   손으로 옮겨 둔 상태를 덮으면 **화면이 사람의 판단을 지우는 셈**이 된다.
+//   연동은 «아직 아무도 안 건드린 것» 을 대신 옮겨 주는 자리다.
+// ★★ 환불 완료 경로가 둘(수정 창 · 목록 일괄)이라 **함수 하나로 모은다** — 두 곳에
+//   적으면 한쪽만 고쳐지는 날이 온다(오늘만 네 번째로 만나는 자리다).
+// ★ 이력은 «시스템» 이 남긴다: 사람이 CS 화면에서 한 일이 아니라 **다른 화면에서
+//   일어난 일이 여기로 옮겨 온 것**이라, 작성자를 사람으로 적으면 「내가 안 했는데」가 된다.
+// ★ 묶음이면 이력은 메인 티켓에 쌓는다(콘솔의 이력 규칙 그대로).
+// ★ 실패해도 «환불 완료» 자체는 되돌리지 않는다 — 환불이 실제로 나간 것이 사실이고,
+//   티켓 상태는 사람이 고칠 수 있다. 대신 조용히 넘어가지 않게 알린다.
+async function csTicketsOnRefundDone(refundIds, actor){
+  const ids = Array.from(new Set((refundIds||[]).filter(Boolean)));
+  if(!ids.length) return 0;
+  const {data, error} = await sb.from('cs_tickets')
+    .select('id,main_ticket_id,stage,refund_id').in('refund_id', ids);
+  if(error){ console.error('[환불→티켓] 조회 실패:', error); return 0; }
+  const targets = (data||[]).filter(t=>t.stage==='refund');
+  if(!targets.length) return 0;
+  const tids = targets.map(t=>t.id);
+  const {error:e1} = await sb.from('cs_tickets')
+    .update({stage:'refunded', updated_by: actor || 'unknown'}).in('id', tids);
+  if(e1){
+    console.error('[환불→티켓] 상태 변경 실패:', e1);
+    toast('환불은 완료됐지만 CS 티켓 상태를 못 바꿨습니다 — 티켓에서 직접 옮겨 주세요.','warn');
+    return 0;
+  }
+  const {error:e2} = await sb.from('cs_ticket_events').insert(targets.map(t=>({
+    ticket_id: t.main_ticket_id || t.id, side:'시스템', action:'환불완료',
+    actor: actor || 'unknown', note:'환불이 완료되었습니다.',
+  })));
+  if(e2) console.error('[환불→티켓] 이력 실패:', e2);   // 상태는 이미 바뀌었다
+  return tids.length;
+}
+
 // 카페24 조회 응답에서 «어디서 들어온 주문인가»를 뽑는다 — 환불 두 창이 함께 쓴다.
 // 결제수단은 저장하는 칸(결제수단)이 담당하고, 여기 값들은 판단용 참고 표시라 저장하지 않는다.
 // 엣지 함수가 옛 버전이면 이 칸들이 없으므로 null 을 돌려 아무것도 그리지 않는다.
@@ -8285,6 +8323,12 @@ function RefundEditModal({ row, reasons, currentUserEmail, onClose, onSaved }){
       // 확인 완료·보류 해제는 같은 메모칸을 쓴다. 한쪽에만 물려 두면 적어 놓은 글이 조용히 사라진다.
       : (action==='resolve_review' || action==='resume_review') ? (resolveNote.trim() || null)
       : null);
+    // ★ 환불이 «완료» 로 갔으면 그 건으로 넘어온 CS 티켓도 «환불 완료» 로 옮긴다
+    //   (제니 2026-09-09). 목록의 일괄 완료와 «같은 함수» 를 쓴다.
+    if(action==='mark_refund_complete'){
+      const n = await csTicketsOnRefundDone([row.id], currentUserEmail);
+      if(n) toast('CS 티켓 '+n+'건도 «환불 완료» 로 옮겼습니다.','success');
+    }
     setSaving(false);
     onSaved();
   };
@@ -9600,8 +9644,11 @@ function RefundManagementPage({ currentUserEmail }) {
       refund_completed_by: userTag,
       updated_by:          userTag,
     }).in('id', ids);
+    if(error){ setBulkProcessing(false); toast('일괄 처리 실패: '+error.message); return; }
+    // ★ 넘어온 CS 티켓도 함께 «환불 완료» 로 옮긴다(제니 2026-09-09 · 수정 창과 같은 함수).
+    const moved = await csTicketsOnRefundDone(ids, userTag);
     setBulkProcessing(false);
-    if(error){ toast('일괄 처리 실패: '+error.message); return; }
+    if(moved) toast('CS 티켓 '+moved+'건도 «환불 완료» 로 옮겼습니다.','success');
     setSelectedIds(new Set());
     load();
   };
@@ -18027,6 +18074,41 @@ const CS_DONE_STAGES = CS_STAGES.filter(s=>s.group===CS_DONE_GROUP);
 //   → 칩 이름 = 단계 이름. 이름이 같으면 눌러 보지 않아도 무엇이 나올지 안다.
 // ★ 「공급사 미접수」는 «티켓 등록» 단계 그 자체다 — 티켓을 만들었으나 아직 공급사로
 //   안 넘긴 상태가 곧 그 단계이기 때문이다. 그래서 둘을 한 칩으로 합쳤다.
+// ── 일괄 편집 바의 색 (제니 2026-09-09) ──────────────────────────────────────
+// 「기존 색상은 다크에서 좋은데, 동일 색상이 라이트에서는 좀 붕 떠서 다른 색으로.
+//   충분히 눈에는 들어오되 콘솔 화면 전체와 어우러지게.」
+// ★★★ **다크의 «진한 붉은 채움» 이 라이트에서 붕 뜨는 것은 당연하다.** 어두운 화면
+//   에서 그 색은 «한 톤 밝은 판» 이지만, 흰 종이 위에서는 **가장 어두운 덩어리**가
+//   되어 화면에서 혼자 튀어나온다. 09-07 에 상태 알약에서 배운 것과 같은 자리다:
+//   **같은 값이 두 바탕에서 정반대의 세기로 읽힌다.**
+// ★★ 그래서 라이트에서는 **뒤집는다** — 옅은 붉은 «바탕» 에 진한 붉은 «테두리·글자».
+//   색상(hue)은 그대로라 «주의» 라는 뜻은 유지되고, 세기만 판에 맞춘다.
+// ★★★ **판을 바꾸면 그 안의 조각을 «전부» 다시 봐야 한다** — 다크에서 흰 판이던
+//   주 동작 버튼은 옅은 붉은 바탕 위에서 오히려 묻힌다. 라이트에서는 그 버튼이
+//   «진한 붉은 채움» 이 되어야 판에서 가장 도드라진다(다크와 정확히 반대다).
+// ★ 그래서 색을 **한 곳에 모은다** — 바와 그 안의 CsBulkPanel 이 같은 표를 본다.
+//   두 곳에 적으면 판만 바뀌고 단추는 그대로인 화면이 나온다.
+function csBulkBarPalette(){
+  return csIsLight() ? {
+    bg:'#FDECEA', bd:'#D64545', title:'#8A2A22', sub:'#A15C54',
+    // 주 동작(N건에 적용 · 일괄 접수 문안 · 환불 요청) — 판에서 가장 진하다
+    primaryBg:'#C0392B', primaryFg:'#FFFFFF', primaryDimBg:'#E8BDB7', primaryDimFg:'#FFFFFF',
+    // 바꾸기 셋 — 흰 판에 남색. 주 동작(붉은 채움)과 계열로 갈린다
+    altBg:'#FFFFFF', altFg:'#1B3E86', altBd:'#BACAE9',
+    // 되돌리는 자리(선택 해제·취소) — 가장 가볍다
+    ghostBg:'transparent', ghostFg:'#8A2A22', ghostBd:'#DCAFA9',
+    // 리체크 «고른» 상태
+    pickBg:'#1B3E86', pickFg:'#FFFFFF',
+  } : {
+    bg:'#7E2620', bd:'#F87171', title:'#FFFFFF', sub:'#F7CFCB',
+    primaryBg:'#FFFFFF', primaryFg:'#7E2620',
+    primaryDimBg:'rgba(255,255,255,.28)', primaryDimFg:'#B08A86',
+    altBg:'#B8D9FF', altFg:'#12203c', altBd:'#B8D9FF',
+    ghostBg:'#33406B', ghostFg:'#D7E0F5', ghostBd:'#55659A',
+    pickBg:'#4F7FD6', pickFg:'#FFFFFF',
+  };
+}
+
 const CS_CHIPS = [
   {id:'mine',      label:'내 티켓'},
   {id:'recheck',   label:'오늘의 리체크'},
@@ -20049,14 +20131,14 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             ★★★ **붉은 판 위에서는 그 안의 모든 조각을 다시 봐야 한다** — 남색 판에
               맞춰 둔 테두리(CS_LINE)·파란 버튼은 붉은 바탕에서 탁해진다.
               (09-03 밝은 판, 09-04 그 판 밖으로 — 같은 함정을 판이 바뀔 때마다 만난다.) */}
-        {pickedIds.length>0 && (
+        {pickedIds.length>0 && (()=>{ const BP = csBulkBarPalette(); return (
           <div style={{position:'sticky',top:0,zIndex:120,marginBottom:8,
-            background:'#7E2620',border:'2px solid #F87171',borderRadius:10,
+            background:BP.bg,border:'2px solid '+BP.bd,borderRadius:10,
             boxShadow:'0 8px 24px rgba(0,0,0,.5)',padding:'9px 12px',
             display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-            <span style={{fontSize:12.5,fontWeight:700,color:'#fff',whiteSpace:'nowrap'}}>
+            <span style={{fontSize:12.5,fontWeight:700,color:BP.title,whiteSpace:'nowrap'}}>
               {pickedIds.length}건</span>
-            <span style={{fontSize:10.5,color:'#F7CFCB'}}>
+            <span style={{fontSize:10.5,color:BP.sub}}>
               {bulkOpen
                 ? ({assignee:'담당자를 고르세요', stage:'상태를 고르세요',
                     recheck:'리체크 날짜 — 비우고 적용하면 지웁니다'}[bulkOpen])
@@ -20095,8 +20177,8 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                     onClick={()=>goDraft(pickedIds.filter(id=>
                       (pageList.find(x=>x.id===id)||{}).stage==='received'))}
                     style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                      cursor:'pointer',whiteSpace:'nowrap',background:'#fff',
-                      border:'1px solid #fff',color:'#7E2620',
+                      cursor:'pointer',whiteSpace:'nowrap',background:BP.primaryBg,
+                      border:'1px solid '+BP.primaryBg,color:BP.primaryFg,
                       fontWeight:700}}>📋 일괄 접수 문안</button>
                 )}
                 {/* ★★★ **«환불 대기» 인 건이 골라져 있을 때만 뜬다**(제니 2026-09-09).
@@ -20118,8 +20200,8 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                     <button disabled={bulkBusy} onClick={()=>setRefundBulk(rs)}
                       title={rs.length+'건을 환불 관리로 넘깁니다'}
                       style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                        cursor:'pointer',whiteSpace:'nowrap',background:'#fff',
-                        border:'1px solid #fff',color:'#7E2620',
+                        cursor:'pointer',whiteSpace:'nowrap',background:BP.primaryBg,
+                        border:'1px solid '+BP.primaryBg,color:BP.primaryFg,
                         fontWeight:700}}>💸 환불 요청 하기 ({rs.length})</button>
                   );
                 })()}
@@ -20127,18 +20209,18 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                   <button key={id} disabled={bulkBusy}
                     onClick={()=>setBulkOpen(id)}
                     style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                      cursor:'pointer',whiteSpace:'nowrap',background:'#B8D9FF',
-                      border:'1px solid #B8D9FF',color:'#12203c',
+                      cursor:'pointer',whiteSpace:'nowrap',background:BP.altBg,
+                      border:'1px solid '+BP.altBd,color:BP.altFg,
                       fontWeight:600}}>{label} 바꾸기</button>
                 ))}
                 <button onClick={()=>setPicked({})} disabled={bulkBusy}
                   style={{padding:'5px 10px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
-                    cursor:'pointer',background:'#33406B',
-                    border:'1px solid #55659A',color:'#D7E0F5'}}>선택 해제</button>
+                    cursor:'pointer',background:BP.ghostBg,
+                    border:'1px solid '+BP.ghostBd,color:BP.ghostFg}}>선택 해제</button>
               </>
             )}
           </div>
-        )}
+        ); })()}
         <div ref={setWrap}
           style={{overflowX:'auto',background:'var(--card)',border:'1px solid var(--border)',borderRadius:12}}>
           {/* ★★ tableLayout:'fixed' + colgroup — 폭을 «내가» 정하려면 이 둘이 필요하다.
@@ -22783,7 +22865,9 @@ async function csRefundFromTicket(t, reasonId, note, actor){
   await sb.from('cs_ticket_events').insert({
     ticket_id: t.main_ticket_id || t.id, side:'원룸만들기', action:'환불요청',
     actor: actor,
-    note: '환불 관리로 넘겼습니다 — 환불 #'+rid+' · '+Number(t.refund_amount).toLocaleString()+'원',
+    // ★ 문구는 제니가 정한 것(2026-09-09) — 「넘겼습니다」는 «자리를 옮겼다» 는 말이라
+    //   무엇이 일어났는지 흐리다. 「요청했습니다」가 실제로 한 일이다.
+    note: '환불을 요청했습니다 — 환불 #'+rid+' · '+Number(t.refund_amount).toLocaleString()+'원',
   });
   return {ok:true, rid};
 }
@@ -27829,17 +27913,20 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
                       onApply, onClose}){
   const [v,setV] = useState('');
   useEffect(()=>{ setV(''); },[what]);
+  // ★ 색은 바깥 바와 «같은 표» 에서 온다(csBulkBarPalette) — 두 곳에 적으면
+  //   판만 바뀌고 단추는 그대로인 화면이 나온다(2026-09-09 라이트 대응).
+  const BP = csBulkBarPalette();
   // ★ 바 «안» 의 오른쪽 조각들이다 — 줄을 따로 만들지 않는다(눈이 좌우로 튄다).
   // ★★ 이 조각들은 «붉은 판 위» 에 선다(2026-09-04). 남색 화면용 색을 그대로 쓰면
   //   바탕에 탁하게 잠긴다 — 칸은 흰 바탕에 어두운 글자로, 테두리는 흰색 계열로.
   const inp = {fontSize:12,padding:'5px 9px',background:'#fff',
-    border:'1px solid #B8D9FF',color:'#12203c',borderRadius:6,
+    border:'1px solid '+BP.altBd,color:'#12203c',borderRadius:6,
     fontFamily:'inherit',colorScheme:'light'};
   // ★ 바 바깥 줄의 [바꾸기] 버튼과 «같은 옷» 이다 — 누른 자리에서 이어지는 조각이라
   //   모양이 달라지면 «다른 버튼이 나타난» 것으로 읽힌다.
   const ghost = {padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-    cursor:'pointer',whiteSpace:'nowrap',background:'#B8D9FF',
-    border:'1px solid #B8D9FF',color:'#12203c'};
+    cursor:'pointer',whiteSpace:'nowrap',background:BP.altBg,
+    border:'1px solid '+BP.altBd,color:BP.altFg};
 
   const run = ()=>{
     if(!v && what!=='recheck') return;
@@ -27889,9 +27976,9 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
           {[1,3,7].map(n=>(
             <button key={n} onClick={()=>setV(csPlusKst(n))}
               style={{...ghost,
-                background: v===csPlusKst(n) ? '#4F7FD6' : '#B8D9FF',
-                color:      v===csPlusKst(n) ? '#fff' : '#12203c',
-                border:'1px solid '+(v===csPlusKst(n) ? '#4F7FD6' : '#B8D9FF'),
+                background: v===csPlusKst(n) ? BP.pickBg : BP.altBg,
+                color:      v===csPlusKst(n) ? BP.pickFg : BP.altFg,
+                border:'1px solid '+(v===csPlusKst(n) ? BP.pickBg : BP.altBd),
                 fontWeight: v===csPlusKst(n) ? 700 : 400}}>+{n}일</button>
           ))}
           <input type="date" value={v} onChange={e=>setV(e.target.value)} style={inp}/>
@@ -27900,8 +27987,8 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
       {/* ★ [취소] 는 [선택 해제] 와 «같은 옷» 이다 — 둘 다 되돌리는 자리다. */}
       <button onClick={onClose} disabled={busy}
         style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',
-          cursor:'pointer',background:'#33406B',
-          border:'1px solid #55659A',color:'#D7E0F5'}}>취소</button>
+          cursor:'pointer',background:BP.ghostBg,
+          border:'1px solid '+BP.ghostBd,color:BP.ghostFg}}>취소</button>
       {/* ★★ 주 동작은 «흰 판에 붉은 글자» 다 — 붉은 바탕에서 가장 크게 뒤집히는 대비이고,
           이 바에서 눌러야 할 것이 이것 하나라는 것이 한눈에 보인다.
           ★ 못 누를 때도 «옅게» 만 한다(뜻은 유지) — opacity 로 눕히면 획까지 흐려져
@@ -27909,8 +27996,8 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
       <button onClick={run} disabled={busy || (!v && what!=='recheck')}
         style={{padding:'5px 13px',borderRadius:6,fontSize:11,fontWeight:700,
           fontFamily:'inherit',border:'none',
-          color: (busy || (!v && what!=='recheck')) ? '#B08A86' : '#7E2620',
-          background: (busy || (!v && what!=='recheck')) ? 'rgba(255,255,255,.28)' : '#fff',
+          color: (busy || (!v && what!=='recheck')) ? BP.primaryDimFg : BP.primaryFg,
+          background: (busy || (!v && what!=='recheck')) ? BP.primaryDimBg : BP.primaryBg,
           cursor: (busy || (!v && what!=='recheck')) ? 'default' : 'pointer'}}>
         {busy ? '바꾸는 중…' : count+'건에 적용'}</button>
     </>
