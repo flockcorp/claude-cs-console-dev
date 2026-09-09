@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909l_item_amount -->
+<!-- v20260909m_sticky_head_tabs -->
+<!-- (2026-09-09) **화면 머리말과 탭을 위에 고정했다**(제니: 「메뉴 화면에서 상단 머리말, 탭 부분은 스크롤 내려도 상단에 있도록」). ★★ 콘솔의 머리말이 아직 «두 집안» 이라 한 셀렉터로 못 잡았다 — `.page-header`(대시보드·인력 관리·데이터 입력·상품 정보 …)와 `.section` 안의 인라인 머리말(공급사·환불·데이터 내역·배송지연·디지털 발송·CS 티켓 목록). 후자 여섯에 **`cs-page-head` 클래스를 붙여 두 집안을 한 이름으로 묶었다**: 09-08 에 «보이는 꼴» 을 맞췄으니 이번엔 «부를 이름» 을 맞춘 것이고, 다음에 머리말을 손댈 때는 셀렉터 하나면 된다. ★ 여섯 곳을 손으로 고치지 않고 **라인으로 짚는 스크립트**로 한 번에 붙였다(`tools/patch_head_class.js` · 줄 내용이 예상과 다르면 멈춘다) — 거의 같은 인라인 스타일이 여섯 줄이라 눈으로 집으면 한 곳이 조용히 빠진다. ★★★ **탭이 붙을 자리(top)는 «그 화면의 머리말 높이» 인데 화면마다 다르다** — 제목만 있는 곳, 부연이 두 줄인 곳, 오른쪽에 단추가 선 곳(공급사)이 다 다르다. 그래서 값을 박지 않고 **그 화면의 머리말을 찾아 실제 높이를 잰다.** 박아 두면 어느 화면에서는 탭이 머리말을 파고들고 어느 화면에서는 떠 있는다. 창 크기가 바뀌면 부연이 접혀 높이가 달라지므로 resize 에서 다시 잰다. ★ 머리말이 없는 화면(CS 설정처럼 안쪽에 있는 탭)은 0 이라 제자리에 붙는다 — 그것이 맞다. ★★ **배경을 반드시 준다**(`var(--bg)`) — 투명하면 밑을 지나가는 표가 글자에 겹쳐 읽힌다. 고정 머리말에서 가장 흔한 사고다. ★ z-index 는 머리말(30) > 탭(20) — 탭이 머리말 아래로 들어가야 스크롤할 때 탭이 제목을 덮지 않는다. ★ 계정 정보 화면은 머리말이 `.section` 자체라 이번에 안 건드렸다(제니 확인 뒤). ★ dev 전용. -->
 <!-- (2026-09-09) 🔴🔴 **티켓의 「상품 금액」을 «최종 결제 상품가» 로 바꿨다**(제니). 발단은 「품목 4건의 상품 금액이 일괄 반영됐다」는 제보였는데, **실측해 보니 값은 틀리지 않았다** — 주문 20260907-0006860 의 품목 여섯을 카페24에서 직접 읽으니 -01~-04 의 product_price 는 실제로 넷 다 4,800 이고, **다른 것은 옵션 금액(-200·-400·-200·0)** 이었다. 곧 실제 품목가는 4,600·4,400·4,600·4,800 이다. **값이 아니라 «보여 주는 칸» 이 틀린 것이었다.** ★★★ 제니가 그 자리에서 설계를 짚었다: 「**가져오는 값의 기준과 표기하는 기준이 달라서 헷갈린다**」 — 카페24가 주는 것은 «조각»(상품가·옵션가)이고 상담원이 볼 것은 «한 값» 인데, 둘을 같은 설정 목록에 나란히 두면 그 혼란이 계속된다. → **층을 갈랐다**: ①엣지 함수가 조각을 합쳐 `item_amount`(최종 결제 상품가)를 준다 — 식은 카페24 상품구매금액 공식이고, 함수 안에 이미 있던 `itemPurchase` 와 **같은 것을 쓴다**(두 곳에 다른 식을 두면 언젠가 갈린다). ②콘솔은 「상품 금액」=`item_amount` 하나를 **always** 로 세운다(제니: 「고정으로 넣어 줘」 — 끄고 켤 것이 아니다). ③조각 둘은 **잠근다**(제니: 「둘 다 검색값으로 처리」) — 고르기·차례·스냅샷에서 빠지는 계산 재료다. ★ 조각을 목록에서 «없애지는» 않는다: 없으면 「상품 금액이 왜 4,600 이지」를 그 화면에서 못 푼다(검색값을 남겨 둔 것과 같은 이유). ★ **잠금 딱지 글자를 필드마다 달리 했다** — 주문번호는 「검색값」(우리가 넣는 값), 상품가·옵션가는 「계산 재료」. **잠금은 같아도 같은 말로 부르면 «왜 못 켜는지» 를 못 읽는다.** ★ 옛 티켓의 스냅샷은 그대로다(접수 시점 고정값) — 「상품가 (옵션 전) 4,800」으로 남는다. ★★ 이 판은 **엣지 함수 `refund-fetch-order` 의 dev 배포와 한 몸**이다. 함수가 옛 판이면 값이 없어 줄이 안 뜬다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 넷 중 셋. ①🔴 **등록 화면이 «첫 품목» 을 보여 주면서 저장은 «메인» 으로 하고 있었다**(제니: 「등록 화면에서 뜨는 상품 금액은 메인 티켓 기준으로」). ★★★ 메인 판정(「본품」이 든 옵션명 → 없으면 번호가 가장 낮은 것)이 **save 안에만 있었다.** 화면은 `chosen[0]` 을 봤다 — **본품이 -02 인 주문에서는 화면이 보여 준 값과 메인 티켓에 담기는 값이 서로 달랐다**(실측 주문에 그런 것이 있었다. 2026-08-31). → 판정을 컴포넌트에서 «한 번만» 하고 화면·저장이 그것을 함께 쓴다. **같은 규칙을 두 곳에 적으면 언젠가 갈린다** — 오늘만 세 번째로 만나는 자리다(뱃지·연동 상태말·이것). 안내 문구도 「고른 첫 품목 기준」→「**메인 티켓** 기준」. ②**「이력은 메인에만 쌓입니다」를 「이력은 그룹 티켓 내에 연동 저장 됩니다」로**(제니 문구). ★★★ **틀린 말이었다** — 저장하는 자리가 메인일 뿐, 쓰는 사람에게는 서브에 적어도 메인과 다른 서브에서 다 보인다. **구현을 설명하지 말고 «쓰는 사람에게 무슨 일이 일어나는가» 를 적어야 한다.** 「메인에만」은 내부 사정이고, 그대로 읽으면 «서브에는 못 적는다» 로 오해된다. ③**유입처 표시**(제니) — 「스마트스토어」면 네이버, 「카카오톡…」이면 💬 를 값 오른쪽에. ★ 판정은 «들어 있나» 로 한다: 카페24가 「네이버 스마트스토어」·「카카오톡 선물하기」처럼 앞뒤를 붙여 주므로 «같은가» 로 보면 조용히 아무것도 안 붙는다. ★★ **네이버 N 은 이모지에 없다** — 비슷한 유니코드 글자(Ⓝ·🅽)는 글꼴에 따라 네모로 떨어진다(09-03 복사 아이콘에서 겪은 자리). 네이버의 아이덴티티대로 **초록 바탕에 흰 N** 을 그린다. 카카오톡은 **콘솔이 이미 쓰는 💬**(소통 채널)를 그대로 쓴다. ④**칸 너비 조절 줄이 다크에서 안 보이던 것**(제니 두 번째 제보) — 09-08 에 색은 이미 `--accent`(밝은 하늘)로 바꿨는데도 그랬다. 남은 원인은 **크기**다: 4px 선은 색을 아무리 밝게 해도 «켜졌나» 가 안 보이고, 평소 색(--border)이 다크 바탕과 거의 같아 **마우스를 대기 전엔 선이 어디 있는지조차 모른다.** → 다크에서만 셋을 올렸다: 평소 선 밝기·hover 두께(4→5)·**빛번짐**. 라이트는 손대지 않는다(제니가 «구분된다» 고 한 쪽을 함께 흔들면 그쪽이 도로 나빠진다). ⏳ 남은 하나(품목별 상품 금액)는 **실측 중** — dev DB 조회 결과 스냅샷은 품목별로 담겼고 네 건의 product_price 가 모두 4800 이었다. 같은 상품의 다른 옵션일 수 있어 **카페24 원본을 확인한 뒤** 고친다. ★ dev 전용. -->
 <!-- (2026-09-09) **② 가 늘어나는 양을 «지금의 2/3» 로 줄였다**(제니: 「매크로 목록 사이즈보다 훨씬 더 많이 늘려서 ② 스크롤이 생긴다 · 1/3만 줄여줘」). ★★★ 왜 넘쳤나 — **목록은 «기호 줄 바로 아래» 에서 시작하는데, 그 아래에는 담당자 칸·안내 문구·저장 줄이 이미 자리를 차지하고 있다.** 목록은 그 위에 «겹쳐» 뜨므로 정말 모자란 것은 목록 높이 «전부» 가 아니라 **그 아래로 삐져나가는 만큼** 이다. 전부를 더하니 이미 있던 자리와 겹쳐 ②가 필요 이상으로 늘어났다. ★★ 남길 것: **«자리가 모자라다» 를 잴 때는 «필요한 크기» 가 아니라 «이미 있는 것과의 차이» 를 재야 한다.** 앞 판에서 자리를 옳은 «곳» 으로 옮기고도 «양» 을 그대로 둔 것이 이 판의 잘못이다. ★ 비율은 제니가 화면에서 재 준 값이다. 아래에 서는 것이 늘 한 벌(담당자·안내·버튼)이라 이 비율로 충분하다. ★ **식은 한 곳에 둔다**(`csMacroSpace`) — 등록·상세 두 화면이 같은 식을 따로 들고 있으면 언젠가 갈린다. ★ dev 전용. -->
@@ -938,6 +939,18 @@
          돌아다니면 언젠가 한 곳이 빠지고, 그 한 곳이 다음 «제각각» 의 시작이 된다.
          집안 ㉠의 껍데기 구조는 그대로 두고 «보이는 꼴» 만 ㉡으로 맞춘다.
        ★ 좌우 여백도 .section(32px)과 같게 두고, 위아래는 그 화면들이 쓰던 값을 지킨다. */
+    /* ★★★ 2026-09-09 제니 — **머리말과 탭은 스크롤을 내려도 위에 남는다.**
+       ★★ 콘솔의 머리말이 아직 «두 집안» 이라(위 주석) 한 셀렉터로 못 잡는다:
+         ㉠`.page-header`(대시보드·인력 관리·데이터 입력·상품 정보·데이터 내역)
+         ㉡`.section` 안의 인라인 머리말(배송지연·디지털 발송·환불·공급사·계정)
+         → ㉡ 쪽에 `.cs-page-head` 클래스를 붙여 **두 집안을 한 이름으로 묶는다.**
+           09-08 에 «보이는 꼴» 을 맞췄으니 이번엔 «부를 이름» 을 맞추는 것이다.
+       ★★ **배경을 반드시 준다** — 투명하면 밑을 지나가는 내용이 글자에 겹쳐 읽힌다.
+         고정된 머리말에서 가장 흔한 사고다.
+       ★ z-index 는 머리말(30) > 탭(20) 이다. 탭이 머리말 아래로 들어가야
+         스크롤할 때 탭이 머리말을 덮지 않는다. */
+    .page-header,
+    .cs-page-head{position:sticky;top:0;z-index:30;background:var(--bg)}
     .page-header{padding:24px 32px 0;display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
     /* 제목과 부연을 «한 줄에 나란히» — 기준 세 화면이 그렇다. */
     .page-header > div:first-child{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
@@ -6947,7 +6960,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
           ★ 원칙: **머리말의 높이는 어느 탭에서도, 어느 메뉴에서도 같아야 한다.**
             그래야 탭이 늘 같은 자리에 선다. 그래서 단추는 흐름에서 빼고(absolute)
             제목 줄 «가운데» 에 맞춰 오른쪽 끝에 띄운다 — 있어도 없어도 높이가 0 이다. */}
-      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap',position:'relative',paddingRight:180,minHeight:29}}>
+      <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap',position:'relative',paddingRight:180,minHeight:29}}>
         <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>🏢 공급사 관리</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>소통 채널·배송비·연락망 관리</span>
         {!canManage&&<span style={{fontSize:12,color:'var(--warn-ink)'}}>· 읽기 전용</span>}
@@ -9641,7 +9654,7 @@ function RefundManagementPage({ currentUserEmail }) {
   return (
     <div className="section" style={{contain:'inline-size'}}>
       {/* 페이지 헤더 (공통) */}
-      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+      <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>💸 환불 관리</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>요청 등록 · 처리 추적 · master 전용</span>
       </div>
@@ -10203,7 +10216,7 @@ function AgentAnalysisPage(){
   return (
     <div style={{padding:'24px 32px'}}>
       {/* 헤더 */}
-      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+      <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>📈 상담원 분석</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>기간별 처리량 비교 · master 전용</span>
       </div>
@@ -10368,7 +10381,7 @@ function DelayedProductsPage({isMaster=false,isManager=false,can}){
   return (
     <div className="section" style={{contain:'inline-size'}}>
       {/* 페이지 헤더 */}
-      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12}}>
+      <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>🚚 배송 지연 관리</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>지연 상품 마킹 및 알림톡 자동 발송 관리</span>
       </div>
@@ -12522,7 +12535,7 @@ function AutoDeliveryPage({ isMaster=false, isManager=false, currentUserEmail })
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
-      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12}}>
+      <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>📧 디지털 상품 발송</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>결제 완료(N10) 시점에 등록된 메일을 자동으로 발송합니다.</span>
       </div>
@@ -19771,7 +19784,7 @@ function CsTicketsPage({currentUserEmail, role, onNew, goTicket, goDraft}){
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
-      <div style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+      <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>🎫 CS 관리</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>고객 접수부터 정산 반영까지 과정을 관리</span>
       </div>
@@ -21470,9 +21483,34 @@ function useCsPanes(key, def){
 //   ⚠ 글자는 `--warn-ink` 다: 흰 바탕에서 #F6AD09 글자는 거의 안 읽힌다.
 //     밑줄은 `--yellow` 그대로 — 선은 굵어서 옅어도 보인다.
 function CsPageTabs({tabs, value, onChange}){
+  // ★★★ 2026-09-09 제니 — **탭도 스크롤을 내려도 위에 남는다.**
+  //   ★★ 붙을 자리(top)는 «그 화면의 머리말 높이» 인데 **화면마다 다르다** —
+  //     제목만 있는 곳도, 부연이 두 줄인 곳도, 오른쪽에 단추가 선 곳도 있다.
+  //     그래서 값을 박지 않고 **그 화면의 머리말을 찾아 실제 높이를 잰다.**
+  //     박아 두면 어느 화면에서는 탭이 머리말을 파고들고 어느 화면에서는 떠 있는다.
+  //   ★ 머리말이 없는 화면(설정 탭처럼 안쪽에 있는 탭)은 0 이다 — 그때는 제자리에
+  //     붙으면 되고, 그것이 맞다.
+  //   ★ 창 크기가 바뀌면 부연이 접혀 높이가 달라진다 → resize 에서 다시 잰다.
+  const barRef = useRef(null);
+  const [top,setTop] = useState(0);
+  useLayoutEffect(()=>{
+    const measure = ()=>{
+      const el = barRef.current; if(!el) return;
+      // ★ «내 위에 떠 있을» 머리말만 본다 — 화면(.main) 안의 것이다.
+      const head = document.querySelector('.main .page-header, .main .cs-page-head');
+      const h = head ? Math.round(head.getBoundingClientRect().height) : 0;
+      setTop(p => p===h ? p : h);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return ()=> window.removeEventListener('resize', measure);
+  });
   return (
-    <div style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',
-      marginBottom:24,flexWrap:'wrap'}}>
+    <div ref={barRef}
+      style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',
+      marginBottom:24,flexWrap:'wrap',
+      // ★ 배경이 없으면 밑을 지나가는 표가 탭 글자에 겹친다.
+      position:'sticky',top:top,zIndex:20,background:'var(--bg)'}}>
       {tabs.map(t=>{
         const on = value===t.id;
         return (
