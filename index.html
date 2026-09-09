@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260909za_cell_pad -->
+<!-- v20260909zb_csv_download -->
+<!-- (2026-09-09) 🔴 **CS 목록 CSV 내려받기**(제니). [+ 티켓 등록] 옆에 [⬇ CSV]. ★★★ **화면이 보여 주는 것을 그대로 내려받는다** — 열도 차례도 «지금 이 칩의 보기 설정» 그대로이고, 칩·필터·검색·정렬이 다 반영된 목록이다. 파일이 화면과 다르면 둘을 대조하는 일이 새로 생긴다. ★★ **고른 것이 있으면 그것만, 없으면 지금 보이는 전체**(제니). 그 건수를 단추 글자에 적는다 — 누르기 전에 몇 건이 나갈지 보여야 «어? 다 나왔네» 가 없다. ★ 값은 정렬용 값(`sv`)에서 꺼낸다(화면 칸은 JSX 라 글자로 못 꺼낸다). **sv 는 정렬을 위해 빈 값을 -1 로 채운 열이 있어** 그대로 쓰면 «-1» 이 찍힌다 → 숫자 -1 은 빈 칸으로 돌린다. ★ **BOM 을 붙인다** — 없으면 엑셀이 한글을 깨뜨린다(엑셀은 UTF-8 을 스스로 못 알아본다). 쉼표·따옴표·줄바꿈이 든 값은 따옴표로 싸고 안의 따옴표는 두 번(이력·메모에 줄바꿈이 실제로 들어온다). ★★ **[보기 설정] 에 «공란» 을 더할 수 있다**(제니: 「여러 개 추가할 수 있게 하고, 콘솔 목록에는 반영되지 않고 엑셀 다운로드 때 빈 열로」). ★★★ 그래서 이 열은 **보기 설정과 파일에만 있고 화면에는 없다** — 목록에 빈 칸을 그리면 그 자리가 «값이 없는 칸» 으로 읽혀 사람이 무엇을 못 채웠나 찾게 된다. 파일에서는 반대로 «받아서 손으로 적을 자리» 라 있어야 한다. ★ 차례를 지키려고 **열 목록 «안»** 에 둔다(따로 뒀으면 몇 번째에 넣을지 정할 수 없다) → 화면용(`viewKeys`)과 파일·설정용(`colKeys`)을 갈랐다. ★ 공란 줄은 체크가 아니라 [지우기] 다 — 끄기를 두면 «꺼 둔 공란» 이라는 아무 뜻 없는 상태가 하나 더 생긴다. ★ dev 전용. -->
 <!-- (2026-09-09) **오른쪽 정렬 칸의 여백을 12→18px 로 늘렸다**(제니). 겸해 그 값을 `CS_CELL_PAD_R` 한 곳으로 뺐다 — 값 칸과 머리글이 **이 한 값을 함께 본다.** ★ 앞 판에서 값에만 주고 머리글을 빠뜨려 그 열의 오른쪽 끝이 어긋났다: **짝으로 움직여야 하는 값은 처음부터 한 자리에 둔다.** ★ dev 전용. -->
 <!-- (2026-09-09) 제니 둘. ①🔴 **일괄 편집 바를 «호박» 으로 바꿨다**(제니: 「목록에 반영되는 색이랑 동일한 색이라 눈에 잘 안 들어온다」). ★★★ 원인이 분명하다 — **체크된 행의 배경이 `rgba(248,113,113,.13)`, 곧 옅은 붉은**이다. 바를 붉은 계열로 두면 «고른 줄» 과 «지금 무엇을 하려는 중» 이 같은 색이 되어, **정작 둘을 갈라 보라고 만든 바가 목록에 녹아 버린다.** ★★ 09-04 에 «남색 화면에서 눈에 띄려면 색상(hue)을 바꿔야 한다» 를 배웠는데, 이번 것은 그 규칙의 **다음 문장**이다: **바꾼 색이 화면의 다른 무엇과 겹치면 안 된다.** 남색(화면)·붉은(고른 줄)을 둘 다 피하면 호박이 남고, 콘솔이 이미 «주의·지금 이것» 에 쓰는 색이라 뜻도 맞는다. ★ 다크는 «어두운 갈호박» 판(#4A3208)에 밝은 호박 테두리, 라이트는 «옅은 호박» 판에 진한 호박 — **밝은 호박으로 채우면 어두운 화면에서 혼자 발광한다**(라이트와 정확히 반대다). ★ 색이 한 표(`csBulkBarPalette`)에 모여 있어 **이 판은 그 함수 하나만 고쳤다** — 09-09 에 모아 둔 값어치가 여기서 나왔다. ②**오른쪽 정렬 열의 «머리글» 에도 같은 여백**(제니 제보 이어서). 앞 판에서 값 칸에만 12px 을 줬더니 머리글과 숫자의 오른쪽 끝이 어긋나 그 열만 삐뚤어 보였다 — **여백은 값과 머리글이 짝으로 움직여야 한다.** ★ dev 전용. -->
 <!-- (2026-09-09) **알림톡 미리보기에서 줄바꿈이 안 보이던 것**(제니 제보: 「실제 발송온 알림톡에서는 적용된 것 확인했지만 미리보기에서는 적용 안 됐다」). 값을 그리는 자리에 `white-space:pre-line` 을 줘 넣은 줄바꿈을 살린다(긴 줄은 폭에 맞춰 접힌다 — 알림톡이 실제로 그렇게 보이는 방식이다). ★★★ **미리보기가 실제와 다르면 미리보기를 안 믿게 된다** — 그 순간 이 칸은 «보고 고치는» 자리가 아니라 그냥 장식이 된다. 같은 날 사유 입력칸을 여러 줄로 바꿨으니 미리보기도 여러 줄로 보여야 짝이 맞는다. ★ dev 전용. -->
@@ -18721,9 +18722,31 @@ const CS_COLS_FALLBACK = ['id','created','touched','stage','cs_type','direction'
 //   셋을 전부 끄는 목록은 번호도 날짜도 없는 목록이라 실제로는 안 만들 것으로 보고
 //   이 쪽(옛 설정을 살리는 쪽)을 택했다 — 반대로 두면 09-03 에 저장해 둔 칩에서
 //   등록·수정이 «말없이» 사라진다.
+// ── «공란» 열 (제니 2026-09-09) ─────────────────────────────────────────────
+// 「보기 설정에 공란 값을 만들어 줘. 여러 개 추가할 수 있게 하고, **콘솔 목록에는
+//   반영되지 않고 엑셀 다운로드 때 빈 열 항목으로** 추가되도록.」
+// ★★★ 그래서 이 열은 **«보기 설정과 파일» 에만 있고 화면에는 없다** — 목록에 빈 칸을
+//   그리면 그 자리가 «값이 없는 칸» 으로 읽혀, 사람이 무엇을 못 채웠나 찾게 된다.
+//   파일에서는 반대로 «채워 넣을 자리» 라 있어야 한다(받아서 손으로 적는 칸이다).
+// ★ 차례를 지키려고 열 목록 «안» 에 둔다 — 따로 뒀으면 «몇 번째에 빈 칸을 넣을지» 를
+//   정할 수 없다.
+const CS_BLANK = 'blank:';
+const csIsBlank = (k)=> String(k).indexOf(CS_BLANK)===0;
+// 다음 공란 번호 — 지우고 다시 더해도 번호가 겹치지 않게 «가장 큰 것 +1».
+function csNextBlank(keys){
+  let max = 0;
+  (keys||[]).forEach(k=>{
+    if(!csIsBlank(k)) return;
+    const v = parseInt(String(k).slice(CS_BLANK.length),10);
+    if(!isNaN(v) && v>max) max = v;
+  });
+  return CS_BLANK + (max+1);
+}
 function csExpandCols(keys){
   const out = [];
   (keys||[]).forEach(k=>{
+    // ★ 공란은 «모르는 열» 이 아니다 — 갈음표를 거치지 않고 그대로 지나간다.
+    if(csIsBlank(k)){ if(out.indexOf(k)<0) out.push(k); return; }
     (CS_COL_ALIAS[k] || [k]).forEach(x=>{
       if(CS_COLS[x] && out.indexOf(x)<0) out.push(x);
     });
@@ -19906,17 +19929,17 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
     // ★ 마지막 열에는 다음 열이 없다 — 그때는 남는 폭을 먹는 빈 열이 상대다(예전과 같다).
     // ★ 끄는 순간 «보이는 폭» 을 통째로 저장값으로 삼는다(rebase). 비율만 뜻이 있으므로
     //   값이 지금 화면 기준으로 다시 적히는 것뿐이고, 그래야 합이 어긋나지 않는다.
-    const idx  = colKeys.indexOf(k);
-    const nk   = colKeys[idx+1] || null;
+    const idx  = viewKeys.indexOf(k);
+    const nk   = viewKeys[idx+1] || null;
     const minw = csColMinW(k);
     const minn = nk ? csColMinW(nk) : 0;
     const base = {};                       // 지금 «보이는» 폭 한 벌
-    colKeys.forEach(x=>{ base[x] = shownWidth(x); });
+    viewKeys.forEach(x=>{ base[x] = shownWidth(x); });
     const w0 = base[k], n0 = nk ? base[nk] : 0;
     // 다음 열이 없으면 늘릴 수 있는 한도는 «남는 빈 폭» 이다.
     let solo = Infinity;
     if(!nk && wrapRef.current){
-      const total = CS_SEL_W + colKeys.reduce((s,x)=>s+base[x],0);
+      const total = CS_SEL_W + viewKeys.reduce((s,x)=>s+base[x],0);
       solo = w0 + Math.max(0, wrapRef.current.clientWidth - total - 2);
     }
     const x0 = e.clientX;
@@ -20085,6 +20108,10 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
     const conf = (settings && settings.cs_list_columns) || {};
     return csExpandCols(conf[chip] || conf['_default'] || CS_COLS_FALLBACK);
   },[settings,chip]);
+  // ★★ 화면이 그리는 열은 «공란을 뺀» 것이다(csIsBlank). 공란은 파일에만 있다 —
+  //   목록에 빈 칸을 그리면 «값이 없는 칸» 으로 읽혀 사람이 무엇을 못 채웠나 찾는다.
+  //   ★ colKeys(공란 포함)는 CSV 와 [보기 설정] 이 쓰고, viewKeys 는 표가 쓴다.
+  const viewKeys = useMemo(()=>colKeys.filter(k=>!csIsBlank(k)), [colKeys]);
   // ── 열 너비는 «비율» 이다 (제니 2026-09-08, 두 번째 판) ──────────────────────
   // 제니: 「다른 메뉴의 목록처럼 **설정한 값 기준으로 비율로 늘림·줄임**이 되어야 하는데,
   //   목록 내 너비가 고정이라 메뉴를 접었다 폈다 하면 가로 스크롤이 생긴다.」
@@ -20099,14 +20126,14 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
   // ★ 2px 은 테두리·반올림 여유다. 이것 없이 딱 맞추면 1px 때문에 스크롤바가 뜬다.
   const shownW = useMemo(()=>{
     const m = {};
-    colKeys.forEach(k=>{ m[k] = widthOf(k); });
-    const sum = colKeys.reduce((s,k)=>s+m[k],0);
+    viewKeys.forEach(k=>{ m[k] = widthOf(k); });
+    const sum = viewKeys.reduce((s,k)=>s+m[k],0);
     const box = availW - CS_SEL_W - 2;
     if(!(availW > 0) || sum <= 0) return m;
     const scale = box / sum;
-    colKeys.forEach(k=>{ m[k] = Math.max(csColMinW(k), Math.round(m[k]*scale)); });
+    viewKeys.forEach(k=>{ m[k] = Math.max(csColMinW(k), Math.round(m[k]*scale)); });
     return m;
-  },[colKeys, colWAll, chip, availW]);
+  },[viewKeys, colWAll, chip, availW]);
   const shownWidth = (k)=> shownW[k] || widthOf(k);
   // [⚙ 보기 설정] 이 «어느 칩의 설정인가» 를 적을 때 쓴다.
   const chipLabel = (CS_CHIPS.find(c=>c.id===chip) || {}).label || chip;
@@ -20208,7 +20235,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
 
   // 지금 이 칩의 폭이 «코드 기본» 과 다른가 — [너비 되돌리기] 를 보일지 정한다.
   // ★ colKeys 뒤에 둔다(선언 순서) — 검사가 잡아 준 자리다.
-  const widthsChanged = colKeys.some(k=>
+  const widthsChanged = viewKeys.some(k=>
     widthOf(k) !== Math.max((CS_COLS[k]||{}).w || 110, csColMinW(k)));
 
   // ★ 담당자·공급사는 «지금 목록에 있는 값» 에서 뽑는다. 사람이 든 목록을 따로 두면
@@ -20297,6 +20324,33 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
         {/* ★★ 오른쪽 두 줄은 «검색칸 / + 티켓 등록» · «페이지 보기 / 보기 설정» 으로
               짝지어 둔다(제니 2026-09-04). 윗줄은 «무엇을 찾고 무엇을 만드나»,
               아랫줄은 «어떻게 보여 주나» — 성격이 같은 것끼리 한 줄에 선다. */}
+        {/* ── 목록 내려받기 (제니 2026-09-09) ───────────────────────────
+            ★ [+ 티켓 등록] 과 «같은 줄» 에 둔다 — 둘 다 «이 목록에 대해 하는 일»
+              이라 성격이 같다(윗줄=무엇을 찾고 무엇을 하나, 아랫줄=어떻게 보나).
+            ★★ **고른 것이 있으면 그것만, 없으면 지금 보이는 전체**(제니). 그 사실을
+              단추 글자에 적는다 — 누르기 전에 몇 건이 나갈지 보여야 «어? 다 나왔네»
+              가 없다.
+            ★ 색은 «가벼운 테두리» 다: 내려받기는 아무것도 바꾸지 않는 일이라,
+              [+ 티켓 등록](채운 남색)과 같은 무게로 서면 안 된다. */}
+        <button onClick={()=>{
+            const src = pickedIds.length
+              ? list.filter(t=>pickedIds.indexOf(t.id)>=0)
+              : list;
+            if(!src.length){ toast('내려받을 목록이 없습니다.','warn'); return; }
+            const head = colKeys.map(k=>(CS_COLS[k] && (CS_COLS[k].plabel || CS_COLS[k].label)) || k);
+            const body = src.map(t=>colKeys.map(k=>csCsvVal(k, t)));
+            const d = new Date();
+            const pad = x=>String(x).padStart(2,'0');
+            const stamp = d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())
+                        + '_' + pad(d.getHours())+pad(d.getMinutes());
+            csCsvDownload('CS티켓_'+chipLabel+'_'+stamp+'.csv', [head].concat(body));
+            toast(src.length+'건을 내려받았습니다.','success');
+          }}
+          style={{padding:'6px 12px',background:'transparent',
+            border:'1px solid '+CS_LINE,borderRadius:8,color:'var(--sub)',
+            fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
+            whiteSpace:'nowrap',flexShrink:0}}>
+          ⬇ CSV{pickedIds.length ? ' ('+pickedIds.length+')' : ''}</button>
         <button onClick={onNew}
           style={{padding:'6px 14px',background:'var(--primary)',border:'none',borderRadius:8,
             color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
@@ -20539,11 +20593,11 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                 가로로 구른다(이미 overflowX:'auto'). */}
           {/* ★ 고르는 칸(CS_SEL_W)도 폭의 합에 넣는다 — 빠뜨리면 그만큼 오른쪽 끝이 밀린다. */}
           <table style={{borderCollapse:'collapse',fontSize:12,tableLayout:'fixed',
-            width:'100%', minWidth: CS_SEL_W + colKeys.reduce((s,k)=>s+shownWidth(k),0)}}>
+            width:'100%', minWidth: CS_SEL_W + viewKeys.reduce((s,k)=>s+shownWidth(k),0)}}>
             <colgroup>
               {/* 고르는 칸 — 값을 보여 주는 열이 아니라 «장치» 라 [보기 설정] 에 없다. */}
               <col style={{width:CS_SEL_W}}/>
-              {colKeys.map(k=><col key={k} style={{width:shownWidth(k)}}/>)}
+              {viewKeys.map(k=><col key={k} style={{width:shownWidth(k)}}/>)}
               <col/>
             </colgroup>
             <thead>
@@ -20558,7 +20612,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                 {/* ★ 「번호」도 이제 고를 수 있는 열이라 여기서 따로 그리지 않는다
                     (제니 2026-09-04). 목록에 있는 값은 하나도 빠짐없이 [보기 설정]
                     안에 있어야 한다. */}
-                {colKeys.map(k=>(
+                {viewKeys.map(k=>(
                   <CsSortTh key={k} k={k} w={shownWidth(k)} label={CS_COLS[k].label}
                     full={CS_COLS[k].plabel||CS_COLS[k].label}
                     align={CS_COLS[k].align} onResize={startResize}
@@ -20610,7 +20664,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                       선이 없는 표라 여백이 곧 경계다.
                       ★★ 이 주석을 `map(k=>(` «뒤» 에 두면 식 자리라 문법이 깨진다 —
                         오늘만 세 번째다. 주석은 괄호 «밖» 에. */}
-                  {colKeys.map(k=>(
+                  {viewKeys.map(k=>(
                     <td key={k} style={CS_COLS[k].align
                         ? {...csTd, textAlign:CS_COLS[k].align,
                            ...(CS_COLS[k].align==='right' ? {paddingRight:CS_CELL_PAD_R} : {})}
@@ -27292,6 +27346,46 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, onBack, goTi
 //   화면 하나에 열 두세 개가 더 들어간다.
 //   ★ 0 으로 두지 않는다 — 값이 옆 열의 세로선에 붙으면 두 열이 한 덩어리로 읽힌다.
 //     **열을 가르는 것은 여백이 아니라 «폭» 이다**(그건 사람이 끌어서 정한다).
+// ── 목록 내려받기 (제니 2026-09-09) ────────────────────────────────────────
+// 「지금 보는 목록을 csv 로. 칩별로 열 구성이 다르니 각 구성에 맞춰서.
+//   체크한 게 있으면 체크한 것만, 없으면 그 칩의 전체(필터 걸린 상태 반영).」
+// ★★★ **화면이 보여 주는 것을 그대로 내려받는다** — 열도 차례도 «지금 이 칩의
+//   보기 설정» 그대로다. 파일이 화면과 다르면 둘을 대조하는 일이 새로 생긴다.
+// ★★ 값은 «정렬용 값(sv)» 에서 가져온다 — 화면 칸은 JSX 라 글자로 꺼낼 수 없다.
+//   ★ sv 는 정렬을 위해 빈 값을 -1 로 채운 열이 있다(금액·수량). 파일에 그대로
+//     쓰면 «-1» 이 찍히므로 빈 칸으로 돌린다 — 금액에 -1 은 없다.
+function csCsvVal(k, t){
+  const c = CS_COLS[k];
+  if(!c) return '';
+  if(typeof c.csv === 'function') return c.csv(t);
+  if(typeof c.sv === 'function'){
+    const v = c.sv(t);
+    if(typeof v === 'number') return v === -1 ? '' : v;
+    return v==null ? '' : String(v);
+  }
+  return '';
+}
+// 한 칸을 CSV 규칙대로 감싼다.
+// ★ 쉼표·따옴표·줄바꿈이 든 값은 반드시 «따옴표로 싸고 안의 따옴표는 두 번» —
+//   이력·메모처럼 줄바꿈이 든 값이 실제로 들어온다.
+function csCsvCell(v){
+  const t = (v==null ? '' : String(v));
+  return /[",\n\r]/.test(t) ? '"' + t.split('"').join('""') + '"' : t;
+}
+// ★★ 파일로 만들어 내려받는다. **BOM 을 앞에 붙인다** — 없으면 엑셀이 한글을
+//   깨진 글자로 연다(엑셀은 UTF-8 을 스스로 못 알아본다).
+// ★ 줄바꿈은 CRLF 다 — 엑셀이 그걸 기준으로 줄을 나눈다.
+function csCsvDownload(name, rows){
+  const text = rows.map(r=>r.map(csCsvCell).join(',')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + text], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  // ★ 조금 뒤에 놓아 준다 — 바로 지우면 사파리에서 내려받기가 끊긴다.
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
 const CS_CELL_PAD = 5;
 // ★ 오른쪽 정렬 칸(금액·수량)의 «오른쪽 여백». 숫자가 칸 끝에 붙으면 옆 칸 글자와
 //   한 덩어리로 읽힌다 — 칸 사이에 선이 없는 표라 여백이 곧 경계다(제니 2026-09-09).
@@ -27445,6 +27539,22 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
             style={{cursor:'grab',color:'var(--sub)',opacity:.6,fontSize:12,
               padding:'0 2px',userSelect:'none',lineHeight:1}}>≡</span>
         ) : <span style={{width:12}}></span>}
+        {/* ★★ 공란 줄은 «켜고 끄는» 것이 아니라 «있거나 없거나» 다 — 체크 대신
+            [지우기] 를 둔다. 끄기가 있으면 «꺼 둔 공란» 이라는, 아무 뜻도 없는
+            상태가 하나 더 생긴다.
+            ★ 차례는 다른 열과 똑같이 끌어서 바꾼다(위 손잡이를 그대로 쓴다) —
+              몇 번째에 빈 칸이 들어갈지가 이 기능의 전부다. */}
+        {csIsBlank(k) ? (
+          <div style={{display:'flex',alignItems:'center',gap:6,flex:1,minWidth:0}}>
+            <span style={{fontSize:11.5,color:'var(--sub)',fontStyle:'italic',
+              overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>
+              공란 <span style={{opacity:.7}}>· 파일에만 빈 칸으로 들어갑니다</span></span>
+            <button onClick={()=>setOrder(p=>p.filter(x=>x!==k))}
+              style={{padding:'1px 7px',borderRadius:5,fontSize:10,fontFamily:'inherit',
+                cursor:'pointer',background:'transparent',
+                border:'1px solid var(--border)',color:'var(--sub)'}}>지우기</button>
+          </div>
+        ) : (
         <label style={{display:'flex',alignItems:'center',gap:6,flex:1,minWidth:0,cursor:'pointer'}}>
           {/* ★ 판이 밝아지면서 accentColor 도 다시 봐야 했다 — var(--primary)(#2A478D)는
               밝은 남색 판 위에서 «켜졌는지» 가 안 읽힌다. 한 단계 밝은 파랑으로.
@@ -27458,9 +27568,14 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
             overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
             {CS_COLS[k].plabel || CS_COLS[k].label}</span>
         </label>
+        )}
       </div>
     );
   };
+
+  // ★ 공란을 «맨 뒤» 에 더한다 — 대개 파일 끝에 적을 칸을 만드는 자리이고,
+  //   가운데 끼워 넣고 싶으면 끌어서 옮기면 된다(그게 더 드문 일이다).
+  const addBlank = ()=> setOrder(p=>p.concat([csNextBlank(p)]));
 
   return (
     <>
@@ -27541,7 +27656,15 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
           )}
         </div>
 
+        {/* ★ [+ 공란 추가] 는 «기본값으로» 와 같은 줄에 둔다 — 둘 다 열 목록을
+            통째로 손보는 일이라 무리가 같다. 파일에만 들어간다는 것을 여기서도
+            한 번 더 적는다(설정과 화면이 다른 말을 하지 않게). */}
         <div style={{display:'flex',gap:6,marginTop:10,alignItems:'center'}}>
+          <button onClick={addBlank} disabled={busy}
+            style={{padding:'5px 9px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
+              cursor:'pointer',background:'transparent',whiteSpace:'nowrap',
+              border:'1px dashed '+P.btnBd,color:'var(--sub)'}}
+            title="CSV 로 내려받을 때만 빈 칸으로 들어갑니다">+ 공란</button>
           <button onClick={()=>setOrder(known(CS_COLS_FALLBACK))} disabled={busy}
             style={{padding:'5px 9px',borderRadius:6,fontSize:10.5,fontFamily:'inherit',
               cursor:'pointer',background:'transparent',
