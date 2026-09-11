@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260911f_action_roles_all -->
+<!-- (2026-09-11) **메뉴 «안» 동작 권한을 전체 메뉴로 넓혔다** — 2026-09-07 에 배송지연 둘만 만들고 「전체 메뉴에 대해 검토해서 만든 다음 한 번에」(제니) 로 멈춰 뒀던 일이다. 조사부터 다시 했다: 콘솔이 «쓰는» 자리를 전수로 재고(표 직접 쓰기 90곳·표 20개) **dev 의 지금 RLS 정책 43개를 실제로 읽어**(sql/probe_policies.sql) 맞췄다. 🔴🔴🔴 **가장 큰 것 — 표 쓰기만 세면 «실제로 고객에게 나가는 것» 둘이 통째로 빠진다.** 배송지연 알림톡(`notify-blast`)과 디지털 상품 메일(`auto-delivery-send`)은 엣지 함수가 **제 키로** 내보내므로 RLS 를 아무리 걸어도 그 길은 안 지난다. **되돌릴 수 없는 동작은 오히려 이 둘이다.** → 격자에 올리되 자물쇠는 «발송 창구»(함수)가 걸고, **어디가 막는지를 동작마다 화면에 적었다**(DB / 발송 창구). 안 적으면 「DB 도 같은 설정을 봅니다」라는 안내가 그 둘에 대해 거짓말이 되고, 거짓말이 하나 있으면 나머지도 안 믿게 된다. ★★ **올릴 것을 고른 기준은 «되돌릴 수 있나» 다**(제니 결정) — 고칠 수 있는 일(상품 수정·공급사 정보·템플릿 편집)은 올리지 않았다. 쓰지 않는 칸이 늘면 설정 화면을 아무도 끝까지 안 읽는다. 여덟이 됐다: 데이터 삭제 · 상품 삭제 · 지연 등록/편집/**발송** · **메일 발송** · 환불 만들기/삭제. ★★★ **기본값은 «지금 실제로 되는 사람» 과 글자 그대로 같다** — 여기서 조이면 운영에 올리는 순간 현업이 막힌다. 좁히는 것은 제니가 설정 화면에서 할 일이지 이 판이 할 일이 아니다. ★★ **한 표를 여러 메뉴가 쓰면 «그 표의 주인 메뉴» 를 따른다**(제니 결정) — CS 티켓의 [환불 요청 하기] 도 `refunds.create` 를 본다. 어디서 눌렀든 같은 일에는 같은 자물쇠이고, DB 도 표 단위로 막으므로 화면과 DB 가 어긋나지 않는다. 🔴 **상품 삭제 자리는 지금 상태 자체가 어긋나 있었다** — DB 는 master·manager 에게 열려 있는데 화면은 «전체 삭제»·«카페24 정리» 만 master 로 잠가 두고 있었다(DB 는 둘 다 같은 DELETE 라 구분 못 한다). 지금 동작을 그대로 두고 **그 사실을 설정 화면 hint 에 적었다.** ★ 계정 «삭제» 는 격자에 없다 — 엣지 함수가 이미 master 를 다시 확인한다. 올리면 «켜도 안 되는 칸» 이 생긴다. ★ 조사 중 찾은 것: `HistoryPage` 는 **어디서도 안 불리는 죽은 코드**다(그 안의 daily_ops 삭제도 실행될 수 없다). ★ 권한이 없으면 버튼을 안 그린다 — 다만 [발송하기] 자리에는 «발송 대기» 라고 적는다(빈 칸이면 그 줄이 «할 일 없는 건» 으로 읽혀 아무도 안 챙긴다). ★ DB: `sql/console_action_allows_all.sql` **dev 적용 완료**(ALL 정책을 지우고 갈라 세웠다 — RLS 는 어느 정책이든 통과하면 허용이라 ALL 을 남기면 아무것도 조이지 못한다). ⏳ 엣지 함수 둘은 다음 판이다. ★ dev 전용. -->
 <!-- v20260911e_btn_width_measured -->
 <!-- (2026-09-11) 🔴🔴🔴 **단추 폭을 «숫자로 짐작해» 박았다가 여백이 남아 한 번 더 고쳤다**(제니: 「왜 가로 너비가 커졌어 … 지금은 가로 너비가 여백이 많잖아」 · 「이런 건 한 번에 좀 잘 맞춰 줘, 괜히 두 번 배포하게 하지 말고」). 앞 판은 `minWidth:120` 이었다 — 「+ 티켓 등록」·「⚙ 보기 설정」이 실제로 그리는 폭보다 30px 가까이 넓었다. ★★★ **글꼴이 그리는 폭은 사람이 셀 수 없다** — 한글·영문·이모지·굵기가 섞인 줄은 더욱 그렇다. 짐작한 숫자는 크면 여백이 남고 작으면 글자가 넘치며, **재야 하는 값을 코드에 적어 두면 이름을 고치는 날 조용히 다시 어긋난다.** → **재는 일을 브라우저에게 넘겼다**: 단추마다 «가장 긴 이름 둘»(`CS_LIST_BTN_RULERS`)을 보이지 않게 겹쳐 깔아 두고 폭은 그중 긴 쪽이 정하게 했다(grid 한 칸에 포개고 숨긴 것은 `height:0`). **코드에 폭 숫자가 한 개도 없다** — 다음에 단추 이름이 바뀌어도 셋이 함께 따라 움직인다. ★★ 셋의 글자 크기·굵기·여백을 맞췄다(12px·600·6/12) — 「가장 긴 이름」이라는 자가 뜻을 가지려면 셋이 **같은 자로 재야** 한다(11.5px 로 잰 66px 과 12px 로 잰 66px 은 다른 폭이다). 그래서 [⚙ 보기 설정] 만 0.5px 커졌다. ★★ **[+ 티켓 등록] 에 «보이지 않는» 1px 테두리를 줬다** — 옆 둘은 테두리가 있어, 없애 두면 이 단추만 좌우로 2px 좁다. **폭을 맞추는 일에서는 안 보이는 1px 도 자리를 먹는다.** ★ [⬇ CSV] 는 고른 건수가 붙으면(「⬇ CSV (128)」) 그 단추만 넓어진다 — 글자를 자르지 않는다. 몇 건이 나가는지는 누르기 전에 봐야 하는 값이고 그 상태는 «고르는 동안» 뿐이다. ★★★ **남길 것: 09-09 에 「높이는 짐작하지 않고 그린 뒤에 잰다」고 적어 두고 폭에서 같은 것을 밟았다. 짐작하지 않는다는 규칙은 높이만의 것이 아니다.** ★ dev 전용. -->
 <!-- (2026-09-11) **[저장 후 …] 의 테두리를 [취소] 보다 한 단 진하게**(제니: 「버튼 색상이 취소 버튼과 동일해서 구분이 안 되는데 … 너무 진한 거 말고 취소 버튼보다 조금만 진하게」). 앞 판에서 «주 동작과 같은 무게로 서면 안 된다» 며 [취소] 와 같은 꼴을 준 것이 **이번엔 반대쪽으로 지나쳤다** — 두 단추가 글자 말고는 구별되지 않았다. ★★★ **«무게를 낮춘다» 와 «옆엣것과 같아진다» 는 다른 일이다.** 낮출 곳은 저장 버튼과의 관계였는데, 낮추다 보니 [취소] 와 겹쳤다. 한 단추의 꼴은 «옆에 무엇이 서 있는가» 까지 보고 정해야 한다. → **테두리만** 한 단 올린다(`--border-strong`). 채움·글자는 그대로다: 셋 다 올리면 부차 동작이라는 무게가 깨져 저장 버튼이 둘로 보인다. ★★ **두 모드에서 «진하다» 는 반대 방향이다** — 어두운 바탕에서는 밝히고(#1e3060→#2C477F), 밝은 바탕에서는 어둡게 한다(#D5DFEF→#B6C7E3). `--accent` 와 같은 계열의 판단이라 값을 팔레트에 토큰으로 두었다(한쪽 값을 두 모드에 쓰면 한 곳에서 테두리가 사라진다). ★ 콘솔이 이미 쓰는 또렷한 선(CS_LINE #3E5DA0)까지는 안 간다 — 거기까지 가면 «테두리만» 이 아니라 «강조된 단추» 로 읽힌다. ★ dev 전용. -->
@@ -2505,7 +2507,7 @@ function AgentListTab() {
 // ── DATA ENTRY ─────────────────────────────────
 const EMPTY_OPS = {date:'',inbound_calls:'',request_calls:'',answered_calls:'',ob_contacts:'',in_call_time:'',out_call_time:''};
 
-function EntryPage({ editDate: propEditDate, onSaved }) {
+function EntryPage({ editDate: propEditDate, onSaved, can }) {
   const [entryTab, setEntryTab] = useState('form');
   const [localEditDate, setLocalEditDate] = useState(null);
   const editDate = localEditDate || propEditDate;
@@ -2802,7 +2804,7 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
           tabs={[{id:'form',label:editDate?'데이터 수정':'데이터 입력'},
                  {id:'history',label:'데이터 내역'}]}/>
       </div>
-      {entryTab==='history'&&<EntryHistorySection onEdit={d=>{setLocalEditDate(d);setEntryTab('form');}}/>}
+      {entryTab==='history'&&<EntryHistorySection can={can} onEdit={d=>{setLocalEditDate(d);setEntryTab('form');}}/>}
       {entryTab==='form'&&<div className="section">
         {/* 엑셀 업로드 */}
         <div className="upload-area" style={{marginBottom:16}}>
@@ -2901,7 +2903,10 @@ function EntryPage({ editDate: propEditDate, onSaved }) {
 }
 
 // ── ENTRY HISTORY SECTION ──────────────────────
-function EntryHistorySection({ onEdit }) {
+function EntryHistorySection({ onEdit, can }) {
+  // ★ 자식 기본값은 «못 한다» 쪽이다 — prop 을 빠뜨렸을 때 열리는 쪽으로 넘어지면
+  //   권한이 조용히 사라진 것을 아무도 모른다(2026-09-07 배송지연에서 세운 규칙).
+  const canDel = typeof can==='function' ? can('entry.delete') : false;
   const [opsMap,setOpsMap]=useState({});
   const [agents,setAgents]=useState([]);
   const [allDates,setAllDates]=useState([]);
@@ -2980,7 +2985,7 @@ function EntryHistorySection({ onEdit }) {
       {checkedDates.size>0&&(
         <div style={{display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(248,113,113,.07)',border:'1px solid rgba(248,113,113,.2)',borderRadius:8,marginBottom:12}}>
           <span style={{fontSize:13,color:'var(--red)',fontWeight:600}}>{checkedDates.size}개 선택됨</span>
-          <button onClick={bulkDel} style={{padding:'5px 14px',background:'#a01a1a',border:'1px solid #c82020',borderRadius:6,color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>선택 삭제</button>
+          {canDel&&<button onClick={bulkDel} style={{padding:'5px 14px',background:'#a01a1a',border:'1px solid #c82020',borderRadius:6,color:'#fff',fontSize:12,fontWeight:700,cursor:'pointer',fontFamily:'inherit'}}>선택 삭제</button>}
           <button onClick={()=>setCheckedDates(new Set())} style={{padding:'5px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>선택 해제</button>
         </div>
       )}
@@ -3029,7 +3034,7 @@ function EntryHistorySection({ onEdit }) {
                   <td>{da.reduce((s,a)=>s+(Number(a.etc_count)||0),0)||'-'}</td>
                   <td>
                     <button className="btn-edit" onClick={()=>onEdit(date)}>수정</button>
-                    <button className="btn-delete" onClick={()=>del(date)}>삭제</button>
+                    {canDel&&<button className="btn-delete" onClick={()=>del(date)}>삭제</button>}
                   </td>
                 </tr>
               );
@@ -3331,7 +3336,10 @@ function mergeFaqAnswers(csInfo,faqMap,uploadRows,parseCs){
 }
 // [FAQ-MERGE-BLOCK-END]
 
-function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEmail=''}){
+function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEmail='',can}){
+  // ★ 자식 기본값은 «못 한다» 쪽이다 — prop 을 빠뜨렸을 때 열리는 쪽으로 넘어지면
+  //   권한이 조용히 사라진 것을 아무도 모른다.
+  const canDelete = typeof can==='function' ? can('products.delete') : false;
   const [tab,setTab]=useState('list');
   const [products,setProducts]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -4749,7 +4757,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
           {checkedIds.size>0&&(
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12,padding:'10px 16px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.2)',borderRadius:8}}>
               <span style={{fontSize:13,color:'var(--red)',fontWeight:600}}>{checkedIds.size}개 선택됨</span>
-              <button onClick={bulkDelete} style={{padding:'6px 16px',background:'var(--red)',border:'none',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>선택 삭제</button>
+              {canDelete&&<button onClick={bulkDelete} style={{padding:'6px 16px',background:'var(--red)',border:'none',borderRadius:6,color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>선택 삭제</button>}
               <button onClick={()=>setCheckedIds(new Set())} style={{padding:'6px 12px',background:'none',border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:12,cursor:'pointer',fontFamily:'inherit'}}>선택 해제</button>
             </div>
           )}
@@ -4884,7 +4892,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                     </td>
                     <td>
                       <button className="btn-edit" onClick={()=>startEdit(p)} style={{background:'#2A478D',border:'1px solid #1a3060',color:'#fff',borderRadius:5,padding:'4px 10px',fontSize:11,cursor:'pointer',marginRight:4,fontWeight:600}}>수정</button>
-                      {!isCrew&&<button onClick={()=>del(p.id)} style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.5)',color:'#e05050',borderRadius:5,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>}
+                      {canDelete&&<button onClick={()=>del(p.id)} style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.5)',color:'#e05050',borderRadius:5,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>}
                     </td>
                   </tr>
                   {expandedCs.has(p.id)&&<tr style={{background:'#f0f5ff'}}>
@@ -8096,7 +8104,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
 //   후처리 대기 → 모든 필드 수정 가능 + [삭제] + [3차 카페24+젠데스크 정리] + [↺ 환불 대기로 원복]
 //   완료      → 읽기 전용 + [삭제] + [↺ 후처리 대기로 원복]
 //              (원복은 휴먼에러 복구용. 한 단계씩만 되돌린다 — 완료→후처리 대기, 후처리 대기→환불 대기)
-function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, onSaved }){
+function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, onSaved, canDelete=false }){
   // 행의 현재 상태 판정
   const stKey = refundStatusOf(row).key;  // 'pending2' | 'pending3' | 'done'
   const isReadOnly = stKey==='done';
@@ -8872,10 +8880,12 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
         <div style={{padding:'12px 20px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap'}}>
           {/* 좌측: 삭제 + (후처리 대기 상태일 때) 환불 대기로 원복 */}
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-            <button onClick={()=>performAction('delete')} disabled={saving}
-              style={{fontSize:12,padding:'8px 14px',background:'transparent',border:'1px solid rgba(255,107,107,.4)',color:'#FF6B6B',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}>
-              🗑 삭제
-            </button>
+            {canDelete && (
+              <button onClick={()=>performAction('delete')} disabled={saving}
+                style={{fontSize:12,padding:'8px 14px',background:'transparent',border:'1px solid rgba(255,107,107,.4)',color:'#FF6B6B',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}>
+                🗑 삭제
+              </button>
+            )}
             {stKey==='pending3' && (
               <button onClick={()=>performAction('revert_to_pending2')} disabled={saving}
                 style={{fontSize:12,padding:'8px 14px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}
@@ -9567,7 +9577,11 @@ function RefundReportTab({ reasons }){
 }
 
 
-function RefundManagementPage({ currentUserEmail, goTicket }) {
+function RefundManagementPage({ currentUserEmail, goTicket, can }) {
+  // ★ 자식 기본값은 «못 한다» 쪽이다 — prop 을 빠뜨렸을 때 열리는 쪽으로 넘어지면
+  //   권한이 조용히 사라진 것을 아무도 모른다.
+  const canCreate = typeof can==='function' ? can('refunds.create') : false;
+  const canDelete = typeof can==='function' ? can('refunds.delete') : false;
   const [tab,setTab]=useState('request');            // 'request' | 'report'
   const [addOpen,setAddOpen]=useState(false);        // 환불 요청 추가 모달
   const [editRow,setEditRow]=useState(null);         // 환불 요청 수정/처리 모달 (행 클릭 시 set)
@@ -9849,8 +9863,8 @@ function RefundManagementPage({ currentUserEmail, goTicket }) {
         </div>
         <button onClick={()=>setReasonsModalOpen(true)}
           style={{fontSize:12,padding:'8px 12px',background:'var(--surface)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,cursor:'pointer'}} title="환불 사유 마스터 관리">⚙️ 사유 관리</button>
-        <button onClick={()=>setAddOpen(true)}
-          style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:6,cursor:'pointer',fontWeight:600}}>+ 환불 요청 추가</button>
+        {canCreate&&<button onClick={()=>setAddOpen(true)}
+          style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:6,cursor:'pointer',fontWeight:600}}>+ 환불 요청 추가</button>}
       </div>
 
       {/* 재개 예정일이 된 보류를 화면 맨 위에서 알린다(2026-08-19 사용자 요청 — 알림 강화).
@@ -10170,6 +10184,7 @@ function RefundManagementPage({ currentUserEmail, goTicket }) {
           reasons={reasons}
           currentUserEmail={currentUserEmail}
           goTicket={goTicket}
+          canDelete={canDelete}
           onClose={()=>setEditRow(null)}
           onSaved={()=>{ setEditRow(null); load(); }}
         />
@@ -10532,6 +10547,9 @@ function DelayedProductsPage({isMaster=false,isManager=false,can}){
   const allow = can || (()=>isMaster||isManager);
   const canCreate = allow('delays.create');   // [+ 지연 상품 추가]
   const canUpdate = allow('delays.update');   // 목록의 [편집] · [해제]
+  // ★★ 실제로 고객에게 나가는 발송이다 — 화면은 헛걸음을 없애는 자리이고,
+  //   진짜 자물쇠는 «발송 창구»(엣지 함수 notify-blast)가 건다.
+  const canSend   = allow('delays.send');     // [발송하기] · [🔄 선택 재발송]
 
   const tabs = [
     {id:'register', label:'지연 등록'},
@@ -10554,8 +10572,9 @@ function DelayedProductsPage({isMaster=false,isManager=false,can}){
 
       {/* 탭 콘텐츠 */}
       {tab==='register' && <DelayRegisterTab isMaster={isMaster} isManager={isManager}
-        canCreate={canCreate} canUpdate={canUpdate} onCountChange={setActiveCount}/>}
-      {tab==='history'  && <DelayHistoryTab/>}
+        canCreate={canCreate} canUpdate={canUpdate} canSend={canSend}
+        onCountChange={setActiveCount}/>}
+      {tab==='history'  && <DelayHistoryTab canSend={canSend}/>}
       {tab==='report'   && <DelayReportTab/>}
     </div>
   );
@@ -10581,7 +10600,7 @@ const delayPageBtn = (disabled)=>({
 // ★ canCreate·canUpdate 는 부모(DelayedProductsPage)가 동작 권한 설정을 읽어 내려 준다.
 //   기본값을 true 로 두지 않는다 — 부모 없이 이 탭만 쓰는 자리가 생기면 «열리는 쪽» 으로
 //   넘어지기 때문이다. 부모는 늘 둘을 함께 넘긴다.
-function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,onCountChange}){
+function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,canSend=false,onCountChange}){
   const PAGE = 50;
   const [rows,setRows] = useState([]);
   const [total,setTotal] = useState(0);
@@ -11018,7 +11037,7 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,on
                     {!r.is_delayed
                       ? <span style={{background:'rgba(143,168,208,.15)',color:'var(--sub)',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>해제</span>
                       : r.initial_send_type==='blast' && !r.blast_sent_at
-                        ? <div style={{display:'inline-flex',flexDirection:'column',alignItems:'center',gap:3}}>
+                        ? (canSend ? <div style={{display:'inline-flex',flexDirection:'column',alignItems:'center',gap:3}}>
                             <button onClick={()=>handleBlastClick(r)} disabled={SEND_BLOCKED}
                               title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
                               style={{background:SEND_BLOCKED?'var(--border)':'#F6AD09',border:SEND_BLOCKED?'1px solid var(--border)':'1px solid #F6AD09',padding:'4px 10px',fontSize:11,borderRadius:4,cursor:SEND_BLOCKED?'not-allowed':'pointer',color:SEND_BLOCKED?'var(--sub)':'#fff',fontWeight:700,fontFamily:'inherit'}}>
@@ -11026,6 +11045,9 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,on
                             </button>
                             {SEND_BLOCKED && <span style={{fontSize:9,color:'#f87171',whiteSpace:'nowrap'}}>{SEND_BLOCKED_SHORT}</span>}
                           </div>
+                          /* ★ 권한이 없으면 «발송 대기» 라고 적는다 — 빈 칸으로 두면
+                             그 줄이 «할 일이 없는 건» 으로 읽혀 아무도 안 챙긴다. */
+                          : <span style={{background:'rgba(143,168,208,.15)',color:'var(--sub)',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>발송 대기</span>)
                         : <span style={{background:'rgba(246,173,9,.15)',color:'#F6AD09',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>진행</span>}
                   </td>
                   <td style={{padding:'12px 8px',textAlign:'center'}}>
@@ -12782,7 +12804,10 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
 // ─────────────────────────────────────────────────────────────────────────────
 // [Phase B-2] AutoDeliveryPage — 디지털 상품 발송 페이지 (등록 탭 + 발송 내역 탭)
 // ─────────────────────────────────────────────────────────────────────────────
-function AutoDeliveryPage({ isMaster=false, isManager=false, currentUserEmail }) {
+function AutoDeliveryPage({ isMaster=false, isManager=false, currentUserEmail, can }) {
+  // ★ 자식 기본값은 «못 한다» 쪽이다 — prop 을 빠뜨렸을 때 열리는 쪽으로 넘어지면
+  //   권한이 조용히 사라진 것을 아무도 모른다.
+  const canSend = typeof can==='function' ? can('autoDelivery.send') : false;
   const [tab, setTab] = useState('register');
   const canManage = isMaster || isManager;
 
@@ -12807,7 +12832,7 @@ function AutoDeliveryPage({ isMaster=false, isManager=false, currentUserEmail })
         <span style={{fontSize:12,color:'var(--sub)'}}>결제 완료(N10) 시점에 등록된 메일을 자동으로 발송합니다.</span>
       </div>
       <CsPageTabs tabs={tabs} value={tab} onChange={setTab}/>
-      {tab==='register' && <AutoDeliveryRegisterTab currentUserEmail={currentUserEmail}/>}
+      {tab==='register' && <AutoDeliveryRegisterTab currentUserEmail={currentUserEmail} canSend={canSend}/>}
       {tab==='history'  && <AutoDeliveryHistoryTab/>}
     </div>
   );
@@ -12816,7 +12841,7 @@ function AutoDeliveryPage({ isMaster=false, isManager=false, currentUserEmail })
 // ─────────────────────────────────────────────────────────────────────────────
 // AutoDeliveryRegisterTab — 템플릿 등록/관리 (목록 + KPI + 모달)
 // ─────────────────────────────────────────────────────────────────────────────
-function AutoDeliveryRegisterTab({ currentUserEmail }) {
+function AutoDeliveryRegisterTab({ currentUserEmail, canSend=false }) {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -13154,11 +13179,12 @@ function AutoDeliveryRegisterTab({ currentUserEmail }) {
               <div style={{fontSize:10,marginTop:2}}>등록 {fmtIsoLocal(t.created_at)}</div>
             </div>
             <div style={{textAlign:'center'}}>
-              <button onClick={()=>handleManualSend(t)}
+              {canSend ? <button onClick={()=>handleManualSend(t)}
                 style={{padding:'4px 10px',background:'rgba(96,165,250,.15)',border:'1px solid rgba(96,165,250,.3)',borderRadius:4,color:'#60a5fa',fontSize:11,cursor:'pointer',fontFamily:'inherit',fontWeight:600}}
                 title="해당 템플릿으로 특정 주문에 수동 발송 (Phase D 후 활성화)">
                 📨 발송
               </button>
+              : <span style={{fontSize:10,color:'var(--sub)'}}>—</span>}
             </div>
             <div style={{textAlign:'center',display:'flex',gap:8,justifyContent:'center'}}>
               <button onClick={()=>openEdit(t)} style={{background:'none',border:'none',color:'#60a5fa',cursor:'pointer',fontSize:11,padding:0,fontFamily:'inherit'}}>수정</button>
@@ -13867,7 +13893,7 @@ function DelayAlimtalkPreview({ selectedProduct, variants, selectedVariantCodes,
   );
 }
 
-function DelayHistoryTab(){
+function DelayHistoryTab({canSend=false}){
   // ─── 필터 state ──────────────────────────────────────────────────────
   const todayStr = new Date().toISOString().slice(0,10);
   const weekAgoStr = (()=>{ const d=new Date(); d.setDate(d.getDate()-7); return d.toISOString().slice(0,10); })();
@@ -14292,11 +14318,11 @@ function DelayHistoryTab(){
       {selectedIds.size>0 && (
         <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14,padding:'10px 14px',background:'rgba(248,113,113,.08)',border:'1px solid rgba(248,113,113,.3)',borderRadius:8,flexWrap:'wrap'}}>
           <span style={{fontSize:13,color:'var(--text)',fontWeight:700}}>실패 {selectedIds.size}건 선택됨</span>
-          <button onClick={handleResendSelected} disabled={resending || SEND_BLOCKED}
+          {canSend && <button onClick={handleResendSelected} disabled={resending || SEND_BLOCKED}
             title={SEND_BLOCKED ? SEND_BLOCKED_MSG : undefined}
             style={{padding:'8px 16px',background:(resending||SEND_BLOCKED)?'var(--border)':'#f87171',border:'none',borderRadius:7,color:SEND_BLOCKED?'var(--sub)':'#fff',fontSize:13,fontWeight:700,cursor:SEND_BLOCKED?'not-allowed':(resending?'default':'pointer'),fontFamily:'inherit'}}>
             {resending ? '재발송 중...' : '🔄 선택 재발송'}
-          </button>
+          </button>}
           <button onClick={()=>setSelectedIds(new Set())} disabled={resending}
             style={{padding:'8px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,color:'var(--sub)',fontSize:12,cursor:resending?'default':'pointer',fontFamily:'inherit'}}>
             선택 해제
@@ -29143,11 +29169,58 @@ function csMenuAllows(settings, id, role){
 //   화면이 약속한 것과 DB 가 지키는 것이 같아야 «권한» 이라 부를 수 있다.
 // ★ 여기 없는 동작은 «메뉴가 열리면 전원» 이다(메뉴 권한과 같은 규칙).
 // ★ 설정을 못 읽으면 «코드 기본» 으로 돈다 — 못 읽었다고 다 열리면 그게 사고다.
+// ★★★ 2026-09-11 — **전체 메뉴를 훑어 여기를 채웠다**(제니 지시: 전체 검토 후 한 번에 올린다).
+//   콘솔이 «쓰는» 자리를 전수로 쟀다: 표 직접 쓰기 90곳(표 20개) + **엣지 함수 호출 8종**.
+//   🔴🔴🔴 **표 쓰기만 세면 «실제로 고객에게 나가는 것» 둘이 통째로 빠진다** —
+//     배송지연 알림톡(`notify-blast`)과 디지털 상품 메일(`auto-delivery-send`)이다.
+//     **되돌릴 수 없는 동작은 오히려 이 둘인데 DB 정책으로는 못 막는다**(엣지 함수가
+//     제 키로 돈다). → 함수가 «부른 사람이 누구인가» 를 보고 막는다(guard:'fn').
+// ★★ **올릴 것을 고른 기준은 «되돌릴 수 있나» 다**(제니 2026-09-11 결정). 고칠 수 있는
+//   일(상품 수정·공급사 정보·템플릿 편집…)은 격자에 올리지 않는다 — 쓰지 않는 칸이
+//   늘면 설정 화면을 아무도 끝까지 안 읽는다. **여기 없는 동작은 «메뉴가 열리면 전원» 이다.**
+// ★★ **기본값은 «지금 실제로 되는 사람» 과 글자 그대로 같다.** 여기서 조이면 운영에
+//   올리는 순간 현업이 막힌다 — 좁히는 것은 제니가 설정 화면에서 할 일이지 이 판이
+//   할 일이 아니다.
+// ★★ **한 표를 여러 메뉴가 쓸 때는 «그 표의 주인 메뉴» 를 따른다**(제니 2026-09-11 결정).
+//   CS 티켓의 [환불 요청 하기] → `refunds.create` · 계정 화면의 «상품 정보 전체 삭제»
+//   → `products.delete`. **어디서 눌렀든 같은 일에는 같은 자물쇠가 걸린다** — DB 도
+//   표 단위로 막으므로 화면과 DB 가 어긋나지 않는다.
+// ★ 계정 «삭제» 는 여기 없다 — 엣지 함수(`console-user-admin`)가 이미 master 를 다시
+//   확인한다. 격자에 올리면 **켜도 안 되는 칸**이 생긴다.
+// ★ 차례는 사이드바 순서다(메뉴 권한 격자와 같은 규칙) — 사람은 사이드바를 떠올리며 훑는다.
+//
+// guard — **이 동작을 실제로 막는 곳이 어디인가.** 화면에 그대로 적는다:
+//   'db' = RLS 정책이 막는다 · 'fn' = 발송 창구(엣지 함수)가 막는다.
+//   ★★ 이것을 안 적으면 「DB 도 같은 설정을 봅니다」라는 안내가 발송 둘에 대해
+//     거짓말이 된다 — **설정과 화면이 다른 말을 하면 둘 다 안 믿게 된다.**
 const CS_ACTION_DEFS = [
-  {id:'delays.create', menu:'배송지연 관리', label:'지연 등록',
+  {id:'entry.delete', menu:'데이터 입력', label:'데이터 삭제', guard:'db',
+   hint:'[데이터 내역] 의 [삭제] — 그 날짜의 일일·상담원 기록이 함께 지워진다',
+   base:['master','manager']},
+  // ★★★ 이 자리는 **지금 상태 자체가 어긋나 있었다**(2026-09-11 실측): DB 정책은
+  //   master·manager 에게 열려 있는데 화면은 «전체 삭제»·«카페24 정리» 두 개만
+  //   master 로 잠가 두고 있었다. 되돌릴 수 없는 정도가 달라서 그렇게 해 둔 것인데,
+  //   **DB 는 둘 다 같은 DELETE 라 구분하지 못한다.**
+  //   → 격자는 DB 가 가를 수 있는 단위(하나)로 두고 기본값은 «지금 실제로 되는 사람»
+  //     으로 두되, **화면이 더 좁게 잠근 두 자리를 여기 적는다.** 안 적으면 설정을
+  //     켜 놓고 「왜 그 버튼이 없지」를 묻게 된다.
+  {id:'products.delete', menu:'상품 정보', label:'상품 삭제', guard:'db',
+   hint:'고른 상품 · 선택 삭제 (※ «전체 삭제»·«카페24 정리» 는 되돌릴 수 없어 master 만)',
+   base:['master','manager']},
+  {id:'delays.create', menu:'배송지연 관리', label:'지연 등록', guard:'db',
    hint:'[+ 지연 상품 추가] 버튼', base:['master','manager']},
-  {id:'delays.update', menu:'배송지연 관리', label:'지연 편집 · 해제',
+  {id:'delays.update', menu:'배송지연 관리', label:'지연 편집 · 해제', guard:'db',
    hint:'목록 행의 [편집] · [해제] 버튼', base:['master','manager']},
+  {id:'delays.send', menu:'배송지연 관리', label:'알림톡 발송', guard:'fn',
+   hint:'[발송하기] — 실제 고객에게 나간다(테스트 발송은 제외)',
+   base:['master','manager']},
+  {id:'autoDelivery.send', menu:'디지털 상품 발송', label:'메일 발송', guard:'fn',
+   hint:'[발송] · [재발송] — 실제 고객에게 나간다',
+   base:['master','manager']},
+  {id:'refunds.create', menu:'환불 관리', label:'환불 만들기', guard:'db',
+   hint:'[+ 환불 추가] · CS 티켓의 [환불 요청 하기]', base:['master']},
+  {id:'refunds.delete', menu:'환불 관리', label:'환불 삭제', guard:'db',
+   hint:'환불 수정 창의 [삭제]', base:['master']},
 ];
 const CS_ACTION_BASE = (()=>{ const m={}; CS_ACTION_DEFS.forEach(d=>{ m[d.id]=d.base; }); return m; })();
 function csActionAllows(settings, id, role){
@@ -29929,8 +30002,15 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
           여기 없는 동작은 <b>메뉴가 열리면 전원</b>입니다.
           <br/>권한이 없으면 그 <b>버튼을 아예 그리지 않습니다</b> — 회색 버튼은
           「내가 뭘 잘못했나」로 읽히고, 없는 버튼은 「내 일이 아니다」로 읽힙니다.
-          <br/><b style={{color:'#22d3a0'}}>DB 도 같은 설정을 봅니다</b> — 켜면 화면과 DB 가
-          함께 열립니다(메뉴 권한과 다른 점입니다).
+          {/* ★★★ «어디가 막는가» 를 동작마다 적는다(2026-09-11). 그전에는 「DB 도 같은
+              설정을 봅니다」 한 줄뿐이었는데, **발송 둘은 DB 가 아니라 발송 창구(엣지
+              함수)가 막는다.** 한 줄로 뭉뚱그리면 그 둘에 대해 이 안내가 거짓말이 되고,
+              거짓말이 하나 있으면 나머지도 안 믿게 된다. */}
+          <br/><b style={{color:'#22d3a0'}}>화면만 가리는 것이 아닙니다</b> — 켜고 끄면
+          실제로 막는 곳도 함께 따라옵니다. 동작마다 어디가 막는지 적어 두었습니다:
+          <b style={{color:'var(--sub)'}}> DB</b> = 데이터베이스 규칙 ·
+          <b style={{color:'var(--sub)'}}> 발송 창구</b> = 메일·알림톡을 내보내는 창구
+          (이 둘은 DB 로는 막을 수 없어 창구가 직접 봅니다).
         </div>
         {cfg===undefined ? (
           <div style={{fontSize:12,color:'var(--red)'}}>
@@ -29955,7 +30035,17 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
                       <td style={{padding:'7px 8px',color:'var(--text)'}}>
                         {head2 && <div style={{fontSize:10,color:'var(--sub)',fontWeight:700,
                           letterSpacing:'.04em',marginBottom:2}}>{d.menu}</div>}
-                        <div>{d.label}</div>
+                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          <span>{d.label}</span>
+                          {/* ★ 막는 곳을 값 옆에 붙인다 — 표 아래에 범례로만 두면
+                              «내 동작이 어느 쪽인지» 를 매번 맞춰 봐야 한다. */}
+                          <span style={{fontSize:9,fontWeight:700,letterSpacing:'.03em',
+                            padding:'1px 5px',borderRadius:4,whiteSpace:'nowrap',
+                            border:'1px solid '+(d.guard==='fn' ? 'rgba(246,173,9,.5)'
+                                                                : 'rgba(34,211,160,.45)'),
+                            color: d.guard==='fn' ? 'var(--warn-ink)' : 'var(--ok-ink)'}}>
+                            {d.guard==='fn' ? '발송 창구' : 'DB'}</span>
+                        </div>
                         <div style={{fontSize:10,color:'var(--sub)',marginTop:1}}>{d.hint}</div>
                       </td>
                       {ROLES.map(r=>{
@@ -30068,7 +30158,7 @@ function CsThemePick({card, head}){
   );
 }
 
-function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved}){
+function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved,can}){
   const isMaster=role==='master';
   // ★ 칩 — 성격이 다른 것을 다른 화면으로 보낸다(제니 2026-09-04). 기본은 «알림» 이다:
   //   이 화면에 들어오는 주된 이유가 「확인이 필요합니다」를 보는 것이다.
@@ -31083,18 +31173,18 @@ function App() {
             안 막히면 그 체크는 거짓말이다** — 메뉴만 감추면 주소로는 그대로 열린다.
             ★ 티켓 «등록·상세» 는 «티켓 목록» 을 따른다: 한 메뉴 안의 화면들이다. */}
         {page==='dashboard'&&(canMenu('dashboard')?<DashboardPage/>:<NoAccessPage/>)}
-        {page==='entry'&&canMenu('entry')&&<EntryPage editDate={editDate} onSaved={afterSave}/>}
-        {page==='account'&&<AccountPage session={session} role={role} alerts={alerts} onGo={navigateTo}
+        {page==='entry'&&canMenu('entry')&&<EntryPage editDate={editDate} onSaved={afterSave} can={canAction}/>}
+        {page==='account'&&<AccountPage session={session} role={role} alerts={alerts} onGo={navigateTo} can={canAction}
           /* ★ 메뉴 권한을 저장하면 «바로» 다시 읽는다 — 안 그러면 저장한 본인도
                새로고침해야 자기 사이드바가 바뀐다(제니: 「바로바로 반영되게」). */
           onMenuSaved={()=>csLoadSetting('menu_roles').then(r=>setMenuCfg((r&&r.value)||null))}
           onActionSaved={()=>csLoadSetting('action_roles').then(r=>setActionCfg((r&&r.value)||null))}/>}
-        {page==='products'&&(canMenu('products')?<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
+        {page==='products'&&(canMenu('products')?<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}/>:<NoAccessPage/>)}
         {page==='suppliers'&&(canMenu('suppliers')?<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager} can={canAction}/>}
-        {page==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>}
+        {page==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}/>}
         {page==='csTickets'&&(canMenu('csTickets')?<CsTicketsPage currentUserEmail={session.user.email} role={role}
-          canRefund={canMenu('refunds')}
+          canRefund={canMenu('refunds') && canAction('refunds.create')}
           onNew={()=>navigateTo('csNew')} goTicket={openTicket}
           goDraft={ids=>{ setCsDraftIds(ids); setPage('csDraft'); setMobileOpen(false); }}/>:<NoAccessPage/>)}
         {page==='csDraft'&&(canMenu('csDraft')?<CsSupplierDraftPage ids={csDraftIds}
@@ -31104,10 +31194,10 @@ function App() {
           onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
           goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
-          role={role} canRefund={canMenu('refunds')} seq={ticketSeq}
+          role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={ticketSeq}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
-        {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket}/>:<NoAccessPage/>)}
+        {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket} can={canAction}/>:<NoAccessPage/>)}
         {page==='costs'&&(canMenu('costs')?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&canMenu('agentAnalysis')&&<AgentAnalysisPage/>}
         {page==='agents'&&(canMenu('agents')?<AgentMgmtPage/>:<NoAccessPage/>)}
