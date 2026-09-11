@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260911h_list_date_font -->
+<!-- (2026-09-11) **CS 목록의 날짜 글씨체를 환불 관리 «일자» 와 같게**(제니). 그동안 CS 목록의 날짜만 **고정폭 글꼴(MONO)** 이라 같은 콘솔 안에서 두 목록이 서로 다른 얼굴을 하고 있었다. ★★ **값을 지어내지 않고 환불 목록에서 그대로 재 왔다** — 본문 글꼴 · 날짜 11 · 시각 10 · 시각만 흐리게. 「같게 해 달라」는 요청에 내 눈대중을 섞으면 «비슷하지만 다른» 것이 하나 더 생긴다(09-08 에 제목 행 색에서 세운 규칙 그대로다). ★★★ **`tabular-nums` 는 남겼다** — 고정폭을 쓴 이유는 «글꼴이 특별해서» 가 아니라 «줄마다 숫자가 같은 자리에 서야 세로로 훑힌다» 였고, 그 일은 본문 글꼴에서도 이 한 줄이 해 준다. **목적과 수단을 갈라야 요청을 들어주면서 목적을 안 잃는다.** ★★ **리체크 열도 함께 바꿨다** — 제니 요청은 「목록의 날짜 표기」였고 그것도 목록의 날짜다. 게다가 그 자리는 **예전에 제니가 «여기만 다르다» 고 짚어 등록·수정 날짜에 맞춰 둔 곳**이라, 등록·수정만 바꾸면 그때 세운 규칙이 그대로 뒤집힌다(「유사한 부분은 모두 확인해서 처리해줘」). ★ 연도 줄은 남긴다 — 환불에는 없지만 지난해 건을 가리는 값이라, 없애면 «올해 것처럼» 보인다. ★ 주문번호·품목별 주문번호는 **고정폭 그대로** 다: 날짜가 아니고, 숫자·하이픈을 눈으로 훑어 다른 건을 집어내는 자리다. ★ 겸해 낡은 주석 하나를 고쳤다(«고정폭에서는 공백이 글자 하나 폭» — 이제 고정폭이 아니다). -->
 <!-- v20260911g_action_menu_col -->
 <!-- (2026-09-11) **동작 권한 격자에 «메뉴» 열을 세웠다**(제니: 「메뉴명이 동작명과 구분이 잘 안 되는데 좌측에 메뉴명을 따로 열을 추가해서 만들어주는 거 어때?」). 그전에는 메뉴 이름이 **같은 칸 안에 작은 글씨로 얹혀** 있었다 — 크기만 다를 뿐 «동작 목록의 첫 줄» 이라, 그 줄이 메뉴 이름을 이고 있는 꼴이 되어 둘이 한 덩어리로 읽혔다. ★★★ **크기·굵기로 가르는 것과 «자리» 로 가르는 것은 다르다** — 같은 칸 안에 있는 한 둘은 같은 것의 일부로 읽힌다. 열을 나누면 그때부터 «메뉴» 와 «그 안의 동작» 이라는 관계가 표 모양 자체로 보인다. ★★ **rowSpan 으로 묶었다** — 한 메뉴의 동작이 여럿이면 메뉴 칸이 세로로 합쳐져 한 덩어리가 된다. 겸해 줄 사이 선이 메뉴 칸을 가로지르지 않게 되어, **선이 그어지는 자리가 곧 «메뉴가 바뀌는 자리»** 가 된다(따로 그릴 것이 없다). ★ 메뉴 칸은 옅게 채웠다(`--hover`) — 굵기만으로는 옆 칸의 동작 이름과 무게가 비슷해 다시 섞여 읽힌다. ★ 줄 수는 **세어서 쓴다**(손으로 적지 않는다) — 동작을 하나 더하는 날 숫자만 옛것으로 남으면 칸이 어긋나고, 표는 그 어긋난 줄을 조용히 그린다. ★ dev 전용. -->
 <!-- v20260911f_action_roles_all -->
@@ -19011,18 +19013,24 @@ function CsStackDate({at}){
   const rel = (m>=0 && m<60) ? (m<1 ? '방금' : m+'분 전') : null;
   if(rel) return (
     <span title={(s.year? s.year+'-':'')+s.md+' '+s.hm}
-      style={{display:'block',fontFamily:MONO,fontSize:11,lineHeight:1.35,
+      style={{display:'block',fontSize:11,lineHeight:1.35,
         whiteSpace:'nowrap',color:'var(--accent)'}}>{rel}</span>
   );
-  // ★ 고정폭 글꼴 + tabular-nums — 줄마다 숫자가 같은 자리에 서야 세로로 훑힌다.
-  //   ★ monospace 만 적으면 윈도우 크롬이 Courier New 를 고른다(MONO 상수를 쓴다).
+  // ★★★ 2026-09-11 — **고정폭 글꼴을 뺐다**(제니: 「목록의 날짜 표기 글씨체를 환불
+  //   관리 일자 표시 글씨체랑 동일하게」). 값은 지어내지 않고 **환불 목록에서 그대로
+  //   재 왔다**: 본문 글꼴 · 날짜 11 · 시각 10 · 시각만 흐리게.
+  //   ★★ **`tabular-nums` 는 남긴다** — 고정폭을 쓴 이유는 «글꼴이 특별해서» 가 아니라
+  //     «줄마다 숫자가 같은 자리에 서야 세로로 훑힌다» 였고, 그 일은 본문 글꼴에서도
+  //     이 한 줄이 해 준다. **목적과 수단을 갈라야 요청을 들어주면서 목적을 안 잃는다.**
+  //   ★ 연도 줄은 환불에 없는 것이지만 남긴다 — 지난해 건을 가리는 값이라, 없애면
+  //     «올해 것처럼» 보인다. 크기는 시각 줄과 같게 둔다(보조 정보라는 뜻이 같다).
   return (
     <span title={(s.year? s.year+'-':'')+s.md+' '+s.hm}
-      style={{display:'block',fontFamily:MONO,fontSize:11,lineHeight:1.35,
+      style={{display:'block',fontSize:11,lineHeight:1.35,
         fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap',color:'var(--sub)'}}>
-      {s.year && <span style={{display:'block',opacity:.8}}>{s.year}</span>}
+      {s.year && <span style={{display:'block',fontSize:10,opacity:.8}}>{s.year}</span>}
       <span style={{display:'block',color:'var(--text)'}}>{s.md}</span>
-      <span style={{display:'block'}}>{s.hm}</span>
+      <span style={{display:'block',fontSize:10}}>{s.hm}</span>
     </span>
   );
 }
@@ -20006,18 +20014,20 @@ function CsRecheck({at, stage}){
   const today = csTodayKst();
   const over = csGroupOf(stage)!=='종결' && at < today;
   const days = over ? Math.round((new Date(today) - new Date(at))/86400000) : 0;
-  // ★ 고정폭이다(제니가 «여기만 다르다» 고 짚었다 — 뜻이 있어서가 아니라 빠뜨린 것이다).
-  //   뒤에 「· 3일」이 붙어도 앞의 날짜는 세로로 맞아야 한다: 이 열은 «지난 것을 찾는»
-  //   자리라, 날짜가 줄마다 어긋나면 훑어서 집어낼 수가 없다.
-  //   ★ 등록·수정 날짜(CsStackDate)와 같은 글꼴을 쓴다 — 같은 성격의 열이 두 글꼴로
-  //     나뉘어 있으면 «이 열은 왜 다르지» 를 매번 생각하게 된다.
+  // ★★★ 2026-09-11 — **등록·수정 날짜와 함께 고정폭을 뺐다.**
+  //   제니 요청은 「목록의 날짜 표기」였고, 이 열도 목록의 날짜다.
+  //   ★★ 여기를 빼먹으면 **예전에 제니가 «여기만 다르다» 고 짚어 맞춰 둔 규칙이
+  //     그대로 뒤집힌다** — 같은 성격의 열이 두 글꼴로 나뉘면 «이 열은 왜 다르지» 를
+  //     매번 생각하게 된다. **한 곳을 고치면 같은 꼴을 전수로 훑는다**(제니 규칙).
+  //   ★ 세로로 맞추는 일은 `tabular-nums` 가 그대로 해 준다 — 뒤에 「· 3일」이 붙어도
+  //     앞의 날짜는 줄마다 같은 자리에 선다(이 열은 «지난 것을 찾는» 자리다).
   return (
     <span style={{color:over?'var(--red)':'var(--text)',fontWeight:over?700:400,
-      fontFamily:MONO, fontSize:11, fontVariantNumeric:'tabular-nums',
+      fontSize:11, fontVariantNumeric:'tabular-nums',
       whiteSpace:'nowrap'}}>
-      {/* ★ 가운뎃점 좌우를 «공백 문자» 로 띄우지 않는다(제니 2026-09-04) — 고정폭
-          글꼴에서는 공백 하나가 글자 하나 폭이라 「09-02  ·  2일」처럼 벌어진다.
-          margin 으로 2px 씩만 띄운다: 같은 «떨어져 있음» 인데 폭은 3분의 1이다. */}
+      {/* ★ 가운뎃점 좌우를 «공백 문자» 로 띄우지 않는다(제니 2026-09-04) — 공백 하나는
+          생각보다 넓어 「09-02  ·  2일」처럼 벌어진다(고정폭이던 시절에는 글자 하나
+          폭이었다). margin 으로 1px 씩만 띄운다: 같은 «떨어져 있음» 인데 훨씬 좁다. */}
       {String(at).slice(5)}
       {over && <>
         <span style={{margin:'0 1px',opacity:.65}}>·</span>{days}일
@@ -29124,8 +29134,16 @@ const CS_MENU_DEFS = [
   {id:'delays',        g:'상품 관리', label:'배송지연 관리',    base:['master','manager']},
   {id:'suppliers',     g:'상품 관리', label:'공급사 관리',      base:['master','manager','crew']},
   {id:'autoDelivery',  g:'상품 관리', label:'디지털 상품 발송', base:['master','manager']},
-  {id:'csTickets',     g:'CS 관리',   label:'티켓 목록',        base:['master','manager','crew']},
-  {id:'csDraft',       g:'CS 관리',   label:'공급사 접수',      base:['master','manager','crew']},
+  // 🔴🔴 **코드 기본은 «master 만» 이다**(2026-09-11 · 제니: 「아직 운영에서는 CS 관리
+  //   메뉴 기능을 실제 사용하지 않을 거야, 개발이 완료되지 않아서」).
+  //   ★★★ 이 값은 **설정을 못 읽었을 때** 쓰인다. 그때 열리는 쪽으로 넘어지면
+  //     «개발이 안 끝난 화면» 이 실무자에게 통째로 보인다 — **못 읽었다고 열리면
+  //     그게 사고다**(메뉴 권한을 만들 때 세운 규칙 그대로다).
+  //   ★ 평소에는 설정이 이긴다: dev 에는 제니가 저장해 둔 값(전원)이 있어 그대로 돌고,
+  //     운영에는 씨앗(sql/console_menu_allows.sql)이 master 만으로 들어간다.
+  //   ★ 열 때는 설정 화면에서 체크만 하면 된다 — 이 줄을 다시 고칠 일이 없다.
+  {id:'csTickets',     g:'CS 관리',   label:'티켓 목록',        base:['master']},
+  {id:'csDraft',       g:'CS 관리',   label:'공급사 접수',      base:['master']},
   {id:'csSettings',    g:'CS 관리',   label:'설정',             base:['master'], rls:true},
   {id:'refunds',       label:'환불 관리',        base:['master'], rls:true},
   {id:'costs',         label:'비용 비교 도구',   base:['master']},
