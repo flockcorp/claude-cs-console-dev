@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260911a_csv_row_and_values -->
+<!-- v20260911b_after_save_dropup -->
+<!-- (2026-09-11) **«저장 후 …» 를 저장 버튼과 같은 목록으로**(제니: 「2번 영역 우측 하단 … 저장 후 액션 버튼의 디자인을 그 우측의 저장 버튼과 동일하게 … 클릭했을 때 위로 리스트가 펼쳐지는 박스 디자인을 동일하게 맞춰달라는 의미야」). 그전에는 브라우저 기본 <select> 였다 — 바로 옆 저장 버튼은 «위로 펴지는 우리 목록» 을 쓰는데 이것만 운영체제가 그리는 목록이라, 나란히 선 둘이 서로 다른 물건으로 보였다(글꼴·모서리·여는 방향이 다 달랐다). ★★★ **꼴을 베끼지 않고 «같은 것» 을 쓰게 했다** — 저장 버튼이 제 안에 갖고 있던 목록을 `CsDropUp`·`CsDropUpItem` 으로 뽑아 둘이 함께 쓴다. 베껴서 두 벌로 두면 언젠가 한쪽만 바뀌고, 그때 «나란히 선 두 목록이 서로 다른» 화면이 생긴다(09-09 의 상태 점·색표에서 세운 규칙과 같은 자리다). 저장 버튼의 동작은 한 줄도 안 바뀌었다. ★★ **단추의 «무게» 는 일부러 다르다**: 저장은 누르면 일이 벌어지는 주 동작이라 채운 상태색이고, 이쪽은 «다음에 어떻게 할지 정해 두는» 자리다 — 같은 채움을 주면 저장 버튼이 둘로 보인다. 높이·모서리·글꼴·화살표(∧/∨)를 맞추고 색은 옆의 [취소] 와 같은 «테두리만» 으로 둔다([⬇ CSV] 에서 세운 것과 같은 규칙). ★ 등록 화면은 여전히 둘(«다음 티켓» 없음), 상세는 셋 — 고르는 값과 저장되는 자리는 그대로다. ★ dev 전용. -->
 <!-- (2026-09-11) 🔴 **CSV 의 「상태」 열이 숫자 코드로 나가던 것**(제니: 「실제 상태값 텍스트로 넣어줘」). 원인은 CSV 가 «정렬용 값(sv)» 을 꺼내 쓰는데 상태의 sv 가 **정렬 차례(0·1·2…)** 였던 것이다. ★★★ 09-09 에 이미 적어 둔 함정 그대로다 — **꺼내 쓰는 값이 «보여 주려고 만든 것» 이 아니면 그대로 내보내면 안 된다**(날짜 ISO · 금액 -1 에 이어 세 번째). 그래서 **한 열만 고치지 않고 30개 열을 전수로 훑어** 화면과 파일이 갈리는 곳을 다 찾았다(제니의 「유사한 부분은 모두 확인해서 처리해줘」). 고친 넷: ①**상태** — 정렬 차례 → 실제 단계 이름(CS_STAGES 에서 꺼낸다 · 손으로 적은 글자 없음) ②**담당** — 이메일 → 이름(화면은 이미 이름이었다 · 09-09 좌측 하단과 같은 자리) ③**주문자**·④**수령인** — 이름만 → **이름+연락처**(열 이름이 「…이름+연락처」인데 값이 이름뿐이면 받는 사람은 연락처가 «없는 건» 인 줄 안다). ★ 나머지 26개는 그대로 둔다: 글자 값은 화면과 같고, 금액·수량은 숫자가 맞고(-1 은 이미 빈칸으로 돈다), 날짜는 09-09 에 편 그대로다. ★ 이름+연락처는 **줄바꿈이 아니라 공백** 한 칸으로 잇는다 — 화면은 두 줄이지만 셀 안 줄바꿈은 거르고 정렬할 때 걸린다(**값이 같아도 «어디에 놓이는가» 가 다르면 같은 모양이 아니다**). 글자로 만드는 식은 화면 조각 옆에 `csNamePhoneText` 하나로 두어 **화면과 파일이 한 자리를 본다**. ★ 없는 값에 «—» 를 적지 않는다 — 화면의 «—» 는 빈 것을 «보이려고» 그린 글자다. ★ dev 전용. -->
 <!-- (2026-09-11) 🔴 **[⬇ CSV] 때문에 검색칸·칩 줄이 통째로 틀어졌던 것을 고쳤다**(제니: 「검색어 입력칸 위치가 어긋났는데 … 칩과 필터 사이 간격도 벌어졌는데 … 기존 화면에서 csv 버튼만 + 티켓 등록 버튼 위로 생기면 되는 건데 왜 다른 게 틀어지는 거야?」). 원인은 **[⬇ CSV] 와 [+ 티켓 등록] 을 세로로 쌓아 «검색 줄 안» 에 넣은 것**이다 — 그 줄은 `alignItems:'center'` 라 **줄 높이가 두 단추만큼 커지자 칩도 검색칸도 세로 가운데로 내려앉았고**, [+ 티켓 등록] 과 나란하던 평행선이 깨졌다. 칩 아래에 생긴 여백이 «칩과 필터 사이가 벌어진» 것으로 보인 것도 같은 원인 하나다. → **[⬇ CSV] 를 제 줄로 뺐다**(오른쪽 정렬 · 칩 줄 위). 검색 줄은 CSV 가 들어오기 전과 **글자 그대로 같은 모양**으로 돌아왔다: 칩 … 검색칸 … [+ 티켓 등록] 이 한 평행선. 오른쪽 끝을 맞췄으니 [+ 티켓 등록] 바로 위에 쌓인 것으로 보인다. ★★★ **남길 것: 한 줄 안에 «그 줄보다 키가 큰 것» 을 넣으면 그 줄에 있던 모든 것이 움직인다.** 「위에 하나 얹는다」는 요청은 «그 줄에 세로로 쌓기» 가 아니라 «제 줄을 만들기» 다 — 쌓으면 얹은 것 하나가 아니라 그 줄 전체가 값을 치른다. ★ dev 전용. -->
 <!-- (2026-09-09) 제니 셋. ①**CSV 의 날짜를 사람이 읽는 꼴로**(제니: 「2026-09-09T07:57:06.849348+00:00 이런 형태인데 단순하게 연-월-일 00:00:00 으로」). ★★★ **화면과 같은 시각대로 편다** — 화면은 KST 로 보여 주는데 파일만 UTC 면 «다른 시각» 이 되어, 파일을 근거로 이야기할 때 서로 다른 시간을 말하게 된다. ★ ISO 꼴이 아닌 값은 손대지 않는다(날짜가 아닌 것을 날짜로 읽으면 더 나쁘다). ★★ 이 자리가 처음부터 예상된 함정이었다 — CSV 는 «정렬용 값(sv)» 을 꺼내 쓰는데, 그 값은 **화면에 보이는 꼴이 아니다**(금액의 -1 도 같은 계열이었다). **꺼내 쓰는 값이 «보여 주려고 만든 것» 이 아니면 그대로 내보내면 안 된다.** ②**등록 화면에도 저장 후 액션**(제니) — 다만 **«다음 티켓» 은 뺐다**: 방금 만든 것이라 «다음» 이라 부를 목록의 자리가 없다. ★★★ «화면 유지» 를 고르면 **방금 만든 건의 값을 비운다** — 그대로 두면 한 번 더 눌렀을 때 **같은 티켓이 두 번 만들어진다.** 이 화면에서 가장 큰 사고가 그것이다. ★ 공통 폼(유형·방향·담당자)은 남긴다: 같은 조건으로 다음 건을 넣는 일이 잦고, 품목이 비어 있으면 어차피 저장이 안 된다. ③**[⬇ CSV] 를 초록으로**(제니: 「너무 진하지 않게 · 다크는 다크에 맞게」). 채우지 않고 **테두리·글자만** — 아무것도 바꾸지 않는 일이라 주 동작과 같은 무게로 서면 안 된다. 바탕은 아주 옅게 깔되 **모드마다 값이 다르다**(같은 rgba 를 두 판에 쓰면 흰 종이 위에서만 뿌옇게 뜬다). 글자·테두리는 `--green` 토큰 하나로 끝난다 — 두 모드에 각각 정의돼 있다(다크 #22d3a0 · 라이트 #0F9D77). ★ 🔴 만들며 **주석을 여는 태그 «안»(속성 자리)에 두어 한 번 깨뜨렸다** — 이 파일에 이미 적혀 있던 경고다. ★ dev 전용. -->
@@ -19701,16 +19702,52 @@ function csAfterSaveSet(v){
   try{ localStorage.setItem('cs_after_save', v); }catch(e){}
 }
 
-function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
-  const [open,setOpen] = useState(false);
-  const [pos,setPos]   = useState(null);
-  const ref = useRef(null);
+// ── 위로 펴는 목록 ────────────────────────────────────────────────────────
+// ★★★ 저장 줄의 조각들이 **같은 목록**을 쓴다(제니 2026-09-11: 「클릭했을 때 위로
+//   리스트가 펼쳐지는 박스 디자인을 동일하게 맞춰달라는 의미야」).
+//   저장 버튼이 제 안에 갖고 있던 것을 밖으로 뺐다 — **꼴을 베껴 두 벌로 두면 언젠가
+//   한쪽만 바뀌고, 그때 «나란히 선 두 목록이 서로 다른» 화면이 생긴다.**
+//   09-09 의 상태 점(CsStageDot)·색표에서 세운 것과 같은 판단이다.
+// ★ 위로 편다 — 이 줄은 칸 맨 아래라 아래로 열면 화면 밖으로 나간다.
+// ★★ 좌표를 재서 fixed 로 띄운다: 이 자리는 overflow 가 걸려 있어 안에서 열면 잘린다.
+//   **무언가를 띄울 때는 조상의 overflow 부터 본다**(09-09 에 세 번 만났다).
+// ★ 바깥을 덮는 투명 층을 함께 깐다 — 목록만 두면 다른 곳을 눌러도 안 닫힌다.
+function CsDropUp({anchorRef, open, onClose, children}){
+  const [pos,setPos] = useState(null);
   useEffect(()=>{
     if(!open){ setPos(null); return; }
-    const el = ref.current; if(!el) return;
+    const el = anchorRef.current; if(!el) return;
     const r = el.getBoundingClientRect();
     setPos({left:r.left, minWidth:r.width, bottom:(window.innerHeight - r.top + 6)});
   },[open]);
+  if(!open || !pos) return null;
+  return (
+    <>
+      <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:1140}}></div>
+      <div style={{position:'fixed',left:pos.left,bottom:pos.bottom,minWidth:pos.minWidth,
+        zIndex:1150,background:'var(--card)',border:'1px solid var(--border)',
+        borderRadius:8,padding:'5px 0',boxShadow:'0 10px 28px rgba(0,0,0,.45)'}}>
+        {children}
+      </div>
+    </>
+  );
+}
+// 목록의 «한 줄». 고른 것은 바탕·글자·굵기 셋으로 말한다 — 굵기만으로는 어두운
+// 화면에서 잘 안 읽히고, 바탕만으로는 밝은 화면에서 잘 안 읽힌다.
+function CsDropUpItem({on, onClick, children}){
+  return (
+    <div onClick={onClick}
+      style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',
+        fontSize:12,cursor:'pointer',whiteSpace:'nowrap',
+        background: on?'var(--hover)':'transparent',
+        color: on?'var(--text)':'var(--sub)',
+        fontWeight: on?700:400}}>{children}</div>
+  );
+}
+
+function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
+  const [open,setOpen] = useState(false);
+  const ref = useRef(null);
   const cur = CS_STAGE_LABEL[stage] || {label:'—', tone:'accent'};
   const on = !busy && dirty;
   // ★★ 버튼 색이 «지금 어느 상태로 저장되는가» 를 말한다(제니 2026-09-03).
@@ -19770,28 +19807,52 @@ function CsStageSubmit({stage, options, onPick, onSave, busy, dirty, light}){
                                       : (pale ? 'rgba(22,35,63,.12)' : 'rgba(255,255,255,.14)')),
           background: bg,
           cursor: busy?'default':'pointer'}}>{open?'∨':'∧'}</button>
-      {open && pos && (
-        <>
-          {/* 바깥을 누르면 닫는다. 목록만 두면 다른 곳을 눌러도 안 닫힌다. */}
-          <div onClick={()=>setOpen(false)}
-            style={{position:'fixed',inset:0,zIndex:1140}}></div>
-          <div style={{position:'fixed',left:pos.left,bottom:pos.bottom,minWidth:pos.minWidth,
-            zIndex:1150,background:'var(--card)',border:'1px solid var(--border)',
-            borderRadius:8,padding:'5px 0',boxShadow:'0 10px 28px rgba(0,0,0,.45)'}}>
-            {options.map(o=>(
-              <div key={o.id} onClick={()=>{ onPick(o.id); setOpen(false); }}
-                style={{display:'flex',alignItems:'center',gap:8,padding:'7px 14px',
-                  fontSize:12,cursor:'pointer',whiteSpace:'nowrap',
-                  background: o.id===stage?'var(--hover)':'transparent',
-                  color: o.id===stage?'var(--text)':'var(--sub)',
-                  fontWeight: o.id===stage?700:400}}>
-                <CsStageDot tone={CS_GROUP_TONE[o.group]}/>
-                {o.label}
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      <CsDropUp anchorRef={ref} open={open} onClose={()=>setOpen(false)}>
+        {options.map(o=>(
+          <CsDropUpItem key={o.id} on={o.id===stage}
+            onClick={()=>{ onPick(o.id); setOpen(false); }}>
+            <CsStageDot tone={CS_GROUP_TONE[o.group]}/>
+            {o.label}
+          </CsDropUpItem>
+        ))}
+      </CsDropUp>
+    </div>
+  );
+}
+
+// ── 저장 «다음» 을 고르는 단추 (제니 2026-09-11) ──────────────────────────
+// 그전에는 브라우저 기본 <select> 였다. 바로 옆 저장 버튼이 «위로 펴지는 우리 목록» 을
+// 쓰는데 이것만 운영체제가 그리는 목록이라, 나란히 선 둘이 서로 다른 물건으로 보였다
+// (제니: 「저장 후 액션 버튼의 디자인을 그 우측의 저장 버튼과 동일하게」).
+// ★★ **목록은 CsDropUp 하나를 저장 버튼과 함께 쓴다** — 꼴을 베끼지 않고 «같은 것» 을
+//   쓰는 것이 «동일하게» 를 지키는 유일한 방법이다.
+// ★★ 다만 **단추의 무게는 저장 버튼과 같지 않다**: 저장은 «누르면 일이 벌어지는» 주
+//   동작이라 채운 상태색이고, 이쪽은 «다음에 어떻게 할지 정해 두는» 자리다. 같은 채움을
+//   주면 저장 버튼이 둘로 보인다 — 높이·모서리·글꼴을 맞추고 색은 옆의 [취소] 와 같은
+//   «테두리만» 으로 둔다(09-09 에 [⬇ CSV] 에서 세운 것과 같은 규칙이다).
+// ★ 화살표는 저장 버튼과 같은 ∧/∨ 다 — 같은 방향으로 열린다는 표시가 같아야 한다.
+function CsAfterSavePick({value, options, onChange}){
+  const [open,setOpen] = useState(false);
+  const ref = useRef(null);
+  const cur = options.filter(o=>o.id===value)[0] || options[0];
+  return (
+    <div ref={ref} style={{position:'relative',display:'flex'}}>
+      <button onClick={()=>setOpen(o=>!o)} title="저장한 다음에 할 일"
+        style={{display:'flex',alignItems:'center',gap:8,
+          padding:'8px 12px',borderRadius:6,fontSize:12,fontFamily:'inherit',
+          background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',
+          cursor:'pointer',whiteSpace:'nowrap'}}>
+        저장 후 {cur ? cur.label : '—'}
+        <span style={{fontSize:11}}>{open?'∨':'∧'}</span>
+      </button>
+      <CsDropUp anchorRef={ref} open={open} onClose={()=>setOpen(false)}>
+        {options.map(o=>(
+          <CsDropUpItem key={o.id} on={o.id===value}
+            onClick={()=>{ onChange(o.id); setOpen(false); }}>
+            저장 후 {o.label}
+          </CsDropUpItem>
+        ))}
+      </CsDropUp>
     </div>
   );
 }
@@ -25852,16 +25913,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   못 누르게 막는 것보다 «어디까지가 내 일인지» 를 보이는 편이 낫다. */}
             {/* ★ 등록 화면에는 «다음 티켓» 이 없다(제니 2026-09-09) — 방금 만든
                 것이라 «다음» 이라 부를 목록의 자리가 없다. 둘만 고른다. */}
-            <select value={afterSave}
-              onChange={e=>{ setAfterSave(e.target.value); csAfterSaveSet(e.target.value); }}
-              title="저장한 다음에 할 일"
-              style={{fontSize:11,padding:'7px 8px',background:'var(--bg)',
-                border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,
-                fontFamily:'inherit',colorScheme:'dark',maxWidth:120}}>
-              {CS_AFTER_SAVE.filter(o=>o.id!=='next').map(o=>(
-                <option key={o.id} value={o.id}>저장 후 {o.label}</option>
-              ))}
-            </select>
+            <CsAfterSavePick value={afterSave}
+              options={CS_AFTER_SAVE.filter(o=>o.id!=='next')}
+              onChange={v=>{ setAfterSave(v); csAfterSaveSet(v); }}/>
             <CsStageSubmit stage={newStage} busy={busy} dirty={missing.length===0}
               onSave={()=>save()}
               onPick={id=>{ setNewStage(id); save(id); }}
@@ -27365,16 +27419,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                 일어날지는 누르기 직전에 보여야 한다. 설정 화면에 있으면 그 값을
                 기억하는 사람만 쓰게 된다.
                 ★ 이 값은 이 브라우저에만 남는다(사람마다 일하는 방식이 다르다). */}
-            <select value={afterSave}
-              onChange={e=>{ setAfterSave(e.target.value); csAfterSaveSet(e.target.value); }}
-              title="저장한 다음에 할 일"
-              style={{fontSize:11,padding:'7px 8px',background:'var(--bg)',
-                border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,
-                fontFamily:'inherit',colorScheme:'dark',maxWidth:120}}>
-              {CS_AFTER_SAVE.map(o=>(
-                <option key={o.id} value={o.id}>저장 후 {o.label}</option>
-              ))}
-            </select>
+            <CsAfterSavePick value={afterSave} options={CS_AFTER_SAVE}
+              onChange={v=>{ setAfterSave(v); csAfterSaveSet(v); }}/>
             <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
               onSave={()=>saveAll()}
               onPick={id=>{ setE('stage', id); saveAll(id); }}
