@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260911n_macro_chip_rows -->
+<!-- (2026-09-11) **매크로 설정의 칩 줄을 둘로 갈랐다**(제니: 「분류값이 늘어나는 경우 … [+매크로 추가] 버튼이 아래줄로 내려가게 돼」). ★★★ **늘어나는 것과 제자리에 있어야 하는 것을 한 줄에 두면 «늘어나는 쪽이 이긴다».** 그전에는 분류 칩·상태 칩·단추가 한 줄이었고, 분류를 새로 만들 때마다 칩이 하나씩 늘어 줄이 가득 차면 단추가 아랫줄로 밀려 내려갔다. → **윗줄 = 개수가 정해진 것(켜짐/꺼짐 셋) + [+ 매크로 추가]**, **아랫줄 = 분류 칩**. 윗줄은 앞으로도 길어질 일이 없으므로 단추가 «지금 자리» 에 그대로 선다. ★ 분류 칩은 아랫줄에서 폭을 다 쓰며 저희끼리 늘어나고 저희끼리 줄바꿈한다 — 단추가 윗줄에 있으니 **닿을 일 자체가 없다**(제니: 「매크로 추가 버튼과 닿기 전에 줄바꿈으로」). ★ 두 무리를 가르던 세로 구분선은 뺐다 — 줄이 갈린 뒤에는 같은 말을 두 번 하는 셈이다. ★ 칩의 생김새·개수 세는 규칙(지금 고른 분류 «안에서» 센다)은 한 글자도 안 건드렸다. ★ dev 전용. -->
 <!-- v20260911m_hint_fit -->
 <!-- (2026-09-11) **「?」 풍선의 폭을 글자에 맞췄다**(제니: 「툴팁 메시지가 가로로 너무 길어. 문장 사이즈에 맞게 만들어줘. 우측 여백이 너무 길잖아」). ★★★ **09-03 에 제니가 «반대쪽» 을 짚었던 자리다** — 그때는 「세로로 길쭉하다」여서 `maxWidth` 를 버리고 폭을 **박았다.** 그 결과 짧은 한 줄짜리 풍선에서는 오른쪽이 통째로 빈다. **두 제보는 충돌하지 않는다: 하나는 «긴 글», 하나는 «짧은 글» 이야기다.** → **`width:max-content` + `maxWidth:W`** 하나로 둘 다 만족한다: 짧은 글은 글자만큼만, 긴 글은 W(236px)에서 줄바꿈한다. 기존의 긴 안내 둘(「필수 시점」·「📎 첨부 조건」)은 가장 긴 줄이 236 을 넘어 **예전과 똑같이** 선다. ★★★ **폭을 «내용이» 정하므로 자리는 그린 뒤에 잰다.** 풍선이 그려지기 «전» 에는 실제 폭을 알 수 없어 첫 계산은 W 로 어림잡고(그 값으로 화면을 안 넘으면 실제 폭은 더 작으니 더더욱 안 넘는다 — 안전한 쪽으로 어림잡는다), **그려진 뒤 한 번 더 재서 자리와 화살표를 바로잡는다.** 오늘 단추 폭에서 얻은 것과 같은 자리다 — **재야 하는 값을 짐작해 박지 않는다.** ★ 화살표는 «실제» 폭 안에 있어야 한다 — 고정폭을 기준으로 잡으면 짧은 풍선에서 화살표가 판 밖으로 나간다. ★ 폭이 그대로면 다시 그리지 않는다 — 안 그러면 setPos 가 자신을 다시 불러 **끝나지 않는 되풀이**가 된다. ★ dev 전용. -->
 <!-- v20260911l_balance_hint -->
@@ -23326,19 +23328,15 @@ function CsMacroSettings({currentUserEmail}){
 
   return (
     <div style={{width:'100%', maxWidth:'max(680px, 68%)'}}>
-      <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',marginBottom:12}}>
-        {['전체'].concat(cats).map(c=>(
-          <div key={c} onClick={()=>pickCat(c)}
-            style={{padding:'4px 11px',borderRadius:14,fontSize:11.5,cursor:'pointer',
-              userSelect:'none',
-              border:'1px solid '+(cat===c?'var(--primary)':'var(--border)'),
-              background: cat===c?'rgba(120,170,255,.12)':'transparent',
-              color: cat===c?'var(--accent)':'var(--sub)'}}>
-            {c}<span style={{marginLeft:5,fontFamily:'monospace',opacity:.75}}>
-              {c==='전체' ? (rows||[]).length : (rows||[]).filter(r=>r.category===c).length}</span>
-          </div>
-        ))}
-        <span style={{width:1,height:16,background:'var(--border)',margin:'0 3px'}}></span>
+      {/* ── 윗줄 — «켜짐/꺼짐» 과 [+ 매크로 추가] ────────────────────────────
+          ★★★ 2026-09-11 제니 — 그전에는 분류 칩·상태 칩·단추가 **한 줄**이었다.
+            분류를 새로 만들면 칩이 하나 늘고, 줄이 가득 차면 **[+ 매크로 추가] 가
+            아랫줄로 밀려 내려갔다.** 늘어나는 것(분류)과 제자리에 있어야 하는 것
+            (단추)이 같은 줄에 있으면 **늘어나는 쪽이 이긴다.**
+          ★★ 그래서 줄을 가른다: 여기는 **개수가 정해진 것**(켜짐/꺼짐 셋)과 단추만
+            둔다 — 이 줄은 앞으로도 길어질 일이 없으므로 단추가 밀리지 않는다.
+          ★ 분류 칩은 아랫줄에서 저희끼리 늘어나고 저희끼리 줄바꿈한다. */}
+      <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',marginBottom:8}}>
         {[['all','전체'],['on','켜짐'],['off','꺼짐']].map(([id,label])=>{
           // ★ 개수는 «지금 고른 분류 안에서» 센다. 분류를 좁혀 놓고 「켜짐 12」가
           //   뜨면 그 12가 어디 것인지 알 수 없다.
@@ -23361,6 +23359,23 @@ function CsMacroSettings({currentUserEmail}){
           style={{padding:'6px 14px',background:'var(--primary)',border:'none',borderRadius:8,
             color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
           + 매크로 추가</button>
+      </div>
+
+      {/* ── 아랫줄 — 분류 칩 (늘어나면 저희끼리 줄바꿈한다) ──────────────────
+          ★ 단추가 윗줄에 있으므로 이 줄은 폭을 다 쓸 수 있고, 분류가 몇 개로 늘든
+            단추를 밀지 않는다(제니: 「매크로 추가 버튼과 닿기 전에 줄바꿈으로」). */}
+      <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',marginBottom:12}}>
+        {['전체'].concat(cats).map(c=>(
+          <div key={c} onClick={()=>pickCat(c)}
+            style={{padding:'4px 11px',borderRadius:14,fontSize:11.5,cursor:'pointer',
+              userSelect:'none',
+              border:'1px solid '+(cat===c?'var(--primary)':'var(--border)'),
+              background: cat===c?'rgba(120,170,255,.12)':'transparent',
+              color: cat===c?'var(--accent)':'var(--sub)'}}>
+            {c}<span style={{marginLeft:5,fontFamily:'monospace',opacity:.75}}>
+              {c==='전체' ? (rows||[]).length : (rows||[]).filter(r=>r.category===c).length}</span>
+          </div>
+        ))}
       </div>
 
       {/* ── 고르기 줄 ────────────────────────────────────────────────────
