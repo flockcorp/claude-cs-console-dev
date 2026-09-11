@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260911d_after_save_border -->
+<!-- v20260911e_btn_width_measured -->
+<!-- (2026-09-11) 🔴🔴🔴 **단추 폭을 «숫자로 짐작해» 박았다가 여백이 남아 한 번 더 고쳤다**(제니: 「왜 가로 너비가 커졌어 … 지금은 가로 너비가 여백이 많잖아」 · 「이런 건 한 번에 좀 잘 맞춰 줘, 괜히 두 번 배포하게 하지 말고」). 앞 판은 `minWidth:120` 이었다 — 「+ 티켓 등록」·「⚙ 보기 설정」이 실제로 그리는 폭보다 30px 가까이 넓었다. ★★★ **글꼴이 그리는 폭은 사람이 셀 수 없다** — 한글·영문·이모지·굵기가 섞인 줄은 더욱 그렇다. 짐작한 숫자는 크면 여백이 남고 작으면 글자가 넘치며, **재야 하는 값을 코드에 적어 두면 이름을 고치는 날 조용히 다시 어긋난다.** → **재는 일을 브라우저에게 넘겼다**: 단추마다 «가장 긴 이름 둘»(`CS_LIST_BTN_RULERS`)을 보이지 않게 겹쳐 깔아 두고 폭은 그중 긴 쪽이 정하게 했다(grid 한 칸에 포개고 숨긴 것은 `height:0`). **코드에 폭 숫자가 한 개도 없다** — 다음에 단추 이름이 바뀌어도 셋이 함께 따라 움직인다. ★★ 셋의 글자 크기·굵기·여백을 맞췄다(12px·600·6/12) — 「가장 긴 이름」이라는 자가 뜻을 가지려면 셋이 **같은 자로 재야** 한다(11.5px 로 잰 66px 과 12px 로 잰 66px 은 다른 폭이다). 그래서 [⚙ 보기 설정] 만 0.5px 커졌다. ★★ **[+ 티켓 등록] 에 «보이지 않는» 1px 테두리를 줬다** — 옆 둘은 테두리가 있어, 없애 두면 이 단추만 좌우로 2px 좁다. **폭을 맞추는 일에서는 안 보이는 1px 도 자리를 먹는다.** ★ [⬇ CSV] 는 고른 건수가 붙으면(「⬇ CSV (128)」) 그 단추만 넓어진다 — 글자를 자르지 않는다. 몇 건이 나가는지는 누르기 전에 봐야 하는 값이고 그 상태는 «고르는 동안» 뿐이다. ★★★ **남길 것: 09-09 에 「높이는 짐작하지 않고 그린 뒤에 잰다」고 적어 두고 폭에서 같은 것을 밟았다. 짐작하지 않는다는 규칙은 높이만의 것이 아니다.** ★ dev 전용. -->
 <!-- (2026-09-11) **[저장 후 …] 의 테두리를 [취소] 보다 한 단 진하게**(제니: 「버튼 색상이 취소 버튼과 동일해서 구분이 안 되는데 … 너무 진한 거 말고 취소 버튼보다 조금만 진하게」). 앞 판에서 «주 동작과 같은 무게로 서면 안 된다» 며 [취소] 와 같은 꼴을 준 것이 **이번엔 반대쪽으로 지나쳤다** — 두 단추가 글자 말고는 구별되지 않았다. ★★★ **«무게를 낮춘다» 와 «옆엣것과 같아진다» 는 다른 일이다.** 낮출 곳은 저장 버튼과의 관계였는데, 낮추다 보니 [취소] 와 겹쳤다. 한 단추의 꼴은 «옆에 무엇이 서 있는가» 까지 보고 정해야 한다. → **테두리만** 한 단 올린다(`--border-strong`). 채움·글자는 그대로다: 셋 다 올리면 부차 동작이라는 무게가 깨져 저장 버튼이 둘로 보인다. ★★ **두 모드에서 «진하다» 는 반대 방향이다** — 어두운 바탕에서는 밝히고(#1e3060→#2C477F), 밝은 바탕에서는 어둡게 한다(#D5DFEF→#B6C7E3). `--accent` 와 같은 계열의 판단이라 값을 팔레트에 토큰으로 두었다(한쪽 값을 두 모드에 쓰면 한 곳에서 테두리가 사라진다). ★ 콘솔이 이미 쓰는 또렷한 선(CS_LINE #3E5DA0)까지는 안 간다 — 거기까지 가면 «테두리만» 이 아니라 «강조된 단추» 로 읽힌다. ★ dev 전용. -->
 <!-- (2026-09-11) **오른쪽 도구 단추 셋의 가로 너비를 맞췄다**(제니: 「csv 버튼 가로 너비가 줄었는데 … CSV 다운로드 버튼과 + 티켓등록 버튼, 그 아래 보기 설정 버튼 이 3개가 세로로 나열되어 있으니까 버튼 가로 너비 동일하게 맞춰줘」). **왜 줄었나**: 앞 판까지 [⬇ CSV] 는 [+ 티켓 등록] 과 한 세로 상자 안에 `alignItems:'stretch'` 로 들어 있어 **형 폭에 맞춰 늘어나 있었다** — 제 줄로 빼면서 제 글자 폭으로 돌아온 것이다. ★★★ **오른쪽 끝이 맞는 것과 «같은 폭» 은 다른 말이다** — 셋이 저마다 제 글자 폭으로 서면 오른쪽 끝은 한 줄로 서지만 **왼쪽 끝이 층계처럼 어긋난다.** 세로로 쌓인 단추는 왼쪽 끝도 눈에 선으로 읽힌다. → 공통 최소 폭 `CS_LIST_BTN_W` 하나를 셋이 함께 본다. ★★ **한 곳에만 적지 않는다** — 다음에 단추 글자를 고치는 날 그 하나만 넓어진다(09-09 에 오른쪽 여백을 `CS_CELL_PAD_R` 로 모은 것과 같은 자리다). ★ 값은 가장 긴 글자(「⬇ CSV (999)」·「+ 티켓 등록」)가 들어가고도 남게 잡았다 — 모자라면 그 단추 «하나만» 넘쳐 커져서 맞춘 보람이 사라진다. ★ 높이는 손대지 않았다(요청은 가로다). ★ dev 전용. -->
 <!-- (2026-09-11) **«저장 후 …» 를 저장 버튼과 같은 목록으로**(제니: 「2번 영역 우측 하단 … 저장 후 액션 버튼의 디자인을 그 우측의 저장 버튼과 동일하게 … 클릭했을 때 위로 리스트가 펼쳐지는 박스 디자인을 동일하게 맞춰달라는 의미야」). 그전에는 브라우저 기본 <select> 였다 — 바로 옆 저장 버튼은 «위로 펴지는 우리 목록» 을 쓰는데 이것만 운영체제가 그리는 목록이라, 나란히 선 둘이 서로 다른 물건으로 보였다(글꼴·모서리·여는 방향이 다 달랐다). ★★★ **꼴을 베끼지 않고 «같은 것» 을 쓰게 했다** — 저장 버튼이 제 안에 갖고 있던 목록을 `CsDropUp`·`CsDropUpItem` 으로 뽑아 둘이 함께 쓴다. 베껴서 두 벌로 두면 언젠가 한쪽만 바뀌고, 그때 «나란히 선 두 목록이 서로 다른» 화면이 생긴다(09-09 의 상태 점·색표에서 세운 규칙과 같은 자리다). 저장 버튼의 동작은 한 줄도 안 바뀌었다. ★★ **단추의 «무게» 는 일부러 다르다**: 저장은 누르면 일이 벌어지는 주 동작이라 채운 상태색이고, 이쪽은 «다음에 어떻게 할지 정해 두는» 자리다 — 같은 채움을 주면 저장 버튼이 둘로 보인다. 높이·모서리·글꼴·화살표(∧/∨)를 맞추고 색은 옆의 [취소] 와 같은 «테두리만» 으로 둔다([⬇ CSV] 에서 세운 것과 같은 규칙). ★ 등록 화면은 여전히 둘(«다음 티켓» 없음), 상세는 셋 — 고르는 값과 저장되는 자리는 그대로다. ★ dev 전용. -->
@@ -19011,11 +19012,38 @@ const CS_LINE = '#3E5DA0';
 // [⬇ CSV] · [+ 티켓 등록] · [⚙ 보기 설정] 셋이 오른쪽 끝에 **세로로 선다.** 글자 수가
 // 달라 저마다 제 폭으로 서면 오른쪽 끝은 맞아도 **왼쪽 끝이 층계처럼 어긋난다**
 // (제니: 「3개가 세로로 나열되어 있으니까 버튼 가로 너비 동일하게 맞춰줘」).
-// ★★ **한 값을 셋이 함께 본다** — 한 곳에만 적으면 다음에 글자를 고치는 날 그 하나만
-//   넓어진다(09-09 에 오른쪽 여백을 CS_CELL_PAD_R 로 모은 것과 같은 자리다).
-// ★ 가장 긴 글자(「⬇ CSV (999)」·「+ 티켓 등록」)가 들어가고도 남는 값이다 —
-//   모자라면 그 단추 «하나만» 넘쳐 커져서 맞춘 보람이 사라진다.
-const CS_LIST_BTN_W = 120;
+// 🔴🔴🔴 **처음엔 폭을 «숫자로 짐작해» 박았다(120px). 그래서 여백이 남아 한 번 더
+//   고치게 됐다**(제니: 「왜 가로 너비가 커졌어 … 지금은 가로 너비가 여백이 많잖아」
+//   · 「이런 건 한 번에 좀 잘 맞춰 줘, 괜히 두 번 배포하게 하지 말고」).
+//   ★★★ **글꼴이 그리는 폭은 사람이 셀 수 없다** — 한글·영문·이모지·굵기가 섞인 줄은
+//     더욱 그렇다. 짐작한 숫자는 크면 여백이 남고 작으면 글자가 넘친다. **재야 하는
+//     값을 코드에 적어 두면 글자를 고치는 날 조용히 다시 어긋난다.**
+//   → **재는 일을 브라우저에게 넘긴다**: 단추마다 «가장 긴 이름들» 을 보이지 않게
+//     겹쳐 깔아 두면, 폭은 그중 긴 쪽이 정한다. 숫자가 한 개도 없고, 나중에 이름이
+//     바뀌어도 셋이 함께 따라 움직인다.
+//   ★ 09-09 에 매크로 목록에서 「높이는 짐작하지 않고 그린 뒤에 잰다」고 적어 두고도
+//     폭에서 같은 것을 밟았다. **짐작하지 않는다는 규칙은 높이만의 것이 아니다.**
+// ★★ 셋의 글자 크기·굵기·여백을 맞춘다 — 「가장 긴 이름」이라는 자가 뜻을 가지려면
+//   셋이 **같은 자로 재야** 한다(11.5px 로 잰 66px 과 12px 로 잰 66px 은 다른 폭이다).
+const CS_LIST_BTN_FONT = 12;
+const CS_LIST_BTN_PAD  = '6px 12px';
+// 폭을 정하는 «자» — 셋 중 글자가 가장 긴 둘. 늘 이 둘 중 긴 쪽이 폭이 된다.
+const CS_LIST_BTN_RULERS = ['+ 티켓 등록', '⚙ 보기 설정'];
+// ★ [⬇ CSV] 는 고른 건수가 붙으면(「⬇ CSV (128)」) 이 자보다 길어질 수 있다. 그때는
+//   그 단추만 넓어진다 — **글자를 자르지 않는다.** 몇 건이 나가는지는 누르기 전에
+//   봐야 하는 값이고, 그 상태는 «고르는 동안» 만이다.
+function CsListBtnLabel({children}){
+  const hide = {gridArea:'1/1', visibility:'hidden', height:0, overflow:'hidden',
+                whiteSpace:'nowrap'};
+  return (
+    <span style={{display:'grid', justifyItems:'center', alignItems:'center'}}>
+      {CS_LIST_BTN_RULERS.map(r=>(
+        <span key={r} aria-hidden="true" style={hide}>{r}</span>
+      ))}
+      <span style={{gridArea:'1/1', whiteSpace:'nowrap'}}>{children}</span>
+    </span>
+  );
+}
 const csDateInp = {fontSize:11,padding:'4px 7px',background:'var(--bg)',
   border:'1px solid '+CS_LINE,color:'var(--text)',borderRadius:6,
   fontFamily:'inherit'};
@@ -20481,13 +20509,14 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             csCsvDownload('CS티켓_'+chipLabel+'_'+stamp+'.csv', [head].concat(body));
             toast(src.length+'건을 내려받았습니다.','success');
           }}
-          style={{padding:'6px 12px',minWidth:CS_LIST_BTN_W,
+          style={{padding:CS_LIST_BTN_PAD,
             background: csIsLight() ? 'rgba(15,157,119,.08)' : 'rgba(34,211,160,.10)',
             border:'1px solid '+(csIsLight() ? 'rgba(15,157,119,.45)' : 'rgba(34,211,160,.45)'),
             borderRadius:8,color:'var(--green)',
-            fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
+            fontSize:CS_LIST_BTN_FONT,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
             whiteSpace:'nowrap',flexShrink:0}}>
-          ⬇ CSV{pickedIds.length ? ' ('+pickedIds.length+')' : ''}</button>
+          <CsListBtnLabel>
+            ⬇ CSV{pickedIds.length ? ' ('+pickedIds.length+')' : ''}</CsListBtnLabel></button>
       </div>
 
       <div style={{display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',marginBottom:14}}>
@@ -20516,12 +20545,15 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
         {/* ★★ 오른쪽 두 줄은 «검색칸 / + 티켓 등록» · «페이지 보기 / 보기 설정» 으로
               짝지어 둔다(제니 2026-09-04). 윗줄은 «무엇을 찾고 무엇을 만드나»,
               아랫줄은 «어떻게 보여 주나» — 성격이 같은 것끼리 한 줄에 선다. */}
+        {/* ★★ 테두리를 «없음» 이 아니라 **제 배경과 같은 색 1px** 로 둔다 — 옆 둘은
+              테두리가 있어, 없애 두면 이 단추만 좌우로 2px 좁다. 보이지는 않지만
+              **폭을 맞추는 일에서는 안 보이는 1px 도 자리를 먹는다.** */}
         <button onClick={onNew}
-          style={{padding:'6px 14px',minWidth:CS_LIST_BTN_W,
-            background:'var(--primary)',border:'none',borderRadius:8,
-            color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
-            whiteSpace:'nowrap',flexShrink:0}}>
-          + 티켓 등록</button>
+          style={{padding:CS_LIST_BTN_PAD,
+            background:'var(--primary)',border:'1px solid var(--primary)',borderRadius:8,
+            color:'#fff',fontSize:CS_LIST_BTN_FONT,fontWeight:600,cursor:'pointer',
+            fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0}}>
+          <CsListBtnLabel>+ 티켓 등록</CsListBtnLabel></button>
       </div>
 
       {/* ── 필터 ────────────────────────────────────────────────────────
@@ -20593,12 +20625,13 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
         {isMaster && (
           <div style={{position:'relative',flexShrink:0}}>
             <button onClick={()=>setColOpen(o=>!o)}
-              style={{padding:'5px 11px',minWidth:CS_LIST_BTN_W,
-                borderRadius:8,fontSize:11.5,fontFamily:'inherit',
+              style={{padding:CS_LIST_BTN_PAD,
+                borderRadius:8,fontSize:CS_LIST_BTN_FONT,fontFamily:'inherit',
                 cursor:'pointer',whiteSpace:'nowrap',fontWeight:600,
                 background: colOpen ? '#8FC2FF' : '#B8D9FF',
                 border:'1px solid '+(colOpen ? '#5B8DEF' : '#B8D9FF'),
-                color:'#12203c'}}>⚙ 보기 설정</button>
+                color:'#12203c'}}>
+              <CsListBtnLabel>⚙ 보기 설정</CsListBtnLabel></button>
             {colOpen && (
               <CsColumnSettings chip={chip} chipLabel={chipLabel}
                 settings={settings} setSettings={setSettings}
