@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260911i_list_mono_off -->
+<!-- (2026-09-11) **목록의 고정폭 글꼴을 걷어냈다 — 주문번호·연락처·금액·계좌번호·티켓번호·사진 장수**(제니: 「날짜 부분 바꾼 글씨체로 주문번호, 연락처 정보, 금액 정보도 모두 바꾸면 문제있을까? 바꾼 글씨체가 더 깔끔해 보이는데」). ★★★ **문제 없다. 다만 조건이 하나 있다 — 빼는 자리마다 `tabular-nums` 를 «반드시 함께» 준다.** 고정폭을 쓴 진짜 이유는 «글꼴이 특별해서» 가 아니라 **«줄마다 숫자가 같은 자리에 서야 세로로 훑힌다»** 였다. 그걸 빼먹으면 글씨는 깔끔해지는데 **여러 건을 세로로 훑는 일이 조용히 깨진다** — 표에서 그것이 가장 큰 값어치다. **목적과 수단을 갈라야 요청을 들어주면서 목적을 안 잃는다**(앞 판에서 날짜에 세운 것과 같은 규칙이다). ★★ 주문번호는 **숫자와 하이픈뿐**이라 `0/O`·`1/l` 을 가릴 일이 없다 — 고정폭이 주던 이점이 여기서는 애초에 없었다. ★ 이름에는 `tabular-nums` 를 주지 않는다(한글에는 아무 일도 안 하면서 뜻만 흐려진다) — 연락처 줄에만 준다. ★ **환불 관리 화면은 손대지 않았다** — 제니가 «기준» 으로 삼은 화면이고, 요청은 CS 목록이다. 좋다고 한 쪽을 함께 흔들면 그쪽이 도로 나빠진다(09-09 에 세운 규칙). ★ 확인: CS 목록 열 정의에 남은 고정폭 **0곳** · 숫자를 그리는 칸은 전부 `tabular-nums`(전수 확인). ★ 낡은 주석 둘도 함께 고쳤다 — 「MONO 상수를 쓴다」·「고정폭은 연락처에만」은 이제 사실이 아니다. -->
 <!-- v20260911h_list_date_font -->
 <!-- (2026-09-11) **CS 목록의 날짜 글씨체를 환불 관리 «일자» 와 같게**(제니). 그동안 CS 목록의 날짜만 **고정폭 글꼴(MONO)** 이라 같은 콘솔 안에서 두 목록이 서로 다른 얼굴을 하고 있었다. ★★ **값을 지어내지 않고 환불 목록에서 그대로 재 왔다** — 본문 글꼴 · 날짜 11 · 시각 10 · 시각만 흐리게. 「같게 해 달라」는 요청에 내 눈대중을 섞으면 «비슷하지만 다른» 것이 하나 더 생긴다(09-08 에 제목 행 색에서 세운 규칙 그대로다). ★★★ **`tabular-nums` 는 남겼다** — 고정폭을 쓴 이유는 «글꼴이 특별해서» 가 아니라 «줄마다 숫자가 같은 자리에 서야 세로로 훑힌다» 였고, 그 일은 본문 글꼴에서도 이 한 줄이 해 준다. **목적과 수단을 갈라야 요청을 들어주면서 목적을 안 잃는다.** ★★ **리체크 열도 함께 바꿨다** — 제니 요청은 「목록의 날짜 표기」였고 그것도 목록의 날짜다. 게다가 그 자리는 **예전에 제니가 «여기만 다르다» 고 짚어 등록·수정 날짜에 맞춰 둔 곳**이라, 등록·수정만 바꾸면 그때 세운 규칙이 그대로 뒤집힌다(「유사한 부분은 모두 확인해서 처리해줘」). ★ 연도 줄은 남긴다 — 환불에는 없지만 지난해 건을 가리는 값이라, 없애면 «올해 것처럼» 보인다. ★ 주문번호·품목별 주문번호는 **고정폭 그대로** 다: 날짜가 아니고, 숫자·하이픈을 눈으로 훑어 다른 건을 집어내는 자리다. ★ 겸해 낡은 주석 하나를 고쳤다(«고정폭에서는 공백이 글자 하나 폭» — 이제 고정폭이 아니다). -->
 <!-- v20260911g_action_menu_col -->
@@ -18568,20 +18570,22 @@ const CS_COLS = {
   photos:    {label:'사진', plabel:'사진 첨부 여부', g:'티켓', w:46, align:'center',
               cell:(t)=> (t._photos>0
                 ? <span title={t._photos+'장 첨부'} style={{fontSize:12,lineHeight:1}}>📎{t._photos>1
-                    ? <span style={{fontFamily:MONO,fontSize:10,marginLeft:1}}>{t._photos}</span>
+                    ? <span style={{fontSize:10,marginLeft:1,fontVariantNumeric:'tabular-nums'}}>{t._photos}</span>
                     : null}</span>
                 : <span style={{color:'var(--sub)',opacity:.5}}>—</span>),
               sv:(t)=>t._photos||0},
 
   // ── ① «주문» ────────────────────────────────────────────────────────
   // ★ 주문번호 둘은 고정폭 글꼴로 그린다 — 숫자·하이픈이 줄마다 같은 자리에 서야
-  //   눈으로 훑어 다른 건을 집어낼 수 있다(MONO 상수 · monospace 만 적으면 윈도우
-  //   크롬이 Courier New 를 고른다).
+  //   눈으로 훑어 다른 건을 집어낼 수 있다.
+  //   ★★ 2026-09-11 — 그 일을 **고정폭 글꼴이 아니라 `tabular-nums`** 가 하게 바꿨다
+  //     (제니: 날짜에서 바꾼 글씨체가 더 깔끔하다). 주문번호는 숫자와 하이픈뿐이라
+  //     0/O·1/l 을 가릴 일이 없어, 고정폭이 주던 이점이 여기서는 없다.
   order_no:  {label:'주문번호', g:'주문', w:126,
-              cell:(t)=><span style={{fontFamily:MONO,fontSize:11}}>{t.order_id||'—'}</span>,
+              cell:(t)=><span style={{fontSize:11,fontVariantNumeric:'tabular-nums'}}>{t.order_id||'—'}</span>,
               sv:(t)=>t.order_id||''},
   order_item:{label:'품목별 주문번호', g:'주문', w:150,
-              cell:(t)=><span style={{fontFamily:MONO,fontSize:11}}>{t.order_item_code||'—'}</span>,
+              cell:(t)=><span style={{fontSize:11,fontVariantNumeric:'tabular-nums'}}>{t.order_item_code||'—'}</span>,
               sv:(t)=>t.order_item_code||''},
   // ★ 「상품 · 옵션」과 겹친다 — 둘을 다 켜면 옵션이 두 번 보인다. 그래도 따로 둔다:
   //   상품명이 긴 칩에서는 상품 열을 끄고 옵션만 보는 편이 훨씬 좁게 읽힌다.
@@ -18659,7 +18663,7 @@ const CS_COLS = {
 
   // ── ① «환불» ────────────────────────────────────────────────────────
   refund_amt:{label:'환불액', plabel:'환불 금액', g:'환불', w:82, align:'right',
-              cell:(t)=><span style={{fontFamily:MONO,fontVariantNumeric:'tabular-nums'}}>
+              cell:(t)=><span style={{fontVariantNumeric:'tabular-nums'}}>
                 {t.refund_amount==null?'—':Number(t.refund_amount).toLocaleString()}</span>,
               sv:(t)=>t.refund_amount==null?-1:Number(t.refund_amount)},
   refund_mth:{label:'결제수단', g:'환불', w:104,
@@ -18675,7 +18679,7 @@ const CS_COLS = {
   //   목록은 여러 건이 한 화면에 깔린 채 오래 떠 있는 자리다. 고치거나 그대로 옮겨
   //   적을 일이 있으면 상세를 연다 — 거기에는 복사할 수 있는 온전한 값이 있다.
   refund_acc:{label:'계좌번호', g:'환불', w:126,
-              cell:(t)=><span style={{fontFamily:MONO,fontSize:11,color:'var(--sub)'}}
+              cell:(t)=><span style={{fontSize:11,fontVariantNumeric:'tabular-nums',color:'var(--sub)'}}
                 title={t.refund_account?'가려서 보여 줍니다 — 온전한 값은 티켓 상세에 있습니다':undefined}>
                 {t.refund_account?csMaskAcct(t.refund_account):'—'}</span>,
               sv:(t)=>t.refund_account||''},
@@ -18686,11 +18690,11 @@ const CS_COLS = {
   //   ★ 「정산 」을 뗀다 — 이미 [보기 설정] 의 «정산» 묶음에 있고, 목록 머리글에서는
   //     그 두 글자가 124px 중 30px 을 먹는다. 온전한 이름은 plabel 이 지킨다.
   settle_fee:{label:'상품금액', plabel:'정산 상품금액', g:'정산', w:106, align:'right',
-              cell:(t)=><span style={{fontFamily:MONO,fontVariantNumeric:'tabular-nums'}}>
+              cell:(t)=><span style={{fontVariantNumeric:'tabular-nums'}}>
                 {t.settle_fee==null?'—':Number(t.settle_fee).toLocaleString()}</span>,
               sv:(t)=>t.settle_fee==null?-1:Number(t.settle_fee)},
   settle_ship:{label:'배송료', plabel:'정산 배송료', g:'정산', w:100, align:'right',
-              cell:(t)=><span style={{fontFamily:MONO,fontVariantNumeric:'tabular-nums'}}>
+              cell:(t)=><span style={{fontVariantNumeric:'tabular-nums'}}>
                 {t.settle_shipping_fee==null?'—':Number(t.settle_shipping_fee).toLocaleString()}</span>,
               sv:(t)=>t.settle_shipping_fee==null?-1:Number(t.settle_shipping_fee)},
 
@@ -18709,7 +18713,7 @@ const CS_COLS = {
   // ★ 목록 머리글은 짧게(등록·수정), 패널에서는 무슨 날짜인지 밝힌다(plabel) —
   //   머리글은 폭이 곧 비용이지만 패널은 골라야 하니 이름이 분명해야 한다.
   id:        {label:'번호', plabel:'티켓 번호', g:'티켓', w:71,
-              cell:(t)=><span style={{fontFamily:MONO,color:'var(--accent)',
+              cell:(t)=><span style={{fontVariantNumeric:'tabular-nums',color:'var(--accent)',
                   textDecoration:'underline',textUnderlineOffset:3,
                   textDecorationColor:'rgba(210,229,255,.35)'}}>#{t.id}</span>,
               sv:(t)=>t.id},
@@ -18976,8 +18980,10 @@ function CsClamp3({text}){
 //   줄로 나누면 **열 폭은 «둘 중 긴 쪽» 만 있으면 되고**, 접히는 자리도 사람이 안다.
 // ★ 연락처 글자색은 이름과 «같다»(제니 2026-09-04) — 한 사람의 두 조각인데 한쪽만
 //   흐리면 연락처가 «곁다리 값» 으로 읽힌다. 전화를 거는 쪽이 오히려 이쪽이다.
-// ★ 고정폭(MONO)은 연락처에만 준다 — 숫자가 줄마다 같은 자리에 서야 세로로 훑힌다.
-//   이름까지 고정폭으로 두면 한글이 성기게 벌어져 오히려 읽기 어렵다(2026-09-04 규칙).
+// ★★ 2026-09-11 — 고정폭(MONO)을 뺐다(제니: 날짜에서 바꾼 글씨체가 더 깔끔하다).
+//   **`tabular-nums` 는 연락처에만 준다** — 숫자가 줄마다 같은 자리에 서야 세로로
+//   훑힌다. 그 일은 글꼴이 아니라 이 한 줄이 한다(목적과 수단은 다르다).
+//   ★ 이름에는 주지 않는다 — 한글에는 아무 일도 안 하면서 뜻만 흐려진다.
 // 같은 값을 «글자로만» 내보내는 자리(CSV). 화면 조각과 **한 자리에 둔다** — 두 곳에
 // 따로 적으면 언젠가 한쪽만 바뀌고, 그때 «화면과 파일이 다른 사람을 가리키는» 칸이 생긴다.
 // ★ 파일에서는 줄바꿈이 아니라 공백이다(셀 안 줄바꿈은 거르고 정렬할 때 걸린다).
@@ -18995,7 +19001,7 @@ function CsNamePhone({name,phone}){
   return (
     <span style={{display:'block',lineHeight:1.35}}>
       {nm && <span style={{display:'block',overflowWrap:'anywhere'}}>{nm}</span>}
-      {ph && <span style={{display:'block',fontFamily:MONO,fontSize:11,
+      {ph && <span style={{display:'block',fontSize:11,fontVariantNumeric:'tabular-nums',
         overflowWrap:'anywhere'}}>{ph}</span>}
     </span>
   );
