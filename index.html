@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260911m_hint_fit -->
+<!-- (2026-09-11) **「?」 풍선의 폭을 글자에 맞췄다**(제니: 「툴팁 메시지가 가로로 너무 길어. 문장 사이즈에 맞게 만들어줘. 우측 여백이 너무 길잖아」). ★★★ **09-03 에 제니가 «반대쪽» 을 짚었던 자리다** — 그때는 「세로로 길쭉하다」여서 `maxWidth` 를 버리고 폭을 **박았다.** 그 결과 짧은 한 줄짜리 풍선에서는 오른쪽이 통째로 빈다. **두 제보는 충돌하지 않는다: 하나는 «긴 글», 하나는 «짧은 글» 이야기다.** → **`width:max-content` + `maxWidth:W`** 하나로 둘 다 만족한다: 짧은 글은 글자만큼만, 긴 글은 W(236px)에서 줄바꿈한다. 기존의 긴 안내 둘(「필수 시점」·「📎 첨부 조건」)은 가장 긴 줄이 236 을 넘어 **예전과 똑같이** 선다. ★★★ **폭을 «내용이» 정하므로 자리는 그린 뒤에 잰다.** 풍선이 그려지기 «전» 에는 실제 폭을 알 수 없어 첫 계산은 W 로 어림잡고(그 값으로 화면을 안 넘으면 실제 폭은 더 작으니 더더욱 안 넘는다 — 안전한 쪽으로 어림잡는다), **그려진 뒤 한 번 더 재서 자리와 화살표를 바로잡는다.** 오늘 단추 폭에서 얻은 것과 같은 자리다 — **재야 하는 값을 짐작해 박지 않는다.** ★ 화살표는 «실제» 폭 안에 있어야 한다 — 고정폭을 기준으로 잡으면 짧은 풍선에서 화살표가 판 밖으로 나간다. ★ 폭이 그대로면 다시 그리지 않는다 — 안 그러면 setPos 가 자신을 다시 불러 **끝나지 않는 되풀이**가 된다. ★ dev 전용. -->
 <!-- v20260911l_balance_hint -->
 <!-- (2026-09-11) **잔액 카드의 «알림 기준 …» 줄을 빼고, 그 말을 «알리는 기준» 의 「?」 로 옮겼다**(제니). ★★★ **설명은 «그 값을 정하는 자리» 에 붙어야 한다** — 앞 판에서 큰 숫자 밑에 「알림 기준 30,000원 미만 — 발송 가능액 기준입니다」를 적었는데, 그 자리는 **숫자를 보는 곳**이지 기준을 정하는 곳이 아니다. 기준을 고치는 사람은 아래 «알리는 기준» 칸을 보고 있고, 거기서 궁금한 것이 「이 30,000원은 무엇을 재는 값인가」다. 카드 위에 적어 두면 **설명과 그 설명이 필요한 자리가 떨어져** 둘 다 흐려진다. ★ 겸해 잔액 카드가 도로 간결해졌다 — 거기서 할 말은 «지금 얼마인가»(발송 가능액 · 충전금) 뿐이다. ★★ 「?」는 콘솔에 하나뿐인 조각 **`CsHint`** 를 쓴다 — 09-03 에 공용 풍선을 통째로 되돌린 뒤로 «뜨는 방식» 이 이것 하나로 정해져 있다(값이 같아도 «언제·어디서 나타나는가» 가 다르면 같은 기능이 아니다). ★★ **자리가 «둘» 이다** — master 가 기준을 고치는 칸과, master 가 아닌 사람이 «왜 이 알림이 뜨는지» 를 읽는 줄. 둘 다 넣었다: **기준을 못 고치는 것과 기준이 무엇을 재는지 모르는 것은 다른 일이다.** ★ dev 전용. -->
 <!-- v20260911k_solapi_deposit -->
@@ -24407,17 +24409,32 @@ function CsHint({children, width}){
   //   ★ 좌우로도 화면을 넘지 않게 묶는다.
   //   ⚠ 09-03 에 되돌린 «공용 풍선» 과는 다른 이야기다: 그때 문제는 fixed 가 아니라
   //     **지나가기만 해도 즉시 뜨던 것**이었다. 이건 「?」에 올려야 뜬다.
+  // ★★★ 2026-09-11 — W 는 이제 «고정 폭» 이 아니라 **«넘지 않을 폭»** 이다
+  //   (제니: 「툴팁 메시지가 가로로 너무 길어. 문장 사이즈에 맞게. 우측 여백이 너무 길잖아」).
+  //   ★★ 09-03 에 제니가 **반대쪽**을 짚었었다 — 「세로로 길쭉하다」. 그때 maxWidth 를
+  //     버리고 폭을 박았는데, 그러면 **짧은 한 줄짜리 풍선에 오른쪽이 통째로 빈다.**
+  //     ★★★ 두 제보는 충돌하지 않는다: 하나는 «긴 글», 하나는 «짧은 글» 이야기다.
+  //       **`width:max-content` + `maxWidth:W`** 면 짧은 글은 글자만큼만, 긴 글은
+  //       W 에서 줄바꿈한다 — 한 값으로 둘 다 만족한다.
+  //   ★ 폭을 «내용이» 정하므로 **자리는 그린 뒤에 잰다**(아래 boxRef) — 오늘 단추
+  //     폭에서 얻은 것과 같다: **재야 하는 값을 짐작해 박지 않는다.**
   const W = width||236;
+  const boxRef = useRef(null);
   useEffect(()=>{
     if(!on){ setPos(null); return; }
     const el = ref.current; if(!el) return;
     const measure = ()=>{
       const r = el.getBoundingClientRect();
       const up = r.top > 150;                       // 위에 풍선이 설 자리가 있나
+      // ★ 풍선이 아직 없으면 W(넘지 않을 폭)로 잡는다 — 그 값으로 화면을 안 넘으면
+      //   실제 폭은 그보다 작거나 같으므로 더더욱 안 넘는다(안전한 쪽으로 어림잡는다).
+      const bw = boxRef.current ? boxRef.current.getBoundingClientRect().width : W;
       let left = r.left - 6;
-      left = Math.max(8, Math.min(left, window.innerWidth - W - 8));
+      left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
       setPos({left, up, top:r.bottom+8, bottom:window.innerHeight - r.top + 8,
-              caret: Math.max(6, Math.min(r.left - left + 3, W - 16))});
+              // ★ 화살표는 «실제» 폭 안에 있어야 한다 — 고정폭을 기준으로 잡으면
+              //   짧은 풍선에서 화살표가 판 밖으로 나간다.
+              caret: Math.max(6, Math.min(r.left - left + 3, bw - 16)), bw});
     };
     measure();
     window.addEventListener('scroll', measure, true);
@@ -24425,6 +24442,21 @@ function CsHint({children, width}){
     return ()=>{ window.removeEventListener('scroll', measure, true);
                  window.removeEventListener('resize', measure); };
   },[on]);
+  // ★★★ **풍선이 그려지기 «전» 에는 실제 폭을 알 수 없다** — 위 measure 는 풍선이
+  //   아직 없을 때 한 번 돌므로 W 로 어림잡는다. 그려진 «뒤» 에 한 번 더 재서
+  //   자리와 화살표를 바로잡는다(높이를 그린 뒤에 재는 것과 같은 방식이다).
+  //   ★ 폭이 그대로면 아무것도 안 한다 — 안 그러면 setPos 가 자신을 다시 불러
+  //     **끝나지 않는 되풀이**가 된다.
+  useEffect(()=>{
+    if(!on || !pos || !boxRef.current || !ref.current) return;
+    const bw = boxRef.current.getBoundingClientRect().width;
+    if(Math.abs((pos.bw||0) - bw) < 1) return;
+    const r = ref.current.getBoundingClientRect();
+    let left = r.left - 6;
+    left = Math.max(8, Math.min(left, window.innerWidth - bw - 8));
+    setPos(p=>({...p, left,
+      caret: Math.max(6, Math.min(r.left - left + 3, bw - 16)), bw}));
+  },[on, pos]);
   return (
     <span style={{position:'relative',display:'inline-flex',alignItems:'center'}}
       onMouseEnter={()=>setOn(true)} onMouseLeave={()=>setOn(false)}>
@@ -24435,11 +24467,11 @@ function CsHint({children, width}){
           background:'#DEE9FF',color:'#1B3E86',border:'1px solid #A9C3F2'}}>?</span>
       {on && pos && (
         // ★ 모양은 TIP_BOX 한 곳에서 온다 — 「?」 풍선이 여럿 생겨도 한 모양이다.
-        // ★ 폭은 «고정» 이다. 내용에 맡기면(maxWidth) 짧은 줄에 맞춰 통째로 좁아져
-        //   여러 줄 안내가 세로로 길쭉해진다(제니 제보 2026-09-03).
-        <span style={{position:'fixed', left:pos.left,
+        // ★★ 폭은 «글자가» 정하고 W 를 넘지 않는다(위 절 참고) — 짧은 한 줄은
+        //   글자만큼만, 긴 안내는 W 에서 줄바꿈한다.
+        <span ref={boxRef} style={{position:'fixed', left:pos.left,
           ...(pos.up ? {bottom:pos.bottom} : {top:pos.top}),
-          width:W, zIndex:2800, ...TIP_BOX}}>
+          width:'max-content', maxWidth:W, zIndex:2800, ...TIP_BOX}}>
           {children}
           <TipCaret down={pos.up} left={pos.caret}/>
         </span>
