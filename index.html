@@ -1462,6 +1462,18 @@ function toast(message, type, opts){
 // 다시 도는 자리라 매번 띄우면 흐름이 끊긴다(콘솔에는 매번 남긴다).
 // 알림은 toast() 로 띄운다(예전엔 alert 이었다) — 창을 닫지 않아도 작업을 이어갈 수 있다.
 let _sbFailLast = {key:'',at:0};
+// ★★ 2026-09-14 긴급 — 발송 함수(notify-blast)는 «로그인한 사람의 토큰» 으로 부른다.
+//   09-11 에 함수가 anon(공개 키) 호출을 막도록 조였는데 화면은 여전히 공개 키로 불러
+//   운영 배송지연 발송이 403 으로 막혔다(제니 제보). 사람 토큰이면 함수가 동작 권한(delays.send)을 본다.
+//   세션을 못 읽으면 공개 키로 물러선다 — 그 경우 함수가 거절하고 화면에 사유가 뜬다.
+async function csUserToken(){
+  try{
+    const {data} = await sb.auth.getSession();
+    const t = data && data.session && data.session.access_token;
+    if(t) return t;
+  }catch(_e){}
+  return SUPABASE_ANON_KEY;
+}
 function sbFail(what, error, opts){
   if(!error) return false;
   // 조회 결과가 0건인 것은 실패가 아니다(.single() 이 내는 코드. .maybeSingle() 은 error 없이 data:null 을 준다)
@@ -10915,7 +10927,7 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
       const dryRes = await fetch(`${SUPABASE_URL}/functions/v1/notify-blast`,{
         method:'POST',
         headers:{
-          'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+          'Authorization':`Bearer ${await csUserToken()}`,
           'apikey':SUPABASE_ANON_KEY,
           'Content-Type':'application/json',
         },
@@ -10969,7 +10981,7 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
       const sendRes = await fetch(`${SUPABASE_URL}/functions/v1/notify-blast`,{
         method:'POST',
         headers:{
-          'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+          'Authorization':`Bearer ${await csUserToken()}`,
           'apikey':SUPABASE_ANON_KEY,
           'Content-Type':'application/json',
         },
@@ -11959,7 +11971,7 @@ function DelayAddModal({ editingRow, onClose, onSaved }){
                     const res = await fetch(`${SUPABASE_URL}/functions/v1/notify-blast`,{
                       method:'POST',
                       headers:{
-                        'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+                        'Authorization':`Bearer ${await csUserToken()}`,
                         'apikey':SUPABASE_ANON_KEY,
                         'Content-Type':'application/json',
                       },
@@ -14284,7 +14296,7 @@ function DelayHistoryTab({canSend=false}){
       const res = await fetch(`${SUPABASE_URL}/functions/v1/notify-blast`,{
         method:'POST',
         headers:{
-          'Authorization':`Bearer ${SUPABASE_ANON_KEY}`,
+          'Authorization':`Bearer ${await csUserToken()}`,
           'apikey':SUPABASE_ANON_KEY,
           'Content-Type':'application/json',
         },
