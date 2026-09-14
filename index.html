@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260914m_delay_send_hint -->
+<!-- v20260914n_manuals_files -->
+<!-- (2026-09-14) 🆕 **메뉴얼 관리 1단계 — 메뉴얼 파일**(제니: 「실무에서 쓰는 써드파티 메뉴얼과 내부 메뉴얼을 한곳에 저장해서 볼 수 있게 · 앞으로 지식 창고로 쌓고 검색」). 2단계(지식 창고)는 확인 뒤. ★★★ **제니가 정한 넷**: ①분류는 제니가 화면에서 더한다 — **«항목» 자체도 늘 수 있다** → 항목·값은 `console_settings.manual_facets`, 메뉴얼은 `facets jsonb` 한 칸(항목이 늘어도 SQL·배포 없음). 항목은 바뀌지 않는 열쇠(key)로 잇고 이름(label)만 고친다 — 이름을 바꿔도 붙은 값이 끊기지 않는다. ②**파일 안의 내용까지 검색** → 올릴 때 브라우저가 글자를 뽑아 `content_text` 에 담는다(PDF=pdf.js · docx/pptx/xlsx/hwpx=JSZip 으로 XML 을 연다 · 텍스트). 옛 hwp·이미지·스캔 PDF 는 «내용 검색 안 됨/글자 없음» 으로 **목록에 드러낸다** — 조용히 안 찾히면 «검색이 고장» 으로 읽힌다. 검색은 DB 함수(`manual_docs_search`)가 하고 **찾은 자리 앞뒤만** 돌려준다(파일 몇 MB 를 목록마다 내리지 않는다). ③**보기 권한은 메뉴얼마다**(`view_roles`) — **DB 가 막고**, 파일을 받는 주소(signed URL)도 같은 판정을 따른다(표만 막고 버킷을 열어 두면 경로를 아는 사람은 받는다). master 는 늘 본다(잠금 체크). ④상품 정보를 기준으로 하되 얽매이지 않는다. ★★ 파일은 **비공개 버킷** `manuals`(cs-images 는 공개). ★★ 라이브러리 두 개는 **올릴 때만** 부른다 — 처음부터 실으면 그 CDN 이 죽는 날 콘솔이 흰 화면이 된다(06-17 사고). 못 불러오면 «글자 읽기 실패» 로 저장은 된다. ★ 파일을 바꿔 올리면 옛 파일은 «이전 파일» 로 남는다(`manual_doc_versions`). ★ «확인 기준일» 이 180일 지나면 «확인 필요» — 써드파티 화면은 자주 바뀌어 낡은 메뉴얼이 틀린 안내를 한다. ★ 권한: 메뉴 `manuals`(기본 전원) · 동작 `manuals.edit`(master·manager) · `manuals.delete`(master) · 분류 설정 탭은 master(console_settings 쓰기가 master). ★ 백업 마스킹 규칙도 함께 넣었다(tools/mask_dump.py). ★ dev 전용 — SQL `sql/manuals.sql` dev 적용. -->
 <!-- (2026-09-14) **동작 권한 «알림톡 발송» 안내 문구를 사실에 맞췄다**(제니 지적: 「[발송하기] — 실제 고객에게 나간다(테스트 발송은 제외)」라고 적혀 있다). 앞 판(`l`)에서 테스트 발송도 이 권한으로 막게 바꿨는데 **문구는 옛 사실(«테스트는 제외»)을 말하고 있었다** — 설정 화면이 거짓말을 하면 그 격자 전체를 안 믿게 된다. 이 권한이 여는 단추 셋을 전부 적었다. ★ dev 전용. -->
 <!-- (2026-09-14) **배송지연 [테스트 발송] 을 «발송 권한» 대로**(제니). ①함수(notify-blast): 테스트 발송 처리가 권한 판정 «위» 에 있어 **공개 키만 있으면 누구나 아무 번호로 알림톡을 보낼 수 있었다**(충전금이 나간다) → 판정(`delays.send`) 뒤로 옮겼다. ②화면: 발송 권한이 없는 계정에는 테스트 발송 칸을 **그리지 않는다**(콘솔 규칙 — 누를 수 없는 버튼은 안 그린다). 권한은 실제 발송과 같은 `delays.send` — 고객에게 안 가도 요금은 같다. ★ dev 전용. -->
 <!-- (2026-09-14) **CS 통계 · 공급사별 처리 시간 — «평균 처리 시간» 머리글에 「?」**(제니 문구: 「접수부터 종결까지의 처리 시간 (철회는 제외)」). 콘솔의 안내 풍선은 CsHint 하나뿐이라 그것을 쓴다. ★ 이 머리글은 «누르면 정렬» 이라 「?」를 누르거나 올린 채 클릭하면 정렬까지 바뀐다 → 「?」 둘레에서 클릭을 멈춘다(stopPropagation). ★ 풍선은 fixed 라 표를 감싼 overflowX:auto 에 안 잘린다. ★ dev 전용. -->
@@ -29862,6 +29863,668 @@ function CsSortTh({k, w, label, full, sortable=true, sort, onClick, align, onRes
   );
 }
 
+// =============================================================================
+// 메뉴얼 관리 (2026-09-14 · 1단계: 메뉴얼 파일) — sql/manuals.sql
+// ★ 분류 «항목·값» 은 console_settings.manual_facets(제니가 화면에서 더한다) · 메뉴얼은 facets jsonb 한 칸.
+// ★ 보기 권한은 메뉴얼마다(view_roles) — DB 가 막는다. 화면은 «고르는 칸» 만.
+// ★ 파일은 비공개 버킷 manuals — 볼 때마다 짧은 주소(signed URL)를 받는다.
+// =============================================================================
+const MANUAL_ROLES = [
+  {id:'master',  label:'master',  lock:true},
+  {id:'manager', label:'manager'},
+  {id:'crew',    label:'crew'},
+];
+const MANUAL_STALE_DAYS = 180;          // 확인 기준일이 이만큼 지나면 «확인 필요»
+const MANUAL_MAX_MB = 50;               // 버킷 한도와 같다(sql/manuals.sql)
+const MANUAL_TEXT_MAX = 1500000;        // 파일 글자는 이만큼까지만 담는다(검색용)
+const MANUAL_FACETS0 = [{key:'category',label:'분류',values:[]},{key:'tool',label:'대상 도구',values:[]}];
+
+// ── 밖에서 가져오는 라이브러리는 «올릴 때만» 부른다 ──────────────────────────
+// ★ 처음부터 실으면 이 화면을 안 쓰는 사람도 매번 받고, 그 스크립트가 죽는 날 콘솔 전체가
+//   흰 화면이 된다(2026-06-17 @babel/standalone 사고). 못 불러오면 «내용 검색 안 됨» 으로 저장만 한다.
+const _manualLibs = {};
+function manualLoadScript(url, globalName){
+  if(window[globalName]) return Promise.resolve(window[globalName]);
+  if(_manualLibs[url]) return _manualLibs[url];
+  _manualLibs[url] = new Promise((resolve, reject)=>{
+    const el = document.createElement('script');
+    el.src = url; el.async = true;
+    el.onload = ()=> window[globalName] ? resolve(window[globalName]) : reject(new Error(globalName+' 없음'));
+    el.onerror = ()=>{ delete _manualLibs[url]; reject(new Error('불러오기 실패: '+url)); };
+    document.head.appendChild(el);
+  });
+  return _manualLibs[url];
+}
+const MANUAL_PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+const MANUAL_PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const MANUAL_JSZIP = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+
+function manualExt(name){ const m = String(name||'').toLowerCase().match(/\.([a-z0-9]+)$/); return m ? m[1] : ''; }
+function manualXmlText(xml, paraEnds){
+  let t = String(xml||'');
+  paraEnds.forEach(tag=>{ t = t.split('</'+tag+'>').join('\n'); });
+  t = t.replace(/<[^>]+>/g, '');
+  return t.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'")
+          .replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(+n)).replace(/&amp;/g,'&');
+}
+// 파일에서 글자를 뽑는다 → {text, status}. status: ok · empty · unsupported · failed
+async function manualExtractText(file){
+  const ext = manualExt(file.name);
+  const done = (text)=>{
+    const t = String(text||'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+    return t ? {text: t.slice(0, MANUAL_TEXT_MAX), status:'ok'} : {text:'', status:'empty'};
+  };
+  try{
+    if(['txt','md','csv','tsv','json','html','htm'].includes(ext)){
+      const raw = await file.text();
+      return done(ext==='html'||ext==='htm' ? manualXmlText(raw, ['p','div','li','tr','h1','h2','h3']) : raw);
+    }
+    if(ext==='pdf'){
+      const pdfjs = await manualLoadScript(MANUAL_PDFJS, 'pdfjsLib');
+      pdfjs.GlobalWorkerOptions.workerSrc = MANUAL_PDFJS_WORKER;
+      const doc = await pdfjs.getDocument({data: await file.arrayBuffer()}).promise;
+      const out = [];
+      for(let i=1; i<=doc.numPages; i++){
+        const page = await doc.getPage(i);
+        const c = await page.getTextContent();
+        // ★ 조각 사이에 무조건 띄어쓰기를 넣으면 한글이 «카 페 24 주 문» 이 되어 «주문» 으로 못 찾는다
+        //   (헤드리스 크롬으로 만든 PDF 로 실측 — 글자마다 조각이 따로 온다). 실제 간격을 재서 넣는다:
+        //   줄(y)이 바뀌면 줄바꿈 · 앞 조각 끝과 이번 조각 시작 사이가 글자 높이의 1/4 을 넘으면 띄어쓰기.
+        let line = '', last = null;
+        for(const it of c.items){
+          if(!it.str && !it.hasEOL) continue;
+          const x = it.transform ? it.transform[4] : 0, y = it.transform ? it.transform[5] : 0;
+          const h = Math.abs(it.height || (it.transform ? it.transform[3] : 10)) || 10;
+          if(last){
+            if(Math.abs(y - last.y) > h * 0.5) line += '\n';
+            else if(x - (last.x + last.w) > h * 0.25) line += ' ';
+          }
+          line += it.str;
+          if(it.hasEOL){ line += '\n'; last = null; continue; }
+          last = {x, y, w: it.width || 0};
+        }
+        out.push(line);
+        if(out.join('').length > MANUAL_TEXT_MAX) break;
+      }
+      return done(out.join('\n'));   // 스캔 PDF 는 글자가 없어 empty 가 된다
+    }
+    if(['docx','pptx','xlsx','hwpx'].includes(ext)){
+      const JSZip = await manualLoadScript(MANUAL_JSZIP, 'JSZip');
+      const zip = await JSZip.loadAsync(await file.arrayBuffer());
+      const names = Object.keys(zip.files);
+      const num = n=>{ const m=n.match(/(\d+)\.xml$/); return m?+m[1]:0; };
+      let pick, ends;
+      if(ext==='docx'){ pick = names.filter(n=>/^word\/(document|header\d*|footer\d*)\.xml$/.test(n)); ends=['w:p']; }
+      if(ext==='pptx'){ pick = names.filter(n=>/^ppt\/(slides\/slide|notesSlides\/notesSlide)\d+\.xml$/.test(n)).sort((a,b)=>num(a)-num(b)); ends=['a:p']; }
+      if(ext==='xlsx'){ pick = names.filter(n=>/^xl\/(sharedStrings|worksheets\/sheet\d+)\.xml$/.test(n)); ends=['si','row']; }
+      if(ext==='hwpx'){ pick = names.filter(n=>/^Contents\/section\d+\.xml$/.test(n)).sort((a,b)=>num(a)-num(b)); ends=['hp:p']; }
+      const parts = [];
+      for(const n of pick){ parts.push(manualXmlText(await zip.file(n).async('string'), ends)); }
+      return done(parts.join('\n'));
+    }
+    return {text:'', status:'unsupported'};   // hwp(옛 형식)·이미지·동영상 등
+  }catch(e){
+    console.error('[메뉴얼 글자 추출] 실패:', e);
+    return {text:'', status:'failed'};
+  }
+}
+function manualSize(n){
+  if(!n && n!==0) return '';
+  if(n < 1024) return n+'B';
+  if(n < 1024*1024) return Math.round(n/1024)+'KB';
+  return (n/1024/1024).toFixed(1)+'MB';
+}
+function manualKindLabel(d){
+  if(d.kind==='link') return '링크';
+  const e = manualExt(d.file_name).toUpperCase();
+  return e || '파일';
+}
+const MANUAL_CONTENT_LABEL = {
+  ok:{t:'내용 검색 됨', c:'var(--ok-ink)'}, empty:{t:'글자 없음(스캔본?)', c:'var(--warn-ink)'},
+  unsupported:{t:'내용 검색 안 됨', c:'var(--sub)'}, failed:{t:'글자 읽기 실패', c:'var(--red-ink)'},
+  link:{t:'링크', c:'var(--sub)'},
+};
+function manualStale(d){
+  if(!d.checked_at) return true;
+  return (Date.now() - new Date(d.checked_at+'T00:00:00+09:00').getTime()) > MANUAL_STALE_DAYS*86400000;
+}
+// 검색어를 강조해 그린다
+function ManualMark({text, q}){
+  const s = String(text||''); const w = String(q||'').trim();
+  if(!w) return <>{s}</>;
+  const out = []; const low = s.toLowerCase(); const lw = w.toLowerCase();
+  let i = 0, k = 0;
+  while(true){
+    const j = low.indexOf(lw, i);
+    if(j < 0){ out.push(<span key={k++}>{s.slice(i)}</span>); break; }
+    if(j > i) out.push(<span key={k++}>{s.slice(i, j)}</span>);
+    out.push(<mark key={k++} style={{background:'rgba(246,173,9,.35)',color:'inherit',padding:'0 1px',borderRadius:2}}>{s.slice(j, j+w.length)}</mark>);
+    i = j + w.length;
+  }
+  return <>{out}</>;
+}
+
+function ManualsPage({currentUserEmail, role, can}){
+  const canEdit   = typeof can==='function' ? can('manuals.edit')   : false;
+  const canDelete = typeof can==='function' ? can('manuals.delete') : false;
+  const isMaster  = role==='master';
+  const [tab,setTab] = useState('files');
+  const [facets,setFacets] = useState(null);     // null=읽는 중 · undefined=못 읽음
+  const [facetsRow,setFacetsRow] = useState(null);
+  const loadFacets = async ()=>{
+    const {data,error} = await sb.from('console_settings').select('value,updated_at,updated_by')
+      .eq('key','manual_facets').maybeSingle();
+    if(sbFail('메뉴얼 분류 조회', error)){ setFacets(MANUAL_FACETS0); setFacetsRow(undefined); return; }
+    setFacets(Array.isArray(data && data.value) ? data.value : MANUAL_FACETS0);
+    setFacetsRow(data || null);
+  };
+  useEffect(()=>{ loadFacets(); },[]);
+  const tabs = [{id:'files',label:'메뉴얼 파일'}].concat(isMaster ? [{id:'facets',label:'분류 설정'}] : []);
+  return (
+    <div style={{padding:'24px 32px'}}>
+      <div className="cs-page-head" style={{marginBottom:16,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>📚 메뉴얼 관리</h1>
+        <span style={{fontSize:12,color:'var(--sub)'}}>써드파티·내부 메뉴얼을 한곳에 · 파일 안의 내용까지 검색</span>
+      </div>
+      {tabs.length > 1 && <CsPageTabs tabs={tabs} value={tab} onChange={setTab}/>}
+      {facets===null ? <div style={{padding:40,textAlign:'center',color:'var(--sub)'}}>읽는 중…</div>
+        : tab==='files' ? <ManualFilesTab facets={facets} canEdit={canEdit} canDelete={canDelete} currentUserEmail={currentUserEmail}/>
+        : <ManualFacetsTab facets={facets} row={facetsRow} currentUserEmail={currentUserEmail}
+            onSaved={loadFacets}/>}
+    </div>
+  );
+}
+
+const MANUAL_COLS = 'id,title,description,kind,storage_path,file_name,file_size,mime,link_url,facets,tags,view_roles,content_status,checked_at,created_at,created_by,updated_at,updated_by';
+
+function ManualFilesTab({facets, canEdit, canDelete, currentUserEmail}){
+  const [docs,setDocs] = useState(null);
+  const [q,setQ] = useState('');
+  const [hits,setHits] = useState(null);           // null=검색 안 함 · {id:{where_hit,snippet}}
+  const [flt,setFlt] = useState({});               // {항목키: [값…]}
+  const [edit,setEdit] = useState(null);           // null · {} (새로) · doc
+  const [open,setOpen] = useState(null);           // 상세로 연 doc
+  const load = async ()=>{
+    const {data,error} = await sb.from('manual_docs').select(MANUAL_COLS).order('updated_at',{ascending:false});
+    if(sbFail('메뉴얼 목록 조회', error)){ setDocs([]); return; }
+    setDocs(data||[]);
+  };
+  useEffect(()=>{ load(); },[]);
+  // 검색은 DB 에서 — 파일 글자는 화면으로 내리지 않고 «찾은 자리 앞뒤» 만 받는다.
+  useEffect(()=>{
+    const w = q.trim();
+    if(!w){ setHits(null); return; }
+    let alive = true;
+    const t = setTimeout(async ()=>{
+      const {data,error} = await sb.rpc('manual_docs_search', {q:w});
+      if(!alive) return;
+      if(sbFail('메뉴얼 검색', error)){ setHits({}); return; }
+      const m = {}; (data||[]).forEach(r=>{ m[r.id] = r; });
+      setHits(m);
+    }, 250);
+    return ()=>{ alive = false; clearTimeout(t); };
+  },[q]);
+
+  const list = (docs||[]).filter(d=>{
+    if(hits && !hits[d.id]) return false;
+    for(const f of facets){
+      const want = flt[f.key] || [];
+      if(!want.length) continue;
+      const have = (d.facets && d.facets[f.key]) || [];
+      if(!want.some(v=>have.indexOf(v)>=0)) return false;
+    }
+    return true;
+  });
+  const fltOn = Object.values(flt).some(a=>a && a.length);
+  const th = {padding:'9px 10px',fontSize:11,fontWeight:700,textAlign:'left',whiteSpace:'nowrap'};
+  const td = {padding:'9px 10px',fontSize:12,borderBottom:'1px solid var(--border)',verticalAlign:'top',color:'var(--text)'};
+  const chip = {display:'inline-block',fontSize:10.5,padding:'1px 7px',borderRadius:10,border:'1px solid var(--border)',color:'var(--sub)',marginRight:4,marginBottom:2,whiteSpace:'nowrap'};
+
+  return (
+    <div>
+      <div style={{display:'flex',alignItems:'flex-start',gap:10,margin:'4px 0 12px'}}>
+        <div style={{flex:'1 1 0',minWidth:0,display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',alignSelf:'stretch',alignContent:'center'}}>
+          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="제목 · 설명 · 태그 · 파일 이름 · 파일 내용 검색"
+            style={{width:'clamp(260px, 32vw, 460px)',fontSize:12,padding:'7px 10px',boxSizing:'border-box',
+              background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit'}}/>
+          {facets.map(f=>(
+            <CsMulti key={f.key} label={f.label} value={flt[f.key]||[]}
+              onChange={v=>setFlt(p=>({...p,[f.key]:v}))}
+              options={(f.values||[]).map(v=>({value:v}))}/>
+          ))}
+          {fltOn && <button onClick={()=>setFlt({})}
+            style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',cursor:'pointer',background:'transparent',
+              border:'1px solid rgba(248,113,113,.5)',color:'var(--red)'}}>필터 지우기</button>}
+        </div>
+        {canEdit && (
+          <button onClick={()=>setEdit({})}
+            style={{flexShrink:0,padding:'7px 14px',background:'var(--primary)',border:'1px solid var(--primary)',borderRadius:8,
+              color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>+ 메뉴얼 등록</button>
+        )}
+      </div>
+
+      {docs===null ? <div style={{padding:50,textAlign:'center',color:'var(--sub)'}}>불러오는 중…</div>
+      : list.length===0 ? (
+        <div style={{textAlign:'center',padding:'60px 24px',background:'var(--card)',border:'1px dashed var(--border)',borderRadius:12,color:'var(--sub)',fontSize:12}}>
+          {(docs||[]).length===0 ? (canEdit ? '아직 메뉴얼이 없습니다 — [+ 메뉴얼 등록] 으로 첫 파일을 올려 주세요.' : '볼 수 있는 메뉴얼이 없습니다.')
+            : '검색어·필터에 맞는 메뉴얼이 없습니다.'}
+        </div>
+      ) : (
+        <div style={{overflowX:'auto',border:'1px solid var(--border)',borderRadius:8,background:'var(--card)'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',minWidth:760}}>
+            <thead><tr>
+              <th style={th}>제목</th>
+              {facets.map(f=><th key={f.key} style={th}>{f.label}</th>)}
+              <th style={th}>태그</th><th style={th}>형식</th><th style={th}>보기</th>
+              <th style={th}>확인 기준일</th><th style={th}>수정</th>
+            </tr></thead>
+            <tbody>
+              {list.map(d=>{
+                const h = hits && hits[d.id];
+                const roles = Array.isArray(d.view_roles) ? d.view_roles : [];
+                const limited = MANUAL_ROLES.some(r=>!r.lock && roles.indexOf(r.id)<0);
+                const cl = MANUAL_CONTENT_LABEL[d.content_status] || MANUAL_CONTENT_LABEL.unsupported;
+                return (
+                  <tr key={d.id} className="cs-stat-row" onClick={()=>setOpen(d)}>
+                    <td style={{...td,minWidth:240}}>
+                      <div style={{fontWeight:600}}><ManualMark text={d.title} q={q}/></div>
+                      {d.description && <div style={{fontSize:11,color:'var(--sub)',marginTop:2}}><ManualMark text={d.description} q={q}/></div>}
+                      {h && h.snippet && (
+                        <div style={{fontSize:11,color:'var(--sub)',marginTop:4,padding:'4px 7px',background:'var(--bg)',borderRadius:5,lineHeight:1.55}}>
+                          <span style={{color:'var(--warn-ink)',fontWeight:600,marginRight:5}}>파일 내용</span>
+                          …<ManualMark text={h.snippet.replace(/\s+/g,' ')} q={q}/>…
+                        </div>
+                      )}
+                    </td>
+                    {facets.map(f=>(
+                      <td key={f.key} style={td}>{((d.facets||{})[f.key]||[]).map(v=>(
+                        <span key={v} style={{...chip,opacity:(f.values||[]).indexOf(v)<0?.55:1}}
+                          title={(f.values||[]).indexOf(v)<0?'분류 설정에서 지워진 값':undefined}>{v}</span>))}</td>
+                    ))}
+                    <td style={td}>{(d.tags||[]).map(t=><span key={t} style={chip}>#<ManualMark text={t} q={q}/></span>)}</td>
+                    <td style={{...td,whiteSpace:'nowrap'}}>
+                      <div style={{fontWeight:600}}>{manualKindLabel(d)}</div>
+                      <div style={{fontSize:10.5,color:cl.c}}>{cl.t}</div>
+                    </td>
+                    <td style={{...td,whiteSpace:'nowrap',fontSize:11}}>
+                      {limited ? roles.filter(r=>r!=='master').join(' · ') || 'master 만' : <span style={{color:'var(--sub)'}}>전원</span>}
+                    </td>
+                    <td style={{...td,whiteSpace:'nowrap'}}>
+                      {d.checked_at || '—'}
+                      {manualStale(d) && <div style={{fontSize:10.5,color:'var(--warn-ink)',fontWeight:600}}>확인 필요</div>}
+                    </td>
+                    <td style={{...td,whiteSpace:'nowrap',fontSize:11,color:'var(--sub)'}}>
+                      {String(d.updated_at||'').slice(0,10)}<div>{csShortUser(d.updated_by||d.created_by)}</div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {edit && <ManualEditModal doc={edit.id ? edit : null} facets={facets} currentUserEmail={currentUserEmail}
+        onClose={()=>setEdit(null)} onSaved={()=>{ setEdit(null); setOpen(null); load(); }}/>}
+      {open && !edit && <ManualDetailModal doc={open} facets={facets} canEdit={canEdit} canDelete={canDelete}
+        onClose={()=>setOpen(null)} onEdit={()=>setEdit(open)}
+        onDeleted={()=>{ setOpen(null); load(); }}/>}
+    </div>
+  );
+}
+
+function ManualModalFrame({title, onClose, children, width}){
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:900,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}
+      onMouseDown={e=>{ if(e.target===e.currentTarget) onClose(); }}>
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:12,width:'100%',maxWidth:width||720,
+        maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 20px 50px rgba(0,0,0,.35)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,padding:'14px 18px',borderBottom:'1px solid var(--border)'}}>
+          <div style={{fontSize:15,fontWeight:700,color:'var(--text)',minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{title}</div>
+          <button onClick={onClose} style={{background:'transparent',border:'none',color:'var(--sub)',fontSize:18,cursor:'pointer',lineHeight:1}}>✕</button>
+        </div>
+        <div style={{padding:'16px 18px',overflowY:'auto'}}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function ManualEditModal({doc, facets, currentUserEmail, onClose, onSaved}){
+  const isNew = !doc;
+  const [f,setF] = useState(()=>({
+    title: doc ? doc.title : '', description: doc ? (doc.description||'') : '',
+    kind: doc ? doc.kind : 'file', link_url: doc ? (doc.link_url||'') : '',
+    facets: doc ? {...(doc.facets||{})} : {}, tags: doc ? (doc.tags||[]).join(', ') : '',
+    view_roles: doc && Array.isArray(doc.view_roles) ? doc.view_roles : ['master','manager','crew'],
+    checked_at: doc ? (doc.checked_at||'') : csTodayKst(),
+  }));
+  const [file,setFile] = useState(null);
+  const [busy,setBusy] = useState('');
+  const set = (k,v)=>setF(p=>({...p,[k]:v}));
+  const toggleFacet = (key, v)=> setF(p=>{
+    const cur = (p.facets[key]||[]);
+    return {...p, facets:{...p.facets, [key]: cur.indexOf(v)>=0 ? cur.filter(x=>x!==v) : cur.concat([v])}};
+  });
+  const toggleRole = (r)=> setF(p=>({...p, view_roles: p.view_roles.indexOf(r)>=0 ? p.view_roles.filter(x=>x!==r) : p.view_roles.concat([r])}));
+  const lab = {fontSize:11,color:'var(--sub)',fontWeight:600,marginBottom:5,display:'block'};
+  const inp = {width:'100%',boxSizing:'border-box',fontSize:12.5,padding:'8px 10px',background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit'};
+  const row = {marginBottom:14};
+  const pill = (on)=>({fontSize:11.5,padding:'4px 10px',borderRadius:14,cursor:'pointer',userSelect:'none',
+    border:'1px solid '+(on?'var(--accent)':'var(--border)'),background:on?'var(--accent)':'transparent',color:on?'var(--on-accent)':'var(--sub)',fontWeight:on?700:400});
+
+  const save = async ()=>{
+    const title = f.title.trim();
+    if(!title){ toast('제목을 넣어 주세요.','warn'); return; }
+    if(f.kind==='link' && !/^https?:\/\//i.test(f.link_url.trim())){ toast('링크는 http:// 또는 https:// 로 시작해야 합니다.','warn'); return; }
+    if(f.kind==='file' && isNew && !file){ toast('올릴 파일을 골라 주세요.','warn'); return; }
+    if(file && file.size > MANUAL_MAX_MB*1024*1024){ toast(`파일이 너무 큽니다 (${manualSize(file.size)} · 최대 ${MANUAL_MAX_MB}MB).`,'warn'); return; }
+    const tags = Array.from(new Set(f.tags.split(',').map(s=>s.trim().replace(/^#/,'')).filter(Boolean)));
+    const payload = {
+      title, description: f.description.trim() || null, kind: f.kind,
+      facets: f.facets, tags, view_roles: Array.from(new Set(['master'].concat(f.view_roles))),
+      checked_at: f.checked_at || null, updated_by: currentUserEmail,
+    };
+    let uploaded = null;
+    try{
+      if(f.kind==='link'){
+        Object.assign(payload, {link_url:f.link_url.trim(), storage_path:null, file_name:null, file_size:null, mime:null,
+          content_text:null, content_status:'link'});
+      } else if(file){
+        setBusy('파일 안의 글자를 읽는 중…');
+        const ex = await manualExtractText(file);
+        setBusy('파일을 올리는 중…');
+        const d = new Date(); const pad = n=>String(n).padStart(2,'0');
+        // ★ 경로에 한글·공백을 넣지 않는다(저장소가 거절하는 글자가 있다). 원래 이름은 file_name 에.
+        const path = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${Date.now()}_${Math.random().toString(36).slice(2,8)}${manualExt(file.name)?'.'+manualExt(file.name):''}`;
+        const up = await sb.storage.from('manuals').upload(path, file, {contentType: file.type || 'application/octet-stream', upsert:false});
+        if(sbFail('메뉴얼 파일 올리기', up.error, {write:true})){ setBusy(''); return; }
+        uploaded = path;
+        Object.assign(payload, {storage_path:path, file_name:file.name, file_size:file.size, mime:file.type||null,
+          link_url:null, content_text: ex.text || null, content_status: ex.status});
+      }
+      setBusy('저장하는 중…');
+      if(isNew){
+        payload.created_by = currentUserEmail;
+        const {error} = await sb.from('manual_docs').insert(payload);
+        if(sbFail('메뉴얼 저장', error, {write:true})) throw new Error('insert');
+      } else {
+        // 파일을 바꿨으면 옛 파일을 «이전 버전» 으로 남긴다(지우지 않는다).
+        if(uploaded && doc.storage_path){
+          const {error:ve} = await sb.from('manual_doc_versions').insert({doc_id:doc.id, storage_path:doc.storage_path,
+            file_name:doc.file_name, file_size:doc.file_size, mime:doc.mime, replaced_by:currentUserEmail});
+          if(sbFail('이전 파일 기록', ve, {write:true})) throw new Error('version');
+        }
+        const {data,error} = await sb.from('manual_docs').update(payload).eq('id', doc.id).select('id');
+        if(sbFail('메뉴얼 수정', error, {write:true})) throw new Error('update');
+        if(!data || !data.length){ toast('권한이 없어 저장되지 않았습니다.','error'); throw new Error('rls'); }
+      }
+      const cl = MANUAL_CONTENT_LABEL[payload.content_status];
+      toast('저장했습니다.' + (file && cl ? ' · '+cl.t : ''), payload.content_status==='failed'?'warn':'success');
+      onSaved();
+    }catch(e){
+      // 올린 파일만 남고 기록이 없으면 «주인 없는 파일» 이 된다 — 치운다(실패해도 화면은 멈추지 않는다).
+      if(uploaded){ try{ await sb.storage.from('manuals').remove([uploaded]); }catch(_e){} }
+    }
+    setBusy('');
+  };
+
+  return (
+    <ManualModalFrame title={isNew ? '메뉴얼 등록' : '메뉴얼 수정'} onClose={busy?()=>{}:onClose}>
+      <div style={row}><label style={lab}>제목 *</label>
+        <input style={inp} value={f.title} onChange={e=>set('title',e.target.value)} placeholder="예: 카페24 주문 취소 처리 가이드"/></div>
+      <div style={row}><label style={lab}>설명</label>
+        <textarea style={{...inp,minHeight:56,resize:'vertical'}} value={f.description} onChange={e=>set('description',e.target.value)}
+          placeholder="어떤 때 보는 메뉴얼인지 한두 줄"/></div>
+
+      <div style={row}><label style={lab}>형식</label>
+        <div style={{display:'flex',gap:6}}>
+          <span style={pill(f.kind==='file')} onClick={()=>set('kind','file')}>파일</span>
+          <span style={pill(f.kind==='link')} onClick={()=>set('kind','link')}>링크 (노션·구글 문서 등)</span>
+        </div>
+      </div>
+      {f.kind==='file' ? (
+        <div style={row}>
+          <label style={lab}>{isNew ? '파일 *' : '파일 바꾸기 (고르지 않으면 그대로)'}</label>
+          {!isNew && doc.file_name && <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:6}}>지금 파일: {doc.file_name} ({manualSize(doc.file_size)})</div>}
+          <input type="file" onChange={e=>setFile(e.target.files && e.target.files[0] || null)} style={{fontSize:12,color:'var(--text)'}}/>
+          <div style={{fontSize:10.5,color:'var(--sub)',marginTop:5,lineHeight:1.6}}>
+            최대 {MANUAL_MAX_MB}MB · 파일 안의 글자까지 검색되는 형식: PDF · 워드(docx) · 파워포인트(pptx) · 엑셀(xlsx) · 한글(hwpx) · 텍스트
+            <br/>옛 한글(hwp)·이미지·스캔 PDF 는 제목·설명·태그로만 찾습니다.
+            {!isNew && ' 바꾸면 지금 파일은 «이전 파일» 로 남습니다.'}
+          </div>
+        </div>
+      ) : (
+        <div style={row}><label style={lab}>링크 *</label>
+          <input style={inp} value={f.link_url} onChange={e=>set('link_url',e.target.value)} placeholder="https://…"/></div>
+      )}
+
+      {facets.map(fc=>(
+        <div key={fc.key} style={row}><label style={lab}>{fc.label}</label>
+          {(fc.values||[]).length===0
+            ? <div style={{fontSize:11.5,color:'var(--sub)'}}>값이 없습니다 — [분류 설정] 탭에서 더해 주세요.</div>
+            : <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                {fc.values.map(v=><span key={v} style={pill((f.facets[fc.key]||[]).indexOf(v)>=0)} onClick={()=>toggleFacet(fc.key, v)}>{v}</span>)}
+              </div>}
+        </div>
+      ))}
+
+      <div style={row}><label style={lab}>태그 (쉼표로 구분)</label>
+        <input style={inp} value={f.tags} onChange={e=>set('tags',e.target.value)} placeholder="예: 취소, 환불, 교환"/></div>
+
+      <div style={{display:'flex',gap:18,flexWrap:'wrap'}}>
+        <div style={row}><label style={lab}>보기 권한</label>
+          <div style={{display:'flex',gap:12,alignItems:'center'}}>
+            {MANUAL_ROLES.map(r=>(
+              <label key={r.id} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'var(--text)',cursor:r.lock?'not-allowed':'pointer'}}
+                title={r.lock ? 'master 는 늘 볼 수 있습니다' : undefined}>
+                <input type="checkbox" disabled={r.lock} checked={r.lock || f.view_roles.indexOf(r.id)>=0}
+                  onChange={()=>toggleRole(r.id)}/>{r.label}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div style={row}><label style={lab}>확인 기준일</label>
+          <input type="date" style={{...inp,width:160}} value={f.checked_at} onChange={e=>set('checked_at',e.target.value)}/>
+          <div style={{fontSize:10.5,color:'var(--sub)',marginTop:4}}>내용이 맞는지 마지막으로 확인한 날 · {MANUAL_STALE_DAYS}일 지나면 «확인 필요»</div>
+        </div>
+      </div>
+
+      <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:8,marginTop:6}}>
+        {busy && <span style={{fontSize:12,color:'var(--sub)',marginRight:'auto'}}>{busy}</span>}
+        <button onClick={onClose} disabled={!!busy} style={{padding:'8px 16px',background:'transparent',border:'1px solid var(--border)',borderRadius:7,color:'var(--text)',fontSize:12.5,cursor:'pointer',fontFamily:'inherit'}}>취소</button>
+        <button onClick={save} disabled={!!busy} style={{padding:'8px 18px',background:'var(--primary)',border:'none',borderRadius:7,color:'#fff',fontSize:12.5,fontWeight:600,cursor:busy?'default':'pointer',fontFamily:'inherit',opacity:busy?.6:1}}>저장</button>
+      </div>
+    </ManualModalFrame>
+  );
+}
+
+function ManualDetailModal({doc, facets, canEdit, canDelete, onClose, onEdit, onDeleted}){
+  const [url,setUrl] = useState(null);
+  const [versions,setVersions] = useState([]);
+  const [busy,setBusy] = useState(false);
+  const ext = manualExt(doc.file_name);
+  const isPdf = ext==='pdf'; const isImg = ['png','jpg','jpeg','gif','webp'].includes(ext);
+  useEffect(()=>{
+    let alive = true;
+    (async ()=>{
+      if(doc.kind==='file' && doc.storage_path && (isPdf || isImg)){
+        const {data,error} = await sb.storage.from('manuals').createSignedUrl(doc.storage_path, 600);
+        if(!alive) return;
+        if(sbFail('메뉴얼 파일 열기', error)) return;
+        setUrl(data && data.signedUrl);
+      }
+      const {data:v} = await sb.from('manual_doc_versions').select('*').eq('doc_id', doc.id).order('replaced_at',{ascending:false});
+      if(alive) setVersions(v||[]);
+    })();
+    return ()=>{ alive = false; };
+  },[doc.id]);
+  const download = async (path, name)=>{
+    const {data,error} = await sb.storage.from('manuals').createSignedUrl(path, 120, {download: name || true});
+    if(sbFail('파일 받기', error)) return;
+    window.open(data.signedUrl, '_blank', 'noopener');
+  };
+  const del = async ()=>{
+    if(!confirm(`«${doc.title}» 을(를) 삭제할까요?\n이전 파일까지 함께 지워지고 되돌릴 수 없습니다.`)) return;
+    setBusy(true);
+    const paths = [doc.storage_path].concat(versions.map(v=>v.storage_path)).filter(Boolean);
+    const {data,error} = await sb.from('manual_docs').delete().eq('id', doc.id).select('id');
+    if(sbFail('메뉴얼 삭제', error, {write:true})){ setBusy(false); return; }
+    if(!data || !data.length){ toast('권한이 없어 삭제되지 않았습니다.','error'); setBusy(false); return; }
+    // ★ 기록을 먼저 지우고 파일을 치운다 — 파일 치우기가 실패해도 목록에는 안 남는다.
+    if(paths.length){ const r = await sb.storage.from('manuals').remove(paths); if(r.error) console.error('[메뉴얼 파일 치우기] 실패:', r.error); }
+    toast('삭제했습니다.','success');
+    onDeleted();
+  };
+  const cl = MANUAL_CONTENT_LABEL[doc.content_status] || MANUAL_CONTENT_LABEL.unsupported;
+  const meta = {display:'grid',gridTemplateColumns:'96px 1fr',gap:'6px 10px',fontSize:12,color:'var(--text)',marginBottom:14};
+  const k = {color:'var(--sub)'};
+  const btn = (primary)=>({padding:'7px 14px',borderRadius:7,fontSize:12,fontFamily:'inherit',fontWeight:600,cursor:'pointer',
+    border: primary?'none':'1px solid var(--border)', background: primary?'var(--primary)':'transparent', color: primary?'#fff':'var(--text)'});
+  return (
+    <ManualModalFrame title={doc.title} onClose={onClose} width={isPdf||isImg?980:720}>
+      {doc.description && <div style={{fontSize:12.5,color:'var(--text)',marginBottom:12,whiteSpace:'pre-wrap'}}>{doc.description}</div>}
+      <div style={meta}>
+        {facets.map(f=>((doc.facets||{})[f.key]||[]).length ? (
+          <React.Fragment key={f.key}><span style={k}>{f.label}</span><span>{(doc.facets[f.key]).join(' · ')}</span></React.Fragment>
+        ) : null)}
+        {(doc.tags||[]).length>0 && <><span style={k}>태그</span><span>{doc.tags.map(t=>'#'+t).join(' ')}</span></>}
+        <span style={k}>형식</span><span>{manualKindLabel(doc)}{doc.file_size ? ' · '+manualSize(doc.file_size) : ''} · <span style={{color:cl.c}}>{cl.t}</span></span>
+        <span style={k}>보기 권한</span><span>{(doc.view_roles||[]).join(' · ')}</span>
+        <span style={k}>확인 기준일</span><span>{doc.checked_at||'—'}{manualStale(doc) && <span style={{color:'var(--warn-ink)',fontWeight:600,marginLeft:6}}>확인 필요</span>}</span>
+        <span style={k}>수정</span><span>{String(doc.updated_at||'').slice(0,16).replace('T',' ')} · {csShortUser(doc.updated_by||doc.created_by)}</span>
+      </div>
+
+      <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
+        {doc.kind==='link'
+          ? <button style={btn(true)} onClick={()=>window.open(doc.link_url,'_blank','noopener')}>↗ 링크 열기</button>
+          : <button style={btn(true)} onClick={()=>download(doc.storage_path, doc.file_name)}>⬇ 파일 받기</button>}
+        {canEdit && <button style={btn(false)} onClick={onEdit}>수정</button>}
+        {canDelete && <button style={{...btn(false),color:'var(--red-ink)',borderColor:'rgba(248,113,113,.45)'}} disabled={busy} onClick={del}>삭제</button>}
+      </div>
+
+      {doc.kind==='file' && (isPdf || isImg) && (
+        url ? (isPdf
+          ? <iframe src={url} title={doc.title} style={{width:'100%',height:'68vh',border:'1px solid var(--border)',borderRadius:8,background:'#fff'}}/>
+          : <img src={url} alt={doc.title} style={{maxWidth:'100%',border:'1px solid var(--border)',borderRadius:8}}/>)
+        : <div style={{padding:30,textAlign:'center',color:'var(--sub)',fontSize:12}}>미리보기를 불러오는 중…</div>
+      )}
+      {doc.kind==='file' && !isPdf && !isImg && (
+        <div style={{padding:'14px',fontSize:12,color:'var(--sub)',background:'var(--bg)',borderRadius:8}}>
+          이 형식({manualKindLabel(doc)})은 콘솔 안에서 바로 보기가 안 됩니다 — [파일 받기] 로 열어 주세요.
+        </div>
+      )}
+
+      {versions.length>0 && (
+        <div style={{marginTop:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:6}}>이전 파일 {versions.length}개</div>
+          {versions.map(v=>(
+            <div key={v.id} style={{display:'flex',alignItems:'center',gap:8,fontSize:11.5,color:'var(--sub)',padding:'5px 0',borderTop:'1px solid var(--border)'}}>
+              <span style={{flex:1,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text)'}}>{v.file_name||'(이름 없음)'}</span>
+              <span>{manualSize(v.file_size)}</span>
+              <span>{String(v.replaced_at||'').slice(0,10)} 교체 · {csShortUser(v.replaced_by)}</span>
+              <button style={{...btn(false),padding:'3px 9px',fontSize:11}} onClick={()=>download(v.storage_path, v.file_name)}>받기</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </ManualModalFrame>
+  );
+}
+
+// ── 분류 설정 (master) — 항목·값을 제니가 직접 더한다 ─────────────────────────
+function ManualFacetsTab({facets, row, currentUserEmail, onSaved}){
+  const [list,setList] = useState(()=>JSON.parse(JSON.stringify(facets)));
+  const [adding,setAdding] = useState({});       // {항목키: 입력 중인 값}
+  const [newLabel,setNewLabel] = useState('');
+  const [busy,setBusy] = useState(false);
+  const [usage,setUsage] = useState({});         // {항목키|값: 쓰는 메뉴얼 수}
+  useEffect(()=>{
+    (async ()=>{
+      const {data} = await sb.from('manual_docs').select('facets');
+      const m = {};
+      (data||[]).forEach(d=>Object.entries(d.facets||{}).forEach(([k,vs])=>(vs||[]).forEach(v=>{ m[k+'|'+v]=(m[k+'|'+v]||0)+1; m[k]=(m[k]||0)+1; })));
+      setUsage(m);
+    })();
+  },[]);
+  const dirty = JSON.stringify(list) !== JSON.stringify(facets);
+  const upd = (i, fn)=> setList(p=>p.map((x,j)=> j===i ? fn({...x, values:[...(x.values||[])]}) : x));
+  const move = (arr, i, d)=>{ const a=[...arr]; const j=i+d; if(j<0||j>=a.length) return a; [a[i],a[j]]=[a[j],a[i]]; return a; };
+  const addValue = (i)=>{
+    const fc = list[i]; const v = String(adding[fc.key]||'').trim();
+    if(!v) return;
+    if((fc.values||[]).indexOf(v)>=0){ toast('이미 있는 값입니다.','warn'); return; }
+    upd(i, x=>({...x, values:x.values.concat([v])}));
+    setAdding(p=>({...p,[fc.key]:''}));
+  };
+  const save = async ()=>{
+    if(list.some(x=>!String(x.label||'').trim())){ toast('이름이 빈 항목이 있습니다.','warn'); return; }
+    setBusy(true);
+    const ok = await csSaveSetting('manual_facets', list.map(x=>({key:x.key,label:x.label.trim(),values:x.values||[]})), currentUserEmail);
+    setBusy(false);
+    if(ok){ toast('분류 설정을 저장했습니다.','success'); onSaved(); }
+  };
+  const inp = {fontSize:12,padding:'6px 9px',background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit'};
+  const small = {padding:'3px 8px',fontSize:11,borderRadius:5,border:'1px solid var(--border)',background:'transparent',color:'var(--sub)',cursor:'pointer',fontFamily:'inherit'};
+  return (
+    <div style={{maxWidth:820,marginTop:6}}>
+      <CsSetNote>
+        메뉴얼을 나누는 <b>항목</b>(예: 분류 · 대상 도구)과 각 항목의 <b>값</b>을 정합니다. 항목도 새로 더할 수 있습니다.
+        <br/>★ 값을 지워도 이미 그 값이 붙은 메뉴얼에서는 사라지지 않고 흐리게 남습니다(목록에서 «지워진 값» 으로 보입니다).
+        <br/>★ 항목 이름을 바꿔도 메뉴얼에 붙은 값은 그대로입니다 — 속으로는 바뀌지 않는 열쇠로 이어져 있습니다.
+      </CsSetNote>
+      {list.map((fc,i)=>(
+        <div key={fc.key} style={{border:'1px solid var(--border)',borderRadius:8,background:'var(--card)',padding:'12px 14px',marginBottom:10}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,flexWrap:'wrap'}}>
+            <span style={{fontSize:11,color:'var(--sub)'}}>항목 이름</span>
+            <input style={{...inp,width:180,fontWeight:600}} value={fc.label} onChange={e=>upd(i, x=>({...x,label:e.target.value}))}/>
+            <span style={{fontSize:11,color:'var(--sub)'}}>메뉴얼 {usage[fc.key]||0}개가 씀</span>
+            <span style={{flex:1}}/>
+            <button style={small} onClick={()=>setList(p=>move(p,i,-1))} disabled={i===0}>▲</button>
+            <button style={small} onClick={()=>setList(p=>move(p,i,1))} disabled={i===list.length-1}>▼</button>
+            <button style={{...small,color:'var(--red-ink)'}} onClick={()=>{
+              if(usage[fc.key] && !confirm(`«${fc.label}» 항목을 쓰는 메뉴얼이 ${usage[fc.key]}개 있습니다.\n항목을 지우면 그 값들이 목록·필터에서 보이지 않습니다. 지울까요?`)) return;
+              setList(p=>p.filter((_,j)=>j!==i));
+            }}>항목 삭제</button>
+          </div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6,alignItems:'center'}}>
+            {(fc.values||[]).map((v,vi)=>(
+              <span key={v} style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:12,padding:'3px 4px 3px 10px',borderRadius:14,border:'1px solid var(--border)',color:'var(--text)'}}>
+                {v}<span style={{fontSize:10,color:'var(--sub)'}}>{usage[fc.key+'|'+v]||''}</span>
+                <button title="앞으로" style={{...small,border:'none',padding:'0 3px'}} onClick={()=>upd(i,x=>({...x,values:move(x.values,vi,-1)}))}>‹</button>
+                <button title="뒤로" style={{...small,border:'none',padding:'0 3px'}} onClick={()=>upd(i,x=>({...x,values:move(x.values,vi,1)}))}>›</button>
+                <button title="지우기" style={{...small,border:'none',padding:'0 4px',color:'var(--red-ink)'}} onClick={()=>{
+                  const n = usage[fc.key+'|'+v];
+                  if(n && !confirm(`«${v}» 이(가) 붙은 메뉴얼이 ${n}개 있습니다. 목록에서 지울까요?\n(그 메뉴얼들에는 흐리게 남습니다)`)) return;
+                  upd(i, x=>({...x, values:x.values.filter(y=>y!==v)}));
+                }}>✕</button>
+              </span>
+            ))}
+            <input style={{...inp,width:150}} value={adding[fc.key]||''} placeholder="값 더하기 + Enter"
+              onChange={e=>setAdding(p=>({...p,[fc.key]:e.target.value}))}
+              onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addValue(i); } }}/>
+          </div>
+        </div>
+      ))}
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+        <input style={{...inp,width:200}} value={newLabel} placeholder="새 항목 이름 (예: 부서)" onChange={e=>setNewLabel(e.target.value)}
+          onKeyDown={e=>{ if(e.key==='Enter' && newLabel.trim()){ setList(p=>p.concat([{key:'f_'+Date.now().toString(36),label:newLabel.trim(),values:[]}])); setNewLabel(''); } }}/>
+        <button style={{...small,padding:'6px 12px',color:'var(--text)'}} disabled={!newLabel.trim()}
+          onClick={()=>{ setList(p=>p.concat([{key:'f_'+Date.now().toString(36),label:newLabel.trim(),values:[]}])); setNewLabel(''); }}>+ 항목 추가</button>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:9,padding:'10px 12px',background:'var(--card)',
+        border:'1px solid '+(dirty?'rgba(246,173,9,.45)':'var(--border)'),borderRadius:8}}>
+        <span style={{fontSize:11,color:'var(--sub)'}}>
+          {row===undefined ? '설정을 못 읽었습니다 — 저장하지 마세요.' : dirty ? '저장하지 않은 변경이 있습니다.' : '저장된 상태입니다.'}
+        </span>
+        <span style={{flex:1}}/>
+        <button disabled={!dirty||busy} onClick={()=>setList(JSON.parse(JSON.stringify(facets)))}
+          style={{padding:'6px 15px',borderRadius:7,fontSize:12,fontFamily:'inherit',fontWeight:600,cursor:'pointer',border:'1px solid var(--border)',background:'transparent',color:'var(--sub)'}}>되돌리기</button>
+        <button disabled={!dirty||busy||row===undefined} onClick={save}
+          style={{padding:'6px 15px',borderRadius:7,fontSize:12,fontFamily:'inherit',fontWeight:600,cursor:'pointer',border:'none',background:'var(--primary)',color:'#fff',opacity:(!dirty||busy||row===undefined)?.5:1}}>저장</button>
+      </div>
+    </div>
+  );
+}
+
 function NoAccessPage(){
   return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',padding:'40px 20px',textAlign:'center'}}>
@@ -29959,6 +30622,8 @@ const CS_MENU_DEFS = [
   {id:'csStats',       g:'CS 관리',   label:'통계',             base:['master']},
   {id:'csSettings',    g:'CS 관리',   label:'설정',             base:['master'], rls:true},
   {id:'refunds',       label:'환불 관리',        base:['master'], rls:true},
+  // ★ 메뉴얼 관리(2026-09-14) — 실무자가 찾아보는 곳이라 기본 전원. 메뉴얼마다 보기 권한은 따로(view_roles).
+  {id:'manuals',       label:'메뉴얼 관리',      base:['master','manager','crew'], rls:true},
   {id:'costs',         label:'비용 비교 도구',   base:['master']},
   {id:'auditLog',      label:'변경 이력',        base:['master'], rls:true},
   {id:'agents',        label:'인력 관리',        base:['master']},
@@ -30051,6 +30716,10 @@ const CS_ACTION_DEFS = [
   {id:'autoDelivery.send', menu:'디지털 상품 발송', label:'메일 발송', guard:'fn',
    hint:'[발송] · [재발송] — 실제 고객에게 나간다',
    base:['master','manager']},
+  {id:'manuals.edit', menu:'메뉴얼 관리', label:'메뉴얼 등록 · 수정', guard:'db',
+   hint:'[+ 메뉴얼 등록] · 상세의 [수정] (파일 올리기 포함)', base:['master','manager']},
+  {id:'manuals.delete', menu:'메뉴얼 관리', label:'메뉴얼 삭제', guard:'db',
+   hint:'상세의 [삭제] — 이전 파일까지 지워지고 되돌릴 수 없다', base:['master']},
   {id:'refunds.create', menu:'환불 관리', label:'환불 만들기', guard:'db',
    hint:'[+ 환불 추가] · CS 티켓의 [환불 요청 하기]', base:['master']},
   {id:'refunds.delete', menu:'환불 관리', label:'환불 삭제', guard:'db',
@@ -30071,7 +30740,7 @@ const PAGE_LABELS = {
   products:'상품 관리', delays:'배송지연', suppliers:'공급사',
   autoDelivery:'자동발송', refunds:'환불 관리', costs:'비용 비교 도구', agents:'인력 관리',
   csTickets:'CS 관리', csNew:'새 티켓', csTicket:'티켓 상세', csSettings:'CS 설정',
-  csDraft:'공급사 접수 문안', csStats:'CS 통계',
+  csDraft:'공급사 접수 문안', csStats:'CS 통계', manuals:'메뉴얼 관리',
 };
 
 // ── 화면별 에러 경계 ──────────────────────────────────────────────────
@@ -31863,6 +32532,15 @@ function App() {
             </div>
           )}
 
+          {/* 메뉴얼 관리 (2026-09-14) — 자체 화면이 있는 1뎁스. 2단계(지식 창고)는 화면 안의 탭으로 더한다. */}
+          {canMenu('manuals') && (
+            <div className="nav-parent" onClick={()=>navigateTo('manuals')}
+              title={navCollapsed?'메뉴얼 관리':undefined}
+              style={page==='manuals' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}>
+              <span style={{width:16,display:'inline-block',textAlign:'center',fontSize:14,lineHeight:1}}>📚</span><span className="nav-label">메뉴얼 관리</span><RoleTag on={masterOnly('manuals')}/>
+            </div>
+          )}
+
           {/* 부모: 비용 비교 — 자식은 도구 안의 프로젝트 목록이다(누가 보나는 설정이 정한다) */}
           {canMenu('costs') && (
             <div className="nav-group">
@@ -32096,6 +32774,7 @@ function App() {
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='csStats'&&(canMenu('csStats')?<CsStatsPage/>:<NoAccessPage/>)}
+        {page==='manuals'&&(canMenu('manuals')?<ManualsPage currentUserEmail={session.user.email} role={role} can={canAction}/>:<NoAccessPage/>)}
         {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket} can={canAction}/>:<NoAccessPage/>)}
         {page==='costs'&&(canMenu('costs')?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&canMenu('agentAnalysis')&&<AgentAnalysisPage/>}
