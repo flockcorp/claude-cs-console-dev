@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260914i_stats_supplier_lead -->
+<!-- v20260914j_delay_option_preview -->
+<!-- (2026-09-14) **배송지연 알림 — 미리보기·테스트 발송의 «옵션» 이 실제 발송과 다르게 보이던 것**(제니: 「옵션 여러 개 선택한 경우 미리보기에 옵션이 “단일 옵션” 으로 표기돼 · 실제 발송은 고객 옵션명이 맞지?」). ★ 실제 발송(notify-blast)은 **맞게 돌고 있었다** — 발송마다 카페24 주문 품목의 옵션을 읽어 `#{옵션명}` 에 넣고, 못 읽을 때만 등록 스냅샷(«단일 옵션»)으로 채운다. 틀린 것은 **보여 주는 두 자리**였다. ①**미리보기** — «전체 옵션» 이면 «단일 옵션» 이라는 «글자» 를 넣었다. 실제로는 고객마다 다른 옵션이 들어가는 자리인데 고정 문구처럼 보였다. → 다른 치환 값({고객명}·{주문번호})과 같은 **보라 변수 표시 `{옵션명}`** 으로. 그 아래 «{변수} 는 발송 시 실제 주문 데이터로 치환» 안내가 이미 있어 뜻이 바로 읽힌다. 수정 모드도 옵션 구분 없는 행(variant_code 없음)이면 같다. ★ 옵션을 골랐으면 예전처럼 첫 옵션 이름을 보여 준다(발송 때도 그 옵션 주문만 가므로 이름이 같다). ②🔴 **테스트 발송은 옵션을 골라도 늘 «단일 옵션» 이었다** — `csDelayTestOption` 이 고른 옵션을 `codes[0]` 으로 꺼냈는데 **넘어오는 값이 배열이 아니라 Set** 이라 늘 undefined → 빈 값 → 함수가 «단일 옵션» 으로 채웠다. **Set 에는 [0] 이 없다 — 오류 없이 undefined 가 나와 조용히 틀린다.** → `Array.from` 으로. 또 셋째 인자 `allVariants`(참/거짓)를 «옵션 목록» 으로 쓰던 자리가 있어 뜻대로 고쳤다. «전체 옵션» 이면 **「(고객이 주문한 옵션명)」** 을 담아 보낸다 — 받은 문자에서 «실제로는 여기 고객 옵션이 들어간다» 가 읽혀야 한다. ★ 함수는 안 건드렸다(보내 온 글자를 그대로 쓴다) — 배포 없음. ★ dev 전용. -->
 <!-- (2026-09-14) **CS 통계 — «공급사별 처리 시간» 표**(제니: 「담당자별 평균 처리 시간 말고 공급사별 평균 처리 시간도 보고 싶어」). 담당자별 표와 같은 모양(접수·종결·진행 중·철회·평균·중앙값)에 **«가장 오래»** 한 칸을 더했다. ★★ **기본 정렬은 «평균 처리 시간이 긴 차례»** — 이 표가 생긴 까닭이 09-11 의 «리체크를 가장 많이 연장한 공급사» 를 제니가 «처리 시간으로 보면 된다» 로 바꾼 것이라, **오래 걸리는 공급사가 맨 위**에 서야 그 질문의 답이 된다. 머리글을 누르면 그 칸으로 다시 정렬한다(또 누르면 방향이 뒤집힌다). ★ **종결이 한 건도 없는 공급사는 평균이 «없음» 이라 늘 맨 아래**다 — 0 으로 치면 «가장 빠른 공급사» 로 올라가 거짓말이 된다. ★ 위 «공급사별» 막대 줄에도 평균이 적혀 있지만 그건 «건수 차례» 라 처리 시간끼리 견주기가 어렵다 — 표는 견주는 자리다. ★ 줄을 누르면 그 공급사로 좁혀진다(막대와 같다). 10곳이 넘으면 [전체 보기]. ★ dev 전용. -->
 <!-- (2026-09-14) **CS 통계 — 앞 판의 «어긋난 상품을 푸는» 장치를 걷어냈다**(제니 정정: 「상품을 골라 둔 상태면 다른 공급사 막대는 누를 수가 없잖아」). ★★★ **맞다 — 필터는 화면 «전체» 를 좁히므로 상품을 고르면 공급사별 막대에는 그 상품의 공급사만 남는다.** 내가 막으려던 길(막대로 다른 공급사를 고르기)은 처음부터 없었다. ★★ **없는 길을 막는 코드는 해가 없는 게 아니다** — 그 장치는 «공급사·상품 짝이 기간 안에 없으면 상품을 푼다» 였는데, 실제로 그 조건이 서는 때는 **기간을 바꿔서 그 짝이 사라질 때**뿐이고, 그러면 공급사는 남기고 상품만 조용히 풀어 «왜 상품 선택이 없어졌지» 를 만든다. 짝이 사라지면 «필터에 맞는 티켓이 없습니다» 가 뜨는 편이 정직하다. ★ 막대가 이미 좁혀진 목록에서 그려진다는 것을 **확인하고 나서 막을 자리를 정했어야 했다.** ★ dev 전용. -->
 <!-- (2026-09-14) **CS 통계 — 공급사를 고르면 상품 검색 목록에는 «그 공급사의 상품만»**(제니: 「a 공급사 검색 후 b 공급사의 상품 c 를 고르는 경우가 생기는데 그러면 결과가 안 나온다」). ★★★ **두 칸이 «각자» 목록을 뽑고 있었다** — 둘 다 «기간 안의 모든 티켓» 에서 뽑아, 서로 맞지 않는 짝을 고를 수 있었고 그 짝은 늘 0건이다. **고를 수 있는데 고르면 빈 화면이 되는 선택지는 선택지가 아니다.** → 상품 목록은 «고른 공급사 안에서» 뽑는다. ★ 반대쪽도 같게 했다 — 상품을 먼저 고르면 공급사 목록에는 그 상품의 공급사만 뜬다(한쪽만 막으면 순서를 바꿔 같은 빈 화면에 닿는다). 목록 옆 건수도 좁힌 안에서 센다. ★★ **이미 고른 상품이 새 공급사와 안 맞으면 상품을 비운다** — 공급사는 검색 칸 말고도 «공급사별 막대» 를 눌러 바뀌는데, 그 길로는 목록 거르기가 안 통한다. 가장 나중에 고른 것(공급사)을 살리고 어긋난 상품을 푼다. ★ dev 전용. -->
@@ -11247,12 +11248,17 @@ function csDelayTestMsg(phone){
 // ★ 테스트 본문에 넣을 «옵션명» — 고른 옵션이 있으면 첫 것을, 없으면 비운다.
 //   ★★ 여러 개를 이어 붙이지 않는다: 실제 발송은 «한 주문에 한 옵션» 이라,
 //     테스트에서 여러 개를 보여 주면 실제와 다른 모양을 확인하는 셈이 된다.
+// 테스트 발송의 «옵션» 글자 (2026-09-14 고침)
+// ★ 실제 발송은 고객 주문의 옵션명이 들어간다 — «전체 옵션» 이면 그 사실을 글자로 보낸다.
+// 🔴 codes 는 Set 이다 — [0] 이 없어 늘 undefined 였고, 그래서 늘 «단일 옵션» 이 나갔다.
+const CS_DELAY_OPTION_BY_ORDER = '(고객이 주문한 옵션명)';
 function csDelayTestOption(codes, variants, allVariants){
-  const list = (variants && variants.length ? variants : (allVariants||[]));
-  const first = (codes||[])[0];
-  if(!first) return '';
-  const v = (list||[]).find(x=>x && (x.variant_code===first || x.code===first));
-  return v ? String(v.option_text || v.option_name || v.label || '') : '';
+  if(allVariants || !variants || !variants.length) return CS_DELAY_OPTION_BY_ORDER;
+  const first = Array.from(codes||[])[0];
+  if(!first) return CS_DELAY_OPTION_BY_ORDER;
+  const v = variants.find(x=>x && (x.variant_code===first || x.code===first));
+  return v ? String(v.option_text || v.option_name || v.label || '') || CS_DELAY_OPTION_BY_ORDER
+           : CS_DELAY_OPTION_BY_ORDER;
 }
 function DelayAddModal({ editingRow, onClose, onSaved }){
   const isEdit = !!editingRow;
@@ -13946,12 +13952,14 @@ function DelayAlimtalkPreview({ selectedProduct, variants, selectedVariantCodes,
   const isEdit = !!editingRow;
   // 미리보기에 표시할 옵션 텍스트 (Q2의 c 안: 첫 선택 옵션만 표시)
   const previewOption = (()=>{
+    // ★ 옵션 구분 없이(전체 옵션) 보내면 고객마다 제 주문 옵션이 들어간다 — 고정 글자가 아니라
+    //   다른 치환 값과 같은 «변수» 로 보여 준다(2026-09-14 제니). 예전엔 «단일 옵션» 이라 적었다.
     if(isEdit){
-      // 편집 모드: editingRow의 옵션 그대로
-      return editingRow.option_text_snapshot || '단일 옵션';
+      if(!editingRow.variant_code) return '{옵션명}';
+      return editingRow.option_text_snapshot || '{옵션명}';
     }
     if(!selectedProduct) return '{옵션}';
-    if(allVariants || variants.length===0) return '단일 옵션';
+    if(allVariants || variants.length===0) return '{옵션명}';
     if(selectedVariantCodes.size===0) return '{옵션}';
     const firstSelected = Array.from(selectedVariantCodes)[0];
     const v = variants.find(x=>x.variant_code===firstSelected);
