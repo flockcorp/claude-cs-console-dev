@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260914h_stats_drop_dead_guard -->
+<!-- v20260914i_stats_supplier_lead -->
+<!-- (2026-09-14) **CS 통계 — «공급사별 처리 시간» 표**(제니: 「담당자별 평균 처리 시간 말고 공급사별 평균 처리 시간도 보고 싶어」). 담당자별 표와 같은 모양(접수·종결·진행 중·철회·평균·중앙값)에 **«가장 오래»** 한 칸을 더했다. ★★ **기본 정렬은 «평균 처리 시간이 긴 차례»** — 이 표가 생긴 까닭이 09-11 의 «리체크를 가장 많이 연장한 공급사» 를 제니가 «처리 시간으로 보면 된다» 로 바꾼 것이라, **오래 걸리는 공급사가 맨 위**에 서야 그 질문의 답이 된다. 머리글을 누르면 그 칸으로 다시 정렬한다(또 누르면 방향이 뒤집힌다). ★ **종결이 한 건도 없는 공급사는 평균이 «없음» 이라 늘 맨 아래**다 — 0 으로 치면 «가장 빠른 공급사» 로 올라가 거짓말이 된다. ★ 위 «공급사별» 막대 줄에도 평균이 적혀 있지만 그건 «건수 차례» 라 처리 시간끼리 견주기가 어렵다 — 표는 견주는 자리다. ★ 줄을 누르면 그 공급사로 좁혀진다(막대와 같다). 10곳이 넘으면 [전체 보기]. ★ dev 전용. -->
 <!-- (2026-09-14) **CS 통계 — 앞 판의 «어긋난 상품을 푸는» 장치를 걷어냈다**(제니 정정: 「상품을 골라 둔 상태면 다른 공급사 막대는 누를 수가 없잖아」). ★★★ **맞다 — 필터는 화면 «전체» 를 좁히므로 상품을 고르면 공급사별 막대에는 그 상품의 공급사만 남는다.** 내가 막으려던 길(막대로 다른 공급사를 고르기)은 처음부터 없었다. ★★ **없는 길을 막는 코드는 해가 없는 게 아니다** — 그 장치는 «공급사·상품 짝이 기간 안에 없으면 상품을 푼다» 였는데, 실제로 그 조건이 서는 때는 **기간을 바꿔서 그 짝이 사라질 때**뿐이고, 그러면 공급사는 남기고 상품만 조용히 풀어 «왜 상품 선택이 없어졌지» 를 만든다. 짝이 사라지면 «필터에 맞는 티켓이 없습니다» 가 뜨는 편이 정직하다. ★ 막대가 이미 좁혀진 목록에서 그려진다는 것을 **확인하고 나서 막을 자리를 정했어야 했다.** ★ dev 전용. -->
 <!-- (2026-09-14) **CS 통계 — 공급사를 고르면 상품 검색 목록에는 «그 공급사의 상품만»**(제니: 「a 공급사 검색 후 b 공급사의 상품 c 를 고르는 경우가 생기는데 그러면 결과가 안 나온다」). ★★★ **두 칸이 «각자» 목록을 뽑고 있었다** — 둘 다 «기간 안의 모든 티켓» 에서 뽑아, 서로 맞지 않는 짝을 고를 수 있었고 그 짝은 늘 0건이다. **고를 수 있는데 고르면 빈 화면이 되는 선택지는 선택지가 아니다.** → 상품 목록은 «고른 공급사 안에서» 뽑는다. ★ 반대쪽도 같게 했다 — 상품을 먼저 고르면 공급사 목록에는 그 상품의 공급사만 뜬다(한쪽만 막으면 순서를 바꿔 같은 빈 화면에 닿는다). 목록 옆 건수도 좁힌 안에서 센다. ★★ **이미 고른 상품이 새 공급사와 안 맞으면 상품을 비운다** — 공급사는 검색 칸 말고도 «공급사별 막대» 를 눌러 바뀌는데, 그 길로는 목록 거르기가 안 통한다. 가장 나중에 고른 것(공급사)을 살리고 어긋난 상품을 푼다. ★ dev 전용. -->
 <!-- (2026-09-14) **CS 통계 — 제니 피드백 넷.** ①**기간 칩을 고르면 그 칩에 색**이 선다. ★ 고른 칩을 «기억» 하지 않고 **지금 날짜에서 거꾸로 알아낸다** — 날짜를 손으로 바꾸면 칩 불이 저절로 꺼지고, 손으로 넣은 날짜가 우연히 «지난 달» 과 같으면 그 칩에 불이 들어온다. 기억해 두면 날짜와 칩이 서로 다른 말을 하는 순간이 생긴다. ②**공급사를 글자로 찾아 고른다**(목록에 없는 값은 못 넣는다). ③**상품도 같게 — 상품명 또는 상품 코드로 찾는다.** ★★ 새 칸을 만들지 않고 **이미 있는 `CsPick`**(티켓 등록의 유형·방향이 쓰는 «찾아서 고르기, 직접 입력 없음» 칸)을 썼다. 상품은 «보여 주는 이름» 과 «고르는 값(코드)» 과 «찾는 글자(이름+코드)» 가 달라서 `labelOf`·`searchOf`·`metaOf` 를 **선택 인자로** 열었다 — 안 넘기면 예전과 똑같이 돈다(기존 다섯 자리는 한 글자도 안 바뀐다). 목록 오른쪽에 건수(와 상품 코드)를 흐리게 적는다. ④그래프 이름 «유형 비중» → **«접수 유형»** · «방향 비중» → **«처리 방향»**. ★ dev 전용. -->
@@ -20262,6 +20263,9 @@ function CsStatsPage(){
   const [f,setF] = useState({supplier:'', product:'', type:'', direction:''});
   const [allSup,setAllSup]   = useState(false);
   const [allProd,setAllProd] = useState(false);
+  // 공급사별 처리 시간 표 — 기본은 «평균이 긴 차례»(오래 걸리는 공급사가 맨 위)
+  const [leadSort,setLeadSort] = useState({key:'avg', dir:-1});
+  const [allLead,setAllLead]   = useState(false);
   const setFilter = (k,v)=> setF(p=>({...p,[k]: p[k]===v ? '' : v}));   // 같은 것을 또 누르면 푼다
 
   // 기간 칩 → [시작, 끝]. ★ 고른 칩은 기억하지 않고 «지금 날짜와 같은 칩» 에 불을 켠다 —
@@ -20371,7 +20375,11 @@ function CsStatsPage(){
     return Object.entries(m).map(([key,arr])=>{
       const byType = {}; arr.forEach(t=>{ byType[t.cs_type]=(byType[t.cs_type]||0)+1; });
       return {key, label:labelFn(key), count:arr.length, byType, lead:csStatLeads(arr),
-              open:arr.filter(t=>t.stage!=='closed'&&t.stage!=='withdrawn').length};
+              open:arr.filter(t=>t.stage!=='closed'&&t.stage!=='withdrawn').length,
+              closed:arr.filter(t=>t.stage==='closed').length,
+              withdrawn:arr.filter(t=>t.stage==='withdrawn').length,
+              longest:arr.filter(t=>t.stage==='closed'&&t.closed_at)
+                .reduce((m,t)=>Math.max(m, new Date(t.closed_at)-new Date(t.created_at)), -1)};
     }).sort((a,b)=>b.count-a.count || a.label.localeCompare(b.label,'ko'));
   };
   const supRank  = groupRank(supOf, k=>k);
@@ -20623,6 +20631,65 @@ function CsStatsPage(){
             <RankList rank={prodRank} fkey="product" all={allProd} setAll={setAllProd} unitName="개"/>
           </div>
         </div>
+
+        {/* 공급사별 처리 시간 (2026-09-14) */}
+        {(()=>{
+          const val = (r,k)=> k==='avg' ? r.lead.avg : k==='median' ? r.lead.median
+            : k==='longest' ? (r.longest>=0 ? r.longest : null) : r[k];
+          const sorted = supRank.slice().sort((a,b)=>{
+            const x = val(a,leadSort.key), y = val(b,leadSort.key);
+            // ★ 값이 없는(종결 0건) 공급사는 방향과 상관없이 맨 아래 — 0 으로 치면 «가장 빠름» 이 된다
+            if(x==null && y==null) return b.count-a.count;
+            if(x==null) return 1;
+            if(y==null) return -1;
+            if(typeof x==='string') return x.localeCompare(y,'ko')*leadSort.dir;
+            return (x-y)*leadSort.dir || b.count-a.count;
+          });
+          const shown = allLead ? sorted : sorted.slice(0,10);
+          const head = (k,l,left)=>(
+            <th key={k} onClick={()=>setLeadSort(p=>({key:k, dir:p.key===k ? -p.dir : (k==='label' ? 1 : -1)}))}
+              style={{...th,textAlign:left?'left':'right',cursor:'pointer',userSelect:'none'}}>
+              {l}{leadSort.key===k ? (leadSort.dir<0 ? ' ▼' : ' ▲') : ''}</th>
+          );
+          return (
+            <div style={{...card,marginBottom:16}}>
+              <div style={title}>공급사별 처리 시간
+                <span style={note}>생성 → 종결 · 머리글을 누르면 정렬 · 줄을 누르면 그 공급사로 좁혀집니다</span></div>
+              <div style={{overflowX:'auto'}}>
+                <table style={{borderCollapse:'collapse',width:'100%'}}>
+                  <thead><tr>
+                    {head('label','공급사',true)}{head('count','접수')}{head('closed','종결')}
+                    {head('open','진행 중')}{head('withdrawn','철회')}
+                    {head('avg','평균 처리 시간')}{head('median','중앙값')}{head('longest','가장 오래')}
+                  </tr></thead>
+                  <tbody>
+                    {shown.map(r=>(
+                      <tr key={r.key} className="cs-stat-row" onClick={()=>setFilter('supplier', r.key)}
+                        style={{background:f.supplier===r.key?'var(--hover)':undefined}}>
+                        <td style={{...td,textAlign:'left',fontWeight:600,maxWidth:260,overflow:'hidden',textOverflow:'ellipsis'}}
+                          title={r.label}>{r.label}</td>
+                        <td style={td}>{r.count}</td>
+                        <td style={{...td,color:'var(--ok-ink)'}}>{r.closed}</td>
+                        <td style={{...td,color:r.open?'var(--warn-ink)':'var(--sub)'}}>{r.open}</td>
+                        <td style={{...td,color:'var(--sub)'}}>{r.withdrawn}</td>
+                        <td style={{...td,fontWeight:700}}>{r.lead.n ? csStatLead(r.lead.avg) : <span style={{color:'var(--sub)',fontWeight:400}}>종결 없음</span>}</td>
+                        <td style={{...td,color:'var(--sub)'}}>{csStatLead(r.lead.median)}</td>
+                        <td style={{...td,color:'var(--sub)'}}>{r.longest>=0 ? csStatLead(r.longest) : '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {sorted.length>10 && (
+                <button onClick={()=>setAllLead(!allLead)}
+                  style={{marginTop:8,fontSize:11,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',
+                    borderRadius:6,color:'var(--sub)',cursor:'pointer',fontFamily:'inherit'}}>
+                  {allLead ? '10곳만 보기' : `전체 ${sorted.length}곳 보기`}
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* 담당자 */}
         <div style={card}>
