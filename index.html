@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260914a_auto_delivery_hold -->
+<!-- v20260914b_attendance_memo_and_order -->
+<!-- (2026-09-14) **근태 관리 둘 + 인원 목록 하나**(제니). ①**«기타» 메모칸에 마우스를 올리면 전문**이 뜬다 — 칸이 날짜 폭이라 몇 글자만 보였다. ②**월별 집계의 «기타» 일수에 마우스를 올리면 「날짜 : 내용」** 이 날짜 차례로 뜬다(집계는 되는데 무슨 일이었는지 볼 길이 없었다). 둘 다 `title=` 이다 — 콘솔의 마우스오버 툴팁 규칙(「?」만 CsHint · 값은 title). **«안내» 가 아니라 «값» 이라 칸에 붙인다.** 메모가 있는 일수에만 점선 밑줄을 그어 «올려 볼 게 있다» 를 알린다(title 은 올려 보기 전엔 있는지 모른다). ③**근태 표의 행 · 인원 목록의 재직 인원을 끌어서 순서 바꾸기**(이름 왼쪽 ≡ 를 잡고 행을 끈다). ★★★ **순서를 어디에 남기나 — 이미 답이 있었다: `agents.sort_order`.** 두 화면(과 데이터 입력)이 원래 이 칸으로 정렬하고 있었고, 없던 것은 «바꾸는 손잡이» 뿐이었다. 그래서 **어느 화면에서 끌어도 같은 순서가 바뀐다** — 한 사람의 취향이 아니라 팀의 명단 차례라 localStorage 가 아니라 DB 가 맞다. ★★ **놓는 즉시 저장한다**(저장 단추 없음) — 근태 표에는 이미 «근태 저장» 단추가 있어, 순서까지 그 단추에 묶으면 «순서만 바꿨는데 저장을 눌러야 하나» 가 생긴다. ★★★ **근태 표에서 순서를 바꿔도 다시 읽지 않는다** — `load()` 가 입력 중인 근태(edits)를 비우기 때문이다. 화면의 차례만 바꾸고 DB 에 쓴다. 실패하면 **원래 차례로 되돌린다.** ★★ **RLS 로 막히면 에러가 아니라 «0행 수정» 이 온다** — `.select()` 로 돌아온 행 수를 세어 0이면 실패로 본다(에러만 보면 «바꿨습니다» 를 띄우고 새로고침하면 도로 돌아간다). agents 쓰기는 master 만이다. ★ 순서는 끄는 순간 전체를 10·20·30… 으로 다시 매긴다 — 옛 값이 겹쳐 있어도(추가할 때 `agents.length` 를 넣어 퇴사·삭제 뒤 겹칠 수 있었다) 한 번에 풀린다. 겸해 **새 인원은 «맨 뒤» 로**: 추가가 `agents.length` 를 넣고 있어 다시 매긴 뒤에는 맨 위로 튀어 올라갔을 것이다 → 가장 큰 값 +10. ★ 손잡이 방식은 CS 설정·보기 설정과 같다 — 줄 전체를 draggable 로 두면 근태 선택칸·메모칸을 누를 때도 행이 딸려 움직인다. ★ dev 전용. -->
 <!-- (2026-09-14) **디지털 상품 발송 화면에 «잠정 보류 중» 띠**(제니: 「디지털 상품 발송 기능을 지금 잠정 보류로 사용하지 않고 있어」). 같은 날 운영·dev DB 에서 자동 발송 일정(auto-delivery-poll-5min)을 «껐다» — 템플릿이 전부 꺼져 있어 할 일 없는 호출이 하루 288번 돌며 가끔 500 으로 흔들려 감시 문자만 만들고 있었다. ★★★ **보류 사실은 `console_settings.auto_delivery_hold` 한 곳에만 있다** — 이 띠와 감시 SQL(보류 일정은 «꺼져 있다» 로 경보 안 함)이 **같은 값을 읽는다.** 화면에 «보류» 를 글자로 박아 두면 재개한 날 띠만 남아 거짓말을 한다. 키가 있으면 띠, 없으면 아무것도 안 그린다(재개 SQL `auto_delivery_resume.sql` 이 키를 지운다). ★ 맥박(.alert-pulse)은 안 쓴다 — 사고가 아니라 «일부러 멈춘 상태» 를 알리는 말이다. 맥박은 사고에만 써야 뜻이 닳지 않는다. ★★ **띠에 «다시 켜는 법» 을 적었다** — 여기서 템플릿만 켜면 메일이 나갈 거라 믿기 쉬운데 일정이 꺼져 있어 **아무 일도 안 일어난다.** 반대로 준비 없이 일정부터 켜면 보류 동안 쌓인 주문에 한꺼번에 나갈 수 있다. 그래서 «템플릿을 켜도 발송되지 않는다» 를 굵게 · 재개는 순서가 있다는 것을 함께 적었다. ★ 못 읽으면 띠를 그리지 않는다(화면을 세우지 않는다). ★ dev 전용. -->
 <!-- (2026-09-11) 🔴 **라이트 모드에서 «공휴일 관리»의 [+ 등록] 글자가 안 보이던 것**(제니). 채움이 `--primary`(브랜드 남색)인데 글자가 `--accent` 로 되어 있었다. ★★★ **`--accent` 는 두 모드에서 «반대 방향» 이다** — 다크에서는 어두운 바탕 위의 밝은 하늘(#D2E5FF), 라이트에서는 밝은 바탕 위의 진한 남색(#2A478D). 그래서 라이트에서 **남색 위에 남색**이 됐다. ★★ **바탕이 모드를 안 따르면 글자도 안 따른다** — 남색을 «채운» 단추의 글자는 모드와 상관없이 흰색이다(09-07 에 `--on-accent` 를 만들며 세운 것과 같은 판단이고, 그때도 「같은 값이라고 같은 뜻이 아니다」를 적어 뒀다). ★ **같은 꼴을 전수로 훑었다** — `background:var(--primary)` 인 자리를 모두 재 보니 나머지는 전부 `#fff` 였고 **이 한 곳만 어긋나 있었다**(앞줄의 취소 버튼 색을 집어 «문제처럼» 보인 자리 넷은 실제로는 멀쩡했다 — 한 줄만 보고 세면 안 된다). ★ dev 전용. -->
 <!-- v20260911n_macro_chip_rows -->
@@ -1837,6 +1838,62 @@ function DashboardPage() {
 const STATUS_LIST = ['근무','연차','오전반차','오후반차','기타','휴일'];
 const STATUS_COLORS = {'근무':'var(--green)','연차':'var(--red)','오전반차':'var(--yellow)','오후반차':'var(--yellow)','기타':'var(--sub)','휴일':'var(--sub)'};
 
+// ── 인원 순서 끌기 (2026-09-14) ─────────────────────────────────────────────
+// 근태 표·인원 목록이 함께 쓴다. 순서는 agents.sort_order 하나뿐이다 — 두 화면이 그 칸으로
+// 정렬하므로 어느 쪽에서 바꿔도 같은 차례가 된다.
+// ★ 끌던 것을 빼고 «놓는 줄이 있던 자리» 에 끼운다(아래로 옮기면 그 줄 뒤, 위로면 앞).
+//   CS 설정의 차례 끌기와 같은 규칙이다.
+function agentsMoved(list, dragId, targetId){
+  const from = list.findIndex(a=>a.id===dragId), to = list.findIndex(a=>a.id===targetId);
+  if(from<0 || to<0 || from===to) return null;
+  const rest = list.filter(a=>a.id!==dragId);
+  const at = rest.findIndex(a=>a.id===targetId);
+  const idx = from < to ? at+1 : at;
+  return rest.slice(0,idx).concat([list[from]], rest.slice(idx))
+    .map((a,i)=>({...a, sort_order:(i+1)*10}));
+}
+function useAgentRowDrag(agents, setAgents){
+  const [armed,setArmed] = useState(null);   // 손잡이를 누른 줄
+  const [drag,setDrag]   = useState(null);   // 끌고 있는 줄
+  const [over,setOver]   = useState(null);   // 놓으려는 줄
+  const end = ()=>{ setArmed(null); setDrag(null); setOver(null); };
+  const drop = async (targetId)=>{
+    const prev = agents;
+    const next = agentsMoved(prev, drag, targetId);
+    end();
+    if(!next) return;
+    setAgents(next);                         // ★ 다시 읽지 않는다 — 근태 입력 중인 값이 날아간다
+    const changed = next.filter(a=>{ const o=prev.find(x=>x.id===a.id); return !o || o.sort_order!==a.sort_order; });
+    const res = await Promise.all(changed.map(a=>
+      sb.from('agents').update({sort_order:a.sort_order}).eq('id',a.id).select('id')));
+    let err = (res.find(r=>r.error)||{}).error || null;
+    // ★★ RLS 로 막히면 에러 없이 0행이 온다 — 세어 봐야 안다.
+    if(!err && res.some(r=>!r.data || r.data.length===0))
+      err = {message:'권한이 없어 순서가 바뀌지 않았습니다(인원 순서는 master 만 바꿀 수 있습니다).'};
+    if(sbFail('인원 순서 저장', err, {write:true})){ setAgents(prev); return; }
+    toast('순서를 바꿨습니다.','ok');
+  };
+  const idx = id=>agents.findIndex(a=>a.id===id);
+  const rowProps = (id)=>({
+    draggable: armed===id,
+    onDragStart: (e)=>{ setDrag(id); e.dataTransfer.effectAllowed='move';
+      try{ e.dataTransfer.setData('text/plain', String(id)); }catch(_){} },   // 파이어폭스는 데이터가 없으면 안 끌린다
+    onDragOver: (e)=>{ if(drag && drag!==id){ e.preventDefault(); setOver(id); } },
+    onDragLeave: ()=>setOver(o=>o===id?null:o),
+    onDrop: (e)=>{ e.preventDefault(); drop(id); },
+    onDragEnd: end,
+  });
+  // 놓을 자리는 «선» 으로 — 위로 옮기면 그 줄 위, 아래로면 아래.
+  const line = (id)=> (over===id && drag) ? (idx(drag)>idx(id) ? 'top' : 'bottom') : null;
+  const handle = (id)=>(
+    <span onMouseDown={()=>setArmed(id)} onMouseUp={()=>setArmed(null)}
+      title="끌어서 순서를 바꿉니다"
+      style={{cursor:'grab',color:'var(--sub)',opacity:.6,fontSize:13,padding:'0 2px',
+        userSelect:'none',lineHeight:1,flex:'0 0 auto'}}>≡</span>
+  );
+  return {rowProps, line, handle, dragging:drag};
+}
+
 function AttendancePage() {
   const todayD = new Date();
   const [year,  setYear]  = useState(todayD.getFullYear());
@@ -1850,6 +1907,7 @@ function AttendancePage() {
   const [tab,     setTab]     = useState('input');
   const [newHDay, setNewHDay] = useState('');
   const [newHName,setNewHName]= useState('');
+  const rowDrag = useAgentRowDrag(agents, setAgents);
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const days = Array.from({length:daysInMonth},(_,i)=>i+1);
@@ -1957,6 +2015,10 @@ function AttendancePage() {
       halfAM:   halfAMc,
       halfPM:   halfPMc,
       other:    recs.filter(r=>r.status==='기타').length,
+      // 「날짜 : 내용」 날짜 차례 — 마우스를 올리면 뜬다(제니 2026-09-11)
+      otherNotes: recs.filter(r=>r.status==='기타').sort((x,y)=>x.date<y.date?-1:1)
+        .map(r=>r.date.slice(5)+' : '+((r.note||'').trim()||'(메모 없음)')).join('\n'),
+      otherHasNote: recs.some(r=>r.status==='기타' && (r.note||'').trim()),
       holiday:  recs.filter(r=>r.status==='휴일').length,
       totalOT:  recs.reduce((s,r)=>s+(Number(r.ot_hours)||0),0),
     };
@@ -2032,10 +2094,16 @@ function AttendancePage() {
                     const resignYM=a.resigned_at.slice(0,7);
                     const curYM=year+'-'+pad(month);
                     return curYM<=resignYM;
-                  }).map(a=>(
-                    <tr key={a.id} style={{borderBottom:'1px solid var(--border)'}}>
-                      <td style={{padding:'6px 14px',fontWeight:600,whiteSpace:'nowrap',position:'sticky',left:0,background:'var(--card)',zIndex:1}}>
+                  }).map(a=>{
+                    const ln = rowDrag.line(a.id);
+                    return (
+                    <tr key={a.id} {...rowDrag.rowProps(a.id)}
+                      style={{opacity:rowDrag.dragging===a.id?.35:1,
+                        borderTop: ln==='top' ? '2px solid var(--primary)' : undefined,
+                        borderBottom: ln==='bottom' ? '2px solid var(--primary)' : '1px solid var(--border)'}}>
+                      <td style={{padding:'6px 14px 6px 8px',fontWeight:600,whiteSpace:'nowrap',position:'sticky',left:0,background:'var(--card)',zIndex:1}}>
                         <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          {rowDrag.handle(a.id)}
                           {a.name}
                           <span style={a.role==='파트장'?{background:'rgba(246,173,9,.15)',color:'#F6AD09',padding:'1px 7px',borderRadius:10,fontSize:10,fontWeight:600}:{background:'rgba(42,71,141,.25)',color:'var(--accent)',padding:'1px 7px',borderRadius:10,fontSize:10,fontWeight:600}}>{a.role||'상담원'}</span>
                         </div>
@@ -2058,14 +2126,15 @@ function AttendancePage() {
                               <input type="text" inputMode="decimal" value={ot} onChange={e=>setVal(d,a.name,'ot_hours',e.target.value)}
                                 placeholder="OT" style={{width:'100%',marginTop:2,padding:'2px 3px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:3,fontSize:10,color:'var(--text)',fontFamily:'inherit',outline:'none',minWidth:0,boxSizing:'border-box'}}/>
                               {status==='기타'&&<input type="text" value={getVal(d,a.name,'note')} onChange={e=>setVal(d,a.name,'note',e.target.value)}
+                                title={getVal(d,a.name,'note')||undefined}
                                 placeholder="메모" style={{width:'100%',marginTop:2,padding:'2px 3px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:3,fontSize:10,color:'var(--text)',fontFamily:'inherit',outline:'none',minWidth:0,boxSizing:'border-box'}}/>}
                             </>
                           }
                         </td>);
                       })}
                     </tr>
-
-                ))}</tbody>
+                    );
+                })}</tbody>
                 </table>
               </div>
               <div style={{display:'flex',alignItems:'center',gap:12,marginTop:16}}>
@@ -2127,7 +2196,9 @@ function AttendancePage() {
                       <td>{s.annual>0?<span style={{color:'var(--red)',fontWeight:600}}>{s.annual}일</span>:'-'}</td>
                       <td>{s.halfAM>0?<span style={{color:'var(--yellow)',fontWeight:600}}>{(s.halfAM*0.5).toFixed(1)}일</span>:'-'}</td>
                       <td>{s.halfPM>0?<span style={{color:'var(--yellow)',fontWeight:600}}>{(s.halfPM*0.5).toFixed(1)}일</span>:'-'}</td>
-                      <td>{s.other>0?<span style={{color:'var(--sub)',fontWeight:600}}>{s.other}일</span>:'-'}</td>
+                      <td>{s.other>0?<span title={s.otherNotes}
+                        style={{color:'var(--sub)',fontWeight:600,cursor:'help',
+                          borderBottom:s.otherHasNote?'1px dotted var(--sub)':'none'}}>{s.other}일</span>:'-'}</td>
                       <td>{s.totalOT>0?<span style={{color:'var(--yellow)',fontWeight:600}}>{s.totalOT.toFixed(1)}h</span>:'-'}</td>
                     </tr>
 
@@ -2371,10 +2442,13 @@ function AgentListTab() {
 
   const load=async()=>{ setLoading(true); const{data}=await sb.from('agents').select('*').order('sort_order').order('created_at'); setAgents(data||[]); setLoading(false); };
   useEffect(()=>{load();},[]);
+  const rowDrag = useAgentRowDrag(agents, setAgents);
 
   const add=async()=>{
     if(!newName.trim()){setMsg('이름을 입력해주세요.');return;}
-    const{error}=await sb.from('agents').insert({name:newName.trim(),sort_order:agents.length,role:newRole,hire_date:newHireDate||null});
+    // ★ 맨 뒤로 — 끌어서 10·20·30… 으로 매긴 뒤에는 agents.length 가 맨 위 값이 된다.
+    const lastOrder=agents.reduce((m,a)=>Math.max(m,Number(a.sort_order)||0),0);
+    const{error}=await sb.from('agents').insert({name:newName.trim(),sort_order:lastOrder+10,role:newRole,hire_date:newHireDate||null});
     if(error){setMsg('이미 등록된 이름이거나 오류가 발생했습니다.');return;}
     setNewName(''); setNewRole('상담원'); setNewHireDate(''); setMsg(''); load();
   };
@@ -2438,8 +2512,13 @@ function AgentListTab() {
         <div className="entry-section-title">재직 인원 ({active.length}명)</div>
         {active.length===0?<div className="empty-state" style={{padding:'12px'}}>등록된 인원이 없습니다</div>:
         <div className="agent-mgmt-list">
-          {active.map((a,i)=>(
-            <div key={a.id} style={{padding:'10px 14px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,marginBottom:6}}>
+          {active.map((a,i)=>{
+            const ln = rowDrag.line(a.id);
+            return (
+            <div key={a.id} {...(editId===a.id ? {} : rowDrag.rowProps(a.id))}
+              style={{padding:'10px 14px 10px 8px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,marginBottom:6,
+                opacity:rowDrag.dragging===a.id?.35:1,
+                boxShadow: ln==='top' ? '0 -3px 0 var(--primary)' : ln==='bottom' ? '0 3px 0 var(--primary)' : 'none'}}>
               {editId===a.id?(
                 <div style={{display:'flex',flexDirection:'column',gap:8}}>
                   <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
@@ -2454,6 +2533,7 @@ function AgentListTab() {
                 </div>
               ):(
                 <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  {rowDrag.handle(a.id)}
                   <div style={{flex:1}}>
                     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
                       <span style={{fontSize:14,fontWeight:600}}>{a.name}</span>
@@ -2470,7 +2550,8 @@ function AgentListTab() {
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>}
 
         {/* 퇴사 인원 */}
