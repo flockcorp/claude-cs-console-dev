@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- v20260914n_manuals_files -->
+<!-- v20260914p_manuals_category_tree -->
+<!-- (2026-09-14) **메뉴얼 관리 — 제니 피드백 둘.** ①🔴 **분류가 «열마다» 서 있었다** — 제니가 설정에 넣은 모양은 «발주모아 › 발주 · 운영 콘솔 › 대시보드·상품관리…» 로 **대분류 → 소분류 두 단계의 «한» 분류**였는데, 화면은 대분류마다 열을 따로 세워 제목 행에 대분류 이름이 줄줄이 섰다(제니: 「제목 행이 '분류' 가 되고 내용에 맞는 값이 들어가야 하지 않을까」). ★★★ **내 설계(«분류·대상 도구» 같은 서로 다른 축)와 제니가 실제로 쓴 방식(한 축의 두 단계)이 달랐다 — 설정 화면의 말(«항목·값»)이 그 오해를 그대로 허용했다.** → 목록은 **«분류» 한 열**에 `대분류 › 소분류` · 필터도 «분류» 하나(대분류 › 소분류 목록) · 등록 창은 «분류» 한 칸 안에 대분류별로 소분류 고르기 · 설정 탭의 말을 **«대분류 / 소분류»** 로. **저장 모양은 그대로다**(대분류=key, 소분류=values) — 이미 넣은 값이 끊기지 않는다. ②**검색 «파일 내용» 조각이 너무 짧다** → 찾은 자리 앞 120자·뒤 400자 · 파일 안에서 **몇 군데** 나오는지 표시(`sql/manuals_search_v2.sql` dev 적용). ★ dev 전용. -->
+<!-- (2026-09-14) 제니 피드백 셋. ①**배송지연 지연 등록 목록 — 행마다 체크 · 고르면 목록 위에 띠(전체 선택 · 일괄 해제)**. 체크는 «해제할 수 있는 행»(진행 중)에만, 편집·해제 권한(delays.update)이 있을 때만 그린다. 일괄 해제는 한 번에 UPDATE 하고 `.select('id')` 로 **실제로 바뀐 줄 수를 센다**(RLS 로 막히면 에러가 아니라 0행이다). 이미 해제된 줄은 조건(is_delayed=true)에서 걸러 두 번 찍히지 않는다. 페이지·필터가 바뀌면 고른 것을 비운다(안 보이는 줄이 고른 채 남으면 «몇 개를 해제하는지» 가 거짓말이 된다). ②**목록 제목 행의 열 너비를 끌어서 조절** — CS 티켓 목록과 같은 손잡이(`cs-colgrip`) · 처음 끌 때 지금 폭을 «재서» px 로 바꾸고 이 브라우저에만 남긴다(열 너비는 취향 — 09-04 규칙) · 머리글을 두 번 누르면 기본값. ③🔴 **티켓 이력에 «표» 로 붙여넣기**(제니: 「젠데스크는 붙여넣으면 표로 들어갔는데 콘솔은 줄바꿈 텍스트로 들어간다」). 이력 칸은 이미 **탭으로 나뉜 줄을 표로 그린다**(CsNoteBody) — 엑셀에서 복사하면 탭이 와서 표가 됐지만, **은행 화면처럼 웹 페이지 표를 복사하면 클립보드의 «글자» 에는 탭이 없고 칸마다 줄바꿈** 이라 표가 안 됐다. → 붙여넣는 순간 클립보드의 **HTML 표**를 읽어 칸=탭·줄=줄바꿈으로 바꿔 넣는다. 붙는 자리는 매크로 조각이 이미 붙어 있는 작성칸(capture) — 등록·상세 두 화면 코드는 안 건드린다. 칸 안의 줄바꿈·탭은 띄어쓰기로 접는다(표가 깨진다). 클립보드 글자에 이미 탭이 있으면(엑셀) 브라우저 기본 붙여넣기에 맡긴다. ★ dev 전용. -->
 <!-- (2026-09-14) 🆕 **메뉴얼 관리 1단계 — 메뉴얼 파일**(제니: 「실무에서 쓰는 써드파티 메뉴얼과 내부 메뉴얼을 한곳에 저장해서 볼 수 있게 · 앞으로 지식 창고로 쌓고 검색」). 2단계(지식 창고)는 확인 뒤. ★★★ **제니가 정한 넷**: ①분류는 제니가 화면에서 더한다 — **«항목» 자체도 늘 수 있다** → 항목·값은 `console_settings.manual_facets`, 메뉴얼은 `facets jsonb` 한 칸(항목이 늘어도 SQL·배포 없음). 항목은 바뀌지 않는 열쇠(key)로 잇고 이름(label)만 고친다 — 이름을 바꿔도 붙은 값이 끊기지 않는다. ②**파일 안의 내용까지 검색** → 올릴 때 브라우저가 글자를 뽑아 `content_text` 에 담는다(PDF=pdf.js · docx/pptx/xlsx/hwpx=JSZip 으로 XML 을 연다 · 텍스트). 옛 hwp·이미지·스캔 PDF 는 «내용 검색 안 됨/글자 없음» 으로 **목록에 드러낸다** — 조용히 안 찾히면 «검색이 고장» 으로 읽힌다. 검색은 DB 함수(`manual_docs_search`)가 하고 **찾은 자리 앞뒤만** 돌려준다(파일 몇 MB 를 목록마다 내리지 않는다). ③**보기 권한은 메뉴얼마다**(`view_roles`) — **DB 가 막고**, 파일을 받는 주소(signed URL)도 같은 판정을 따른다(표만 막고 버킷을 열어 두면 경로를 아는 사람은 받는다). master 는 늘 본다(잠금 체크). ④상품 정보를 기준으로 하되 얽매이지 않는다. ★★ 파일은 **비공개 버킷** `manuals`(cs-images 는 공개). ★★ 라이브러리 두 개는 **올릴 때만** 부른다 — 처음부터 실으면 그 CDN 이 죽는 날 콘솔이 흰 화면이 된다(06-17 사고). 못 불러오면 «글자 읽기 실패» 로 저장은 된다. ★ 파일을 바꿔 올리면 옛 파일은 «이전 파일» 로 남는다(`manual_doc_versions`). ★ «확인 기준일» 이 180일 지나면 «확인 필요» — 써드파티 화면은 자주 바뀌어 낡은 메뉴얼이 틀린 안내를 한다. ★ 권한: 메뉴 `manuals`(기본 전원) · 동작 `manuals.edit`(master·manager) · `manuals.delete`(master) · 분류 설정 탭은 master(console_settings 쓰기가 master). ★ 백업 마스킹 규칙도 함께 넣었다(tools/mask_dump.py). ★ dev 전용 — SQL `sql/manuals.sql` dev 적용. -->
 <!-- (2026-09-14) **동작 권한 «알림톡 발송» 안내 문구를 사실에 맞췄다**(제니 지적: 「[발송하기] — 실제 고객에게 나간다(테스트 발송은 제외)」라고 적혀 있다). 앞 판(`l`)에서 테스트 발송도 이 권한으로 막게 바꿨는데 **문구는 옛 사실(«테스트는 제외»)을 말하고 있었다** — 설정 화면이 거짓말을 하면 그 격자 전체를 안 믿게 된다. 이 권한이 여는 단추 셋을 전부 적었다. ★ dev 전용. -->
 <!-- (2026-09-14) **배송지연 [테스트 발송] 을 «발송 권한» 대로**(제니). ①함수(notify-blast): 테스트 발송 처리가 권한 판정 «위» 에 있어 **공개 키만 있으면 누구나 아무 번호로 알림톡을 보낼 수 있었다**(충전금이 나간다) → 판정(`delays.send`) 뒤로 옮겼다. ②화면: 발송 권한이 없는 계정에는 테스트 발송 칸을 **그리지 않는다**(콘솔 규칙 — 누를 수 없는 버튼은 안 그린다). 권한은 실제 발송과 같은 `delays.send` — 고객에게 안 가도 요금은 같다. ★ dev 전용. -->
@@ -10764,6 +10766,14 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
   const [monthReleasedCount,setMonthReleasedCount] = useState(0);
   const [showAddModal,setShowAddModal] = useState(false);
   const [editingRow,setEditingRow] = useState(null);  // 편집 모드일 때 해당 row, null이면 신규 등록 모드
+  // ── 일괄 해제용 선택 (2026-09-14) — 페이지·필터가 바뀌면 비운다 ──
+  const [picked,setPicked] = useState(()=>new Set());
+  const [bulkBusy,setBulkBusy] = useState(false);
+  useEffect(()=>{ setPicked(new Set()); },[rows]);
+  // ── 열 너비 (2026-09-14) — 처음 끌 때 지금 폭을 재서 px 로 · 이 브라우저에만 ──
+  const DELAY_COLW_KEY = 'cs_delay_col_w';
+  const [colW,setColW] = useState(()=>{ try{ const v=JSON.parse(localStorage.getItem(DELAY_COLW_KEY)||'null'); return Array.isArray(v)?v:null; }catch(_e){ return null; } });
+  const delayTableRef = useRef(null);
 
   // 공급사 목록 (필터 드롭다운용) - 최초 1회
   useEffect(()=>{
@@ -10885,6 +10895,48 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
       const uniq = [...new Set((data||[]).map(r=>r.supplier_name_snapshot).filter(Boolean))].sort();
       setSupplierList(uniq);
     });
+  };
+  const pickable = (r)=> canUpdate && r.is_delayed;
+  const togglePick = (id)=> setPicked(p=>{ const n=new Set(p); n.has(id)?n.delete(id):n.add(id); return n; });
+  const handleBulkRelease = async()=>{
+    const ids = rows.filter(r=>picked.has(r.id) && r.is_delayed).map(r=>r.id);
+    if(!ids.length) return;
+    if(!window.confirm(`선택한 지연 등록 ${ids.length}건을 해제합니다.\n\n해제 시:\n- 신규 주문에 알림톡 발송이 중단됩니다\n- 이력은 "해제됨" 필터에서 확인 가능합니다\n\n계속하시겠습니까?`)) return;
+    setBulkBusy(true);
+    try{
+      const {data:authData} = await sb.auth.getUser();
+      const userEmail = authData?.user?.email || 'unknown';
+      const {data,error} = await sb.from('delayed_options')
+        .update({is_delayed:false, released_at:new Date().toISOString(), released_by:userEmail})
+        .in('id', ids).eq('is_delayed', true).select('id');
+      if(sbFail('일괄 해제', error, {write:true})){ setBulkBusy(false); return; }
+      const n = (data||[]).length;
+      // ★ RLS 로 막히면 에러가 아니라 0행이다 — 센 값으로 말한다.
+      if(n===0) toast('해제된 건이 없습니다 — 권한이 없거나 이미 해제된 건입니다.','warn');
+      else if(n < ids.length) toast(`${ids.length}건 중 ${n}건을 해제했습니다 (나머지는 권한이 없거나 이미 해제됨).`,'warn');
+      else toast(`${n}건을 해제했습니다.`,'success');
+      handleModalSaved();
+    }catch(e){
+      toast('일괄 해제 실패: '+(e?.message||e),'error');
+    }
+    setBulkBusy(false);
+  };
+  const onDelayColGrip = (i, e, reset)=>{
+    e.preventDefault(); e.stopPropagation();
+    if(reset){ setColW(null); try{ localStorage.removeItem(DELAY_COLW_KEY); }catch(_e){} return; }
+    const ths = delayTableRef.current ? Array.from(delayTableRef.current.querySelectorAll('thead th')) : [];
+    const base = (colW && colW.length===ths.length) ? colW.slice() : ths.map(th=>Math.round(th.getBoundingClientRect().width));
+    const startX = e.clientX, start = base[i];
+    let cur = base;
+    const move = (ev)=>{ cur = base.slice(); cur[i] = Math.max(40, Math.round(start + ev.clientX - startX)); setColW(cur); };
+    const up = ()=>{
+      document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+      document.body.style.cursor = ''; document.body.style.userSelect = '';
+      try{ localStorage.setItem(DELAY_COLW_KEY, JSON.stringify(cur)); }catch(_e){}
+    };
+    document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+    setColW(base);
   };
   const handleReleaseClick = async(row)=>{
     const opt = row.option_text_snapshot ? ` / ${row.option_text_snapshot}` : '';
@@ -11104,6 +11156,29 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
         </span>
       </div>
 
+      {/* 일괄 해제 띠 — 하나라도 고르면 뜬다(2026-09-14 제니) */}
+      {picked.size>0 && (()=>{
+        const can = rows.filter(pickable);
+        const allOn = can.length>0 && can.every(r=>picked.has(r.id));
+        return (
+          <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap',marginBottom:8,padding:'9px 14px',
+            background:'rgba(246,173,9,.10)',border:'1px solid rgba(246,173,9,.45)',borderRadius:8}}>
+            <label style={{display:'flex',alignItems:'center',gap:6,fontSize:12,color:'var(--text)',cursor:'pointer'}}>
+              <input type="checkbox" checked={allOn}
+                onChange={()=>setPicked(allOn ? new Set() : new Set(can.map(r=>r.id)))}/>
+              이 페이지 전체 선택 ({can.length})
+            </label>
+            <span style={{fontSize:12,color:'var(--text)'}}><b>{picked.size}</b>건 선택됨</span>
+            <span style={{flex:1}}/>
+            <button onClick={()=>setPicked(new Set())} disabled={bulkBusy}
+              style={{padding:'5px 12px',background:'transparent',border:'1px solid var(--border)',borderRadius:6,fontSize:12,color:'var(--sub)',cursor:'pointer',fontFamily:'inherit'}}>선택 취소</button>
+            <button onClick={handleBulkRelease} disabled={bulkBusy}
+              style={{padding:'5px 14px',background:'rgba(34,211,160,.12)',border:'1px solid rgba(34,211,160,.5)',borderRadius:6,fontSize:12,fontWeight:700,color:'var(--ok-ink)',cursor:bulkBusy?'default':'pointer',fontFamily:'inherit'}}>
+              {bulkBusy ? '해제하는 중…' : `선택 ${picked.size}건 일괄 해제`}</button>
+          </div>
+        );
+      })()}
+
       {/* 테이블 카드 */}
       <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
         {loading ? (
@@ -11127,28 +11202,46 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
             </div>
           </div>
         ) : (
-          <table style={{width:'100%',borderCollapse:'collapse',fontSize:12,tableLayout:'fixed'}}>
-            <colgroup>
-              <col style={{width:'17%'}}/><col style={{width:'21%'}}/><col style={{width:'12%'}}/>
-              <col style={{width:'14%'}}/><col style={{width:'8%'}}/><col style={{width:'7%'}}/>
-              <col style={{width:'7%'}}/><col style={{width:'5%'}}/><col style={{width:'9%'}}/>
-            </colgroup>
+          <div style={{overflowX:'auto'}}>
+          {(()=>{
+            // ★ 열 정의 한 곳 — colgroup·머리글·손잡이가 같은 차례를 본다. 체크 칸은 편집 권한이 있을 때만.
+            const HEAD = [
+              ...(canUpdate ? [{k:'pick', w:'36px', label:'', align:'center', noGrip:true}] : []),
+              {k:'name', w:'17%', label:'상품명', pad:'10px 14px'}, {k:'opt', w:'21%', label:'옵션'},
+              {k:'sup', w:'12%', label:'공급사'}, {k:'reason', w:'14%', label:'사유'},
+              {k:'target', w:'8%', label:'발송 대상 주문'}, {k:'eta', w:'7%', label:'예상발송'},
+              {k:'rel', w:'7%', label:'해제일'}, {k:'st', w:'5%', label:'상태', align:'center'},
+              {k:'act', w:'9%', label:'조작', align:'center'},
+            ];
+            const px = colW && colW.length===HEAD.length;
+            return (
+          <table ref={delayTableRef} style={{width: px ? colW.reduce((a,b)=>a+b,0) : '100%', minWidth:'100%',
+            borderCollapse:'collapse',fontSize:12,tableLayout:'fixed'}}>
+            <colgroup>{HEAD.map((h,i)=><col key={h.k} style={{width: px ? colW[i] : h.w}}/>)}</colgroup>
             <thead>
               <tr style={{background:'var(--head-bg)',color:'var(--head-ink)'}}>
-                <th style={{textAlign:'left',padding:'10px 14px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>상품명</th>
-                <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>옵션</th>
-                <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>공급사</th>
-                <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>사유</th>
-                <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>발송 대상 주문</th>
-                <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>예상발송</th>
-                <th style={{textAlign:'left',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>해제일</th>
-                <th style={{textAlign:'center',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>상태</th>
-                <th style={{textAlign:'center',padding:'10px 8px',fontSize:11,fontWeight:700,letterSpacing:'.04em',borderBottom:'1px solid var(--border)'}}>조작</th>
+                {HEAD.map((h,i)=>(
+                  <th key={h.k} onDoubleClick={h.noGrip?undefined:(e)=>onDelayColGrip(i,e,true)}
+                    style={{position:'relative',textAlign:h.align||'left',padding:h.pad||'10px 8px',fontSize:11,fontWeight:700,
+                      letterSpacing:'.04em',borderBottom:'1px solid var(--border)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                    {h.label}
+                    {!h.noGrip && (
+                      <span onMouseDown={e=>onDelayColGrip(i,e)} onClick={e=>e.stopPropagation()}
+                        title="끌어서 열 너비를 바꿉니다 (머리글을 두 번 누르면 기본값)" className="cs-colgrip"
+                        style={{position:'absolute',top:0,right:0,bottom:0,width:7,cursor:'col-resize',userSelect:'none'}}></span>
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {rows.map(r=>(
-                <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}>
+                <tr key={r.id} style={{borderBottom:'1px solid var(--border)',background:picked.has(r.id)?'rgba(246,173,9,.06)':undefined}}>
+                  {canUpdate && (
+                    <td style={{padding:'12px 4px',textAlign:'center',verticalAlign:'top'}}>
+                      {pickable(r) && <input type="checkbox" checked={picked.has(r.id)} onChange={()=>togglePick(r.id)}/>}
+                    </td>
+                  )}
                   <td style={{padding:'12px 14px'}}>
                     <div style={{fontWeight:500,color:'var(--text)'}}>{r.product_name_snapshot||'-'}</div>
                     <div style={{color:'var(--sub)',fontSize:10,fontFamily:'monospace',marginTop:2}}>{r.product_code}</div>
@@ -11241,6 +11334,9 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
               ))}
             </tbody>
           </table>
+            );
+          })()}
+          </div>
         )}
 
         {/* 페이지네이션 (rows 있을 때만) */}
@@ -19569,7 +19665,7 @@ function CsMacroTools({taRef, value, onChange, light, onSpace}){
   // 최신 값을 그대로 들고 있는 상자 — 아래 리스너는 «한 번만» 붙이므로,
   // 그 안에서 옛 값을 붙잡고 있지 않도록 매 렌더마다 갈아 끼운다.
   const nowRef = useRef({});
-  nowRef.current = {matched, idx, tok, insert, setIdx, setTok};
+  nowRef.current = {matched, idx, tok, insert, setIdx, setTok, value, onChange};
 
   useEffect(()=>{
     const el = taRef && taRef.current;
@@ -19604,6 +19700,27 @@ function CsMacroTools({taRef, value, onChange, light, onSpace}){
       }
     };
     const onBlur = ()=>{ setTimeout(()=>setTok(null), 120); };
+    // ★ 2026-09-14 — 웹 페이지 표를 붙여넣으면 «탭 표» 로 바꿔 넣는다(이력이 표로 그린다).
+    //   클립보드 글자에 이미 탭이 있으면(엑셀) 기본 붙여넣기에 맡긴다.
+    const onPaste = (e)=>{
+      const cd = e.clipboardData; if(!cd) return;
+      const plain = cd.getData('text/plain') || '';
+      if(plain.indexOf('\t')>=0) return;
+      const t = csClipTableText(cd.getData('text/html'));
+      if(!t) return;
+      e.preventDefault();
+      const s = nowRef.current;
+      const v = String(s.value||'');
+      const a = el.selectionStart==null ? v.length : el.selectionStart;
+      const b = el.selectionEnd==null ? a : el.selectionEnd;
+      // 표는 제 줄에서 시작하고 끝나야 앞뒤 글과 섞이지 않는다
+      const pre = (a>0 && v[a-1]!=='\n') ? '\n' : '';
+      const post = (b<v.length && v[b]!=='\n') ? '\n' : '';
+      const ins = pre + t + post;
+      s.onChange(v.slice(0,a) + ins + v.slice(b));
+      requestAnimationFrame(()=>{ try{ const at=a+ins.length; el.focus(); el.setSelectionRange(at,at); }catch(_e){} });
+    };
+    el.addEventListener('paste', onPaste);
     el.addEventListener('input', sync);
     el.addEventListener('click', sync);
     el.addEventListener('keyup', sync);
@@ -19615,6 +19732,7 @@ function CsMacroTools({taRef, value, onChange, light, onSpace}){
       el.removeEventListener('keyup', sync);
       el.removeEventListener('keydown', onKey, true);
       el.removeEventListener('blur', onBlur);
+      el.removeEventListener('paste', onPaste);
     };
   },[taRef && taRef.current]);
 
@@ -19750,6 +19868,38 @@ function CsMacroTools({taRef, value, onChange, light, onSpace}){
 // ★★★ 화면(CsNoteBody)과 복사(csNoteHtml)가 **같은 함수로 나눈다** — 규칙을 두 곳에
 //   적으면 «화면에서는 표인데 붙여 넣으면 아닌» 자리가 생긴다. 그게 바로 2026-09-09에
 //   제니가 제보한 것(복사해 메일에 붙였더니 표가 안 따라왔다)의 뿌리다.
+// ★ 2026-09-14 — 클립보드의 HTML 표를 «탭·줄바꿈» 글자로 바꾼다. 표가 없으면 null.
+//   은행 화면 같은 웹 표는 복사하면 글자 쪽에 탭이 없어 이력에서 표로 안 그려졌다.
+function csClipTableText(html){
+  if(!html || !/<table/i.test(html)) return null;
+  let doc;
+  try{ doc = new window.DOMParser().parseFromString(html, 'text/html'); }catch(_e){ return null; }
+  const tables = Array.from(doc.querySelectorAll('table'));
+  if(!tables.length) return null;
+  // ★ 칸 안의 <br>·문단은 textContent 에서 사라져 글자가 붙는다(「2026-09-1410:21」 실측) → 띄어쓰기로 바꾼 뒤 읽는다.
+  const cellText = (el)=>{ const c = el.cloneNode(true);
+    c.querySelectorAll('br').forEach(b=>b.replaceWith(doc.createTextNode(' ')));
+    c.querySelectorAll('p,div,li').forEach(b=>b.append(doc.createTextNode(' ')));
+    return c.textContent; };
+  const cell = (el)=> String(cellText(el)||'').replace(/[\t\r\n\u00a0]+/g,' ').replace(/ {2,}/g,' ').trim();
+  const out = [];
+  // 표 밖의 글자(표 위 제목 등)는 앞에 한 줄로 둔다
+  const outer = doc.body ? doc.body.cloneNode(true) : null;
+  if(outer){ outer.querySelectorAll('table').forEach(t=>t.remove()); const t = cell(outer); if(t) out.push(t); }
+  tables.forEach(t=>{
+    // ★ 표 안의 표는 바깥 표의 칸으로만 센다(중복 방지)
+    if(t.parentElement && t.parentElement.closest('table')) return;
+    const rows = Array.from(t.querySelectorAll('tr')).filter(tr=>tr.closest('table')===t);
+    const lines = rows.map(tr=>Array.from(tr.children).filter(c=>/^(TD|TH)$/.test(c.tagName)).map(cell))
+      .filter(r=>r.length && r.some(v=>v!==''));
+    if(!lines.length) return;
+    // 한 칸짜리 표는 표가 아니다 — 글자로 둔다
+    if(lines.every(r=>r.length<2)){ out.push(lines.map(r=>r[0]).join('\n')); return; }
+    out.push(lines.map(r=>r.join('\t')).join('\n'));
+  });
+  const text = out.join('\n');
+  return text.indexOf('\t')>=0 ? text : null;
+}
 function csNoteBlocks(text){
   const blocks = [];
   String(text||'').split('\n').forEach(ln=>{
@@ -30067,11 +30217,10 @@ function ManualFilesTab({facets, canEdit, canDelete, currentUserEmail}){
 
   const list = (docs||[]).filter(d=>{
     if(hits && !hits[d.id]) return false;
-    for(const f of facets){
-      const want = flt[f.key] || [];
-      if(!want.length) continue;
-      const have = (d.facets && d.facets[f.key]) || [];
-      if(!want.some(v=>have.indexOf(v)>=0)) return false;
+    const want = flt.cat || [];
+    if(want.length){
+      const have = Object.entries(d.facets||{}).flatMap(([k,vs])=>(vs||[]).map(v=>k+'|'+v));
+      if(!want.some(w=>have.indexOf(w)>=0)) return false;
     }
     return true;
   });
@@ -30087,11 +30236,10 @@ function ManualFilesTab({facets, canEdit, canDelete, currentUserEmail}){
           <input value={q} onChange={e=>setQ(e.target.value)} placeholder="제목 · 설명 · 태그 · 파일 이름 · 파일 내용 검색"
             style={{width:'clamp(260px, 32vw, 460px)',fontSize:12,padding:'7px 10px',boxSizing:'border-box',
               background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit'}}/>
-          {facets.map(f=>(
-            <CsMulti key={f.key} label={f.label} value={flt[f.key]||[]}
-              onChange={v=>setFlt(p=>({...p,[f.key]:v}))}
-              options={(f.values||[]).map(v=>({value:v}))}/>
-          ))}
+          {/* ★ 분류는 «대분류 › 소분류» 두 단계의 한 축이다(제니 2026-09-14) — 필터도 하나. 값은 «대분류키|소분류» */}
+          <CsMulti label="분류" value={flt.cat||[]} width={260}
+            onChange={v=>setFlt({cat:v})}
+            options={facets.flatMap(f=>(f.values||[]).map(v=>({value:f.key+'|'+v, label:f.label+' › '+v})))}/>
           {fltOn && <button onClick={()=>setFlt({})}
             style={{padding:'4px 10px',borderRadius:6,fontSize:11,fontFamily:'inherit',cursor:'pointer',background:'transparent',
               border:'1px solid rgba(248,113,113,.5)',color:'var(--red)'}}>필터 지우기</button>}
@@ -30114,7 +30262,7 @@ function ManualFilesTab({facets, canEdit, canDelete, currentUserEmail}){
           <table style={{width:'100%',borderCollapse:'collapse',minWidth:760}}>
             <thead><tr>
               <th style={th}>제목</th>
-              {facets.map(f=><th key={f.key} style={th}>{f.label}</th>)}
+              <th style={th}>분류</th>
               <th style={th}>태그</th><th style={th}>형식</th><th style={th}>보기</th>
               <th style={th}>확인 기준일</th><th style={th}>수정</th>
             </tr></thead>
@@ -30131,16 +30279,20 @@ function ManualFilesTab({facets, canEdit, canDelete, currentUserEmail}){
                       {d.description && <div style={{fontSize:11,color:'var(--sub)',marginTop:2}}><ManualMark text={d.description} q={q}/></div>}
                       {h && h.snippet && (
                         <div style={{fontSize:11,color:'var(--sub)',marginTop:4,padding:'4px 7px',background:'var(--bg)',borderRadius:5,lineHeight:1.55}}>
-                          <span style={{color:'var(--warn-ink)',fontWeight:600,marginRight:5}}>파일 내용</span>
+                          <span style={{color:'var(--warn-ink)',fontWeight:600,marginRight:5}}>
+                            파일 내용{h.hits>1 ? ` · ${h.hits}곳` : ''}</span>
                           …<ManualMark text={h.snippet.replace(/\s+/g,' ')} q={q}/>…
                         </div>
                       )}
                     </td>
-                    {facets.map(f=>(
-                      <td key={f.key} style={td}>{((d.facets||{})[f.key]||[]).map(v=>(
-                        <span key={v} style={{...chip,opacity:(f.values||[]).indexOf(v)<0?.55:1}}
-                          title={(f.values||[]).indexOf(v)<0?'분류 설정에서 지워진 값':undefined}>{v}</span>))}</td>
-                    ))}
+                    <td style={{...td,minWidth:150}}>{Object.entries(d.facets||{}).map(([k,vs])=>{
+                      const f = facets.find(x=>x.key===k);
+                      return (vs||[]).map(v=>{
+                        const gone = !f || (f.values||[]).indexOf(v)<0;
+                        return <span key={k+'|'+v} style={{...chip,opacity:gone?.55:1}}
+                          title={gone?'분류 설정에서 지워진 값':undefined}>{f ? f.label : '(지워진 대분류)'} › {v}</span>;
+                      });
+                    })}</td>
                     <td style={td}>{(d.tags||[]).map(t=><span key={t} style={chip}>#<ManualMark text={t} q={q}/></span>)}</td>
                     <td style={{...td,whiteSpace:'nowrap'}}>
                       <div style={{fontWeight:600}}>{manualKindLabel(d)}</div>
@@ -30297,15 +30449,20 @@ function ManualEditModal({doc, facets, currentUserEmail, onClose, onSaved}){
           <input style={inp} value={f.link_url} onChange={e=>set('link_url',e.target.value)} placeholder="https://…"/></div>
       )}
 
-      {facets.map(fc=>(
-        <div key={fc.key} style={row}><label style={lab}>{fc.label}</label>
-          {(fc.values||[]).length===0
-            ? <div style={{fontSize:11.5,color:'var(--sub)'}}>값이 없습니다 — [분류 설정] 탭에서 더해 주세요.</div>
-            : <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                {fc.values.map(v=><span key={v} style={pill((f.facets[fc.key]||[]).indexOf(v)>=0)} onClick={()=>toggleFacet(fc.key, v)}>{v}</span>)}
-              </div>}
-        </div>
-      ))}
+      <div style={row}><label style={lab}>분류</label>
+        {facets.every(fc=>!(fc.values||[]).length)
+          ? <div style={{fontSize:11.5,color:'var(--sub)'}}>분류가 없습니다 — [분류 설정] 탭에서 더해 주세요.</div>
+          : <div style={{border:'1px solid var(--border)',borderRadius:8,padding:'6px 10px'}}>
+              {facets.filter(fc=>(fc.values||[]).length).map(fc=>(
+                <div key={fc.key} style={{display:'flex',gap:8,alignItems:'baseline',padding:'5px 0',borderBottom:'1px solid var(--border)'}}>
+                  <span style={{fontSize:12,fontWeight:600,color:'var(--text)',minWidth:90}}>{fc.label}</span>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {fc.values.map(v=><span key={v} style={pill((f.facets[fc.key]||[]).indexOf(v)>=0)} onClick={()=>toggleFacet(fc.key, v)}>{v}</span>)}
+                  </div>
+                </div>
+              ))}
+            </div>}
+      </div>
 
       <div style={row}><label style={lab}>태그 (쉼표로 구분)</label>
         <input style={inp} value={f.tags} onChange={e=>set('tags',e.target.value)} placeholder="예: 취소, 환불, 교환"/></div>
@@ -30383,9 +30540,12 @@ function ManualDetailModal({doc, facets, canEdit, canDelete, onClose, onEdit, on
     <ManualModalFrame title={doc.title} onClose={onClose} width={isPdf||isImg?980:720}>
       {doc.description && <div style={{fontSize:12.5,color:'var(--text)',marginBottom:12,whiteSpace:'pre-wrap'}}>{doc.description}</div>}
       <div style={meta}>
-        {facets.map(f=>((doc.facets||{})[f.key]||[]).length ? (
-          <React.Fragment key={f.key}><span style={k}>{f.label}</span><span>{(doc.facets[f.key]).join(' · ')}</span></React.Fragment>
-        ) : null)}
+        {Object.values(doc.facets||{}).some(vs=>(vs||[]).length) && (
+          <><span style={k}>분류</span><span>{Object.entries(doc.facets||{}).flatMap(([kk,vs])=>{
+            const fc = facets.find(x=>x.key===kk);
+            return (vs||[]).map(v=>(fc ? fc.label : '(지워진 대분류)')+' › '+v);
+          }).join(' · ')}</span></>
+        )}
         {(doc.tags||[]).length>0 && <><span style={k}>태그</span><span>{doc.tags.map(t=>'#'+t).join(' ')}</span></>}
         <span style={k}>형식</span><span>{manualKindLabel(doc)}{doc.file_size ? ' · '+manualSize(doc.file_size) : ''} · <span style={{color:cl.c}}>{cl.t}</span></span>
         <span style={k}>보기 권한</span><span>{(doc.view_roles||[]).join(' · ')}</span>
@@ -30456,7 +30616,7 @@ function ManualFacetsTab({facets, row, currentUserEmail, onSaved}){
     setAdding(p=>({...p,[fc.key]:''}));
   };
   const save = async ()=>{
-    if(list.some(x=>!String(x.label||'').trim())){ toast('이름이 빈 항목이 있습니다.','warn'); return; }
+    if(list.some(x=>!String(x.label||'').trim())){ toast('이름이 빈 대분류가 있습니다.','warn'); return; }
     setBusy(true);
     const ok = await csSaveSetting('manual_facets', list.map(x=>({key:x.key,label:x.label.trim(),values:x.values||[]})), currentUserEmail);
     setBusy(false);
@@ -30467,23 +30627,23 @@ function ManualFacetsTab({facets, row, currentUserEmail, onSaved}){
   return (
     <div style={{maxWidth:820,marginTop:6}}>
       <CsSetNote>
-        메뉴얼을 나누는 <b>항목</b>(예: 분류 · 대상 도구)과 각 항목의 <b>값</b>을 정합니다. 항목도 새로 더할 수 있습니다.
-        <br/>★ 값을 지워도 이미 그 값이 붙은 메뉴얼에서는 사라지지 않고 흐리게 남습니다(목록에서 «지워진 값» 으로 보입니다).
-        <br/>★ 항목 이름을 바꿔도 메뉴얼에 붙은 값은 그대로입니다 — 속으로는 바뀌지 않는 열쇠로 이어져 있습니다.
+        메뉴얼의 <b>분류</b>를 <b>대분류 › 소분류</b> 두 단계로 정합니다(예: 운영 콘솔 › 상품관리). 대분류도 새로 더할 수 있습니다.
+        <br/>★ 소분류를 지워도 이미 붙은 메뉴얼에서는 사라지지 않고 흐리게 남습니다(목록에서 «지워진 값» 으로 보입니다).
+        <br/>★ 대분류 이름을 바꿔도 메뉴얼에 붙은 분류는 그대로 이어집니다.
       </CsSetNote>
       {list.map((fc,i)=>(
         <div key={fc.key} style={{border:'1px solid var(--border)',borderRadius:8,background:'var(--card)',padding:'12px 14px',marginBottom:10}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10,flexWrap:'wrap'}}>
-            <span style={{fontSize:11,color:'var(--sub)'}}>항목 이름</span>
+            <span style={{fontSize:11,color:'var(--sub)'}}>대분류</span>
             <input style={{...inp,width:180,fontWeight:600}} value={fc.label} onChange={e=>upd(i, x=>({...x,label:e.target.value}))}/>
             <span style={{fontSize:11,color:'var(--sub)'}}>메뉴얼 {usage[fc.key]||0}개가 씀</span>
             <span style={{flex:1}}/>
             <button style={small} onClick={()=>setList(p=>move(p,i,-1))} disabled={i===0}>▲</button>
             <button style={small} onClick={()=>setList(p=>move(p,i,1))} disabled={i===list.length-1}>▼</button>
             <button style={{...small,color:'var(--red-ink)'}} onClick={()=>{
-              if(usage[fc.key] && !confirm(`«${fc.label}» 항목을 쓰는 메뉴얼이 ${usage[fc.key]}개 있습니다.\n항목을 지우면 그 값들이 목록·필터에서 보이지 않습니다. 지울까요?`)) return;
+              if(usage[fc.key] && !confirm(`«${fc.label}» 대분류를 쓰는 메뉴얼이 ${usage[fc.key]}개 있습니다.\n지우면 그 분류가 목록에서 «지워진 대분류» 로 흐리게 남습니다. 지울까요?`)) return;
               setList(p=>p.filter((_,j)=>j!==i));
-            }}>항목 삭제</button>
+            }}>대분류 삭제</button>
           </div>
           <div style={{display:'flex',flexWrap:'wrap',gap:6,alignItems:'center'}}>
             {(fc.values||[]).map((v,vi)=>(
@@ -30498,17 +30658,17 @@ function ManualFacetsTab({facets, row, currentUserEmail, onSaved}){
                 }}>✕</button>
               </span>
             ))}
-            <input style={{...inp,width:150}} value={adding[fc.key]||''} placeholder="값 더하기 + Enter"
+            <input style={{...inp,width:150}} value={adding[fc.key]||''} placeholder="소분류 더하기 + Enter"
               onChange={e=>setAdding(p=>({...p,[fc.key]:e.target.value}))}
               onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addValue(i); } }}/>
           </div>
         </div>
       ))}
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
-        <input style={{...inp,width:200}} value={newLabel} placeholder="새 항목 이름 (예: 부서)" onChange={e=>setNewLabel(e.target.value)}
+        <input style={{...inp,width:200}} value={newLabel} placeholder="새 대분류 이름 (예: 정산)" onChange={e=>setNewLabel(e.target.value)}
           onKeyDown={e=>{ if(e.key==='Enter' && newLabel.trim()){ setList(p=>p.concat([{key:'f_'+Date.now().toString(36),label:newLabel.trim(),values:[]}])); setNewLabel(''); } }}/>
         <button style={{...small,padding:'6px 12px',color:'var(--text)'}} disabled={!newLabel.trim()}
-          onClick={()=>{ setList(p=>p.concat([{key:'f_'+Date.now().toString(36),label:newLabel.trim(),values:[]}])); setNewLabel(''); }}>+ 항목 추가</button>
+          onClick={()=>{ setList(p=>p.concat([{key:'f_'+Date.now().toString(36),label:newLabel.trim(),values:[]}])); setNewLabel(''); }}>+ 대분류 추가</button>
       </div>
       <div style={{display:'flex',alignItems:'center',gap:9,padding:'10px 12px',background:'var(--card)',
         border:'1px solid '+(dirty?'rgba(246,173,9,.45)':'var(--border)'),borderRadius:8}}>
