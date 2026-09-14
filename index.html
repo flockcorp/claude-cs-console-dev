@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260914d_cs_stats -->
+<!-- v20260914e_list_toolbar_pinned -->
+<!-- (2026-09-14) **티켓 목록 윗줄 둘의 «오른쪽 묶음» 을 제자리에 고정**(제니: 「검색칸·+티켓 등록 · 페이지 보기·보기 설정이 CSV 버튼처럼 그 위치에 고정되게 · 가로가 줄면 그 영역이 아랫줄로 밀리지 말고 왼쪽 칩과 필터가 줄바꿈되어야 해」). ★★★ **원인 — 칩·검색칸·단추가 «한 flex 줄에 한 식구» 로 섞여 있었다.** `flexWrap:wrap` 은 «넘치는 것부터 다음 줄로» 보내는데 넘치는 것은 줄 «끝» 의 것이라, 가로가 줄면 **오른쪽 묶음이 먼저 떨어져 나갔다.** 칩과 오른쪽 사이에 있던 `flex:1` 빈 칸도 줄이 바뀌면 뜻을 잃는다. → **줄마다 «왼쪽 칸(줄바꿈 됨)» 과 «오른쪽 칸(안 줄어듦)» 두 칸으로 갈랐다.** 줄바꿈은 왼쪽 칸 «안» 에서만 일어난다. ★★ **세로 자리** — 왼쪽이 한 줄일 때는 예전처럼 오른쪽 단추와 **가운데가 맞아야** 하고, 여러 줄로 늘면 오른쪽은 **맨 윗줄에 붙어 있어야** 한다(아래로 끌려 내려가면 «고정» 이 아니다). 바깥 줄을 `alignItems:flex-start` 로 두고 왼쪽 칸만 `alignSelf:stretch + alignContent:center` 로 뒀다 — 한 줄이면 오른쪽 키만큼 늘어나 그 안에서 가운데로 서고, 여러 줄이면 제 키가 더 크니 늘어날 것이 없다. **숫자로 높이를 박지 않았다**(짐작 금지 규칙). ★ 검색칸은 예전의 «늘었다 줄었다» 범위(320~520px)를 그대로 지키되, 이제 오른쪽 칸이 안 줄어드므로 **창 폭에 따라** 그 범위 안에서 움직이게 했다(`clamp`) — 고정 폭으로 박으면 넓은 화면에서 예전보다 짧아진다. ★ [⚙ 보기 설정] 패널은 여전히 단추에 매달려 오른쪽 끝(right:0)에서 열린다. ★ dev 전용. -->
 <!-- (2026-09-14) 🆕 **CS 관리 > «통계»**(제니: 「CS 접수로 생성된 모든 티켓에 대한 통계 · 기간별·공급사별·상품별 · 유형·방향별로도」). 프로토타입 없음 — 구성은 제니가 고른 안(필터 → 요약 카드 → 추이 → 유형·방향 → 유형×방향 표 → 공급사·상품 TOP 10 → 담당자). ★★★ **정한 셋**(제니): ①건수는 **티켓(품목) 기준** — 상품별 통계와 숫자가 맞는다 ②«처리 시간» 은 **생성 → 종결(closed)** 만 — 철회는 해결이 아니라 따로 센다 ③리체크 연장 횟수는 따로 보지 않는다(연장 = 오래 걸렸다는 뜻이라 처리 시간이 이미 말한다). ★★★ **처리 시간의 재료가 없었다** — `closed_at` 칸을 콘솔이 한 번도 안 채웠다(dev 종결 3·철회 2 전부 빈칸). → DB 트리거가 종결 무리로 «들어갈 때» 채우고 나오면 비운다 + 지난 티켓은 이력에서 채웠다(`sql/cs_tickets_closed_at.sql` · dev 적용). **화면이 아니라 DB 인 이유: 단계를 바꾸는 길이 여럿(상세·일괄 편집·묶음 형제)이라 화면에서 채우면 한 길이 빠진다.** ★★ **기간은 «접수일(KST)» 기준, 상태는 «지금» 기준**이다 — 머리말 옆에 적었다. 기간을 «종결일» 로도 잡으면 한 화면에 두 기준이 섞여 숫자끼리 안 맞는다. ★★ 날짜는 **KST 로 자른다** — 환불 리포트는 `created_at.slice(0,10)`(UTC)이라 새벽 9시 전 건이 전날로 간다. 여기서는 그 함정을 처음부터 피했다. ★★ **공급사·상품 TOP 10 은 Chart.js 가 아니라 HTML 막대**다: 누르면 그 공급사·상품으로 **화면 전체가 좁혀져야** 하는데(유형×방향 표의 칸도 같다), 가로 막대는 콘솔에 함정 기록(cs-console-chartjs-hbar-trap)이 있고 클릭 배선도 캔버스보다 HTML 이 곧다. 막대 안은 **유형별로 쌓아** «이 공급사는 무엇이 많은가» 가 한 줄에 보인다. ★ 추이는 기간 길이로 일/주/월을 자동으로 고르되 바꿀 수 있다(45일↓ 일 · 180일↓ 주 · 그 위 월). 빈 날도 0 으로 세운다 — 빠지면 선이 건너뛰어 «줄었다» 가 안 보인다. ★ 필터 목록은 «기간 안의 티켓» 에서 뽑는다(없는 공급사를 고르면 빈 화면이 된다). ★ 메뉴 권한 기본은 master 만(CS 셋과 같다 — 담당자별 실적이 들어간다). 설정 화면 «메뉴 권한» 에 «통계» 줄이 저절로 생긴다. ★ 운영에는 티켓이 아직 0건이라 빈 화면이 정상이다. ★ dev 전용. -->
 <!-- (2026-09-14) **월별 집계 «기타 N일» 의 메모를 «?» 풍선과 같은 풍선으로**(제니: 「내용은 잘 뜨는데 마우스 이미지에 내용이 가려지는 부분이 있어 · 메시지 전체가 잘 보이게」). ★★★ **브라우저 기본 툴팁(`title=`)은 «커서 바로 아래» 에 뜨고 그 자리를 바꿀 수 없다** — 게다가 `cursor:help`(화살표+?)는 보통 화살표보다 커서 더 덮었다. 여러 줄(「날짜 : 내용」)이면 첫 줄이 커서에 먹힌다. → **CsHint 에 `trigger` 를 열었다**: 「?」 대신 넘긴 조각(여기선 「N일」)에 마우스를 올리면 **같은 풍선이 그 글자 «위» 에 뜬다**(위에 자리가 없으면 아래). 커서는 글자 위에 있고 풍선은 글자 밖에 서므로 가리지 않는다. ★★ **새 풍선을 만들지 않았다** — 09-03 에 «공용 풍선» 을 만들었다 되돌린 교훈(모양이 둘이면 둘 다 안 믿는다). 모양·자리 잡기·화면 밖 넘김 막기는 CsHint 가 이미 갖고 있다. ★ 09-03 의 «지나가기만 해도 즉시 뜬다» 문제와는 다르다 — 이 풍선은 **점선 밑줄이 그어진 한 칸**에만 붙는다(표 전체·줄 전체가 아니다). ★ 메모칸(입력 표)은 그대로 `title=` 이다 — 한 줄짜리라 가려질 것이 없고, 입력칸 위에 풍선이 뜨면 옆 날짜 칸을 덮어 입력을 방해한다. ★ dev 전용. -->
 <!-- (2026-09-14) **근태 관리 둘 + 인원 목록 하나**(제니). ①**«기타» 메모칸에 마우스를 올리면 전문**이 뜬다 — 칸이 날짜 폭이라 몇 글자만 보였다. ②**월별 집계의 «기타» 일수에 마우스를 올리면 「날짜 : 내용」** 이 날짜 차례로 뜬다(집계는 되는데 무슨 일이었는지 볼 길이 없었다). 둘 다 `title=` 이다 — 콘솔의 마우스오버 툴팁 규칙(「?」만 CsHint · 값은 title). **«안내» 가 아니라 «값» 이라 칸에 붙인다.** 메모가 있는 일수에만 점선 밑줄을 그어 «올려 볼 게 있다» 를 알린다(title 은 올려 보기 전엔 있는지 모른다). ③**근태 표의 행 · 인원 목록의 재직 인원을 끌어서 순서 바꾸기**(이름 왼쪽 ≡ 를 잡고 행을 끈다). ★★★ **순서를 어디에 남기나 — 이미 답이 있었다: `agents.sort_order`.** 두 화면(과 데이터 입력)이 원래 이 칸으로 정렬하고 있었고, 없던 것은 «바꾸는 손잡이» 뿐이었다. 그래서 **어느 화면에서 끌어도 같은 순서가 바뀐다** — 한 사람의 취향이 아니라 팀의 명단 차례라 localStorage 가 아니라 DB 가 맞다. ★★ **놓는 즉시 저장한다**(저장 단추 없음) — 근태 표에는 이미 «근태 저장» 단추가 있어, 순서까지 그 단추에 묶으면 «순서만 바꿨는데 저장을 눌러야 하나» 가 생긴다. ★★★ **근태 표에서 순서를 바꿔도 다시 읽지 않는다** — `load()` 가 입력 중인 근태(edits)를 비우기 때문이다. 화면의 차례만 바꾸고 DB 에 쓴다. 실패하면 **원래 차례로 되돌린다.** ★★ **RLS 로 막히면 에러가 아니라 «0행 수정» 이 온다** — `.select()` 로 돌아온 행 수를 세어 0이면 실패로 본다(에러만 보면 «바꿨습니다» 를 띄우고 새로고침하면 도로 돌아간다). agents 쓰기는 master 만이다. ★ 순서는 끄는 순간 전체를 10·20·30… 으로 다시 매긴다 — 옛 값이 겹쳐 있어도(추가할 때 `agents.length` 를 넣어 퇴사·삭제 뒤 겹칠 수 있었다) 한 번에 풀린다. 겸해 **새 인원은 «맨 뒤» 로**: 추가가 `agents.length` 를 넣고 있어 다시 매긴 뒤에는 맨 위로 튀어 올라갔을 것이다 → 가장 큰 값 +10. ★ 손잡이 방식은 CS 설정·보기 설정과 같다 — 줄 전체를 draggable 로 두면 근태 선택칸·메모칸을 누를 때도 행이 딸려 움직인다. ★ dev 전용. -->
@@ -21168,7 +21169,13 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             ⬇ CSV{pickedIds.length ? ' ('+pickedIds.length+')' : ''}</CsListBtnLabel></button>
       </div>
 
-      <div style={{display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',marginBottom:14}}>
+      {/* ★★ 줄마다 «왼쪽 칸(줄바꿈)» | «오른쪽 칸(고정)» 두 칸이다(제니 2026-09-14) —
+            한 flex 줄에 섞어 두면 가로가 줄 때 줄 «끝» 의 오른쪽 묶음이 먼저 아랫줄로 떨어진다.
+            ★ 왼쪽 칸만 stretch + alignContent:center — 한 줄이면 오른쪽 키에 맞춰 가운데로,
+              여러 줄이면 오른쪽은 맨 윗줄에 붙어 있다. 높이 숫자를 박지 않는다. */}
+      <div style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:14}}>
+      <div style={{flex:'1 1 0',minWidth:0,alignSelf:'stretch',display:'flex',flexWrap:'wrap',
+        gap:6,alignItems:'center',alignContent:'center'}}>
         {visibleChips.map(c=>(
           <div key={c.id} onClick={()=>setChip(c.id)}
             /* ★★ 고른 칩을 [+ 티켓 등록] 과 «같은 파랑» 으로 두면 둘이 한 덩어리로 읽힌다
@@ -21185,10 +21192,11 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             {c.id!=='all' && <span style={{fontFamily:'monospace',opacity:.75,marginLeft:5}}>{counts[c.id]||0}</span>}
           </div>
         ))}
-        <div style={{flex:1}}></div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
         <input value={q} onChange={e=>setQ(e.target.value)}
           placeholder="주문번호 · 고객명 · 연락처 · 공급사 · 옛 티켓번호"
-          style={{flex:'1 1 380px',minWidth:320,maxWidth:520,fontSize:12,padding:'6px 10px',
+          style={{width:'clamp(320px, 30vw, 520px)',fontSize:12,padding:'6px 10px',boxSizing:'border-box',
             background:'var(--bg)',border:'1px solid '+CS_LINE,color:'var(--text)',
             borderRadius:6,fontFamily:'inherit'}}/>
         {/* ★★ 오른쪽 두 줄은 «검색칸 / + 티켓 등록» · «페이지 보기 / 보기 설정» 으로
@@ -21204,11 +21212,14 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             fontFamily:'inherit',whiteSpace:'nowrap',flexShrink:0}}>
           <CsListBtnLabel>+ 티켓 등록</CsListBtnLabel></button>
       </div>
+      </div>
 
       {/* ── 필터 ────────────────────────────────────────────────────────
           ★★ 칩과 «따로» 한 줄을 쓴다(제니). 같은 줄에 섞으면 「눌러서 하나만 고르는 것」과
             「겹쳐 거는 것」이 나란히 서서 어느 쪽이 어느 쪽인지 안 보인다. */}
-      <div style={{display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',marginBottom:14}}>
+      <div style={{display:'flex',alignItems:'flex-start',gap:10,marginBottom:14}}>
+      <div style={{flex:'1 1 0',minWidth:0,alignSelf:'stretch',display:'flex',flexWrap:'wrap',
+        gap:6,alignItems:'center',alignContent:'center'}}>
         <span style={{fontSize:11,color:'var(--sub)',marginRight:2}}>필터</span>
         <CsMulti label="담당자" value={flt.assignee} onChange={v=>setF2('assignee',v)}
           options={optAssignee}/>
@@ -21241,7 +21252,8 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
               cursor:'pointer',background:'transparent',
               border:'1px solid rgba(248,113,113,.5)',color:'var(--red)'}}>필터 지우기</button>
         ) : null}
-        <div style={{flex:1}}></div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
         {/* ★ 티켓은 사람이 만든다 — 이 버튼이 유일한 입구다.
             ★ 모달이 아니라 «화면» 으로 간다(제니) — 주문 정보·수기 입력·확인거리를
               나란히 놓으려면 모달 폭으로는 모자란다.
@@ -21291,6 +21303,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             )}
           </div>
         )}
+      </div>
       </div>
 
       {rows===null ? (
