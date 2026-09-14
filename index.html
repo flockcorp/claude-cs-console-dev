@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260914c_etc_memo_bubble -->
+<!-- v20260914d_cs_stats -->
+<!-- (2026-09-14) 🆕 **CS 관리 > «통계»**(제니: 「CS 접수로 생성된 모든 티켓에 대한 통계 · 기간별·공급사별·상품별 · 유형·방향별로도」). 프로토타입 없음 — 구성은 제니가 고른 안(필터 → 요약 카드 → 추이 → 유형·방향 → 유형×방향 표 → 공급사·상품 TOP 10 → 담당자). ★★★ **정한 셋**(제니): ①건수는 **티켓(품목) 기준** — 상품별 통계와 숫자가 맞는다 ②«처리 시간» 은 **생성 → 종결(closed)** 만 — 철회는 해결이 아니라 따로 센다 ③리체크 연장 횟수는 따로 보지 않는다(연장 = 오래 걸렸다는 뜻이라 처리 시간이 이미 말한다). ★★★ **처리 시간의 재료가 없었다** — `closed_at` 칸을 콘솔이 한 번도 안 채웠다(dev 종결 3·철회 2 전부 빈칸). → DB 트리거가 종결 무리로 «들어갈 때» 채우고 나오면 비운다 + 지난 티켓은 이력에서 채웠다(`sql/cs_tickets_closed_at.sql` · dev 적용). **화면이 아니라 DB 인 이유: 단계를 바꾸는 길이 여럿(상세·일괄 편집·묶음 형제)이라 화면에서 채우면 한 길이 빠진다.** ★★ **기간은 «접수일(KST)» 기준, 상태는 «지금» 기준**이다 — 머리말 옆에 적었다. 기간을 «종결일» 로도 잡으면 한 화면에 두 기준이 섞여 숫자끼리 안 맞는다. ★★ 날짜는 **KST 로 자른다** — 환불 리포트는 `created_at.slice(0,10)`(UTC)이라 새벽 9시 전 건이 전날로 간다. 여기서는 그 함정을 처음부터 피했다. ★★ **공급사·상품 TOP 10 은 Chart.js 가 아니라 HTML 막대**다: 누르면 그 공급사·상품으로 **화면 전체가 좁혀져야** 하는데(유형×방향 표의 칸도 같다), 가로 막대는 콘솔에 함정 기록(cs-console-chartjs-hbar-trap)이 있고 클릭 배선도 캔버스보다 HTML 이 곧다. 막대 안은 **유형별로 쌓아** «이 공급사는 무엇이 많은가» 가 한 줄에 보인다. ★ 추이는 기간 길이로 일/주/월을 자동으로 고르되 바꿀 수 있다(45일↓ 일 · 180일↓ 주 · 그 위 월). 빈 날도 0 으로 세운다 — 빠지면 선이 건너뛰어 «줄었다» 가 안 보인다. ★ 필터 목록은 «기간 안의 티켓» 에서 뽑는다(없는 공급사를 고르면 빈 화면이 된다). ★ 메뉴 권한 기본은 master 만(CS 셋과 같다 — 담당자별 실적이 들어간다). 설정 화면 «메뉴 권한» 에 «통계» 줄이 저절로 생긴다. ★ 운영에는 티켓이 아직 0건이라 빈 화면이 정상이다. ★ dev 전용. -->
 <!-- (2026-09-14) **월별 집계 «기타 N일» 의 메모를 «?» 풍선과 같은 풍선으로**(제니: 「내용은 잘 뜨는데 마우스 이미지에 내용이 가려지는 부분이 있어 · 메시지 전체가 잘 보이게」). ★★★ **브라우저 기본 툴팁(`title=`)은 «커서 바로 아래» 에 뜨고 그 자리를 바꿀 수 없다** — 게다가 `cursor:help`(화살표+?)는 보통 화살표보다 커서 더 덮었다. 여러 줄(「날짜 : 내용」)이면 첫 줄이 커서에 먹힌다. → **CsHint 에 `trigger` 를 열었다**: 「?」 대신 넘긴 조각(여기선 「N일」)에 마우스를 올리면 **같은 풍선이 그 글자 «위» 에 뜬다**(위에 자리가 없으면 아래). 커서는 글자 위에 있고 풍선은 글자 밖에 서므로 가리지 않는다. ★★ **새 풍선을 만들지 않았다** — 09-03 에 «공용 풍선» 을 만들었다 되돌린 교훈(모양이 둘이면 둘 다 안 믿는다). 모양·자리 잡기·화면 밖 넘김 막기는 CsHint 가 이미 갖고 있다. ★ 09-03 의 «지나가기만 해도 즉시 뜬다» 문제와는 다르다 — 이 풍선은 **점선 밑줄이 그어진 한 칸**에만 붙는다(표 전체·줄 전체가 아니다). ★ 메모칸(입력 표)은 그대로 `title=` 이다 — 한 줄짜리라 가려질 것이 없고, 입력칸 위에 풍선이 뜨면 옆 날짜 칸을 덮어 입력을 방해한다. ★ dev 전용. -->
 <!-- (2026-09-14) **근태 관리 둘 + 인원 목록 하나**(제니). ①**«기타» 메모칸에 마우스를 올리면 전문**이 뜬다 — 칸이 날짜 폭이라 몇 글자만 보였다. ②**월별 집계의 «기타» 일수에 마우스를 올리면 「날짜 : 내용」** 이 날짜 차례로 뜬다(집계는 되는데 무슨 일이었는지 볼 길이 없었다). 둘 다 `title=` 이다 — 콘솔의 마우스오버 툴팁 규칙(「?」만 CsHint · 값은 title). **«안내» 가 아니라 «값» 이라 칸에 붙인다.** 메모가 있는 일수에만 점선 밑줄을 그어 «올려 볼 게 있다» 를 알린다(title 은 올려 보기 전엔 있는지 모른다). ③**근태 표의 행 · 인원 목록의 재직 인원을 끌어서 순서 바꾸기**(이름 왼쪽 ≡ 를 잡고 행을 끈다). ★★★ **순서를 어디에 남기나 — 이미 답이 있었다: `agents.sort_order`.** 두 화면(과 데이터 입력)이 원래 이 칸으로 정렬하고 있었고, 없던 것은 «바꾸는 손잡이» 뿐이었다. 그래서 **어느 화면에서 끌어도 같은 순서가 바뀐다** — 한 사람의 취향이 아니라 팀의 명단 차례라 localStorage 가 아니라 DB 가 맞다. ★★ **놓는 즉시 저장한다**(저장 단추 없음) — 근태 표에는 이미 «근태 저장» 단추가 있어, 순서까지 그 단추에 묶으면 «순서만 바꿨는데 저장을 눌러야 하나» 가 생긴다. ★★★ **근태 표에서 순서를 바꿔도 다시 읽지 않는다** — `load()` 가 입력 중인 근태(edits)를 비우기 때문이다. 화면의 차례만 바꾸고 DB 에 쓴다. 실패하면 **원래 차례로 되돌린다.** ★★ **RLS 로 막히면 에러가 아니라 «0행 수정» 이 온다** — `.select()` 로 돌아온 행 수를 세어 0이면 실패로 본다(에러만 보면 «바꿨습니다» 를 띄우고 새로고침하면 도로 돌아간다). agents 쓰기는 master 만이다. ★ 순서는 끄는 순간 전체를 10·20·30… 으로 다시 매긴다 — 옛 값이 겹쳐 있어도(추가할 때 `agents.length` 를 넣어 퇴사·삭제 뒤 겹칠 수 있었다) 한 번에 풀린다. 겸해 **새 인원은 «맨 뒤» 로**: 추가가 `agents.length` 를 넣고 있어 다시 매긴 뒤에는 맨 위로 튀어 올라갔을 것이다 → 가장 큰 값 +10. ★ 손잡이 방식은 CS 설정·보기 설정과 같다 — 줄 전체를 draggable 로 두면 근태 선택칸·메모칸을 누를 때도 행이 딸려 움직인다. ★ dev 전용. -->
 <!-- (2026-09-14) **디지털 상품 발송 화면에 «잠정 보류 중» 띠**(제니: 「디지털 상품 발송 기능을 지금 잠정 보류로 사용하지 않고 있어」). 같은 날 운영·dev DB 에서 자동 발송 일정(auto-delivery-poll-5min)을 «껐다» — 템플릿이 전부 꺼져 있어 할 일 없는 호출이 하루 288번 돌며 가끔 500 으로 흔들려 감시 문자만 만들고 있었다. ★★★ **보류 사실은 `console_settings.auto_delivery_hold` 한 곳에만 있다** — 이 띠와 감시 SQL(보류 일정은 «꺼져 있다» 로 경보 안 함)이 **같은 값을 읽는다.** 화면에 «보류» 를 글자로 박아 두면 재개한 날 띠만 남아 거짓말을 한다. 키가 있으면 띠, 없으면 아무것도 안 그린다(재개 SQL `auto_delivery_resume.sql` 이 키를 지운다). ★ 맥박(.alert-pulse)은 안 쓴다 — 사고가 아니라 «일부러 멈춘 상태» 를 알리는 말이다. 맥박은 사고에만 써야 뜻이 닳지 않는다. ★★ **띠에 «다시 켜는 법» 을 적었다** — 여기서 템플릿만 켜면 메일이 나갈 거라 믿기 쉬운데 일정이 꺼져 있어 **아무 일도 안 일어난다.** 반대로 준비 없이 일정부터 켜면 보류 동안 쌓인 주문에 한꺼번에 나갈 수 있다. 그래서 «템플릿을 켜도 발송되지 않는다» 를 굵게 · 재개는 순서가 있다는 것을 함께 적었다. ★ 못 읽으면 띠를 그리지 않는다(화면을 세우지 않는다). ★ dev 전용. -->
@@ -732,6 +733,9 @@
        ⚠ `min-height:0` 이 있어야 한다 — flex 자식은 «내용보다 작아지지 않는» 것이
          기본이라, 이것이 없으면 목록이 통째로 늘어나 스크롤이 안 생긴다. */
     .sidebar-logo{flex-shrink:0}
+    /* CS 통계 — 누르면 좁혀지는 줄·칸 (2026-09-14) */
+    .cs-stat-row{border-radius:6px;cursor:pointer}
+    .cs-stat-row:hover{background:var(--hover)}
     .sidebar-nav{padding:16px 12px;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
     .nav-section{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.1em;text-transform:uppercase;padding:0 8px;margin:16px 0 6px}
     .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;font-size:13px;font-weight:500;color:var(--sub);cursor:pointer;transition:all .15s;margin-bottom:2px}
@@ -20194,6 +20198,447 @@ function CsRecheck({at, stage}){
 //     화면만 master 로 박아 두면 «설정에서 열어 줬는데 버튼이 없는» 자리가 된다 —
 //     09-07 에 배송지연에서 만난 그 함정이다(**설정이 거짓말을 하는 자리**).
 //   ★ 화면과 DB 가 «같은 자리» 를 본다. 화면은 헛걸음을 없애고, 진짜 자물쇠는 DB 다.
+// =============================================================================
+// CS 통계 (2026-09-14) — CS 접수로 만든 모든 티켓. 기간·공급사·상품·유형·방향.
+// ★ 기간 = 접수일(KST) · 상태 = 지금. 건수 = 티켓(품목). 처리 시간 = 생성 → 종결(closed)만.
+// =============================================================================
+const CS_STAT_TYPE_COLOR = {
+  '불량':'#E5484D','파손':'#F76B15','오염':'#D6A100','누락':'#8E4EC6','오배송':'#6E56CF',
+  '지연':'#0090FF','배송불가지역':'#00A2C7','품절':'#12A594','변심':'#30A46C',
+  '불만족':'#E93D82','기타':'#8B8D98',
+};
+const CS_STAT_DIR_COLOR = {
+  '교환':'#0090FF','반품':'#E5484D','부분보상':'#F76B15','재출고':'#30A46C','환불':'#8E4EC6',
+  '정산 반영':'#D6A100','취소':'#8B8D98','A/S':'#00A2C7','(미정)':'#C4C7D0',
+};
+const CS_STAT_NONE = '(미정)';
+// KST 날짜 «YYYY-MM-DD» — toISOString 은 UTC 라 새벽 9시 전 건이 전날로 간다.
+function csStatDay(v){
+  return new Date(new Date(v).getTime() + 9*3600*1000).toISOString().slice(0,10);
+}
+function csStatAddDays(ymd, n){
+  const d = new Date(ymd+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function csStatBucket(ymd, unit){
+  if(unit==='month') return ymd.slice(0,7);
+  if(unit==='week'){                       // 월요일 시작
+    const d = new Date(ymd+'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay()+6)%7));
+    return d.toISOString().slice(0,10);
+  }
+  return ymd;
+}
+// 처리 시간 — 하루가 넘으면 «2.4일», 안 넘으면 «5시간»
+function csStatLead(ms){
+  if(ms==null || isNaN(ms)) return '—';
+  const h = ms/3600000;
+  if(h < 1) return Math.max(1, Math.round(ms/60000))+'분';
+  if(h < 24) return Math.round(h)+'시간';
+  const d = h/24;
+  return (d < 10 ? d.toFixed(1) : Math.round(d))+'일';
+}
+function csStatLeads(list){
+  const ms = list.filter(t=>t.stage==='closed' && t.closed_at)
+    .map(t=>new Date(t.closed_at)-new Date(t.created_at)).filter(v=>v>=0).sort((a,b)=>a-b);
+  if(!ms.length) return {avg:null, median:null, n:0};
+  const avg = ms.reduce((a,b)=>a+b,0)/ms.length;
+  const m = ms.length%2 ? ms[(ms.length-1)/2] : (ms[ms.length/2-1]+ms[ms.length/2])/2;
+  return {avg, median:m, n:ms.length};
+}
+
+function CsStatsPage(){
+  const todayK = csStatDay(new Date());
+  const [from,setFrom] = useState(csStatAddDays(todayK, -29));
+  const [to,setTo]     = useState(todayK);
+  const [rows,setRows] = useState([]);
+  const [loading,setLoading] = useState(true);
+  const [failed,setFailed]   = useState(false);
+  const [unit,setUnit] = useState('');           // '' = 자동
+  const [f,setF] = useState({supplier:'', product:'', type:'', direction:''});
+  const [allSup,setAllSup]   = useState(false);
+  const [allProd,setAllProd] = useState(false);
+  const setFilter = (k,v)=> setF(p=>({...p,[k]: p[k]===v ? '' : v}));   // 같은 것을 또 누르면 푼다
+
+  const quick = (type)=>{
+    const [y,m] = todayK.split('-').map(Number);
+    const pad = n=>String(n).padStart(2,'0');
+    if(type==='7d'){ setFrom(csStatAddDays(todayK,-6)); setTo(todayK); }
+    else if(type==='30d'){ setFrom(csStatAddDays(todayK,-29)); setTo(todayK); }
+    else if(type==='90d'){ setFrom(csStatAddDays(todayK,-89)); setTo(todayK); }
+    else if(type==='this_month'){ setFrom(`${y}-${pad(m)}-01`); setTo(todayK); }
+    else if(type==='last_month'){
+      const ly = m===1 ? y-1 : y, lm = m===1 ? 12 : m-1;
+      setFrom(`${ly}-${pad(lm)}-01`);
+      setTo(csStatAddDays(`${y}-${pad(m)}-01`, -1));
+    }
+    else if(type==='this_year'){ setFrom(`${y}-01-01`); setTo(todayK); }
+  };
+
+  useEffect(()=>{
+    let alive = true;
+    (async ()=>{
+      setLoading(true); setFailed(false);
+      const cols = 'id,created_at,closed_at,stage,cs_type,direction,supplier_name,product_code,product_name,assignee,main_ticket_id';
+      let all = [], at = 0;
+      const PAGE = 1000;
+      while(true){
+        const {data,error} = await sb.from('cs_tickets').select(cols)
+          .gte('created_at', from+'T00:00:00+09:00')
+          .lt('created_at', csStatAddDays(to,1)+'T00:00:00+09:00')
+          .order('created_at',{ascending:true}).range(at, at+PAGE-1);
+        if(!alive) return;
+        if(sbFail('CS 통계 조회', error)){ setFailed(true); break; }
+        all = all.concat(data||[]);
+        if(!data || data.length < PAGE) break;
+        at += PAGE;
+      }
+      if(!alive) return;
+      setRows(all); setLoading(false);
+    })();
+    return ()=>{ alive = false; };
+  },[from, to]);
+
+  // ── 좁히기 ──
+  const supOf  = t=> t.supplier_name || '(공급사 없음)';
+  const prodOf = t=> t.product_code || t.product_name || '(상품 없음)';
+  const prodLabel = {};
+  rows.forEach(t=>{ prodLabel[prodOf(t)] = t.product_name || t.product_code || '(상품 없음)'; });
+  const dirOf  = t=> t.direction || CS_STAT_NONE;
+  const list = rows.filter(t=>
+    (!f.supplier || supOf(t)===f.supplier) && (!f.product || prodOf(t)===f.product) &&
+    (!f.type || t.cs_type===f.type) && (!f.direction || dirOf(t)===f.direction));
+
+  // 필터 목록은 «기간 안의 티켓» 에서 — 많은 차례로
+  const countBy = (arr, keyFn)=>{
+    const m = {}; arr.forEach(t=>{ const k=keyFn(t); m[k]=(m[k]||0)+1; });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  };
+  const optSup  = countBy(rows, supOf);
+  const optProd = countBy(rows, prodOf);
+  const optType = CS_TYPES.filter(x=>rows.some(t=>t.cs_type===x));
+  const optDir  = CS_DIRECTIONS.concat([CS_STAT_NONE]).filter(x=>rows.some(t=>dirOf(t)===x));
+
+  // ── 요약 ──
+  const nClosed    = list.filter(t=>t.stage==='closed').length;
+  const nWithdrawn = list.filter(t=>t.stage==='withdrawn').length;
+  const nOpen      = list.length - nClosed - nWithdrawn;
+  const lead = csStatLeads(list);
+
+  // ── 추이 ──
+  const spanDays = Math.round((new Date(to+'T00:00:00Z') - new Date(from+'T00:00:00Z'))/86400000) + 1;
+  const autoUnit = spanDays <= 45 ? 'day' : spanDays <= 180 ? 'week' : 'month';
+  const u = unit || autoUnit;
+  const keys = [];
+  for(let d=from; d<=to; d=csStatAddDays(d,1)){
+    const k = csStatBucket(d,u); if(keys[keys.length-1]!==k) keys.push(k);
+  }
+  const inCnt = {}, outCnt = {};
+  keys.forEach(k=>{ inCnt[k]=0; outCnt[k]=0; });
+  list.forEach(t=>{
+    const k = csStatBucket(csStatDay(t.created_at),u); if(k in inCnt) inCnt[k]++;
+    if(t.stage==='closed' && t.closed_at){
+      const c = csStatBucket(csStatDay(t.closed_at),u); if(c in outCnt) outCnt[c]++;
+    }
+  });
+  const keyLabel = k=> u==='month' ? k : (u==='week' ? k.slice(5)+'주' : k.slice(5));
+
+  // ── 유형·방향 ──
+  const typeEntries = countBy(list, t=>t.cs_type||'기타');
+  const dirEntries  = countBy(list, dirOf);
+  const crossTypes = CS_TYPES.filter(x=>list.some(t=>t.cs_type===x));
+  const crossDirs  = CS_DIRECTIONS.concat([CS_STAT_NONE]).filter(x=>list.some(t=>dirOf(t)===x));
+  const cross = {}; let crossMax = 0;
+  list.forEach(t=>{ const k=t.cs_type+'|'+dirOf(t); cross[k]=(cross[k]||0)+1; crossMax=Math.max(crossMax,cross[k]); });
+
+  // ── 공급사·상품 ──
+  const groupRank = (keyFn, labelFn)=>{
+    const m = {};
+    list.forEach(t=>{ const k=keyFn(t); (m[k]=m[k]||[]).push(t); });
+    return Object.entries(m).map(([key,arr])=>{
+      const byType = {}; arr.forEach(t=>{ byType[t.cs_type]=(byType[t.cs_type]||0)+1; });
+      return {key, label:labelFn(key), count:arr.length, byType, lead:csStatLeads(arr),
+              open:arr.filter(t=>t.stage!=='closed'&&t.stage!=='withdrawn').length};
+    }).sort((a,b)=>b.count-a.count || a.label.localeCompare(b.label,'ko'));
+  };
+  const supRank  = groupRank(supOf, k=>k);
+  const prodRank = groupRank(prodOf, k=>prodLabel[k]||k);
+
+  // ── 담당자 ──
+  const who = {};
+  list.forEach(t=>{ const k=t.assignee||''; (who[k]=who[k]||[]).push(t); });
+  const whoRows = Object.entries(who).map(([k,arr])=>({
+    key:k, name: k ? csShortUser(k) : '(담당 없음)', count:arr.length,
+    closed:arr.filter(t=>t.stage==='closed').length,
+    withdrawn:arr.filter(t=>t.stage==='withdrawn').length,
+    open:arr.filter(t=>t.stage!=='closed'&&t.stage!=='withdrawn').length,
+    lead:csStatLeads(arr)})).sort((a,b)=>b.count-a.count);
+
+  // ── 모양 ──
+  const card = {background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,padding:16};
+  const title = {fontSize:13,fontWeight:600,color:'var(--text)',marginBottom:12,display:'flex',alignItems:'baseline',gap:8};
+  const note = {fontSize:11,color:'var(--sub)',fontWeight:400};
+  const seg = (on)=>({fontSize:11,padding:'7px 12px',border:'none',borderRight:'1px solid var(--border)',cursor:'pointer',
+    fontFamily:'inherit',background:on?'rgba(246,173,9,.18)':'transparent',color:on?'var(--warn-ink)':'var(--sub)'});
+  const ctl = {fontSize:12,padding:'6px 10px',background:'var(--surface)',border:'1px solid var(--border)',
+    color:'var(--text)',borderRadius:6,fontFamily:'inherit',maxWidth:220};
+  const th = {padding:'8px 10px',fontSize:11,fontWeight:700,whiteSpace:'nowrap',textAlign:'right'};
+  const td = {padding:'8px 10px',fontSize:12,borderBottom:'1px solid var(--border)',textAlign:'right',
+    fontVariantNumeric:'tabular-nums',color:'var(--text)',whiteSpace:'nowrap'};
+  const legendDot = c=>({display:'inline-block',width:8,height:8,borderRadius:2,background:c,marginRight:5});
+  const hasFilter = f.supplier||f.product||f.type||f.direction;
+  const doughnutBorder = csIsLight() ? '#FFFFFF' : '#111e38';
+
+  const Kpi = ({label, value, sub, color})=>(
+    <div style={{...card,padding:'14px 16px'}}>
+      <div style={{fontSize:11,color:'var(--sub)'}}>{label}</div>
+      <div style={{fontSize:22,fontWeight:700,marginTop:4,color:color||'var(--text)',fontVariantNumeric:'tabular-nums'}}>{value}</div>
+      {sub && <div style={{fontSize:10.5,color:'var(--sub)',marginTop:3}}>{sub}</div>}
+    </div>
+  );
+
+  const RankList = ({rank, fkey, all, setAll, unitName})=>{
+    const shown = all ? rank : rank.slice(0,10);
+    const max = Math.max(1, ...rank.map(r=>r.count));
+    return (
+      <div>
+        {shown.map((r,i)=>{
+          const on = f[fkey]===r.key;
+          return (
+            <div key={r.key} className="cs-stat-row" onClick={()=>setFilter(fkey, r.key)}
+              style={{padding:'6px 6px',background:on?'var(--hover)':undefined,
+                outline:on?'1px solid var(--primary)':'none'}}>
+              <div style={{display:'flex',justifyContent:'space-between',gap:10,fontSize:12,marginBottom:4}}>
+                <span title={r.label} style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:'var(--text)',minWidth:0}}>
+                  <span style={{color:'var(--sub)',fontVariantNumeric:'tabular-nums',marginRight:6}}>{i+1}</span>{r.label}
+                </span>
+                <span style={{whiteSpace:'nowrap',color:'var(--sub)',fontVariantNumeric:'tabular-nums'}}>
+                  <b style={{color:'var(--text)'}}>{r.count}건</b>
+                  {r.open>0 && <> · 진행 {r.open}</>}
+                  {' · '}{r.lead.n ? '평균 '+csStatLead(r.lead.avg) : '종결 없음'}
+                </span>
+              </div>
+              <div style={{display:'flex',height:8,width:(r.count/max*100)+'%',minWidth:4,borderRadius:3,overflow:'hidden'}}>
+                {CS_TYPES.filter(x=>r.byType[x]).map(x=>(
+                  <span key={x} title={x+' '+r.byType[x]+'건'}
+                    style={{flex:r.byType[x],background:CS_STAT_TYPE_COLOR[x]||'#8B8D98'}}/>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+        {rank.length>10 && (
+          <button onClick={()=>setAll(!all)}
+            style={{marginTop:8,fontSize:11,padding:'5px 10px',background:'transparent',border:'1px solid var(--border)',
+              borderRadius:6,color:'var(--sub)',cursor:'pointer',fontFamily:'inherit'}}>
+            {all ? 'TOP 10 만 보기' : `전체 ${rank.length}${unitName} 보기`}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{padding:'24px 32px'}}>
+      <div className="cs-page-head" style={{marginBottom:16,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>📊 CS 통계</h1>
+        <span style={{fontSize:12,color:'var(--sub)'}}>기간은 접수일 기준 · 상태는 지금 기준 · 건수는 티켓(품목) 기준</span>
+      </div>
+
+      {/* 기간 */}
+      <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap',marginBottom:10}}>
+        <div style={{display:'inline-flex',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:6,overflow:'hidden'}}>
+          {[['7d','최근 7일'],['30d','최근 30일'],['90d','최근 90일'],['this_month','이번 달'],['last_month','지난 달'],['this_year','올해']].map(([k,l],i,a)=>(
+            <button key={k} onClick={()=>quick(k)} style={{...seg(false),borderRight:i===a.length-1?'none':seg(false).borderRight}}>{l}</button>
+          ))}
+        </div>
+        <input type="date" value={from} max={to} onChange={e=>e.target.value&&setFrom(e.target.value)} style={ctl}/>
+        <span style={{color:'var(--sub)',fontSize:12}}>~</span>
+        <input type="date" value={to} min={from} max={todayK} onChange={e=>e.target.value&&setTo(e.target.value)} style={ctl}/>
+      </div>
+
+      {/* 좁히기 */}
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:18}}>
+        <select value={f.supplier} onChange={e=>setF(p=>({...p,supplier:e.target.value}))} style={ctl}>
+          <option value="">공급사 전체</option>
+          {optSup.map(([k,n])=><option key={k} value={k}>{k} ({n})</option>)}
+        </select>
+        <select value={f.product} onChange={e=>setF(p=>({...p,product:e.target.value}))} style={ctl}>
+          <option value="">상품 전체</option>
+          {optProd.map(([k,n])=><option key={k} value={k}>{prodLabel[k]||k} ({n})</option>)}
+        </select>
+        <select value={f.type} onChange={e=>setF(p=>({...p,type:e.target.value}))} style={ctl}>
+          <option value="">유형 전체</option>
+          {optType.map(x=><option key={x} value={x}>{x}</option>)}
+        </select>
+        <select value={f.direction} onChange={e=>setF(p=>({...p,direction:e.target.value}))} style={ctl}>
+          <option value="">방향 전체</option>
+          {optDir.map(x=><option key={x} value={x}>{x}</option>)}
+        </select>
+        {hasFilter && (
+          <button onClick={()=>setF({supplier:'',product:'',type:'',direction:''})}
+            style={{fontSize:11,padding:'6px 10px',background:'transparent',border:'1px solid var(--border)',borderRadius:6,
+              color:'var(--sub)',cursor:'pointer',fontFamily:'inherit'}}>✕ 필터 지우기</button>
+        )}
+        <span style={{fontSize:11,color:'var(--sub)'}}>막대·표의 칸을 누르면 그것으로 좁혀집니다</span>
+      </div>
+
+      {loading ? (
+        <div style={{padding:60,textAlign:'center',color:'var(--sub)'}}>집계 중…</div>
+      ) : failed ? (
+        <div style={{...card,padding:40,textAlign:'center',color:'var(--red-ink)'}}>티켓을 읽지 못했습니다. 새로고침해 주세요.</div>
+      ) : list.length===0 ? (
+        <div style={{...card,padding:60,textAlign:'center',color:'var(--sub)'}}>
+          {rows.length===0 ? '선택한 기간에 접수된 티켓이 없습니다.' : '필터에 맞는 티켓이 없습니다.'}
+        </div>
+      ) : (<>
+        {/* 요약 */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:16}}>
+          <Kpi label="전체 접수" value={list.length+'건'}/>
+          <Kpi label="종결" value={nClosed+'건'} color="var(--ok-ink)"
+            sub={list.length ? Math.round(nClosed/list.length*100)+'%' : null}/>
+          <Kpi label="진행 중" value={nOpen+'건'} color="var(--warn-ink)" sub="종결·철회 전 모든 단계"/>
+          <Kpi label="철회" value={nWithdrawn+'건'} color="var(--sub)"/>
+          <Kpi label="평균 처리 시간" value={csStatLead(lead.avg)}
+            sub={lead.n ? `중앙값 ${csStatLead(lead.median)} · 종결 ${lead.n}건 기준` : '종결된 티켓이 없습니다'}/>
+        </div>
+
+        {/* 추이 */}
+        <div style={{...card,marginBottom:16}}>
+          <div style={{...title,justifyContent:'space-between',flexWrap:'wrap'}}>
+            <span>접수·종결 추이 <span style={note}>종결은 종결된 날에 셉니다</span></span>
+            <div style={{display:'inline-flex',border:'1px solid var(--border)',borderRadius:6,overflow:'hidden'}}>
+              {[['day','일'],['week','주'],['month','월']].map(([k,l],i)=>(
+                <button key={k} onClick={()=>setUnit(k===autoUnit?'':k)}
+                  style={{...seg(u===k),borderRight:i===2?'none':seg(false).borderRight,padding:'5px 12px'}}>{l}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{height:240}}>
+            <ChartComp type="bar"
+              options={{...BASE_OPTS,
+                scales:{x:{...BASE_OPTS.scales.x},
+                        y:{...BASE_OPTS.scales.y, beginAtZero:true, ticks:{...BASE_OPTS.scales.y.ticks, precision:0}}},
+                plugins:{...BASE_OPTS.plugins}}}
+              data={{labels:keys.map(keyLabel), datasets:[
+                {type:'bar', label:'접수', data:keys.map(k=>inCnt[k]), backgroundColor:'rgba(91,141,239,.55)', borderColor:'#5B8DEF', borderWidth:1, order:2},
+                {type:'line', label:'종결', data:keys.map(k=>outCnt[k]), borderColor:'#22B08A', backgroundColor:'rgba(34,176,138,.2)', tension:.3, pointRadius:2, order:1},
+              ]}}/>
+          </div>
+        </div>
+
+        {/* 유형 · 방향 */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:16,marginBottom:16}}>
+          {[['유형 비중', typeEntries, CS_STAT_TYPE_COLOR, 'type'], ['방향 비중', dirEntries, CS_STAT_DIR_COLOR, 'direction']].map(([ttl, ents, colors, fk])=>(
+            <div key={fk} style={card}>
+              <div style={title}>{ttl} <span style={note}>이름을 누르면 좁혀집니다</span></div>
+              <div style={{display:'grid',gridTemplateColumns:'180px 1fr',gap:12,alignItems:'center'}}>
+                <div style={{height:180}}>
+                  <ChartComp type="doughnut"
+                    options={{...BASE_OPTS, scales:{}, cutout:'58%',
+                      plugins:{legend:{display:false},
+                        tooltip:{callbacks:{label:(c)=>` ${c.label}: ${c.parsed}건 (${Math.round(c.parsed/list.length*100)}%)`}}}}}
+                    data={{labels:ents.map(e=>e[0]), datasets:[{data:ents.map(e=>e[1]),
+                      backgroundColor:ents.map(e=>colors[e[0]]||'#8B8D98'), borderColor:doughnutBorder, borderWidth:2}]}}/>
+                </div>
+                <div>
+                  {ents.map(([k,n])=>(
+                    <div key={k} className="cs-stat-row" onClick={()=>setFilter(fk,k)}
+                      style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'3px 6px',fontSize:12,
+                        background:f[fk]===k?'var(--hover)':undefined}}>
+                      <span style={{color:'var(--text)',whiteSpace:'nowrap'}}><span style={legendDot(colors[k]||'#8B8D98')}/>{k}</span>
+                      <span style={{color:'var(--sub)',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>
+                        <b style={{color:'var(--text)'}}>{n}</b> · {Math.round(n/list.length*100)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 유형 × 방향 */}
+        <div style={{...card,marginBottom:16}}>
+          <div style={title}>유형 × 방향 <span style={note}>칸을 누르면 그 유형·방향으로 좁혀집니다</span></div>
+          <div style={{overflowX:'auto'}}>
+            <table style={{borderCollapse:'collapse',width:'100%'}}>
+              <thead><tr>
+                <th style={{...th,textAlign:'left'}}>유형 \ 방향</th>
+                {crossDirs.map(d=><th key={d} style={th}>{d}</th>)}
+                <th style={th}>합계</th>
+              </tr></thead>
+              <tbody>
+                {crossTypes.map(ty=>{
+                  const rowSum = list.filter(t=>t.cs_type===ty).length;
+                  return (
+                    <tr key={ty}>
+                      <td style={{...td,textAlign:'left',fontWeight:600}}><span style={legendDot(CS_STAT_TYPE_COLOR[ty])}/>{ty}</td>
+                      {crossDirs.map(d=>{
+                        const v = cross[ty+'|'+d]||0;
+                        return (
+                          <td key={d} className={v?'cs-stat-row':undefined}
+                            onClick={v?()=>setF(p=>({...p,type:p.type===ty&&p.direction===d?'':ty,direction:p.type===ty&&p.direction===d?'':d})):undefined}
+                            style={{...td,color:v?'var(--text)':'var(--sub)',borderRadius:0,
+                              background:v?`rgba(91,141,239,${(0.08+0.42*v/Math.max(1,crossMax)).toFixed(2)})`:undefined}}>
+                            {v||'·'}</td>
+                        );
+                      })}
+                      <td style={{...td,fontWeight:700}}>{rowSum}</td>
+                    </tr>
+                  );
+                })}
+                <tr>
+                  <td style={{...td,textAlign:'left',fontWeight:700}}>합계</td>
+                  {crossDirs.map(d=><td key={d} style={{...td,fontWeight:700}}>{list.filter(t=>dirOf(t)===d).length}</td>)}
+                  <td style={{...td,fontWeight:700}}>{list.length}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 공급사 · 상품 */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(360px,1fr))',gap:16,marginBottom:16}}>
+          <div style={card}>
+            <div style={title}>공급사별 <span style={note}>{supRank.length}곳 · 막대는 유형별로 쌓았습니다</span></div>
+            <RankList rank={supRank} fkey="supplier" all={allSup} setAll={setAllSup} unitName="곳"/>
+          </div>
+          <div style={card}>
+            <div style={title}>상품별 <span style={note}>{prodRank.length}개 · 막대는 유형별로 쌓았습니다</span></div>
+            <RankList rank={prodRank} fkey="product" all={allProd} setAll={setAllProd} unitName="개"/>
+          </div>
+        </div>
+
+        {/* 담당자 */}
+        <div style={card}>
+          <div style={title}>담당자별 <span style={note}>지금 담당자 기준</span></div>
+          <div style={{overflowX:'auto'}}>
+            <table style={{borderCollapse:'collapse',width:'100%'}}>
+              <thead><tr>
+                <th style={{...th,textAlign:'left'}}>담당자</th><th style={th}>접수</th><th style={th}>종결</th>
+                <th style={th}>진행 중</th><th style={th}>철회</th><th style={th}>평균 처리 시간</th><th style={th}>중앙값</th>
+              </tr></thead>
+              <tbody>
+                {whoRows.map(w=>(
+                  <tr key={w.key}>
+                    <td style={{...td,textAlign:'left',fontWeight:600}} title={w.key||undefined}>{w.name}</td>
+                    <td style={td}>{w.count}</td>
+                    <td style={{...td,color:'var(--ok-ink)'}}>{w.closed}</td>
+                    <td style={{...td,color:w.open?'var(--warn-ink)':'var(--sub)'}}>{w.open}</td>
+                    <td style={{...td,color:'var(--sub)'}}>{w.withdrawn}</td>
+                    <td style={td}>{csStatLead(w.lead.avg)}</td>
+                    <td style={{...td,color:'var(--sub)'}}>{csStatLead(w.lead.median)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </>)}
+    </div>
+  );
+}
+
 function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDraft,
                        chip, setChip}){
   const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
@@ -29360,6 +29805,8 @@ const CS_MENU_DEFS = [
   //   ★ 열 때는 설정 화면에서 체크만 하면 된다 — 이 줄을 다시 고칠 일이 없다.
   {id:'csTickets',     g:'CS 관리',   label:'티켓 목록',        base:['master']},
   {id:'csDraft',       g:'CS 관리',   label:'공급사 접수',      base:['master']},
+  // ★ 통계(2026-09-14) — 담당자별 실적이 들어가 기본은 master 만.
+  {id:'csStats',       g:'CS 관리',   label:'통계',             base:['master']},
   {id:'csSettings',    g:'CS 관리',   label:'설정',             base:['master'], rls:true},
   {id:'refunds',       label:'환불 관리',        base:['master'], rls:true},
   {id:'costs',         label:'비용 비교 도구',   base:['master']},
@@ -29473,7 +29920,7 @@ const PAGE_LABELS = {
   products:'상품 관리', delays:'배송지연', suppliers:'공급사',
   autoDelivery:'자동발송', refunds:'환불 관리', costs:'비용 비교 도구', agents:'인력 관리',
   csTickets:'CS 관리', csNew:'새 티켓', csTicket:'티켓 상세', csSettings:'CS 설정',
-  csDraft:'공급사 접수 문안',
+  csDraft:'공급사 접수 문안', csStats:'CS 통계',
 };
 
 // ── 화면별 에러 경계 ──────────────────────────────────────────────────
@@ -30889,7 +31336,7 @@ function App() {
     csTickets:'csMgmt', csNew:'csMgmt', csTicket:'csMgmt', csSettings:'csMgmt',
     // ★ 자식 화면을 더할 때는 이 표도 함께 — 없으면 그 화면을 보고 있는데
     //   사이드바에서는 부모가 접혀 «지금 보는 메뉴가 안 보이는» 상태가 된다.
-    csDraft:'csMgmt',
+    csDraft:'csMgmt', csStats:'csMgmt',
   };
   // 현재 펼친 부모들 (다중 펼침 가능: 사용자 수동 조작 존중)
   // 비용 비교 도구와 사이드바를 잇는 두 칸. 목록은 도구가 올려 주고, 클릭은 nav 로 내려보낸다.
@@ -31201,7 +31648,7 @@ function App() {
               ★ 흐름이 티켓 → 환불 → 정산이라 «환불 관리» 앞에 선다.
               ★ 「설정」은 만드는 중이라 아직 자식으로 두지 않았다 — 없는 화면으로
                 가는 메뉴를 먼저 두면 «고장 난 것» 으로 읽힌다. */}
-          {(canMenu('csTickets')||canMenu('csDraft')||canMenu('csSettings')) && (
+          {(canMenu('csTickets')||canMenu('csDraft')||canMenu('csStats')||canMenu('csSettings')) && (
           <div className="nav-group">
           <div className="nav-parent" onClick={()=>toggleGroup('csMgmt')}
             title={navCollapsed?'CS 관리':undefined}>
@@ -31238,6 +31685,11 @@ function App() {
                   설정도 «지금» master 만이라 M 이 뜬다. 여기만 빼 두면 «M 이 없으니
                   나도 되겠지» 로 읽힌다(2026-09-08).
                   ⚠ 주석은 `&& (` 안이 아니라 «밖» 에 — 오늘만 다섯 번째다. */}
+              {canMenu('csStats') && (
+                <div className={`nav-child ${page==='csStats'?'active':''}`} onClick={()=>navigateTo('csStats')}>
+                  <span className="nav-label">통계</span><RoleTag on={masterOnly('csStats')}/>
+                </div>
+              )}
               {canMenu('csSettings') && (
                 <div className={`nav-child ${page==='csSettings'?'active':''}`} onClick={()=>navigateTo('csSettings')}>
                   <span className="nav-label">설정</span><RoleTag on={masterOnly('csSettings')}/>
@@ -31492,6 +31944,7 @@ function App() {
           role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={ticketSeq}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
+        {page==='csStats'&&(canMenu('csStats')?<CsStatsPage/>:<NoAccessPage/>)}
         {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket} can={canAction}/>:<NoAccessPage/>)}
         {page==='costs'&&(canMenu('costs')?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&canMenu('agentAnalysis')&&<AgentAnalysisPage/>}
