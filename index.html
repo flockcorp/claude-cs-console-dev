@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260915c_note_find_and_link -->
+<!-- (2026-09-15) 제니 dev 피드백 셋. ①**용어 — 지식 창고에서 쓰는 것은 «문서» 다**(제니). 화면 글자를 전부 바꿨다. ★ **표·칸 이름(`manual_docs`·`body`·`kind='note'`)은 그대로 뒀다** — 이름을 바꾸면 SQL·정책·검사·백업 마스킹까지 함께 밀리는데 얻는 것이 없다. **사람이 부르는 이름과 기계가 쓰는 이름은 갈라도 된다.** ②🆕 **문서 «안» 찾기**(제니: 「문서 화면에서 상단에 문서 안의 내용에 대해 검색」). 소제목·내용·**표 칸 안까지** 강조하고 «블록 N개 · M곳» 을 센다. [찾은 블록만] 으로 거를 수 있다. ★★ 목록의 검색과 **뜻이 다르다** — 저것은 «어느 문서인가», 이것은 «이 문서 어디인가» 다. 그래서 자리도 문서 안이고, 세는 단위도 문서가 아니라 블록·곳이다. ★★★ **강조 조각을 하나로 모았다** — `ManualMark` 를 **`CsMark`** 로 옮기고, 표까지 그리는 `CsNoteBody` 가 그것을 부르게 했다(`q` 를 안 주면 예전과 글자 그대로 같다). 베껴 두 벌을 만들었으면 언젠가 한쪽 강조만 고쳐진다. 겸해 «몇 곳인가» 를 세는 `csCountHits` 도 한 곳에 뒀다. ★ 거른 뒤에도 **블록 번호는 «원래 자리»** 다 — 1,2,3 으로 다시 매기면 찾고 나서 고치러 갈 때 그 번호로 못 찾는다. ★ 찾은 것이 없으면 [찾은 블록만] 을 **안 먹인다** — 빈 화면은 «고장» 으로 읽힌다. ★ 찾기 칸은 **제 줄**이다 — 입력칸이 위 단추들보다 키가 커서 같은 줄에 끼우면 그 줄이 통째로 내려앉는다(09-11 CSV 단추에서 밟은 것). ③**연결된 메뉴얼을 눌러 바로 연다**(제니). ★★ 문서 창을 **닫지 않고 그 위에 겹친다** — 연결을 누르는 까닭은 대개 «보고 돌아오려고» 라, 닫았다 열면 펼침·스크롤·찾던 말이 다 사라진다. ★★ 목록에 담아 둔 줄을 그대로 쓰지 않고 **누를 때 다시 읽어 온다** — 탭에 들어올 때 한 번 읽은 것이라 그사이 파일이 바뀌었으면 옛 경로로 미리보기를 연다. 지워졌거나 볼 수 없게 된 것도 여기서 갈린다(**RLS 는 «에러» 가 아니라 «없음» 으로 막는다**). ★ 겹친 창은 **읽기 전용**이다 — 거기서 파일을 고치게 하면 뒤에 선 문서 창에 옛 내용이 남아 무엇이 최신인지 헷갈린다. 고치는 길은 [메뉴얼 파일] 탭이라고 적어 뒀다. ★ 반대 방향(메뉴얼 → 가리키는 문서)은 아직 글자다. ★ dev 전용. -->
 <!-- v20260915b_manual_notes -->
 <!-- (2026-09-15) 🆕 **메뉴얼 관리 2단계 «지식 창고»**(제니: 프로토타입 없음 · 「상품 정보 기준으로 알아서」). 메뉴얼 관리에 탭 하나가 늘었다 — 콘솔 안에서 글을 쓰고 쌓고 찾는다. ★★★ **표를 따로 만들지 않고 `manual_docs` 에 `kind='note'` 로 함께 넣었다** — 1단계 SQL 에 「2단계는 이 표와 따로 만든다」고 적어 뒀던 것을 **뒤집었다.** 필요한 것을 늘어놓고 보니 다른 것은 **본문 한 칸과 변경 이력뿐**이고 분류·태그·보기 권한·확인 기준일·RLS 넉·판정 함수(manual_doc_visible)·동작 권한(manuals.edit/delete)·메뉴 권한·검색 함수가 **글자 그대로 같았다.** 따로 만들면 그 전부를 베껴야 하는데, 2026-09-11 에 배운 것이 그 반대다 — **«복제된 코드는 복제된 구멍을 만든다»**(auto-delivery-poll 이 제 안에서 메일을 보내 send 에만 걸어 둔 자물쇠를 비켜 갔다). 베끼면 **제니가 언젠가 보기 권한을 손대는 날 한쪽만 바뀐다.** ★★ 덕분에 **검색 함수를 한 줄도 안 고쳤다** — 글 본문을 `content_text` 에 담으니 `manual_docs_search` 가 파일과 글을 함께 찾는다. 3단계로 미뤄 뒀던 «통합 검색» 이 사실상 여기서 끝났다. 값을 치른 곳은 한 군데다: 목록을 `kind` 로 가른다(명시적이고 값싸다). ★★ **본문은 «블록 여럿»**(`body jsonb` = [{h,t}]) — 이 창고를 쓰는 목적이 대개 «이 상황엔 이 문구» 라 **글 전체가 아니라 그 토막만 복사**해야 한다. 그래서 [복사] 가 블록마다 있다. ★ **새 표기법을 안 만들었다** — 글 안에 기호를 외워 넣게 하면 아무도 안 쓴다. ★★ 표는 콘솔에 이미 규칙이 있다(탭으로 칸 나누기 · CS 이력과 같다) → 그리는 것 `CsNoteBody` · 복사 `CsCopy`(표가 있으면 HTML 까지 실어 메일에 붙여도 표가 따라온다) · 기호 줄 `CsSymbolBar` 를 **새로 만들지 않고 그대로 썼다**(매크로 단추만 끈다 — 글 안에 매크로를 박으면 사본이 되어 매크로를 고친 날 글이 옛말을 한다). ★★★ **변경 이력은 «고치기 전» 을 남기고, 되돌리기도 같은 길을 지난다** — 지금 판을 이력에 남긴 뒤 옛 판을 쓴다. 그래야 되돌린 것도 되돌릴 수 있다. ★ 한 벌을 통째로 남긴다(차이가 아니라) — 차이만 남기면 되돌릴 때 거꾸로 적용해야 하고 그 코드가 틀리면 «없던 글» 이 생긴다. ★ **파일 연결은 양쪽에서 보인다** — 글에 `linked_doc_ids` 를 적고, 파일 상세는 `contains` 한 줄로 되짚어 «이 메뉴얼을 가리키는 글» 을 보여 준다(안 보여 주면 파일을 바꿀 때 그 글들이 옛말을 하는 것을 모른다). ★ 목록의 «내용» 칸 문구는 글·파일을 갈랐다 — 빈 글에 «글자 없음(스캔본?)» 이라고 적으면 안내가 아니라 오해다. SQL `sql/manuals_notes.sql`(+`_verify`) **dev 적용·검사 통과 · 운영 미적용**. ★ dev 전용. -->
 <!-- v20260915a_dead_history_removed -->
@@ -19913,11 +19915,39 @@ function csNoteHtml(text){
   });
   return out.join('');
 }
-function CsNoteBody({text}){
+// 검색어를 강조해 그린다. 목록의 조각 표시와 «문서 안 찾기» 가 같은 것을 쓴다.
+// ★★ 이름을 Cs- 로 둔 까닭: 아래 CsNoteBody(표까지 그리는 조각)도 이것을 부른다.
+//   메뉴얼 전용 이름을 CS 쪽에서 부르면 다음 사람이 «왜 여기서?» 를 묻게 된다.
+//   구현은 **하나뿐**이라야 한다 — 베끼면 언젠가 한쪽 강조만 고쳐진다.
+function CsMark({text, q}){
+  const s = String(text||''); const w = String(q||'').trim();
+  if(!w) return <>{s}</>;
+  const out = []; const low = s.toLowerCase(); const lw = w.toLowerCase();
+  let i = 0, k = 0;
+  while(true){
+    const j = low.indexOf(lw, i);
+    if(j < 0){ out.push(<span key={k++}>{s.slice(i)}</span>); break; }
+    if(j > i) out.push(<span key={k++}>{s.slice(i, j)}</span>);
+    out.push(<mark key={k++} style={{background:'rgba(246,173,9,.35)',color:'inherit',padding:'0 1px',borderRadius:2}}>{s.slice(j, j+w.length)}</mark>);
+    i = j + w.length;
+  }
+  return <>{out}</>;
+}
+// 글자 안에 그 말이 «몇 곳» 있나(겹치지 않게 센다).
+function csCountHits(text, q){
+  const a = String(text||'').toLowerCase(), b = String(q||'').trim().toLowerCase();
+  if(!b) return 0;
+  let n = 0, i = 0;
+  while(true){ const j = a.indexOf(b, i); if(j < 0) break; n++; i = j + b.length; }
+  return n;
+}
+function CsNoteBody({text, q}){
   const base = {fontSize:12,color:'var(--text)',lineHeight:1.7,marginTop:2,
     whiteSpace:'pre-wrap',overflowWrap:'anywhere',minWidth:0};
   const s = String(text||'');
-  if(s.indexOf('\t')<0) return <div style={base}>{s}</div>;
+  // ★ q 가 없으면 예전과 글자 그대로 같다 — 강조는 «덧붙는» 것이지 바꾸는 것이 아니다.
+  const M = (v)=> q ? <CsMark text={v} q={q}/> : v;
+  if(s.indexOf('\t')<0) return <div style={base}>{M(s)}</div>;
   const blocks = csNoteBlocks(s);
   // ★★ 표 선은 «칸을 나누는» 것이 일이라 눈에 보여야 한다(제니 2026-09-04).
   //   var(--border)(#1e3060)는 이 어두운 바탕에서 거의 안 보여 표가 «줄글 덩어리» 로
@@ -19931,7 +19961,7 @@ function CsNoteBody({text}){
         if(!b.tab || b.lines.length<2){
           const t2 = b.lines.join('\n');
           if(!t2.trim()) return null;
-          return <div key={bi} style={{whiteSpace:'pre-wrap'}}>{t2}</div>;
+          return <div key={bi} style={{whiteSpace:'pre-wrap'}}>{M(t2)}</div>;
         }
         const rows = b.lines.map(l=>l.split('\t'));
         const head = rows[0], body = rows.slice(1);
@@ -19941,10 +19971,10 @@ function CsNoteBody({text}){
               <thead><tr>{head.map((c,i)=>(
                 <th key={i} style={{...td,textAlign:'left',color:'var(--head-ink)',
                   fontWeight:700,background:'var(--head-bg)',
-                  whiteSpace:'nowrap'}}>{c}</th>
+                  whiteSpace:'nowrap'}}>{M(c)}</th>
               ))}</tr></thead>
               <tbody>{body.map((r,ri)=>(
-                <tr key={ri}>{r.map((c,i)=><td key={i} style={td}>{c}</td>)}</tr>
+                <tr key={ri}>{r.map((c,i)=><td key={i} style={td}>{M(c)}</td>)}</tr>
               ))}</tbody>
             </table>
           </div>
@@ -30111,21 +30141,6 @@ function manualStale(d){
   if(!d.checked_at) return true;
   return (Date.now() - new Date(d.checked_at+'T00:00:00+09:00').getTime()) > MANUAL_STALE_DAYS*86400000;
 }
-// 검색어를 강조해 그린다
-function ManualMark({text, q}){
-  const s = String(text||''); const w = String(q||'').trim();
-  if(!w) return <>{s}</>;
-  const out = []; const low = s.toLowerCase(); const lw = w.toLowerCase();
-  let i = 0, k = 0;
-  while(true){
-    const j = low.indexOf(lw, i);
-    if(j < 0){ out.push(<span key={k++}>{s.slice(i)}</span>); break; }
-    if(j > i) out.push(<span key={k++}>{s.slice(i, j)}</span>);
-    out.push(<mark key={k++} style={{background:'rgba(246,173,9,.35)',color:'inherit',padding:'0 1px',borderRadius:2}}>{s.slice(j, j+w.length)}</mark>);
-    i = j + w.length;
-  }
-  return <>{out}</>;
-}
 
 function ManualsPage({currentUserEmail, role, can}){
   const canEdit   = typeof can==='function' ? can('manuals.edit')   : false;
@@ -30148,7 +30163,7 @@ function ManualsPage({currentUserEmail, role, can}){
     <div style={{padding:'24px 32px'}}>
       <div className="cs-page-head" style={{marginBottom:16,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>📚 메뉴얼 관리</h1>
-        <span style={{fontSize:12,color:'var(--sub)'}}>써드파티·내부 메뉴얼을 한곳에 · 파일 «안» 의 내용까지 검색 · 콘솔에서 쓴 글(지식 창고)도 함께</span>
+        <span style={{fontSize:12,color:'var(--sub)'}}>써드파티·내부 메뉴얼을 한곳에 · 파일 «안» 의 내용까지 검색 · 콘솔에서 쓴 문서(지식 창고)도 함께</span>
       </div>
       {tabs.length > 1 && <CsPageTabs tabs={tabs} value={tab} onChange={setTab}/>}
       {facets===null ? <div style={{padding:40,textAlign:'center',color:'var(--sub)'}}>읽는 중…</div>
@@ -30253,13 +30268,13 @@ function ManualFilesTab({facets, canEdit, canDelete, currentUserEmail}){
                 return (
                   <tr key={d.id} className="cs-stat-row" onClick={()=>setOpen(d)}>
                     <td style={{...td,minWidth:240}}>
-                      <div style={{fontWeight:600}}><ManualMark text={d.title} q={q}/></div>
-                      {d.description && <div style={{fontSize:11,color:'var(--sub)',marginTop:2}}><ManualMark text={d.description} q={q}/></div>}
+                      <div style={{fontWeight:600}}><CsMark text={d.title} q={q}/></div>
+                      {d.description && <div style={{fontSize:11,color:'var(--sub)',marginTop:2}}><CsMark text={d.description} q={q}/></div>}
                       {h && h.snippet && (
                         <div style={{fontSize:11,color:'var(--sub)',marginTop:4,padding:'4px 7px',background:'var(--bg)',borderRadius:5,lineHeight:1.55}}>
                           <span style={{color:'var(--warn-ink)',fontWeight:600,marginRight:5}}>
                             파일 내용{h.hits>1 ? ` · ${h.hits}곳` : ''}</span>
-                          …<ManualMark text={h.snippet.replace(/\s+/g,' ')} q={q}/>…
+                          …<CsMark text={h.snippet.replace(/\s+/g,' ')} q={q}/>…
                         </div>
                       )}
                     </td>
@@ -30271,7 +30286,7 @@ function ManualFilesTab({facets, canEdit, canDelete, currentUserEmail}){
                           title={gone?'분류 설정에서 지워진 값':undefined}>{f ? f.label : '(지워진 대분류)'} › {v}</span>;
                       });
                     })}</td>
-                    <td style={td}>{(d.tags||[]).map(t=><span key={t} style={chip}>#<ManualMark text={t} q={q}/></span>)}</td>
+                    <td style={td}>{(d.tags||[]).map(t=><span key={t} style={chip}>#<CsMark text={t} q={q}/></span>)}</td>
                     <td style={{...td,whiteSpace:'nowrap'}}>
                       <div style={{fontWeight:600}}>{manualKindLabel(d)}</div>
                       <div style={{fontSize:10.5,color:cl.c}}>{cl.t}</div>
@@ -30607,10 +30622,10 @@ function ManualDetailModal({doc, facets, canEdit, canDelete, onClose, onEdit, on
              ★ 하나도 없을 때는 아예 안 그린다 — 「0건」 줄이 화면마다 서면 읽을 것이 는다. */}
       {refs && refs.length>0 && (
         <div style={{marginTop:12,paddingTop:10,borderTop:'1px solid var(--border)',flexShrink:0}}>
-          <div style={{fontSize:10.5,color:'var(--sub)',fontWeight:700,marginBottom:5}}>이 메뉴얼을 가리키는 글 {refs.length}건</div>
+          <div style={{fontSize:10.5,color:'var(--sub)',fontWeight:700,marginBottom:5}}>이 메뉴얼을 가리키는 문서 {refs.length}건</div>
           {refs.map(r=><div key={r.id} style={{fontSize:12,color:'var(--text)',padding:'3px 0'}}>📄 {r.title}</div>)}
           <div style={{fontSize:10.5,color:'var(--sub)',marginTop:4}}>
-            이 파일을 바꾸거나 지우면 위 글의 안내가 어긋날 수 있습니다 — [지식 창고] 탭에서 함께 봐 주세요.
+            이 파일을 바꾸거나 지우면 위 문서의 안내가 어긋날 수 있습니다 — [지식 창고] 탭에서 함께 봐 주세요.
           </div>
         </div>
       )}
@@ -30667,6 +30682,7 @@ function ManualNotesTab({facets, canEdit, canDelete, currentUserEmail}){
   const [flt,setFlt] = useState({});
   const [edit,setEdit] = useState(null);
   const [open,setOpen] = useState(null);
+  const [openFile,setOpenFile] = useState(null);   // 문서에서 연결을 눌러 겹쳐 띄운 메뉴얼
   const load = async ()=>{
     const {data,error} = await sb.from('manual_docs').select(MANUAL_COLS)
       .eq('kind','note').order('updated_at',{ascending:false});
@@ -30715,7 +30731,7 @@ function ManualNotesTab({facets, canEdit, canDelete, currentUserEmail}){
     <div>
       <div style={{display:'flex',alignItems:'flex-start',gap:10,margin:'4px 0 12px'}}>
         <div style={{flex:'1 1 0',minWidth:0,display:'flex',flexWrap:'wrap',gap:6,alignItems:'center',alignSelf:'stretch',alignContent:'center'}}>
-          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="제목 · 설명 · 태그 · 글 내용 검색"
+          <input value={q} onChange={e=>setQ(e.target.value)} placeholder="제목 · 설명 · 태그 · 문서 내용 검색"
             style={{width:'clamp(260px, 32vw, 460px)',fontSize:12,padding:'7px 10px',boxSizing:'border-box',
               background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit'}}/>
           <CsMulti label="분류" value={flt.cat||[]} width={260}
@@ -30728,7 +30744,7 @@ function ManualNotesTab({facets, canEdit, canDelete, currentUserEmail}){
         {canEdit && (
           <button onClick={()=>setEdit({})}
             style={{flexShrink:0,padding:'7px 14px',background:'var(--primary)',border:'1px solid var(--primary)',borderRadius:8,
-              color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>+ 글 쓰기</button>
+              color:'#fff',fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>+ 문서 쓰기</button>
         )}
       </div>
 
@@ -30737,10 +30753,10 @@ function ManualNotesTab({facets, canEdit, canDelete, currentUserEmail}){
         <div style={{textAlign:'center',padding:'60px 24px',background:'var(--card)',border:'1px dashed var(--border)',borderRadius:12,color:'var(--sub)',fontSize:12,lineHeight:1.8}}>
           {(docs||[]).length===0
             ? (canEdit
-              ? <>아직 쓴 글이 없습니다 — [+ 글 쓰기] 로 첫 글을 남겨 주세요.
+              ? <>아직 등록한 문서가 없습니다 — [+ 문서 쓰기] 로 첫 문서를 남겨 주세요.
                   <br/><span style={{fontSize:11}}>업무 순서·판단 기준·고객에게 그대로 보낼 문구 같은 것을 블록으로 나눠 담으면, 필요할 때 그 토막만 복사해 쓸 수 있습니다.</span></>
-              : '볼 수 있는 글이 없습니다.')
-            : '검색어·필터에 맞는 글이 없습니다.'}
+              : '볼 수 있는 문서가 없습니다.')
+            : '검색어·필터에 맞는 문서가 없습니다.'}
         </div>
       ) : (
         <div style={{overflowX:'auto',border:'1px solid var(--border)',borderRadius:8,background:'var(--card)'}}>
@@ -30760,13 +30776,13 @@ function ManualNotesTab({facets, canEdit, canDelete, currentUserEmail}){
                 return (
                   <tr key={d.id} className="cs-stat-row" onClick={()=>setOpen(d)}>
                     <td style={{...td,minWidth:240}}>
-                      <div style={{fontWeight:600}}><ManualMark text={d.title} q={q}/></div>
-                      {d.description && <div style={{fontSize:11,color:'var(--sub)',marginTop:2}}><ManualMark text={d.description} q={q}/></div>}
+                      <div style={{fontWeight:600}}><CsMark text={d.title} q={q}/></div>
+                      {d.description && <div style={{fontSize:11,color:'var(--sub)',marginTop:2}}><CsMark text={d.description} q={q}/></div>}
                       {h && h.snippet && (
                         <div style={{fontSize:11,color:'var(--sub)',marginTop:4,padding:'4px 7px',background:'var(--bg)',borderRadius:5,lineHeight:1.55}}>
                           <span style={{color:'var(--warn-ink)',fontWeight:600,marginRight:5}}>
-                            글 내용{h.hits>1 ? ` · ${h.hits}곳` : ''}</span>
-                          …<ManualMark text={h.snippet.replace(/\s+/g,' ')} q={q}/>…
+                            문서 내용{h.hits>1 ? ` · ${h.hits}곳` : ''}</span>
+                          …<CsMark text={h.snippet.replace(/\s+/g,' ')} q={q}/>…
                         </div>
                       )}
                     </td>
@@ -30778,7 +30794,7 @@ function ManualNotesTab({facets, canEdit, canDelete, currentUserEmail}){
                           title={gone?'분류 설정에서 지워진 값':undefined}>{f ? f.label : '(지워진 대분류)'} › {v}</span>;
                       });
                     })}</td>
-                    <td style={td}>{(d.tags||[]).map(t=><span key={t} style={chip}>#<ManualMark text={t} q={q}/></span>)}</td>
+                    <td style={td}>{(d.tags||[]).map(t=><span key={t} style={chip}>#<CsMark text={t} q={q}/></span>)}</td>
                     <td style={{...td,whiteSpace:'nowrap',fontSize:11,color:cl.c}}>{cl.t}</td>
                     <td style={{...td,whiteSpace:'nowrap',fontSize:11,color:links?'var(--text)':'var(--sub)'}}>
                       {links ? '📎 '+links : '—'}</td>
@@ -30805,7 +30821,13 @@ function ManualNotesTab({facets, canEdit, canDelete, currentUserEmail}){
       {open && !edit && <ManualNoteDetailModal doc={open} facets={facets} files={files}
         canEdit={canEdit} canDelete={canDelete} currentUserEmail={currentUserEmail}
         onClose={()=>setOpen(null)} onEdit={()=>setEdit(open)}
-        onChanged={()=>{ setOpen(null); load(); }}/>}
+        onChanged={()=>{ setOpen(null); load(); }} onOpenFile={setOpenFile}/>}
+      {/* ★★ 문서 창을 «닫지 않고» 그 위에 겹친다 — 연결을 누르는 까닭은 대개 «보고 돌아오려고»
+             이기 때문이다. 닫았다 다시 열면 펼침·스크롤·찾던 말이 다 사라진다.
+             ★ 겹친 창은 읽기 전용이다(수정·삭제 없음) — 그 자리에서 파일을 고치게 하면
+               문서 창 뒤에 옛 내용이 남고, 무엇이 최신인지 헷갈린다. */}
+      {openFile && <ManualDetailModal doc={openFile} facets={facets} canEdit={false} canDelete={false}
+        onClose={()=>setOpenFile(null)} onEdit={()=>{}} onDeleted={()=>setOpenFile(null)}/>}
     </div>
   );
 }
@@ -30920,9 +30942,9 @@ function ManualNoteEditModal({doc, facets, files, currentUserEmail, onClose, onS
       if(isNew){
         payload.created_by = currentUserEmail;
         const {error} = await sb.from('manual_docs').insert(payload);
-        if(sbFail('글 저장', error, {write:true})) throw new Error('insert');
+        if(sbFail('문서 저장', error, {write:true})) throw new Error('insert');
       } else {
-        // ★★★ 변경 이력은 «고치기 전» 을 남긴다 — 고친 뒤에 남기면 옛 글이 영영 사라진다.
+        // ★★★ 변경 이력은 «고치기 전» 을 남긴다 — 고친 뒤에 남기면 옛 문서가 영영 사라진다.
         //   ★ 먼저 남기고 나서 고친다: 순서가 뒤바뀌면 이력 쓰기가 실패한 판에 원본이 이미 없다.
         const {error:ve} = await sb.from('manual_note_revisions').insert({
           doc_id: doc.id, title: doc.title, description: doc.description || null,
@@ -30931,7 +30953,7 @@ function ManualNoteEditModal({doc, facets, files, currentUserEmail, onClose, onS
         });
         if(sbFail('변경 이력 남기기', ve, {write:true})) throw new Error('revision');
         const {data,error} = await sb.from('manual_docs').update(payload).eq('id', doc.id).select('id');
-        if(sbFail('글 수정', error, {write:true})) throw new Error('update');
+        if(sbFail('문서 수정', error, {write:true})) throw new Error('update');
         // ★ RLS 는 «에러» 가 아니라 «0행» 으로 막는다(2026-09-14 근태에서 얻은 것).
         if(!data || !data.length){ toast('권한이 없어 저장되지 않았습니다.','error'); throw new Error('rls'); }
       }
@@ -30942,21 +30964,21 @@ function ManualNoteEditModal({doc, facets, files, currentUserEmail, onClose, onS
   };
 
   return (
-    <ManualModalFrame title={isNew ? '글 쓰기' : '글 수정'} onClose={busy?()=>{}:onClose} width={860} resizable={true}>
+    <ManualModalFrame title={isNew ? '문서 쓰기' : '문서 수정'} onClose={busy?()=>{}:onClose} width={860} resizable={true}>
       <div style={row}><label style={lab}>제목 *</label>
         <input style={inp} value={f.title} onChange={e=>set('title',e.target.value)} placeholder="예: 배송 지연 안내 — 공급사 확인 전에 고객에게 먼저 알릴 때"/></div>
       <div style={row}><label style={lab}>설명</label>
         <textarea style={{...inp,minHeight:52,resize:'vertical'}} value={f.description} onChange={e=>set('description',e.target.value)}
-          placeholder="어떤 때 찾아 보는 글인지 한두 줄"/></div>
+          placeholder="어떤 때 찾아 보는 문서인지 한두 줄"/></div>
 
       <ManualNoteBlocks blocks={f.blocks} onChange={v=>set('blocks',v)}/>
 
-      <div style={row}><label style={lab}>메뉴얼 파일 연결 (이 글이 가리키는 파일·링크)</label>
+      <div style={row}><label style={lab}>메뉴얼 파일 연결 (이 문서가 가리키는 파일·링크)</label>
         {files.length===0
           ? <div style={{fontSize:11.5,color:'var(--sub)'}}>연결할 메뉴얼이 없습니다 — [메뉴얼 파일] 탭에서 먼저 올려 주세요.</div>
           : <CsMulti label="메뉴얼" value={f.links} width={360} onChange={v=>set('links',v)}
               options={files.map(x=>({value:String(x.id), label:x.title + (x.kind==='link' ? ' (링크)' : (x.file_name ? ' · '+x.file_name : ''))}))}/>}
-        <div style={{fontSize:10.5,color:'var(--sub)',marginTop:4}}>연결하면 그 파일 쪽에서도 «이 파일을 가리키는 글» 로 보입니다.</div>
+        <div style={{fontSize:10.5,color:'var(--sub)',marginTop:4}}>연결하면 그 파일 쪽에서도 «이 파일을 가리키는 문서» 로 보입니다.</div>
       </div>
 
       <div style={row}><label style={lab}>분류</label>
@@ -31004,15 +31026,20 @@ function ManualNoteEditModal({doc, facets, files, currentUserEmail, onClose, onS
   );
 }
 
-// ── 글 «읽는» 자리 ─────────────────────────────────────────────────────────
+// ── 문서 «읽는» 자리 (지식 창고에서 쓰는 것을 제니는 «문서» 라 부른다 · 2026-09-15) ──
 // ★★ 블록마다 [복사] 다(CsCopy) — 표가 들어 있으면 HTML 까지 함께 실어 메일에 붙여도
 //   표가 따라온다. 그 일은 CsCopy 가 이미 한다(2026-09-09).
-// ★ [전체 복사] 도 둔다 — 글 하나가 곧 한 벌인 경우가 있다.
-function ManualNoteDetailModal({doc, facets, files, canEdit, canDelete, currentUserEmail, onClose, onEdit, onChanged}){
+// ★ [전체 복사] 도 둔다 — 문서 하나가 곧 한 벌인 경우가 있다.
+function ManualNoteDetailModal({doc, facets, files, canEdit, canDelete, currentUserEmail, onClose, onEdit, onChanged, onOpenFile}){
   const [revs,setRevs] = useState(null);
   const [openRev,setOpenRev] = useState(null);
   const [infoOpen,setInfoOpen] = useState(false);
   const [busy,setBusy] = useState(false);
+  // 문서 «안» 찾기 (제니 2026-09-15). ★ 목록의 검색과 뜻이 다르다 —
+  //   저것은 «어느 문서인가», 이것은 «이 문서 어디인가» 다. 그래서 자리도 문서 안이다.
+  const [nq,setNq] = useState('');
+  const [onlyHit,setOnlyHit] = useState(false);
+  const [opening,setOpening] = useState(0);
   const blocks = manualBlocks(doc);
   const linked = (doc.linked_doc_ids||[]).map(id=>files.find(x=>String(x.id)===String(id))).filter(Boolean);
   const lostLinks = (doc.linked_doc_ids||[]).length - linked.length;
@@ -31030,19 +31057,41 @@ function ManualNoteDetailModal({doc, facets, files, canEdit, canDelete, currentU
     return ()=>{ alive = false; };
   },[doc.id]);
 
+  // ★ 소제목과 내용을 «함께» 센다 — 소제목만 맞는 블록을 못 찾으면 «없다» 는 답이 거짓이 된다.
+  const w = nq.trim();
+  const hitOf = (b)=> csCountHits(b.h, w) + csCountHits(b.t, w);
+  const hitNums = w ? blocks.map(hitOf) : [];
+  const hitBlocks = hitNums.filter(n=>n>0).length;
+  const hitTotal = hitNums.reduce((a,b)=>a+b, 0);
+  // ★ 찾은 것이 없으면 «찾은 곳만» 을 켠 채로 두지 않는다 — 빈 화면은 «고장» 으로 읽힌다.
+  const shown = (w && onlyHit && hitBlocks) ? blocks.filter((b,i)=>hitNums[i]>0) : blocks;
+  const hiddenN = blocks.length - shown.length;
+
+  // 연결된 메뉴얼을 눌러 «바로» 연다(제니 2026-09-15).
+  // ★★ 목록에 담아 둔 줄이 아니라 **그 자리에서 다시 읽어 온다** — 목록은 이 탭에 들어올 때
+  //   한 번 읽은 것이라, 그사이 파일이 바뀌었으면 옛 경로로 미리보기를 열게 된다.
+  //   지워졌거나 볼 수 없게 된 경우도 여기서 갈린다(RLS 는 «에러» 가 아니라 «없음» 으로 막는다).
+  const openLinked = async (x)=>{
+    setOpening(x.id);
+    const {data,error} = await sb.from('manual_docs').select(MANUAL_COLS).eq('id', x.id).maybeSingle();
+    setOpening(0);
+    if(error || !data){ toast('지워졌거나 볼 수 없는 메뉴얼입니다.','warn'); return; }
+    onOpenFile(data);
+  };
+
   const del = async ()=>{
-    if(!confirm('이 글을 지웁니다. 변경 이력도 함께 사라집니다. 계속할까요?')) return;
+    if(!confirm('이 문서를 지웁니다. 변경 이력도 함께 사라집니다. 계속할까요?')) return;
     setBusy(true);
     const {data,error} = await sb.from('manual_docs').delete().eq('id', doc.id).select('id');
     setBusy(false);
-    if(sbFail('글 삭제', error, {write:true})) return;
+    if(sbFail('문서 삭제', error, {write:true})) return;
     if(!data || !data.length){ toast('권한이 없어 지워지지 않았습니다.','error'); return; }
     toast('지웠습니다.','success');
     onChanged();
   };
 
   // ★★ 되돌리기도 «저장» 과 같은 길을 지난다 — 지금 판을 이력에 남긴 뒤에 옛 판을 쓴다.
-  //   그래야 되돌린 것도 되돌릴 수 있다. 되돌리기가 이력을 안 남기면 그 순간의 글이 사라진다.
+  //   그래야 되돌린 것도 되돌릴 수 있다. 되돌리기가 이력을 안 남기면 그 순간의 문서가 사라진다.
   const restore = async (r)=>{
     const when = String(r.revised_at||'').slice(0,16).replace('T',' ');
     if(!confirm(`${when} 판으로 되돌립니다. 지금 내용은 변경 이력에 남습니다. 계속할까요?`)) return;
@@ -31092,11 +31141,29 @@ function ManualNoteDetailModal({doc, facets, files, canEdit, canDelete, currentU
       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:10,flexShrink:0}}>
         <button style={btn(false)} onClick={()=>setInfoOpen(o=>!o)}>{infoOpen ? '▾ 정보 접기' : '▸ 정보 보기'}</button>
         <CsCopy value={manualNoteText(blocks)} strong={true}/>
-        <span style={{fontSize:11,color:'var(--sub)'}}>글 전체 복사</span>
+        <span style={{fontSize:11,color:'var(--sub)'}}>문서 전체 복사</span>
         <span style={{flex:1}}/>
         {canEdit && <button style={btn(true)} onClick={onEdit}>수정</button>}
         {canDelete && <button style={{...btn(false),borderColor:'rgba(248,113,113,.5)',color:'var(--red)'}}
           disabled={busy} onClick={del}>삭제</button>}
+      </div>
+
+      {/* ★★ 찾기는 «제 줄» 이다 — 입력칸은 위 단추들보다 키가 커서, 같은 줄에 끼우면
+             그 줄에 있던 것들이 세로 가운데로 내려앉아 전부 움직인다(2026-09-11 CSV 단추에서 밟았다). */}
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap',marginBottom:10,flexShrink:0}}>
+        <input value={nq} onChange={e=>setNq(e.target.value)} placeholder="이 문서 안에서 찾기"
+          style={{width:'clamp(180px, 26vw, 300px)',fontSize:12,padding:'6px 10px',boxSizing:'border-box',
+            background:'var(--bg)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,fontFamily:'inherit'}}/>
+        {w && (hitBlocks
+          ? <>
+              <span style={{fontSize:11.5,color:'var(--warn-ink)',fontWeight:600}}>
+                블록 {hitBlocks}개 · {hitTotal}곳</span>
+              <label style={{display:'flex',alignItems:'center',gap:5,fontSize:11.5,color:'var(--text)',cursor:'pointer'}}>
+                <input type="checkbox" checked={onlyHit} onChange={e=>setOnlyHit(e.target.checked)}/>찾은 블록만
+              </label>
+            </>
+          : <span style={{fontSize:11.5,color:'var(--sub)'}}>이 문서 안에는 없습니다</span>)}
+        {w && <button style={{...btn(false),padding:'3px 9px',fontSize:11}} onClick={()=>{ setNq(''); setOnlyHit(false); }}>지우기</button>}
       </div>
 
       {infoOpen && (
@@ -31122,29 +31189,44 @@ function ManualNoteDetailModal({doc, facets, files, canEdit, canDelete, currentU
 
       <div style={{overflowY:'auto',flex:'1 1 auto',minHeight:0}}>
         {blocks.length===0 && <div style={{fontSize:12,color:'var(--sub)',padding:'20px 0'}}>내용이 없습니다.</div>}
-        {blocks.map((b,i)=>(
-          <div key={i} style={{border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px',marginBottom:10,background:'var(--card)'}}>
+        {shown.map((b)=>{
+          // ★ 번호는 «원래 자리» 다 — 거르고 나서 1,2,3 으로 다시 매기면 문서 안에서
+          //   몇 번째 블록인지가 사라진다(찾은 뒤에 수정하러 갈 때 그 번호로 찾는다).
+          const i = blocks.indexOf(b);
+          const n = w ? hitNums[i] : 0;
+          return (
+          <div key={i} style={{border:'1px solid '+(n?'rgba(246,173,9,.45)':'var(--border)'),borderRadius:8,padding:'10px 12px',marginBottom:10,background:'var(--card)'}}>
             <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:b.h?6:2}}>
-              {b.h ? <div style={{fontSize:12.5,fontWeight:700,color:'var(--text)',minWidth:0}}>{b.h}</div>
+              {b.h ? <div style={{fontSize:12.5,fontWeight:700,color:'var(--text)',minWidth:0}}><CsMark text={b.h} q={w}/></div>
                    : <div style={{fontSize:11,color:'var(--sub)'}}>블록 {i+1}</div>}
+              {n>0 && <span style={{fontSize:10.5,color:'var(--warn-ink)',fontWeight:600,whiteSpace:'nowrap'}}>{n}곳</span>}
               <span style={{flex:1}}/>
               <CsCopy value={b.t}/>
             </div>
-            <CsNoteBody text={b.t}/>
+            <CsNoteBody text={b.t} q={w}/>
           </div>
-        ))}
+          );
+        })}
+        {hiddenN>0 && <div style={{fontSize:11,color:'var(--sub)',padding:'2px 0 10px'}}>
+          찾는 말이 없는 블록 {hiddenN}개는 숨겼습니다 — [찾은 블록만] 을 끄면 다 보입니다.</div>}
 
         {(linked.length>0 || lostLinks>0) && (
           <div style={{marginTop:14,paddingTop:12,borderTop:'1px solid var(--border)'}}>
             <div style={{...key,marginBottom:6}}>연결된 메뉴얼</div>
             {linked.map(x=>(
-              <div key={x.id} style={{fontSize:12,color:'var(--text)',padding:'4px 0'}}>
-                📎 {x.title}{x.kind==='link' ? ' (링크)' : (x.file_name ? ' · '+x.file_name : '')}
-              </div>
+              <button key={x.id} type="button" onClick={()=>openLinked(x)} disabled={opening===x.id}
+                style={{display:'block',width:'100%',textAlign:'left',padding:'4px 0',fontSize:12,
+                  background:'transparent',border:'none',color:'var(--text)',fontFamily:'inherit',
+                  cursor: opening===x.id ? 'default' : 'pointer'}}>
+                📎 <span style={{color:'var(--accent)',textDecoration:'underline',textUnderlineOffset:3}}>{x.title}</span>
+                {x.kind==='link' ? ' (링크)' : (x.file_name ? ' · '+x.file_name : '')}
+                {opening===x.id && <span style={{color:'var(--sub)',marginLeft:6}}>여는 중…</span>}
+              </button>
             ))}
             {lostLinks>0 && <div style={{fontSize:11,color:'var(--sub)',padding:'4px 0'}}>
               그 밖에 {lostLinks}건은 지워졌거나 볼 수 없는 메뉴얼입니다.</div>}
-            <div style={{fontSize:10.5,color:'var(--sub)',marginTop:4}}>파일을 열려면 [메뉴얼 파일] 탭에서 그 제목을 누르세요.</div>
+            <div style={{fontSize:10.5,color:'var(--sub)',marginTop:4}}>
+              눌러서 바로 엽니다 · 닫으면 이 문서로 돌아옵니다. 파일을 «고치려면» [메뉴얼 파일] 탭에서 여세요.</div>
           </div>
         )}
 
