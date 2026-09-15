@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260915a_dead_history_removed -->
+<!-- (2026-09-15) **죽은 코드 `HistoryPage` 를 지웠다**(42줄). 2026-09-11 동작 권한 조사에서 「어디서도 안 불린다」고 확인해 두고 남겨 뒀던 것이다 — 라우팅에 없고, 참조도 제 안의 한 곳뿐이었다. 🔴 **그냥 안 쓰는 코드가 아니라 «잠기지 않은» 코드였다**: 그 안의 삭제 단추가 `daily_ops`·`agent_daily_ops` 를 지우면서 `entry.delete` 동작 권한을 한 번도 안 본다. 지금은 불릴 길이 없으니 사고가 아니지만, **언젠가 누가 «비슷한 화면이 있네» 하고 되살리면 그때 권한 없는 삭제가 생긴다.** ★ 썩은 것도 눈에 보였다 — 제목 행은 `<th>` 여덟인데 본문은 `<td>` 열하나였다(쓰이지 않으니 아무도 못 봤다). 살아 있는 것은 `EntryHistorySection`(데이터 입력 > 데이터 내역)이고 그쪽은 `can` 으로 권한을 본다. ★★ **«안 불린다» 를 확인한 코드는 그 자리에서 지운다 — 메모에 적어 두면 다음 사람은 메모를 안 읽는다.** ★ dev 전용. -->
 <!-- v20260914t_manual_facets_plan_a -->
 <!-- (2026-09-14) **메뉴얼 분류 기입 기준을 «A안» 으로 못 박았다**(제니: 「대분류와 소분류를 어떤 기준으로 기입해야 하는지 헷갈려」 → A안 선택). ★★★ 헷갈린 까닭: dev 에 넣은 대분류 넷이 **기준이 섞여** 있었다 — 발주모아·운영 콘솔은 «도구», 주문관리·공급사는 «업무 영역». 한 단계에 두 기준이 서면 「발주모아에서 하는 공급사 온보딩」 을 어디 넣을지 매번 고민한다. → **대분류 = 도구(시스템) · 소분류 = 그 도구 안의 메뉴·기능 · 업무 영역은 «태그»**. 설정 화면 안내·예시·입력칸 글자와 등록 창의 태그 예시를 그 기준으로 바꿨다. 저장 구조·동작은 그대로. ★ dev 전용. -->
 <!-- (2026-09-14) «즉시발송» 뱃지 풍선 문구가 애매한 자리에서 줄바꿈됐다(제니: 「이것만 메시지 너비 무시하고 한 줄로」). 풍선의 «넘지 않을 폭»(기본 236px)에 걸려 접힌 것이다 → **이 풍선만** 폭 한도를 넉넉히(520) 주고 문구를 줄바꿈 없이(nowrap). 다른 「?」 풍선은 그대로다. ★ dev 전용. -->
@@ -10642,50 +10644,6 @@ function AgentAnalysisPage(){
   );
 }
 
-
-// ── HISTORY (legacy - unused) ──────────────────
-function HistoryPage({ onEdit }) {
-  const [opsMap,setOpsMap]=useState({}); const [agents,setAgents]=useState([]); const [allDates,setAllDates]=useState([]); const [loading,setLoading]=useState(true);
-  const load=async()=>{
-    setLoading(true);
-    const[r1,r2]=await Promise.all([sb.from('daily_ops').select('*'),sb.from('agent_daily_ops').select('*')]);
-    if(sbFail('데이터 내역 조회',r1.error||r2.error)){ setLoading(false); return; }
-    const ops=r1.data||[]; const ag=r2.data||[];
-    const map={}; ops.forEach(r=>{map[r.date]=r;});
-    const dates=[...new Set([...ops.map(r=>r.date),...ag.map(r=>r.date)])].sort().reverse();
-    setOpsMap(map); setAgents(ag); setAllDates(dates); setLoading(false);
-  };
-  useEffect(()=>{load();},[]);
-  const del=async date=>{ if(!confirm(`${date} 데이터를 삭제하시겠습니까?`))return; const rs=await Promise.all([sb.from('daily_ops').delete().eq('date',date),sb.from('agent_daily_ops').delete().eq('date',date)]); if(sbFail('데이터 삭제',rs.find(r=>r.error)?.error,{write:true})) return; load(); };
-  return (
-    <div>
-      <div className="page-header"><div><div className="page-title">📋 데이터 내역</div><div className="page-sub">입력된 운영 데이터 목록</div></div></div>
-      <div className="section">
-        <div className="chart-card">
-          {loading?<div className="loading">불러오는 중...</div>:allDates.length===0?<div className="empty-state">입력된 데이터가 없습니다</div>:
-          <div className="table-wrap">
-            <table className="hist">
-              <thead><tr><th>날짜</th><th>응대율</th><th>인입호</th><th>요청호</th><th>응대호(유선)</th><th>상담원</th><th>응대호 합계</th><th>관리</th></tr></thead>
-              <tbody>{allDates.map(date=>{ const r=opsMap[date]||{}; const da=agents.filter(a=>a.date===date); const tot=da.reduce((s,a)=>s+(Number(a.answered_calls)||0),0); return (
-                <tr key={date}>
-                  <td>{date}</td>
-                  <td>{r.response_rate!=null?<span className={`badge ${Number(r.response_rate)>=90?'badge-green':'badge-red'}`}>{fmtPct(r.response_rate)}</span>:<span style={{color:'var(--sub)',fontSize:11}}>-</span>}</td>
-                  <td>{r.inbound_calls??'-'}</td><td>{r.request_calls??'-'}</td><td>{r.answered_calls??'-'}</td>
-                  <td>{r.ob_contacts??'-'}</td>
-                  <td>{da.map(a=><span key={a.id} className="agent-badge">{a.agent_name}</span>)}</td>
-                  <td>{tot||'-'}</td>
-                  <td>{da.reduce((s,a)=>s+(Number(a.board_count)||0),0)||'-'}</td>
-                  <td>{da.reduce((s,a)=>s+(Number(a.chat_count)||0),0)||'-'}</td>
-                  <td><button className="btn-edit" onClick={()=>onEdit(date)}>수정</button><button className="btn-delete" onClick={()=>del(date)}>삭제</button></td>
-                </tr>
-              );})}</tbody>
-            </table>
-          </div>}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── DELAYED PRODUCTS PAGE (배송 지연 관리) ──
 // Phase 5: 골격만 (탭 라우팅 + 권한 가드 + 빈 placeholder)
