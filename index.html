@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260915f_modal_portal_loose_find -->
+<!-- (2026-09-15) 제니 dev 피드백 둘. ①🔴🔴🔴 **티켓 화면에서 ④ 검색 결과를 눌러 창을 띄우면 ①②③ 사이 «너비 조절 줄» 이 창 위로 겹쳐 보였다.** 창은 `zIndex:900` 이고 줄은 `5` 인데도 그랬다. ★★★ 까닭: **z-index 는 «같은 쌓임 맥락» 안에서만 견준다.** 창을 그리는 자리가 티켓 ③ 칸 «안» 인데 그 칸이 `position:sticky` 다 — **sticky 는 z-index 를 주지 않아도 그 자체로 쌓임 맥락을 만든다.** 그러면 창의 900 은 «③ 칸 안에서의 900» 일 뿐이고, ③ 칸 자신(z auto=0)이 줄(5)보다 아래라 **칸 안의 모든 것이 그 줄 밑에 깔린다.** ★★ 고치는 길이 둘이었다 — ①줄의 z-index 를 낮춘다 ②창을 그 맥락 «밖» 으로 낸다. ①은 «이 창 때문에 저 줄을 손대는» 것이라 **다음에 또 어딘가에서 같은 일이 난다**(창은 앞으로도 여러 자리에서 열린다). → `ReactDOM.createPortal` 로 **앱 뿌리(`#root`)에** 그린다. **한 곳(`ManualModalFrame`)을 고쳐 이 창이 열리는 모든 자리가 낫는다.** ★★ 옮기는 자리를 `document.body` 가 아니라 `#root` 로 잡았다 — 그래야 사이드바(z 1000)와 **나란히** 서서 지금까지의 층위가 글자 그대로 유지된다(창 900 < 사이드바 1000 · `left:var(--nav-w)`). body 로 내면 그 관계가 «우연히 맞는» 것이 되어 언젠가 사이드바를 덮는다. ★ 겉모습·동작은 한 글자도 안 바뀐다 — 그리는 «자리» 만 옮겼다. ②🆕 **검색이 띄어쓰기를 무시한다**(제니: 「'배송 지연' 으로 검색하면 나오는데 '배송지연' 으로 검색하면 안 나와」). ★★★ 한국어 띄어쓰기는 **쓰는 사람마다 다르고**, 글을 쓴 사람과 찾는 사람은 다른 사람이다 — **띄어쓰기가 같기를 기대하는 검색은 반쯤 고장난 검색**이고, 맞추는 일을 찾는 사람에게 떠넘길 수 없다. **양방향으로 통한다**: '배송지연'→'배송 지연' · '반품 배송비'→'반품배송비'. ★★ **DB 와 화면을 «같은 규칙» 으로** 고쳤다(`sql/manuals_search_v3.sql` + `csLooseFind`) — DB 만 느슨하게 하면 **찾아 온 조각에 강조가 하나도 안 칠해져** 「왜 이게 걸렸지」가 된다. DB 는 찾는 말을 `배\s*송\s*지\s*연` 식으로 바꿔 찾고(`cs_loose_pat`), 조각·«몇 곳» 도 `regexp_instr`/`regexp_count` 로 잰다 — **느슨히 찾으면서 세는 것만 엄격하면 찾아 놓고 «0곳» 이라 말한다.** ★ 정규식 특수문자는 글자마다 막는다(안 막으면 사람이 친 `(` 가 식으로 읽혀 **조용히 0건**이 된다) · `string_agg` 에 `WITH ORDINALITY`+`ORDER BY`(차례는 보장되지 않는다 — 우연에 기대지 않는다). 화면 쪽은 공백을 걷어 맞춰 보고 **찾은 자리를 원문 좌표로 되돌린다**(강조가 원문의 공백까지 감싸야 한다) · 세는 것도 **강조와 같은 함수**로(따로 세면 「3곳」이라 적고 두 곳만 칠하는 날이 온다). 🚨 **운영 승격 때 `manuals_search_v3.sql` 을 함께 올려야 한다**(화면만 가면 띄어쓰기 무시가 안 먹는다). ★ dev 전용. -->
 <!-- v20260915e_ticket_knowledge_find -->
 <!-- (2026-09-15) 🆕 **티켓 등록·상세 화면 ③ 아래에 ④ «메뉴얼 · 문서 찾기»**(제니: 「티켓 등록/상세 화면에서 실시간으로 바로 메뉴얼, 지식 창고 문서 검색을 할 수 있게 · 검색은 문서 화면의 «이 문서 안에서 찾기» 처럼」). 두 글자부터 실시간으로 찾고, **제목·설명·태그와 파일·문서 «안» 의 내용까지** 뒤져 찾은 자리 앞뒤 조각을 강조해 보여 준다(«내용에서 찾음 · N곳»). 누르면 메뉴얼 관리와 **같은 창**(탭으로 문서↔메뉴얼 오가기까지)이 열리고 쓰던 티켓은 그대로 남는다. ★★★ **두 화면이 조각 하나를 쓴다**(`CsKnowledgeFinder`) — 2026-09-02 에 ③의 «내용 안에서 찾기» 를 등록 화면에만 붙였다가 상세에도 붙이며 세운 규칙이다: **화면마다 따로 두면 한쪽만 고쳐지고 그 어긋남은 한참 뒤에야 드러난다.** ★★ 찾는 일은 **이미 있는 DB 함수 하나**(`manual_docs_search`)가 한다 — 메뉴얼 관리의 목록 검색과 글자 그대로 같은 함수라 **여기서 찾히는 것과 거기서 찾히는 것이 영영 같다.** 따로 쿼리를 짜면 «거기선 나오는데 여기선 안 나오는» 날이 온다. ★ 그 함수는 `security invoker` 라 **부른 사람의 권한이 그대로 걸린다** — 못 보는 것은 결과에도 없어 화면이 따로 가릴 것이 없다. ★ 본문 전체를 안 내린다(파일이 몇 MB 다) — 함수가 조각만 주고, 제목·형식은 찾은 id 로 한 번 더 읽는다. ★ ④는 **③ «안»** 이다 — 격자의 넷째 칸으로 만들면 열이 하나 늘어 ①②③ 이 다 좁아진다(제니 말도 「3번 영역 아래」다). ★ **한 글자는 안 찾는다** — 거의 다 걸려서 목록이 아니라 소음이 된다. ★ 문서를 앞에, 메뉴얼을 뒤에(찾는 사람이 대개 «우리가 쓴 안내» 를 먼저 본다) · 같은 갈래는 나온 곳 수 많은 차례. ★ 아무것도 볼 수 없는 자리면(권한이거나 비어 있으면) **그 사실을 먼저 적는다** — 안 적으면 검색어를 바꿔 가며 헤맨다. ★★ 겸해 **문서 보기가 «연결된 메뉴얼» 을 스스로 읽게** 바꿨다(`files` prop 제거) — 전에는 부모가 읽어 둔 목록에서 찾아, **부모가 무엇을 읽었는지에 따라 같은 문서가 다르게 보였다**(목록이 없는 티켓 화면에서는 연결이 전부 «지워진 것» 으로 보인다 — 거짓말이다). 덤으로 «볼 수 없는 N건» 셈이 정확해졌다. ★ dev 전용. -->
 <!-- v20260915d_viewer_tabs -->
@@ -19923,27 +19925,53 @@ function csNoteHtml(text){
 // ★★ 이름을 Cs- 로 둔 까닭: 아래 CsNoteBody(표까지 그리는 조각)도 이것을 부른다.
 //   메뉴얼 전용 이름을 CS 쪽에서 부르면 다음 사람이 «왜 여기서?» 를 묻게 된다.
 //   구현은 **하나뿐**이라야 한다 — 베끼면 언젠가 한쪽 강조만 고쳐진다.
+// ★★★ 2026-09-15 제니 — 「'배송 지연' 은 나오는데 '배송지연' 으로는 안 나와」.
+//   한국어 띄어쓰기는 **쓰는 사람마다 다르고**, 글을 쓴 사람과 찾는 사람은 다른 사람이다.
+//   띄어쓰기가 같기를 기대하는 검색은 반쯤 고장난 검색이다 → **공백을 무시해서 찾는다.**
+//   DB 쪽(`sql/manuals_search_v3.sql`)도 같은 규칙으로 고쳤다.
+//   ★★ 둘이 «같은 규칙» 이라야 한다 — DB 는 느슨히 찾는데 화면이 글자 그대로 강조하면
+//     **찾아 온 조각에 강조가 하나도 안 칠해진다**(「왜 이게 걸렸지」가 된다).
+//
+// 찾는 말과 원문에서 공백을 걷어 맞춰 보고, 찾은 자리를 **원문 좌표로 되돌린다.**
+// ★ 공백을 걷은 사본에서 자리를 세면 원문과 어긋나므로, 글자마다 원문 색인을 들고 간다.
+function csLooseFind(text, q){
+  const s = String(text||'');
+  const nw = String(q||'').replace(/\s+/g,'').toLowerCase();
+  if(!nw) return [];
+  let low = ''; const idx = [];
+  for(let i=0;i<s.length;i++){
+    const c = s[i];
+    if(/\s/.test(c)) continue;      // 공백은 «없는 것» 으로 보고 센다
+    low += c.toLowerCase(); idx.push(i);
+  }
+  const out = []; let from = 0;
+  while(true){
+    const j = low.indexOf(nw, from);
+    if(j < 0) break;
+    // 원문에서의 [시작, 끝) — 끝은 «마지막 글자의 다음» 이라 그 글자를 포함한다.
+    out.push([idx[j], idx[j + nw.length - 1] + 1]);
+    from = j + nw.length;
+  }
+  return out;
+}
 function CsMark({text, q}){
   const s = String(text||''); const w = String(q||'').trim();
   if(!w) return <>{s}</>;
-  const out = []; const low = s.toLowerCase(); const lw = w.toLowerCase();
-  let i = 0, k = 0;
-  while(true){
-    const j = low.indexOf(lw, i);
-    if(j < 0){ out.push(<span key={k++}>{s.slice(i)}</span>); break; }
-    if(j > i) out.push(<span key={k++}>{s.slice(i, j)}</span>);
-    out.push(<mark key={k++} style={{background:'rgba(246,173,9,.35)',color:'inherit',padding:'0 1px',borderRadius:2}}>{s.slice(j, j+w.length)}</mark>);
-    i = j + w.length;
-  }
+  const hits = csLooseFind(s, w);
+  if(!hits.length) return <>{s}</>;
+  const out = []; let i = 0, k = 0;
+  hits.forEach(([a,b])=>{
+    if(a > i) out.push(<span key={k++}>{s.slice(i, a)}</span>);
+    out.push(<mark key={k++} style={{background:'rgba(246,173,9,.35)',color:'inherit',padding:'0 1px',borderRadius:2}}>{s.slice(a, b)}</mark>);
+    i = b;
+  });
+  if(i < s.length) out.push(<span key={k++}>{s.slice(i)}</span>);
   return <>{out}</>;
 }
-// 글자 안에 그 말이 «몇 곳» 있나(겹치지 않게 센다).
+// 글자 안에 그 말이 «몇 곳» 있나(겹치지 않게 · 띄어쓰기 무시).
+// ★ 강조와 «같은 함수» 로 센다 — 따로 세면 「3곳」이라 적고 두 곳만 칠하는 날이 온다.
 function csCountHits(text, q){
-  const a = String(text||'').toLowerCase(), b = String(q||'').trim().toLowerCase();
-  if(!b) return 0;
-  let n = 0, i = 0;
-  while(true){ const j = a.indexOf(b, i); if(j < 0) break; n++; i = j + b.length; }
-  return n;
+  return csLooseFind(text, q).length;
 }
 function CsNoteBody({text, q}){
   const base = {fontSize:12,color:'var(--text)',lineHeight:1.7,marginTop:2,
@@ -30351,7 +30379,24 @@ function ManualModalFrame({title, onClose, children, width, resizable}){
     ? {width: big ? '100%' : 'min(100%, '+(width||720)+'px)', height:'100%',
        minWidth:420, minHeight:320, maxWidth:'100%', maxHeight:'100%', resize:'both', overflow:'hidden'}
     : {width:'100%', maxWidth:width||720, maxHeight:'92vh'};
-  return (
+  // 🔴🔴🔴 2026-09-15 제니 — **티켓 화면에서 이 창을 띄우면 ①②③ 사이 «너비 조절 줄» 이
+  //   창 위로 겹쳐 보였다.** `zIndex:900` 인데도 그랬다.
+  //   ★★★ 까닭: z-index 는 **같은 «쌓임 맥락» 안에서만** 견준다. 이 창을 그리는 자리가
+  //     티켓 ③ 칸 «안» 인데, 그 칸이 `position:sticky` 다 — **sticky 는 z-index 를 주지
+  //     않아도 그 자체로 쌓임 맥락을 만든다.** 그러면 창의 900 은 «③ 칸 안에서의 900» 일
+  //     뿐이고, ③ 칸 자신(z auto=0)이 너비 조절 줄(zIndex:5)보다 아래라 **칸 안의 모든
+  //     것이 그 줄 밑에 깔린다.**
+  //   ★★ 고치는 길이 둘이었다: ①줄의 z-index 를 낮춘다 ②창을 그 맥락 «밖» 으로 낸다.
+  //     ①은 «이 창 때문에 저 줄을 손대는» 것이라, 다음에 또 어딘가에서 같은 일이 난다
+  //     (창은 앞으로도 여러 자리에서 열린다). ②는 **이 창이 어디에 놓여도 맨 위에 선다.**
+  //   → `createPortal` 로 앱 뿌리(`#root`)에 그린다. **한 곳을 고쳐 모든 자리가 낫는다.**
+  //   ★★ 옮기는 자리를 `document.body` 가 아니라 **`#root`** 로 잡았다 — 그러면 이 창이
+  //     사이드바(z-index 1000)와 **나란히** 서서, 지금까지의 층위가 글자 그대로 유지된다
+  //     (창 900 < 사이드바 1000 이고, 창은 `left:var(--nav-w)` 로 사이드바 오른쪽부터 깐다).
+  //     body 로 내면 그 관계가 «우연히 맞는» 것이 되고, 언젠가 사이드바 위를 덮는다.
+  //   ★ 겉모습·동작은 한 글자도 안 바뀐다 — 그리는 «자리» 만 옮긴다.
+  //     React 조각 관계는 그대로라 onClose 같은 것도 그대로 오간다.
+  return ReactDOM.createPortal((
     <div className="cs-modal-overlay"
       style={{position:'fixed',top:0,right:0,bottom:0,background:'rgba(0,0,0,.55)',zIndex:900,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}
       onMouseDown={e=>{ if(e.target===e.currentTarget) onClose(); }}>
@@ -30370,7 +30415,7 @@ function ManualModalFrame({title, onClose, children, width, resizable}){
         <div style={{padding:'16px 18px',overflowY:'auto',flex:'1 1 auto',minHeight:0,display:'flex',flexDirection:'column'}}>{children}</div>
       </div>
     </div>
-  );
+  ), document.getElementById('root') || document.body);
 }
 
 function ManualEditModal({doc, facets, currentUserEmail, onClose, onSaved}){
