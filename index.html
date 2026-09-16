@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260916l_relink_and_settle_kpi -->
+<!-- (2026-09-16) 제니 둘. ①🔗 **2차 접수 잇기** — 교환해 준 상품에 고객이 «또» 접수하는 경우, 1차 티켓에 이력을 이어 붙이지 않고 **새 티켓을 만들어 1차를 가리킨다**(제니 결정 · 내 권고와 같았다). ★★★ 이어 붙이면 네 군데가 깨진다 — **한 티켓은 값을 하나씩만 갖기 때문이다**: 단계가 하나라 1차의 «재출고 완료» 를 지우고 되돌려야 하고(**끝난 일이 안 끝난 일이 된다**), 통계는 티켓으로 세니 CS 2건이 1건이 되며 처리 시간이 부풀고, 환불은 티켓당 한 번이라 2차를 못 넘기고, 리체크·보낸 시각도 한 칸이라 1차 기록이 덮인다. 이어 붙이기의 장점은 «맥락이 한 화면에» 하나뿐인데 그건 이음으로 해결된다. ★★ `group_key`·`main_ticket_id` 와 **뜻이 다르다** — 그쪽은 «같은 주문의 품목 묶음»(한 번 접수하고 한 번 회신받는 **한 사건**)이고 이 칸은 **다른 사건 사이의 이음**이다. 그래서 화면에서도 꼴을 갈랐다(묶음 뱃지 ↔ 🔗 화살표). ★★★ **양쪽에서 보인다** — 내 앞은 `prev_ticket_id` 가 들고 있지만 내 «뒤» 는 상대가 나를 가리켜서 따로 물어야 안다. 안 물으면 **1차를 열었을 때 2차가 있는지 모르고**, 그러면 이어 둔 뜻이 없다(09-15 «문서 ↔ 메뉴얼 연결» 과 같은 규칙). ★ 이어받을 때 **비우는 것 셋**(제니): 회수 주소 · 유형 · 방향 — 1차가 「불량 교환」이어도 2차는 「파손 반품」일 수 있고 **미리 채워 두면 아무도 안 고친다**(CS 접수 수량을 1로 두는 것과 같은 판단). ★ 담당자는 **2차를 접수하는 사람**이다(제니) — 1차 담당자를 물려받지 않는다. ★ 이력에도 한 줄 남긴다(「#N 에서 이어진 건입니다」) — 칸에만 있으면 이력을 세로로 읽을 때 «왜 이어졌는지» 가 안 보인다. ★ SQL `sql/cs_tickets_prev.sql`(칸 + 색인 + 검사) — **dev 적용 · 운영 미적용**. ②🔢 **정산 대기 카드가 «환불 완료» 를 안 세고 있었다**(제니). 칩에는 2026-09-09 에 이미 그 조건이 들어갔는데 **카드만 옛 셈으로 돌아 칩과 숫자가 달랐다** — 숫자 둘이 다르면 사람은 그 순간 **둘 다 안 믿는다**. → 카드도 **칩의 판정(match)** 을 그대로 쓴다. 두 곳에 적지 않으니 다음에 칩 조건을 고치면 카드가 저절로 따라온다. ★ dev 전용. -->
 <!-- v20260916k_nav_dashboard_collapsed -->
 <!-- (2026-09-16) 제니: 「좌측 메뉴 첫 번째 '대시보드' 는 펼쳐짐이 기본인데, 다른 메뉴처럼 접힘으로」. 왜 그것만 펼쳐져 있었나 — 사이드바에는 **«지금 보는 화면의 부모를 자동으로 펼친다»** 는 규칙이 있고, 콘솔을 열면 첫 화면이 대시보드이며 그 부모가 곧 «대시보드» 라 늘 펼쳐진 채 시작했다. ★★ 그 규칙을 통째로 없앨 수는 없다 — 없으면 **지금 보고 있는 메뉴가 사이드바에서 안 보이는** 상태가 된다(2026-09-01 디지털 상품 발송 · 09-04 접수 문안에서 두 번 밟은 자리다). ★★★ 그래서 **«자체 화면이 있는 부모» 만 예외**로 뒀다: 대시보드처럼 부모 줄 자신이 화면인 경우 **접혀 있어도 그 줄이 그대로 보이고 지금 화면으로 표시된다 — 펼치지 않아도 잃는 것이 없다.** 반대로 상품 관리·CS 관리는 부모에 제 화면이 없어 자식이 안 보이면 지금 자리를 알 수 없다. ★ 판정을 `autoOpen` 한 곳에 뒀다 — 처음 그릴 때와 화면을 옮길 때가 **같은 규칙**을 본다(두 곳에 적으면 «처음엔 접혔는데 돌아오면 펼쳐지는» 자리가 생긴다). ★ dev 전용. -->
 <!-- v20260916j_menu_email_fix -->
@@ -21583,8 +21585,14 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
       await4:  r.filter(t=>t.stage==='awaiting' && t.supplier_sent_at &&
                  (Date.now()-new Date(t.supplier_sent_at))/86400000 >= 4).length,
       awaiting:r.filter(t=>t.stage==='awaiting').length,
-      settle:  r.filter(t=>t.stage==='settlement').length,
-      nocost:  r.filter(t=>t.stage==='settlement' && t.settle_fee==null).length,
+      // ★★★ 2026-09-16 제니 — 「정산 대기 카드는 «정산 대기» 와 «환불 완료» 를 함께 센다」.
+      //   ★★ 칩에는 이미 그 조건이 적혀 있었다(2026-09-09 · st:settlement 의 where).
+      //     **카드만 옛 셈으로 돌아 칩과 숫자가 달랐다** — 숫자 둘이 다르면 사람은
+      //     그 순간 둘 다 안 믿는다(공급사 KPI 에서 세운 원칙이다).
+      //   → 카드도 **칩의 판정(match)** 을 그대로 쓴다. 나중에 칩 조건을 고치면
+      //     카드가 저절로 따라온다 — 두 곳에 적지 않는다.
+      settle:  r.filter(t=>match(t,'st:settlement')).length,
+      nocost:  r.filter(t=>match(t,'st:settlement') && t.settle_fee==null).length,
     };
   },[rows]);
 
@@ -26392,6 +26400,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     const v = csAfterSaveGet();
     return v==='list' ? 'list' : 'stay';
   });
+  // ★★★ 2차 접수 잇기(제니 2026-09-16) — 교환해 준 상품에 고객이 «또» 접수하는 경우다.
+  //   1차 티켓에 이력을 이어 붙이지 않고 **새 티켓을 만들어 1차를 가리킨다**.
+  //   까닭은 sql/cs_tickets_prev.sql 맨 위에 적어 뒀다(한 티켓은 단계·환불·리체크를
+  //   «하나씩만» 갖는다 — 이어 붙이면 1차의 끝난 기록이 덮인다).
+  const [prevId,setPrevId] = useState(null);
   const [raw,setRaw]       = useState('');
   const [busy,setBusy]     = useState(false);
   const [msg,setMsg]       = useState(null);
@@ -26777,6 +26790,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         cost_bearer: f.cost_bearer || null,
         settle_fee: money(f.settle_fee), settle_shipping_fee: money(f.settle_shipping_fee),
         stage: st, recheck_at: recheck, group_key: gkey,
+        // ★ 2차 접수라면 앞 티켓을 가리킨다. 묶음이면 형제 «전부» 가 같은 1차를 가리킨다 —
+        //   1차 상세에서 «→ 2차» 를 그릴 때 묶음이 통째로 보여야 하기 때문이다.
+        prev_ticket_id: prevId,
         // ★★ 담당자는 고른 사람이고, «만든 사람»(created_by)은 언제나 로그인 계정이다.
         //   둘을 같은 값으로 두면 «누가 배정했나» 가 사라진다 — 배정은 관리자가 하고
         //   일은 다른 사람이 하는 것이 이 기능의 뜻이다.
@@ -26810,7 +26826,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     //   같은 값이 티켓마다 다른 자리에 있으면 나중에 어디를 봐야 할지 알 수 없다.
     //   ★ 메모는 이제 제 칸에서 보이고 상세에서 고칠 수도 있다 — 여기서는 이력에
     //     「접수」 한 줄만 남긴다(사건이 시작된 시각이 이력에 있어야 한다).
-    const evs = (notes.length ? notes : [{side:'고객', text:'접수'}]).map(n=>({
+    // ★★ 이어받았으면 **이력에도 남긴다** — 칸에만 있으면 «왜 이어졌는지» 가 이력을
+    //   세로로 읽을 때 안 보인다. 사람이 적은 줄보다 «앞» 에 오게 맨 앞에 넣는다.
+    const linkEv = prevId!=null ? [{side:'시스템', text:'티켓 #'+prevId+' 에서 이어진 건입니다.'}] : [];
+    const evs = linkEv.concat(notes.length ? notes : [{side:'고객', text:'접수'}]).map(n=>({
       ticket_id: mrow.id, side:n.side, action:'기록', actor:currentUserEmail,
       // ★ 사진만 남긴 줄은 note 를 «빈 문자열» 이 아니라 null 로 둔다 — 빈 문자열은
       //   «적었는데 비었다» 로 읽히고, 나중에 세면 한 종류로 잡힌다.
@@ -27628,6 +27647,20 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             <div style={{marginTop:14,paddingTop:12,borderTop:'1px solid var(--border)'}}>
               <div style={{fontSize:11,fontWeight:700,color:'#F6AD09',marginBottom:7}}>
                 고른 품목에 이미 {dups.length}건 있습니다</div>
+              {/* ★★ 이어받는 중이라는 것이 **저장 버튼 가까이에서도** 보여야 한다 —
+                  목록 안의 작은 «✓» 만으로는 스크롤을 내리면 안 보인다. */}
+              {prevId!=null && (
+                <div style={{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap',
+                  fontSize:11,color:'var(--accent)',background:'var(--bg)',
+                  border:'1px solid var(--accent)',borderRadius:6,
+                  padding:'5px 9px',marginBottom:7}}>
+                  <span>🔗 티켓 <b style={{fontFamily:'monospace'}}>#{prevId}</b> 에서 이어받는 중</span>
+                  <button onClick={()=>setPrevId(null)}
+                    style={{marginLeft:'auto',padding:'2px 7px',borderRadius:5,fontSize:10,
+                      fontFamily:'inherit',cursor:'pointer',background:'transparent',
+                      border:'1px solid var(--border-strong)',color:'var(--sub)'}}>해제</button>
+                </div>
+              )}
               {/* 🔴 2026-09-15 — **이 목록만 상한이 없었다.** 주문자 최근 티켓은 6건으로
                   잘려 있는데(slice) 이것은 품목에 달린 티켓을 전부 그린다 — 손이 많이 간
                   품목이면 줄이 끝없이 늘고, **맨 위로 올린 지금은 그만큼 ③④가 통째로
@@ -27647,6 +27680,26 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     {' '}<CsStagePill stage={d.stage}/>
                     {' '}<span style={{opacity:.7}}>{csDate(d.created_at)}</span>
                   </span>
+                  {/* ★★ [이어받기] — «또 생긴 사건» 을 새 티켓으로 만들되 1차를 가리킨다.
+                      ★ 주문·상품·고객은 이미 화면에 있는 것을 그대로 쓴다(다시 조회하지 않는다).
+                      ★★ **비우는 것이 셋이다**(제니 2026-09-16): 회수 주소 · 유형 · 방향.
+                        1차가 「불량 교환」이어도 2차는 「파손 반품」일 수 있고, **미리 채워 두면
+                        아무도 안 고친다** — CS 접수 수량을 1로 두는 것과 같은 판단이다.
+                      ★ 담당자는 **2차를 접수하는 사람**이다(제니) — 1차 담당자를 물려받지 않는다. */}
+                  <button onClick={()=>{
+                      setPrevId(d.id);
+                      set('cs_type',''); set('direction','');
+                      set('pickup_zipcode',''); set('pickup_address1',''); set('pickup_address2','');
+                      setAssignee(currentUserEmail);
+                      toast('티켓 #'+d.id+' 에서 이어받습니다 — 유형·방향·회수 주소를 새로 골라 주세요.','ok');
+                    }}
+                    disabled={prevId===d.id}
+                    style={{padding:'3px 9px',borderRadius:5,fontSize:10,fontFamily:'inherit',
+                      cursor:prevId===d.id?'default':'pointer',
+                      background:prevId===d.id?'var(--accent)':'transparent',
+                      border:'1px solid '+(prevId===d.id?'var(--accent)':'rgba(120,170,255,.55)'),
+                      color:prevId===d.id?'var(--on-accent)':'var(--accent)',whiteSpace:'nowrap'}}>
+                    {prevId===d.id ? '✓ 이어받는 중' : '이어받기'}</button>
                   <button onClick={()=>{
                       if(notes.length && !window.confirm('여기 적어 둔 이력 '+notes.length+'줄은 함께 옮겨지지 않습니다. 티켓 #'+d.id+' 로 이동할까요?')) return;
                       goTicket(d.id);
@@ -27662,7 +27715,9 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               <div style={{fontSize:10,color:'var(--sub)',marginTop:7,lineHeight:1.7}}>
                 {/* ★ 두 문장이 붙어 있으면 «그래서 어느 쪽이지» 로 읽힌다 — 고르는
                     갈림길이라 한 줄에 하나씩 둔다(제니). */}
+                {/* ★ 갈림길이 셋이 됐다 — 한 줄에 하나씩 둔다(제니 규칙). */}
                 또 생긴 사건이면 <b>새로 만드는 것</b>이 맞습니다.<br/>
+                <b>교환·재출고 받은 뒤 또 접수</b>라면 <b>[이어받기]</b> — 그 티켓과 이어집니다.<br/>
                 같은 건에 이력만 더할 일이면 <b>[티켓 이동]</b> 을 누르세요.
               </div>
             </div>
@@ -27826,6 +27881,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
   // ★★ 1단의 값은 «바로» 저장하지 않는다(제니 2026-09-01). 고칠 때마다 저장하면
   //   손이 미끄러진 것·잘못 고른 것까지 전부 이력에 남아 정작 봐야 할 흐름이 묻힌다.
   //   화면에서만 고쳐 두었다가 [저장] 을 누를 때 한 번에 쓰고 이력도 «한 줄» 만 남긴다.
+  // 나를 가리키는 티켓들(2차 이상). 위 load 에서 채운다.
+  const [nextTickets,setNextTickets] = useState([]);
   const [edit,setEdit] = useState(null);
   const setE = (k,v)=> setEdit(p=>({...p,[k]:v}));
   // 표의 값 → 화면에서 고칠 값. 금액은 문자열로 다룬다(빈 칸과 0 을 갈라야 한다).
@@ -27883,6 +27940,15 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
     const {data:ev} = await sb.from('cs_ticket_events').select('*')
       .in('ticket_id', ids.length?ids:[ticketId]).order('created_at',{ascending:true});
     setEvents(ev||[]);
+    // ★★★ 2차 접수 잇기(제니 2026-09-16) — **양쪽에서 보여야 한다.**
+    //   내 «앞» 은 이 티켓이 들고 있지만(prev_ticket_id), 내 «뒤» 는 상대가 나를 가리키고
+    //   있어서 따로 물어야 안다. 안 물으면 **1차를 열었을 때 2차가 있는지 모른다** —
+    //   그러면 이어 둔 뜻이 없다(09-15 «문서 ↔ 메뉴얼 연결» 에서 세운 것과 같은 규칙).
+    //   ★ 묶음이면 형제 전부가 같은 1차를 가리키므로 여럿이 나온다. 그대로 다 보인다.
+    const {data:nx} = await sb.from('cs_tickets')
+      .select('id,stage,cs_type,direction,created_at')
+      .eq('prev_ticket_id', data.id).order('id',{ascending:true});
+    setNextTickets(nx||[]);
     // ③ — 이 주문자의 최근 티켓(연락처 기준) · 이 상품의 CS 정보
     const dg = digits(data.orderer_phone);
     if(dg){
@@ -28457,6 +28523,34 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                   color: gMain ? 'var(--on-accent)' : 'var(--sub)'}}>#{g.id}</button>
               );
             })}
+          </span>
+        )}
+        {/* ★★ 이어진 건 — «앞» 과 «뒤» 를 한 줄에 함께 보인다(제니 2026-09-16).
+            ★ 묶음 뱃지와 **꼴을 가른다**: 묶음은 «같은 사건의 품목들», 이쪽은 «다른 사건».
+              같은 모양으로 그리면 둘이 같은 것으로 읽힌다 — 그래서 🔗 와 화살표를 쓴다. */}
+        {(t.prev_ticket_id || nextTickets.length>0) && (
+          <span style={{display:'inline-flex',alignItems:'center',gap:5,fontSize:11,
+            padding:'3px 8px',borderRadius:6,lineHeight:1,
+            background:'var(--bg)',border:'1px solid var(--border-strong)'}}>
+            <span style={{color:'var(--sub)',lineHeight:1}}>🔗 이어진 건</span>
+            {t.prev_ticket_id && (
+              <button onClick={()=>goTicket(t.prev_ticket_id)}
+                title="이 건의 앞 티켓으로"
+                style={{padding:'3px 8px',borderRadius:5,fontSize:11,fontFamily:MONO,
+                  cursor:'pointer',lineHeight:1,fontWeight:700,display:'inline-flex',
+                  alignItems:'center',background:'transparent',
+                  border:'1px solid var(--border)',color:'var(--sub)'}}>
+                ← #{t.prev_ticket_id}</button>
+            )}
+            {nextTickets.map(x=>(
+              <button key={x.id} onClick={()=>goTicket(x.id)}
+                title={'이 건에서 이어진 티켓 — '+((CS_STAGE_LABEL[x.stage]||{}).label||x.stage)}
+                style={{padding:'3px 8px',borderRadius:5,fontSize:11,fontFamily:MONO,
+                  cursor:'pointer',lineHeight:1,fontWeight:700,display:'inline-flex',
+                  alignItems:'center',background:'transparent',
+                  border:'1px solid var(--border)',color:'var(--sub)'}}>
+                #{x.id} →</button>
+            ))}
           </span>
         )}
         <span style={{fontSize:12,color:'var(--sub)'}}>
