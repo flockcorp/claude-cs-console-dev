@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260916m_dup_fork_dialog -->
+<!-- (2026-09-16) 제니 둘. ①🚧 **«이어받기» 를 안 눌러도 그냥 티켓이 만들어졌다** — 제니: 「그러면 실제로는 2·3차 접수여도 그 사실을 모를 수가 있다」. **맞는 지적이고 이것이 이 기능의 급소였다**: ③ 목록 안의 작은 단추는 **안 눌러도 지나가지는 길**이라, 이어야 할 건이 조용히 안 이어진다. ★★★ 고치는 법은 단추를 키우는 것이 아니라 **갈림길을 앞에 세우는 것**이다 — 이미 티켓이 있는 품목을 조회하면 그 자리에서 한 번 물어본다(제니 제안 그대로): **이어받기 · 기존 티켓으로 이동 · 새로 만들기**. ★★ 묻는 자리가 «조회 직후» 인 것이 중요하다 — 값을 다 채우고 저장할 때 물으면 이미 늦다(유형·방향을 골라 둔 뒤 이어받으면 그것들이 비워져 헛일이 된다). ★★ 세 갈래를 **같은 무게로 두지 않았다** — 이어받기가 기본(채운 단추)이고 새로 만들기는 조용한 단추다. 같은 품목에 이미 티켓이 있으면 대개 그 건의 다음 차례이고 **새로 만드는 쪽이 예외**다. 무게가 같으면 사람은 왼쪽부터 누른다. ★ 어느 티켓에서 이어받을지 골라야 하므로 **줄마다** 단추를 둔다(건이 하나면 제니가 말한 «단추 셋» 과 같은 모양이 된다). ★ 바깥을 눌러도 안 닫는다 — 닫는 것이 곧 «새로 만들기» 를 고른 셈이라 실수로 지나가면 안 된다. ★ **한 번만 뜬다**(조회할 때) — 품목을 더 고를 때마다 뜨면 «닫기만 하는 창» 이 되고, 그때부터 사람은 읽지 않고 닫는다. ★ 이어받기 동작을 `takeOver` 한 곳으로 모았다 — 두 자리(③ 목록·갈림길 창)에 적으면 «비우는 것 셋» 중 하나가 언젠가 한쪽에서만 빠진다. ②↕ **③④ 칸이 좁아지면 [이어받기]·[티켓 이동] 을 위아래로**(제니) — 나란히 두면 왼쪽 글이 밀려 줄바꿈이 자꾸 생긴다. ★ 창 크기가 아니라 **그 칸의 너비**(`paneW.r`)로 가른다 — 사람이 손잡이로 끌어 바꾸는 값이라 화면 크기로는 알 수 없다. 🔴 그러다 **또 밟았다**: `.map(d=>(` 바로 뒤는 «식 자리» 라 거기 `{/* */}` 를 두면 문법이 깨진다(09-07 삼항 · 09-08 `&&` 에 이어 세 번째다). **주석은 자식 자리에.** ★ dev 전용. -->
 <!-- v20260916l_relink_and_settle_kpi -->
 <!-- (2026-09-16) 제니 둘. ①🔗 **2차 접수 잇기** — 교환해 준 상품에 고객이 «또» 접수하는 경우, 1차 티켓에 이력을 이어 붙이지 않고 **새 티켓을 만들어 1차를 가리킨다**(제니 결정 · 내 권고와 같았다). ★★★ 이어 붙이면 네 군데가 깨진다 — **한 티켓은 값을 하나씩만 갖기 때문이다**: 단계가 하나라 1차의 «재출고 완료» 를 지우고 되돌려야 하고(**끝난 일이 안 끝난 일이 된다**), 통계는 티켓으로 세니 CS 2건이 1건이 되며 처리 시간이 부풀고, 환불은 티켓당 한 번이라 2차를 못 넘기고, 리체크·보낸 시각도 한 칸이라 1차 기록이 덮인다. 이어 붙이기의 장점은 «맥락이 한 화면에» 하나뿐인데 그건 이음으로 해결된다. ★★ `group_key`·`main_ticket_id` 와 **뜻이 다르다** — 그쪽은 «같은 주문의 품목 묶음»(한 번 접수하고 한 번 회신받는 **한 사건**)이고 이 칸은 **다른 사건 사이의 이음**이다. 그래서 화면에서도 꼴을 갈랐다(묶음 뱃지 ↔ 🔗 화살표). ★★★ **양쪽에서 보인다** — 내 앞은 `prev_ticket_id` 가 들고 있지만 내 «뒤» 는 상대가 나를 가리켜서 따로 물어야 안다. 안 물으면 **1차를 열었을 때 2차가 있는지 모르고**, 그러면 이어 둔 뜻이 없다(09-15 «문서 ↔ 메뉴얼 연결» 과 같은 규칙). ★ 이어받을 때 **비우는 것 셋**(제니): 회수 주소 · 유형 · 방향 — 1차가 「불량 교환」이어도 2차는 「파손 반품」일 수 있고 **미리 채워 두면 아무도 안 고친다**(CS 접수 수량을 1로 두는 것과 같은 판단). ★ 담당자는 **2차를 접수하는 사람**이다(제니) — 1차 담당자를 물려받지 않는다. ★ 이력에도 한 줄 남긴다(「#N 에서 이어진 건입니다」) — 칸에만 있으면 이력을 세로로 읽을 때 «왜 이어졌는지» 가 안 보인다. ★ SQL `sql/cs_tickets_prev.sql`(칸 + 색인 + 검사) — **dev 적용 · 운영 미적용**. ②🔢 **정산 대기 카드가 «환불 완료» 를 안 세고 있었다**(제니). 칩에는 2026-09-09 에 이미 그 조건이 들어갔는데 **카드만 옛 셈으로 돌아 칩과 숫자가 달랐다** — 숫자 둘이 다르면 사람은 그 순간 **둘 다 안 믿는다**. → 카드도 **칩의 판정(match)** 을 그대로 쓴다. 두 곳에 적지 않으니 다음에 칩 조건을 고치면 카드가 저절로 따라온다. ★ dev 전용. -->
 <!-- v20260916k_nav_dashboard_collapsed -->
@@ -26405,6 +26407,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   까닭은 sql/cs_tickets_prev.sql 맨 위에 적어 뒀다(한 티켓은 단계·환불·리체크를
   //   «하나씩만» 갖는다 — 이어 붙이면 1차의 끝난 기록이 덮인다).
   const [prevId,setPrevId] = useState(null);
+  const [dupAsk,setDupAsk] = useState(null);   // 조회 직후 세우는 갈림길(이미 있는 티켓들)
   const [raw,setRaw]       = useState('');
   const [busy,setBusy]     = useState(false);
   const [msg,setMsg]       = useState(null);
@@ -26514,6 +26517,15 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //     다시 상태를 옮기는 두 번 일이 됐다. 버튼이 곧 «어디로 보내는가» 여야 한다.
   const [newStage,setNewStage] = useState('received');
 
+  // ★ 이어받기는 두 자리(③ 목록 · 갈림길 창)에서 부른다 — **한 곳에 둔다.**
+  //   두 곳에 적으면 «비우는 것 셋» 중 하나가 언젠가 한쪽에서만 빠진다.
+  const takeOver = (id)=>{
+    setPrevId(id);
+    set('cs_type',''); set('direction','');
+    set('pickup_zipcode',''); set('pickup_address1',''); set('pickup_address2','');
+    setAssignee(currentUserEmail);
+    toast('티켓 #'+id+' 에서 이어받습니다 — 유형·방향·회수 주소를 새로 골라 주세요.','ok');
+  };
   const isItemCode = (v)=> /-\d{2}$/.test(String(v||'').trim());
   const baseOf = (v)=>{ const s=String(v||'').trim(); return isItemCode(s) ? s.slice(0,-3) : s; };
   const digits = csDigits;   // ★ 사본을 두지 않는다(csDigits 한 곳)
@@ -26591,6 +26603,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
       .select('id,stage,cs_type,direction,created_at,order_item_code')
       .in('order_item_code', codes).order('id',{ascending:false});
     setDups(d1||[]);
+    const foundDups = d1||[];
     // 이 «주문자» 의 최근 티켓 — 연락처 기준이다(공급사가 아니다).
     // ★ 숫자만 남겨 맞춘다 — 표기가 흔들리는 값이라 그대로 비교하면 «전에도 있었는데
     //   안 뜨는» 일이 생긴다.
@@ -26622,6 +26635,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         .eq('product_name', list[0].product_name).limit(3);
       setCsInfo((d3||[]).length===1 ? d3[0] : {ambiguous:(d3||[]).length});
     } else setCsInfo({ambiguous:0});
+    return foundDups;
   };
 
   // ★★ 주문번호만 넣으면 품목을 «훑어» 목록을 만든다. 지금 엣지 함수는 품목 목록을
@@ -26672,7 +26686,17 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     setItemF(pre);
     const first = [found[0].code];
     setSel(first);
-    await loadSide([found[0]]);
+    const already = await loadSide([found[0]]);
+    // ★★★ 2026-09-16 제니 — 「[이어받기] 를 안 눌러도 티켓이 그냥 만들어진다. 그러면
+    //   실제로는 2·3차인데 **그 사실을 아무도 모른 채** 새 티켓이 생긴다」.
+    //   ★★ 맞는 지적이다. ③ 목록 안의 작은 단추는 **«고르지 않아도 지나갈 수 있는» 길**이라,
+    //     이어야 할 건이 조용히 안 이어진다. 놓치면 히스토리가 끊기고 그건 되돌리기 어렵다.
+    //   → **갈림길을 앞에 세운다**: 이미 티켓이 있는 품목이면 조회 직후 한 번 물어본다.
+    //     ★ 물어보는 자리는 «조회 직후» 다 — 값을 다 채우고 저장할 때 물으면 이미 늦다
+    //       (유형·방향을 골라 둔 뒤에 «이어받기» 를 누르면 그것들이 비워져 헛일이 된다).
+    //     ★ 한 번만 뜬다 — 품목을 더 고를 때마다 뜨면 «닫기만 하는 창» 이 되고,
+    //       그때부터 사람은 읽지 않고 닫는다.
+    if(already && already.length) setDupAsk(already);
     setMsg({t:'ok', m: found.length===1 ? '주문 정보를 불러왔습니다.'
       : found.length+'개 품목을 찾았습니다. 함께 접수할 품목을 고르세요(같은 공급사만).'});
     setBusy(false);
@@ -26984,9 +27008,79 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
  // 칸 너비 — 사람마다 따로 남는다. 생성과 상세가 «다른» 열쇠를 쓴다:
   // 만들 때와 볼 때 보는 것이 달라 원하는 폭도 다르다.
   const [paneW, dragPane] = useCsPanes('cs_new_panes', {l:360, r:325});
+  // ★ ③④ 칸이 좁아지면 그 안의 단추들을 위아래로 세운다(제니 2026-09-16).
+  //   창 크기가 아니라 «이 칸» 의 너비다 — 사람이 손잡이로 끌어 바꾸는 값이다.
+  const narrowPane = (paneW.r || 0) < 400;
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
+      {/* ★★★ 갈림길 창(제니 2026-09-16) — 「이미 티켓이 있는 품목 주문번호를 조회해서 또
+          만들려고 하면 팝업을 띄우자」. **고르지 않고는 지나갈 수 없는 자리**라야 한다:
+          ③ 목록의 작은 단추는 안 눌러도 그냥 지나가지고, 그러면 2·3차인데 이어지지 않은
+          티켓이 조용히 생긴다(제니 제보).
+          ★★ 세 갈래를 «같은 무게» 로 두지 않았다 — **이어받기가 기본**이다. 같은 품목에
+            이미 티켓이 있다면 대개 그 건의 다음 차례이고, 새로 만드는 쪽이 예외다.
+            무게를 똑같이 주면 사람은 왼쪽부터 누른다.
+          ★ 어느 티켓에서 이어받을지 골라야 하므로 **줄마다** 단추를 둔다 — 건이 하나면
+            줄도 하나라 제니가 말한 «단추 셋» 과 같은 모양이 된다.
+          ★ 바깥을 눌러도 안 닫는다 — 닫는 것 자체가 «새로 만들기» 를 고른 셈이 되므로
+            실수로 지나가면 안 된다. */}
+      {dupAsk && dupAsk.length>0 && (
+        <div style={{position:'fixed',top:0,left:0,right:0,bottom:0,
+          background:'rgba(0,0,0,.55)',zIndex:2600,display:'flex',
+          alignItems:'center',justifyContent:'center',padding:20}}>
+          <div style={{background:'var(--surface)',borderRadius:10,width:'100%',maxWidth:640,
+            maxHeight:'calc(100vh - 60px)',display:'flex',flexDirection:'column',
+            border:'1px solid var(--border)',padding:'18px 20px'}}>
+            <div style={{fontSize:15,fontWeight:700,color:'var(--text)',marginBottom:6}}>
+              이미 이 품목 주문번호로 티켓이 있습니다
+              <span style={{fontFamily:MONO,opacity:.75,marginLeft:6}}>{dupAsk.length}건</span>
+            </div>
+            <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7,marginBottom:12}}>
+              교환·재출고를 받은 뒤 <b>또 접수</b>라면 <b>[이어받기]</b> 를 눌러 주세요 —
+              두 티켓이 이어져 <b>앞뒤 이력을 서로 오갈 수 있습니다.</b>
+              <br/>이어받지 않으면 같은 품목에 <b>따로 노는 티켓</b>이 하나 더 생깁니다.
+            </div>
+
+            <div style={{overflowY:'auto',marginBottom:14,border:'1px solid var(--border)',
+              borderRadius:8}}>
+              {dupAsk.map((d,i)=>(
+                <div key={d.id} style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',
+                  padding:'9px 11px',fontSize:12,color:'var(--text)',
+                  borderTop: i ? '1px solid var(--border)' : 'none'}}>
+                  <span style={{fontFamily:MONO,color:'var(--accent)',fontWeight:700}}>#{d.id}</span>
+                  <CsStagePill stage={d.stage}/>
+                  <span style={{color:'var(--sub)',fontSize:11}}>
+                    {(d.cs_type||'—')}{d.direction ? ' · '+d.direction : ''}</span>
+                  <span style={{color:'var(--sub)',fontSize:11,opacity:.8}}>{csDate(d.created_at)}</span>
+                  <span style={{flex:1}}></span>
+                  <button onClick={()=>{ takeOver(d.id); setDupAsk(null); }}
+                    style={{padding:'6px 13px',borderRadius:7,fontSize:12,fontWeight:700,
+                      fontFamily:'inherit',cursor:'pointer',background:'var(--primary)',
+                      border:'1px solid var(--primary)',color:'#fff',whiteSpace:'nowrap'}}>
+                    이어받기</button>
+                  <button onClick={()=>{ setDupAsk(null); goTicket(d.id); }}
+                    style={{padding:'6px 11px',borderRadius:7,fontSize:12,fontFamily:'inherit',
+                      cursor:'pointer',background:'transparent',
+                      border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',whiteSpace:'nowrap'}}>
+                    기존 티켓으로 이동</button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{display:'flex',alignItems:'center',gap:9,flexWrap:'wrap'}}>
+              <span style={{fontSize:11,color:'var(--sub)',marginRight:'auto',lineHeight:1.6}}>
+                앞 건과 상관없는 <b>새 사건</b>이라면 그냥 새로 만드세요.
+              </span>
+              <button onClick={()=>setDupAsk(null)}
+                style={{padding:'6px 14px',borderRadius:7,fontSize:12,fontFamily:'inherit',
+                  cursor:'pointer',background:'transparent',
+                  border:'1px solid var(--border-strong)',color:'var(--sub)',whiteSpace:'nowrap'}}>
+                새로 만들기</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{marginBottom:16,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         {/* ★ 말은 «등록» 으로 통일한다(제니 2026-09-02) — 목록의 [+ 티켓 등록],
             이 머리말, 저장 버튼이 모두 같은 말을 써야 같은 일로 읽힌다. */}
@@ -27667,8 +27761,16 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   밀린다.** ★ 위에서 다섯만 그리고 나머지는 수로만 알린다: 고를 것은
                   «가장 최근 것» 이고, 스무 줄을 다 보여 준다고 판단이 나아지지 않는다.
                   ★ 제목의 «N건» 은 자른 수가 아니라 **전체 수** 다(dups.length). */}
+              {/* ★★ 칸이 좁아지면 단추를 **위아래로** 세운다(제니 2026-09-16) — 나란히 두면
+                  왼쪽 글(번호·단계·날짜)이 밀려 줄바꿈이 자꾸 생긴다.
+                  ★ 창 너비가 아니라 **이 칸의 너비**로 가른다 — 사람이 손잡이로 끌어
+                    바꾸는 값이라 화면 크기로는 알 수 없다(paneW.r 이 그 값이다).
+                  🔴 주석은 **여기**(자식 자리)에 둔다 — `.map(d=>(` 바로 뒤는 «식 자리» 라
+                    거기 `{/* */}` 를 두면 문법이 깨진다. 09-07·09-08 에 삼항과 `&&` 에서
+                    밟은 것과 **같은 자리**이고 오늘 또 밟았다. */}
               {(allDups ? dups : dups.slice(0,CS_LIST_PEEK)).map(d=>(
-                <div key={d.id} style={{display:'flex',alignItems:'center',gap:6,
+                <div key={d.id} style={{display:'flex',
+                  alignItems: narrowPane ? 'flex-start' : 'center', gap:6,
                   fontSize:11,color:'var(--sub)',lineHeight:1.9}}>
                   <span style={{flex:1,minWidth:0}}>
                     <span style={{fontFamily:'monospace',color:'var(--accent)'}}>#{d.id}</span>
@@ -27680,19 +27782,15 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     {' '}<CsStagePill stage={d.stage}/>
                     {' '}<span style={{opacity:.7}}>{csDate(d.created_at)}</span>
                   </span>
+                  <span style={{display:'flex',gap:4,flexShrink:0,
+                    flexDirection: narrowPane ? 'column' : 'row'}}>
                   {/* ★★ [이어받기] — «또 생긴 사건» 을 새 티켓으로 만들되 1차를 가리킨다.
                       ★ 주문·상품·고객은 이미 화면에 있는 것을 그대로 쓴다(다시 조회하지 않는다).
                       ★★ **비우는 것이 셋이다**(제니 2026-09-16): 회수 주소 · 유형 · 방향.
                         1차가 「불량 교환」이어도 2차는 「파손 반품」일 수 있고, **미리 채워 두면
                         아무도 안 고친다** — CS 접수 수량을 1로 두는 것과 같은 판단이다.
                       ★ 담당자는 **2차를 접수하는 사람**이다(제니) — 1차 담당자를 물려받지 않는다. */}
-                  <button onClick={()=>{
-                      setPrevId(d.id);
-                      set('cs_type',''); set('direction','');
-                      set('pickup_zipcode',''); set('pickup_address1',''); set('pickup_address2','');
-                      setAssignee(currentUserEmail);
-                      toast('티켓 #'+d.id+' 에서 이어받습니다 — 유형·방향·회수 주소를 새로 골라 주세요.','ok');
-                    }}
+                  <button onClick={()=>takeOver(d.id)}
                     disabled={prevId===d.id}
                     style={{padding:'3px 9px',borderRadius:5,fontSize:10,fontFamily:'inherit',
                       cursor:prevId===d.id?'default':'pointer',
@@ -27708,6 +27806,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                       cursor:'pointer',background:'transparent',
                       border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',whiteSpace:'nowrap'}}>
                     티켓 이동</button>
+                  </span>
                 </div>
               ))}
               <CsMoreLine total={dups.length} open={allDups}
