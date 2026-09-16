@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260916i_private_imgs_stage_roles -->
+<!-- (2026-09-16) 제니 셋. ①🔒 **cs-images 를 «비공개» 버킷으로**(`sql/cs_images_private.sql`). 여기에는 **고객이 보낸 사진**이 들어 있다 — 불량 사진만이 아니라 운송장·영수증이 찍힌 것도 온다. 그동안은 공개 버킷이라 **주소를 아는 사람은 로그인 없이 볼 수 있었다.** 같은 콘솔의 메뉴얼 파일은 이미 비공개+서명 주소다 — ★★ **한 콘솔에 기준이 둘이면 둘 다 안 지켜진다**(낮은 쪽으로 맞춰진다). ★★★ **가장 큰 함정: 지금까지 저장된 주소가 «공개 주소» 꼴로 DB 에 글자로 박혀 있다**(상품 CS 이미지 · 티켓 이력 첨부 둘 다 · 수천 건). 버킷을 잠그면 그 주소가 400 을 낸다 → **주소에서 «경로» 를 뽑아 그때그때 서명 주소를 받는다**(`csImgPath`·`csImgUrl`·`CsImg`). **옛 자료를 하나도 안 옮겼다** — 주소 자체가 경로를 담고 있어 읽는 쪽만 고치면 된다(주소가 아니라 «열쇠» 로 쓰는 셈이다). ★ 목록 «안» 에서는 훅을 못 부르므로 **사진 한 장이 제 주소를 스스로 받아 오는 조각**으로 뒀다. ★ 받아 둔 서명 주소는 만료 전까지 다시 쓴다. ★ 밖에서 받아 온 그림은 경로가 안 뽑혀 그대로 둔다. 🔴 **순서가 반대다** — 표를 만들 때와 달리 **화면을 먼저 올리고 SQL 을 뒤에** 돌린다(새 화면은 공개 버킷에서도 그대로 돈다). ★ 내려받기도 서명 주소로 바꿨다(상품 팝업의 `<a download>` → 단추). ②👤 **«비용 비교 도구» 를 jenny@floc.kr 계정에만**(제니 지시). ★★ 역할로는 못 가르는 요구다 — master 가 여럿인데 그중 한 사람만 보는 메뉴다. **역할은 «무슨 일을 하는 사람인가» 이지 «누구인가» 가 아니라서** 사람 하나를 위해 역할을 만들면 그 역할이 다른 메뉴에서 무슨 뜻인지 매번 정해야 한다 → **역할 검사를 지난 뒤 이메일 목록으로 한 겹 더** 좁힌다(`CS_MENU_EMAILS` · `console_settings.menu_emails` 로도 바꿀 수 있다). ★ 메뉴 권한 설정 표에 «👤 … 만» 을 적었다 — 안 적으면 **체크가 거짓말을 한다**(master 에 체크가 있는데 어떤 master 에게는 안 보인다). 🔴 화면의 잠금이다(cost_store 는 DB 에서 master 전체에게 열려 있다). ③⚙ **CS 설정 › «상태 권한» 탭 신설**(제니: 「권한별 티켓의 저장 가능한 상태값을 설정할 수 있게」). `CS_STAGES_MASTER` 가 코드에 박혀 있던 것을 설정으로 뺐다(`cs_stage_roles`). ★★ **기본값은 지금 실제로 되는 사람과 글자 그대로 같다** — 여기서 조이면 설정을 켜 보기도 전에 현업이 막힌다. ★ 판정은 `csStageAllows` 한 곳이고 등록·상세·목록 일괄 셋이 그것을 본다. ★ 칸 규칙 탭과 «같은 꼴» 로 그렸다(나란히 선 두 탭이 다르면 읽는 법을 두 번 배운다). 🔴 화면의 잠금이다 — 되돌릴 수 없는 «환불 요청»·«정산 반영» 은 필드 권한이 막는다. ★ dev 전용. -->
 <!-- v20260916h_hint_gap_down -->
 <!-- (2026-09-16) 제니: 「상단 제목 우측에 들어간 메시지는 마우스 커서 때문에 문구 앞부분이 잘 안 보여」. ★★★ **위로 열릴 때와 아래로 열릴 때의 사정이 다르다** — 커서 그림은 손이 짚은 자리에서 **오른쪽 «아래» 로** 뻗는다(「?」 는 `cursor:help` 라 화살표에 물음표가 붙어 더 길다). 그래서 위로 열리는 풍선에는 커서가 닿지 않고, **아래로 열리는 풍선만 첫 줄 앞부분이 덮인다.** 통계 화면 맨 위의 「?」 는 위에 자리가 없어 아래로 여는 자리라(`up = r.top > 150`) 거기서만 제보가 나왔다 — **같은 조각인데 자리에 따라 다른 병을 앓는다.** → **아래로 열릴 때만** 사이를 벌렸다(8 → 20px). 위로 열리는 자리는 그대로 둔다: 멀쩡한 쪽까지 벌리면 «풍선이 떠 있다» 는 느낌만 늘어난다. ★★ **가로로 피하는 길은 답이 아니다** — 커서는 짚은 자리에서 오른쪽으로 20px 남짓 뻗으므로 풍선을 그만큼 왼쪽으로 밀면 덮이는 글자가 앞이 아니라 «가운데» 로 옮겨갈 뿐이다. 세로로 비키는 것 말고는 길이 없다(09-16 «오른쪽 정렬 숫자 잘림» 과 같은 계열 — 폭·여백을 만지다가 정작 바꿔야 할 것이 따로 있는 자리). ⚠ **커서 크기는 잴 수 없는 값이다**(브라우저가 OS 커서를 그리고 화면 찍기에도 안 담긴다) — 윈도우 기본 커서가 32px 이라는 것을 근거로 20 을 골랐다. 첫 줄 글자가 「?」 위쪽 끝에서 44px 아래에 서므로 여느 자리에서는 8px 남는다. **이 값만은 «재서» 정하지 못했다는 것을 여기 적어 둔다.** ★ dev 전용. -->
 <!-- v20260916g_intake_star_group -->
@@ -3362,7 +3364,11 @@ async function uploadImage(file, productCode){
     upsert: false
   });
   if(upErr) throw upErr;
-  // 5. public URL 반환
+  // 5. 주소 반환
+  // ★★ 버킷은 이제 **비공개**라 이 주소로는 바로 못 연다(2026-09-16).
+  //   그래도 이 꼴 그대로 저장한다 — 주소 안에 «경로» 가 들어 있어서 읽는 쪽(csImgPath)이
+  //   거기서 경로를 뽑아 서명 주소를 받는다. **이미 저장된 수천 건과 같은 모양**이라
+  //   옛것과 새것을 가를 필요가 없다. (주소가 아니라 «열쇠» 로 쓰는 셈이다.)
   const { data } = sb.storage.from('cs-images').getPublicUrl(path);
   return data.publicUrl;
 }
@@ -5442,7 +5448,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                           <span style={{fontSize:11,color:'var(--sub)',flexShrink:0}}>📎 첨부이미지</span>
                           {(qa.images||[]).map((img,ii)=>(
                             <div key={ii} style={{position:'relative',width:48,height:48,flexShrink:0}}>
-                              <img src={img.url} alt="" style={{width:48,height:48,objectFit:'cover',borderRadius:6,border:'1px solid var(--border)'}}/>
+                              <CsImg src={img.url} alt="" style={{width:48,height:48,objectFit:'cover',borderRadius:6,border:'1px solid var(--border)'}}/>
                               <button onClick={()=>{
                                 const cat=form._csTab||'불량';
                                 const map={...(form._qaMap||{})};
@@ -5880,12 +5886,14 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
               {imgModal.images.map((url,i)=>(
                 <div key={i}>
                   <div style={{borderRadius:8,overflow:'hidden',border:'1px solid var(--border)',aspectRatio:'1',background:'var(--bg)',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                    <img src={url} alt={`이미지 ${i+1}`} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+                    <CsImg src={url} alt={`이미지 ${i+1}`} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                   </div>
-                  <a href={url} download target="_blank" rel="noreferrer"
-                    style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,width:'100%',marginTop:6,padding:'6px',background:'rgba(42,71,141,.12)',border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:11,textDecoration:'none',cursor:'pointer'}}>
+                  {/* ★ 비공개 버킷이라 링크로는 못 받는다 — 서명 주소를 받아 내려받는다(2026-09-16). */}
+                  <button type="button"
+                    onClick={()=>csDownloadPhoto(url, (imgModal.title||'이미지')+'_'+(i+1)+'.jpg')}
+                    style={{display:'flex',alignItems:'center',justifyContent:'center',gap:4,width:'100%',marginTop:6,padding:'6px',background:'rgba(42,71,141,.12)',border:'1px solid var(--border)',borderRadius:6,color:'var(--sub)',fontSize:11,fontFamily:'inherit',cursor:'pointer'}}>
                     ⬇ 다운로드
-                  </a>
+                  </button>
                 </div>
               ))}
             </div>
@@ -5947,8 +5955,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
               <span style={{color:'#22d3a0'}}>일회성 작업</span> — 완료 후에는 새로 추가되는 이미지만 자동으로 Storage에 업로드됩니다.
             </div>
             <div style={{fontSize:11,color:'var(--sub)',marginBottom:16,padding:10,background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.25)',borderRadius:6,lineHeight:1.6}}>
-              ⚠️ 사전 준비: Supabase 대시보드에서 <code style={{background:'rgba(0,0,0,.3)',padding:'1px 5px',borderRadius:3}}>cs-images</code> 버킷을 <b>Public</b>으로 생성해야 합니다.<br/>
-              (Storage → New bucket → Name: cs-images, Public bucket: ON)
+              ⚠️ 사전 준비: Supabase 대시보드에서 <code style={{background:'rgba(0,0,0,.3)',padding:'1px 5px',borderRadius:3}}>cs-images</code> 버킷이 있어야 합니다.<br/>
+              (Storage → New bucket → Name: cs-images, <b>Public bucket: OFF</b> — 고객 사진이 들어가는 곳이라 비공개입니다. 2026-09-16)
             </div>
             {migProgress.total>0&&(
               <div style={{marginBottom:16}}>
@@ -18611,6 +18619,41 @@ const CS_STAGE_GROUPS = ['접수','처리중','확인 대기','완료','종결']
 //   ★ 이건 «화면» 의 잠금이다. DB 가 진짜로 막는 것은 «환불 요청(refunds 행 생성)» 과
 //     «정산 반영(settled_at)» 이다 — 되돌릴 수 없는 것은 그 둘이고, 단계는 이름표다.
 const CS_STAGES_MASTER = ['refunded','settlement','closed','withdrawn'];
+// ★★★ 2026-09-16 제니 — **«권한별로 저장할 수 있는 단계» 를 설정에서 정한다**
+//   (CS 설정 › «상태 권한» 탭). 그전에는 위 `CS_STAGES_MASTER` 가 코드에 박혀 있어
+//   화면에서 바꿀 길이 없었다.
+//   ★★ 기본값은 **지금 실제로 되는 사람과 글자 그대로 같다** — 위 목록이 곧 기본이다.
+//     여기서 조이면 설정을 켜 보기도 전에 현업이 막힌다(09-11 동작 권한에서 세운 규칙).
+//   ★ master 는 늘 통과한다. 설정에서 체크를 끌 수 없는 것도 같은 까닭이다 —
+//     master 마저 막히면 되돌릴 사람이 없어진다.
+//   🔴 **이것은 «화면» 의 잠금이다.** DB 는 단계를 막지 않는다(2026-09-01 에 그렇게 정했다:
+//     되돌릴 수 없는 것은 단계가 아니라 «환불 요청» 과 «정산 반영» 이고, 그 둘은
+//     `cs_field_rules` 가 막는다). 단계는 이름표라 잘못 옮겨도 다시 옮기면 그만이다.
+const CS_STAGE_ROLES_BASE = (()=>{
+  const m = {};
+  CS_STAGES.forEach(x=>{
+    m[x.id] = CS_STAGES_MASTER.indexOf(x.id) >= 0 ? ['master'] : ['master','manager','crew'];
+  });
+  return m;
+})();
+function csStageAllows(cfg, id, role){
+  if(!role) return false;
+  if(role === 'master') return true;
+  const arr = (cfg && Array.isArray(cfg[id])) ? cfg[id] : CS_STAGE_ROLES_BASE[id];
+  if(!arr) return true;
+  return arr.indexOf(role) >= 0;
+}
+// ★ 설정을 한 번 읽어 둔다. null = 못 읽었다 → 코드 기본으로 돈다
+//   (못 읽었다고 다 열리면 그게 사고다 — 메뉴·동작 권한과 같은 규칙).
+function useCsStageRoles(){
+  const [cfg,setCfg] = useState(null);
+  useEffect(()=>{ let alive = true;
+    csLoadSetting('cs_stage_roles').then(r=>{ if(alive) setCfg((r && r.value) || null); });
+    return ()=>{ alive = false; };
+  },[]);
+  return cfg;
+}
+
 // 정렬용 차례 — 단계 이름을 가나다로 세우면 아무 뜻이 없다.
 const CS_STAGE_ORDER = {};
 CS_STAGES.forEach((s,i)=>{ CS_STAGE_ORDER[s.id] = i; });
@@ -21059,6 +21102,8 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
   // ★ 칸 규칙 — [환불 요청 하기] 를 그릴지 정하는 데 쓴다(2026-09-16). 상세 화면과 같은 값이라야
   //   «목록에선 되는데 상세에선 안 되는» 자리가 안 생긴다.
   const fieldRules = useCsFieldRules();
+  // 어느 단계로 저장할 수 있나 — CS 설정 › 상태 권한(2026-09-16).
+  const stageRoles = useCsStageRoles();
   // ★ 처음 보는 화면은 «전체» 다(제니). 「내 티켓」으로 열면 남이 만든 건이 안 보여
   //   「티켓이 없네」로 읽힌다 — 좁히는 것은 사람이 정할 일이다.
   // ★★★ 칩은 **App 이 들고 있다**(제니 2026-09-11: 「티켓 상세 화면 들어간 후
@@ -21811,6 +21856,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
             <div style={{flex:1}}></div>
             {bulkOpen ? (
               <CsBulkPanel what={bulkOpen} count={pickedIds.length} busy={bulkBusy}
+                role={role} stageRoles={stageRoles}
                 optAssignee={optAssignee} currentUserEmail={currentUserEmail}
                 isMaster={isMaster} onApply={applyBulk}
                 onClose={()=>setBulkOpen(null)}/>
@@ -22997,6 +23043,123 @@ function CsChipRoleSettings({currentUserEmail}){
 // 칸마다 «언제 꼭 있어야 하나» 와 «누가 고칠 수 있나». cs_field_rules.
 // ★★ 둘을 한 설정에 담는다 — 따로 두면 「필수인데 못 고치는 칸」 같은 어긋남이
 //   생기고, 그때 어느 쪽이 맞는지 알 수 없다. 한 칸의 규칙은 한 곳에 있어야 한다.
+// ── 상태 권한 — «누가 어느 단계로 저장할 수 있나» (제니 2026-09-16) ────────
+// 그전에는 `CS_STAGES_MASTER` 가 코드에 박혀 있어 화면에서 바꿀 길이 없었다.
+// ★★ 읽는 규칙은 `csStageAllows` 한 곳이다 — 등록·상세·목록 일괄 셋이 그것을 본다.
+//   설정 화면이 다른 규칙으로 그리면 «설정에서 켰는데 그 화면에서는 안 되는» 자리가 생긴다.
+// ★ 칸 규칙 화면(CsFieldRuleSettings)과 **같은 꼴**로 그린다 — 나란히 선 두 탭이
+//   서로 다른 모양이면 읽는 법을 두 번 배워야 한다.
+function CsStageRoleSettings({currentUserEmail}){
+  const [row,setRow]   = useState(null);
+  const [loaded,setLoaded] = useState(false);
+  const [base,setBase] = useState({});
+  const [draft,setDraft] = useState({});
+  const [busy,setBusy] = useState(false);
+
+  // 설정에 없는 단계는 «코드 기본» 으로 편다 — 빈 칸으로 두면 「아무도 못 한다」로 읽힌다.
+  const spread = (v)=>{
+    const out = {};
+    CS_STAGES.forEach(x=>{
+      const arr = (v && Array.isArray(v[x.id])) ? v[x.id] : CS_STAGE_ROLES_BASE[x.id];
+      const ids = CS_ROLE_IDS.filter(r=>arr.indexOf(r)>=0);
+      // master 는 판정에서 맨 앞에 통과한다 — 목록에서 빼도 못 막으므로 늘 켠다.
+      out[x.id] = ids.indexOf('master')>=0 ? ids : ['master'].concat(ids);
+    });
+    return out;
+  };
+  useEffect(()=>{ (async()=>{
+    const r = await csLoadSetting('cs_stage_roles');
+    setRow(r); setLoaded(true);
+    const sp = spread((r && r.value) || {});
+    setBase(sp); setDraft(sp);
+  })(); },[]);
+
+  const dirty = JSON.stringify(base)!==JSON.stringify(draft);
+  const on = (id,role)=> (draft[id]||[]).indexOf(role)>=0;
+  const toggle = (id,role)=>{
+    if(role==='master') return;
+    setDraft(p=>{
+      const cur = p[id]||[];
+      const next = cur.indexOf(role)>=0 ? cur.filter(x=>x!==role) : cur.concat([role]);
+      return {...p, [id]: CS_ROLE_IDS.filter(x=>next.indexOf(x)>=0)};
+    });
+  };
+  const save = async ()=>{
+    const out = {};
+    CS_STAGES.forEach(x=>{ out[x.id] = draft[x.id]; });
+    setBusy(true);
+    const ok = await csSaveSetting('cs_stage_roles', out, currentUserEmail);
+    setBusy(false);
+    if(!ok) return;
+    setBase(draft);
+    setRow({value:out, updated_at:new Date().toISOString(), updated_by:currentUserEmail});
+    toast('상태 권한을 저장했습니다. 다른 계정은 다음에 화면을 열 때 반영됩니다.','ok');
+  };
+
+  if(!loaded) return <div style={{fontSize:12,color:'var(--sub)',padding:'30px 0'}}>읽는 중…</div>;
+
+  // 무리(접수·처리중·확인 대기·완료·종결)로 묶어 그린다 — 단계를 아홉 줄로 늘어놓으면
+  // «어디까지가 상담원 일인가» 가 안 보인다.
+  return (
+    <div style={{width:'100%',maxWidth:'max(680px, 62%)'}}>
+      <CsSetNote>
+        <b>저장할 수 있는 상태</b> — 티켓을 <b>어느 단계로 넘길 수 있는지</b>를 권한마다 정합니다.
+        켜지지 않은 단계는 저장 버튼의 목록과 목록 일괄 편집에서 <b>아예 보이지 않습니다</b>.
+        MASTER 는 늘 모든 단계로 넘길 수 있습니다.
+        <br/>★ 이것은 <b>화면</b>의 잠금입니다 — 단계는 «이름표» 라 잘못 옮겨도 다시 옮기면 됩니다.
+        되돌릴 수 없는 <b>환불 요청</b>과 <b>정산 반영</b>은 <b>필드 권한</b> 탭에서 막습니다.
+      </CsSetNote>
+
+      <div style={{border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',
+        background:'var(--card)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead>
+            <tr>
+              <th style={csSetTh}>단계</th>
+              {CS_ROLES.map(r=>(
+                <th key={r.id} style={{...csSetTh, width:110, textAlign:'center'}}>{r.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {CS_STAGE_GROUPS.map(g=>(
+              <React.Fragment key={g}>
+                <tr>
+                  <td colSpan={1+CS_ROLES.length}
+                    style={{padding:'8px 10px 3px',fontSize:11,fontWeight:700,
+                      color:'var(--sub)',whiteSpace:'nowrap'}}>{g}</td>
+                </tr>
+                {CS_STAGES.filter(x=>x.group===g).map(x=>(
+                  <tr key={x.id} style={{borderTop:'1px solid var(--border)'}}>
+                    <td style={{...csSetTd, paddingLeft:24, whiteSpace:'nowrap'}}>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:7}}>
+                        <CsStagePill stage={x.id}/>
+                      </span>
+                    </td>
+                    {CS_ROLES.map(r=>(
+                      <td key={r.id} style={{...csSetTd, textAlign:'center'}}>
+                        <input type="checkbox" style={{width:14,height:14,accentColor:'#5B8DEF',
+                          cursor:r.id==='master'?'default':'pointer',
+                          opacity:r.id==='master'?.5:1}}
+                          checked={on(x.id,r.id)} disabled={r.id==='master'}
+                          title={r.id==='master'?'MASTER 는 늘 넘길 수 있습니다':undefined}
+                          onChange={()=>toggle(x.id,r.id)}/>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <CsSaveBar row={row} dirty={dirty} busy={busy} onSave={save}
+        onReset={()=>setDraft(base)}/>
+    </div>
+  );
+}
+
 function CsFieldRuleSettings({currentUserEmail}){
   const [row,setRow]     = useState(null);
   const [loaded,setLoaded] = useState(false);
@@ -24238,6 +24401,7 @@ function CsSettingsPage({currentUserEmail, role}){
     {id:'draft', label:'접수 문안'},
     {id:'chip',  label:'칩 권한'},
     {id:'field', label:'필드 권한'},
+    {id:'stage', label:'상태 권한'},
     {id:'cafe24',label:'카페24 연동'},
   ];
   const [tab,setTab] = useState('macro');
@@ -24267,6 +24431,7 @@ function CsSettingsPage({currentUserEmail, role}){
       {tab==='draft'  && <CsDraftTplSettings currentUserEmail={currentUserEmail}/>}
       {tab==='chip'   && <CsChipRoleSettings currentUserEmail={currentUserEmail}/>}
       {tab==='field'  && <CsFieldRuleSettings currentUserEmail={currentUserEmail}/>}
+      {tab==='stage'  && <CsStageRoleSettings currentUserEmail={currentUserEmail}/>}
       {tab==='cafe24' && <CsCafe24Settings currentUserEmail={currentUserEmail}/>}
     </div>
   );
@@ -25795,7 +25960,7 @@ function CsPhotoAttach({photos, setPhotos, light, disabled}){
         <div style={{display:'flex',gap:5,flexWrap:'wrap',marginTop:6}}>
           {list.map((p,i)=>(
             <div key={p.url+i} style={{position:'relative'}}>
-              <img src={p.url} alt={p.name||''}
+              <CsImg src={p.url} alt={p.name||''}
                 style={{width:52,height:52,objectFit:'cover',borderRadius:5,
                   border:'1px solid '+line,display:'block'}}/>
               {/* ★ ✕ 는 사진 «위» 에 얹는다. 아래에 두면 사진이 여럿일 때 어느 것의
@@ -25852,9 +26017,70 @@ function csPhotoFileName(base, i, total, url, orig){
 //   전부 이 경우다. 그래서 **파일을 받아 와서(blob) 그 사본에 이름을 붙여** 내린다.
 // ★ 실패하면 조용히 두지 않고 «사진을 눌러 새 창에서 저장하라» 고 말한다 —
 //   눌렀는데 아무 일도 안 일어나는 것이 가장 나쁘다.
+// ★★★ cs-images 는 **비공개 버킷**이다(2026-09-16 제니 지시 · sql/cs_images_private.sql).
+//   여기에는 **고객이 보낸 사진**이 들어 있다 — 불량 사진만이 아니라 운송장·영수증이
+//   찍힌 것도 온다. 그동안은 공개 버킷이라 **주소를 아는 사람은 로그인 없이 볼 수 있었다.**
+//   ★★ 같은 콘솔의 메뉴얼 파일은 이미 비공개+서명 주소다 — **한 콘솔에 기준이 둘이면
+//     둘 다 안 지켜진다.** 낮은 쪽으로 맞춰지기 때문이다.
+//
+// ★★★ 가장 큰 함정: **지금까지 저장된 주소가 «공개 주소» 꼴로 DB 에 글자로 박혀 있다**
+//   (`…/object/public/cs-images/폴더/파일.jpg`). 상품 CS 이미지 · 티켓 이력 첨부 둘 다.
+//   버킷을 비공개로 바꾸는 순간 그 주소는 400 을 낸다 — **화면이 저장된 주소에서
+//   «경로» 만 뽑아 그때그때 서명 주소를 받아야 한다.** 옛 자료를 옮기지 않는다:
+//   주소 자체가 경로를 담고 있어서, 읽는 쪽만 고치면 8천 건을 건드릴 일이 없다.
+// ★ 우리 버킷이 아닌 주소(밖에서 받아 온 그림)는 그대로 쓴다 — 경로가 안 뽑히면 손대지 않는다.
+const CS_IMG_BUCKET = 'cs-images';
+function csImgPath(u){
+  const v = String(u==null ? '' : u).trim();
+  if(!v) return '';
+  // 앞으로 «경로만» 저장하게 되어도 그대로 받는다.
+  if(!/^https?:\/\//i.test(v)) return v.replace(/^\/+/, '');
+  const m = v.match(/\/storage\/v1\/object\/(?:public|sign)\/cs-images\/([^?]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+// ★ 받아 둔 서명 주소는 만료 «전» 까지 다시 쓴다 — 목록에 사진이 여럿이면 그만큼 왕복이 준다.
+const CS_IMG_TTL = 3600;
+const _csImgSigned = {};
+async function csImgUrl(u){
+  const path = csImgPath(u);
+  if(!path) return String(u==null ? '' : u);      // 우리 버킷이 아니다 — 그대로
+  const hit = _csImgSigned[path];
+  if(hit && hit.exp > Date.now() + 60000) return hit.url;
+  const {data, error} = await sb.storage.from(CS_IMG_BUCKET).createSignedUrl(path, CS_IMG_TTL);
+  if(error || !data || !data.signedUrl){
+    console.error('[사진 주소] 받지 못했습니다:', path, error);
+    return '';
+  }
+  _csImgSigned[path] = {url:data.signedUrl, exp: Date.now() + CS_IMG_TTL*1000};
+  return data.signedUrl;
+}
+// ★ 조각으로 두는 까닭: 목록 «안» 에서는 훅을 부를 수 없다(반복문 안의 훅은 규칙 위반).
+//   사진 하나가 제 주소를 스스로 받아 오게 하면 어디에 몇 장이 놓이든 상관이 없다.
+function useCsImgUrl(src){
+  const [u, setU] = useState('');
+  useEffect(()=>{
+    let alive = true;
+    setU('');
+    if(!src) return;
+    csImgUrl(src).then(v=>{ if(alive) setU(v); });
+    return ()=>{ alive = false; };
+  }, [src]);
+  return u;
+}
+// 사진 한 장 — 주소를 받는 동안에는 «자리» 만 잡아 둔다(빈 칸이 되면 줄이 출렁인다).
+function CsImg({src, alt, style, title, onClick}){
+  const u = useCsImgUrl(src);
+  if(!u) return <div title={title} style={{...(style||{}), background:'var(--sunk,rgba(127,127,127,.12))',
+    display:'inline-block'}}/>;
+  return <img src={u} alt={alt||''} title={title} style={style} onClick={onClick}/>;
+}
+
+// ★ 내려받기도 «서명 주소» 로 한다 — 저장된 공개 주소로는 이제 못 받는다.
 async function csDownloadPhoto(url, filename){
   try{
-    const res = await fetch(url, {mode:'cors'});
+    const signed = await csImgUrl(url);
+    if(!signed) throw new Error('사진 주소를 받지 못했습니다');
+    const res = await fetch(signed, {mode:'cors'});
     if(!res.ok) throw new Error('HTTP '+res.status);
     const blob = await res.blob();
     const href = URL.createObjectURL(blob);
@@ -25874,6 +26100,17 @@ async function csDownloadPhoto(url, filename){
 //     보이지 않는 클릭 자리는 «사진을 열려다 엉뚱한 것이 눌리는» 함정이 된다.
 //   ★ 손가락으로 쓰는 화면에는 «마우스를 올리는» 일이 없다 — 그때는 사진을 눌러
 //     새 창에서 저장하면 된다(사진 자체는 늘 링크다).
+// 사진을 눌러 새 창에서 크게 본다. 주소를 받기 «전» 에는 링크를 안 건다.
+function CsPhotoOpen({src, style, imgStyle}){
+  const u = useCsImgUrl(src);
+  const img = u
+    ? <img src={u} alt="" style={imgStyle}/>
+    : <div style={{...(imgStyle||{}), background:'rgba(127,127,127,.15)'}}/>;
+  return u
+    ? <a href={u} target="_blank" rel="noreferrer" style={style}>{img}</a>
+    : <span style={style}>{img}</span>;
+}
+
 function CsPhotoStrip({list, nameBase}){
   const arr = Array.isArray(list) ? list : [];
   const [hov,setHov] = useState(-1);
@@ -25897,14 +26134,14 @@ function CsPhotoStrip({list, nameBase}){
         return (
           <div key={url+i} style={{position:'relative',lineHeight:0}}
             onMouseEnter={()=>setHov(i)} onMouseLeave={()=>setHov(h=>h===i?-1:h)}>
-            <a href={url} target="_blank" rel="noreferrer"
+            {/* ★ 비공개 버킷이라 «새 창에서 크게 보기» 도 서명 주소라야 한다(2026-09-16).
+                주소를 받는 동안에는 링크를 안 건다 — 빈 주소로 열면 새 창이 그냥 죽는다. */}
+            <CsPhotoOpen src={url}
               style={{display:'block',lineHeight:0,borderRadius:7,
                 border:'2px solid rgba(210,229,255,.85)',
                 boxShadow:'0 0 0 1px rgba(11,22,45,.55), 0 2px 6px rgba(0,0,0,.35)',
-                overflow:'hidden',background:'rgba(210,229,255,.85)'}}>
-              <img src={url} alt=""
-                style={{width:64,height:64,objectFit:'cover',display:'block'}}/>
-            </a>
+                overflow:'hidden',background:'rgba(210,229,255,.85)'}}
+              imgStyle={{width:64,height:64,objectFit:'cover',display:'block'}}/>
             {fn && (
               <button type="button" title={'«'+fn+'» 으로 저장'}
                 onClick={e=>{ e.preventDefault(); e.stopPropagation(); csDownloadPhoto(url, fn); }}
@@ -26128,6 +26365,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   const isMaster = role==='master';
   // 「무엇이 언제 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
+  // 어느 단계로 저장할 수 있나 — CS 설정 › 상태 권한(2026-09-16).
+  const stageRoles = useCsStageRoles();
   // ★★★ 담당자를 바꿀 수 있는가 — **설정에서 정한다**(제니 2026-09-08).
   //   앞 판(d)에서는 master·manager 로 코드에 박아 뒀는데, 제니가 「설정 메뉴에서
   //   설정할 수 있게」라고 해 **이미 있던 자리**로 옮겼다: CS 설정 > «칸» > 담당자 >
@@ -27314,7 +27553,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             <CsStageSubmit stage={newStage} busy={busy} dirty={missing.length===0}
               onSave={()=>save()}
               onPick={id=>{ setNewStage(id); save(id); }}
-              options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
+              options={CS_STAGES.filter(x=>csStageAllows(stageRoles, x.id, role))}/>
           </div>
           {/* ★ 상세와 같은 자리·같은 뜻·같은 식(csMacroSpace) — 매크로 목록이 열린
               만큼 ②가 아래로 자란다. */}
@@ -27519,6 +27758,8 @@ function csCafe24OrderUrl(t){
 function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack, goTicket}){
   // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
+  // 어느 단계로 저장할 수 있나 — CS 설정 › 상태 권한(2026-09-16).
+  const stageRoles = useCsStageRoles();
   const [t,setT]         = useState(null);
   const [events,setEvents] = useState(null);
   const [busy,setBusy]   = useState(false);
@@ -28898,7 +29139,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
             <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
               onSave={()=>saveAll()}
               onPick={id=>{ setE('stage', id); saveAll(id); }}
-              options={CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)}/>
+              options={CS_STAGES.filter(x=>csStageAllows(stageRoles, x.id, role))}/>
           </div>
           {/* ★ 매크로 목록이 열린 만큼 ②가 «아래로» 자란다 — 목록은 absolute 라
               자리를 안 먹고, 그러면 overflow 가 걸린 이 박스가 목록을 잘라 낸다.
@@ -30352,7 +30593,7 @@ function CsSupplierDraft({rows, events, photoMap, supMap, busy, onSent, onBack, 
 // ★ 담당자 목록은 «지금 목록에 있는 사람 + 나» 다. console_users 를 읽으려면 정책을
 //   함께 열어야 하는데(계정 화면과 한 몸이다), 그 전까지는 이 편이 정직하다 —
 //   있지도 않은 사람을 고르게 하는 것보다 낫다.
-function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster,
+function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster, role, stageRoles,
                       onApply, onClose}){
   const [v,setV] = useState('');
   useEffect(()=>{ setV(''); },[what]);
@@ -30408,7 +30649,7 @@ function CsBulkPanel({what, count, busy, optAssignee, currentUserEmail, isMaster
           <option value="">상태를 고르세요</option>
           {/* crew·manager 에게는 환불·정산·종결을 아예 안 보여 준다(상세와 같은 규칙) —
               못 누르게 막는 것보다 «어디까지가 내 일인지» 를 보이는 편이 낫다. */}
-          {CS_STAGES.filter(x=>isMaster || CS_STAGES_MASTER.indexOf(x.id)<0)
+          {CS_STAGES.filter(x=>csStageAllows(stageRoles, x.id, role))
             .map(x=><option key={x.id} value={x.id}>{x.label}</option>)}
         </select>
       )}
@@ -32276,12 +32517,34 @@ function csMenuIsMasterOnly(settings, id){
   if(!Array.isArray(arr)) return false;
   return arr.length===1 && arr[0]==='master';
 }
-function csMenuAllows(settings, id, role){
+// ★★★ 역할 «위에» 사람으로 한 겹 더 좁히는 자리 (제니 2026-09-16:
+//   「'비용 비교 도구' 메뉴는 master 중에서도 jenny@floc.kr 계정만 보이게」).
+//   ★★ 역할로는 못 가르는 요구다 — master 가 여럿인데 그중 한 사람만 보는 메뉴다.
+//     역할을 새로 만드는 길도 있지만(«master2» 같은 것) **역할은 «무슨 일을 하는
+//     사람인가» 이지 «누구인가» 가 아니다.** 사람 한 명을 위해 역할을 만들면
+//     그 역할이 다른 메뉴들에서도 무슨 뜻인지 매번 정해야 한다.
+//   ★ 그래서 **역할 검사를 지난 뒤** 이메일 목록으로 한 번 더 좁힌다. 목록이 없으면
+//     예전과 글자 그대로 같다(이 판 이전과 동작이 안 바뀐다).
+//   ★ 설정(`console_settings.menu_emails`)으로도 바꿀 수 있게 해 뒀다 — 사람이
+//     바뀌는 날 배포 없이 고치려는 것이다. 설정이 없으면 아래 코드 기본으로 돈다.
+//   🔴 이것은 «화면» 의 잠금이다. `cost_store` 표는 DB 에서 여전히 master 전체에게
+//     열려 있다 — 다른 master 가 주소를 직접 쳐도 화면은 안 열리지만, API 로는 닿는다.
+//     (상품 «전체 삭제» 가 화면만 master 인 것과 같은 계열이다.)
+const CS_MENU_EMAILS = {
+  costs: ['jenny@floc.kr'],
+};
+function csMenuAllows(settings, id, role, email){
   if(!role) return false;
   const conf = (settings && settings.menu_roles) || null;
   const arr = (conf && Array.isArray(conf[id])) ? conf[id] : CS_MENU_BASE[id];
-  if(!arr) return true;                 // 목록에 없는 메뉴는 전원
-  return arr.indexOf(role) >= 0;
+  if(arr && arr.indexOf(role) < 0) return false;
+  const ec = (settings && settings.menu_emails) || null;
+  const only = (ec && Array.isArray(ec[id])) ? ec[id] : CS_MENU_EMAILS[id];
+  if(only && only.length){
+    const mine = String(email||'').trim().toLowerCase();
+    return !!mine && only.some(x=>String(x).trim().toLowerCase() === mine);
+  }
+  return true;                          // 목록에 없는 메뉴는 전원
 }
 
 // ── 메뉴 «안» 의 동작 권한 (제니 2026-09-04 요청 · 2026-09-07 구현) ──────────
@@ -33029,6 +33292,14 @@ function CsMenuRoles({currentUserEmail, card, head, onSaved}){
                         {d.label}
                         {d.rls && <span title="DB 권한도 함께 열어야 목록이 보입니다"
                           style={{marginLeft:6,fontSize:10,color:'#F6AD09'}}>⚠ DB</span>}
+                        {/* ★★ 역할 «위에» 사람으로 한 겹 더 좁힌 메뉴는 그 사실을 여기 적는다
+                            (2026-09-16). 안 적으면 체크가 거짓말을 한다 — master 에 체크가
+                            있는데 어떤 master 에게는 안 보이기 때문이다. */}
+                        {(CS_MENU_EMAILS[d.id]||[]).length>0 && (
+                          <span title={'이 메뉴는 ' + CS_MENU_EMAILS[d.id].join(' · ') + ' 계정에만 보입니다'}
+                            style={{marginLeft:6,fontSize:10,color:'var(--accent)'}}>
+                            👤 {CS_MENU_EMAILS[d.id].join(' · ')} 만</span>
+                        )}
                       </td>
                       {ROLES.map(r=>{
                         const on = r==='master' || (draft[d.id]||[]).indexOf(r)>=0;
@@ -33748,10 +34019,13 @@ function App() {
   //   ★ 못 읽으면 null 이고, 그때는 csMenuAllows 가 «코드 기본» 으로 돈다 —
   //     못 읽었다고 다 열리면 그게 사고다.
   const [menuCfg,setMenuCfg]=useState(null);
+  // ★ 메뉴마다 «이 사람만» 목록(console_settings.menu_emails). 없으면 코드 기본으로 돈다.
+  const [menuEmailCfg,setMenuEmailCfg]=useState(null);
   const role=me?.console_role||null;
   // 이 계정이 그 메뉴를 볼 수 있나. 사이드바와 라우팅이 «같은 함수» 를 쓴다 —
   // 두 곳에 따로 적으면 «메뉴는 보이는데 눌러도 안 열리는» 자리가 생긴다.
-  const canMenu=(id)=>csMenuAllows({menu_roles:menuCfg}, id, role);
+  // ★ 이메일까지 넘긴다 — 역할 위에 «사람» 으로 한 겹 더 좁히는 메뉴가 있다(csMenuAllows).
+  const canMenu=(id)=>csMenuAllows({menu_roles:menuCfg, menu_emails:menuEmailCfg}, id, role, me&&me.email);
   // M 뱃지 — 지금 설정에서 «master 만» 인 메뉴에만 붙는다(제니 2026-09-08).
   const masterOnly=(id)=>csMenuIsMasterOnly({menu_roles:menuCfg}, id);
   // ★★ 첫 화면(대시보드)이 막혀 있으면 «볼 수 있는 첫 메뉴» 로 옮긴다(2026-09-08).
@@ -33760,8 +34034,8 @@ function App() {
   //   ★ 대시보드에 있을 때만 끼어든다 — 다른 화면을 보는 중에 끌고 가면 안 된다.
   useEffect(()=>{
     if(!role || page!=='dashboard') return;
-    if(csMenuAllows({menu_roles:menuCfg},'dashboard',role)) return;
-    const first = CS_MENU_DEFS.find(d=>d.id!=='dashboard'&&csMenuAllows({menu_roles:menuCfg},d.id,role));
+    if(csMenuAllows({menu_roles:menuCfg, menu_emails:menuEmailCfg},'dashboard',role,me&&me.email)) return;
+    const first = CS_MENU_DEFS.find(d=>d.id!=='dashboard'&&csMenuAllows({menu_roles:menuCfg, menu_emails:menuEmailCfg},d.id,role,me&&me.email));
     if(first) setPage(first.id);
   },[role,menuCfg,page]);
   // 메뉴 «안» 의 동작 권한(2026-09-07). 메뉴 권한과 같은 모양으로 읽는다 —
@@ -33955,6 +34229,8 @@ function App() {
     csLoadUserNames().then(()=>{ if(alive) setNamesTick(t=>t+1); });
     // 메뉴 권한 설정 — 로그인마다 한 번.
     csLoadSetting('menu_roles').then(r=>{ if(alive) setMenuCfg((r&&r.value)||null); });
+    // ★ 메뉴마다 «이 사람만» 목록. 없으면 null 이고 그때는 코드 기본(CS_MENU_EMAILS)으로 돈다.
+    csLoadSetting('menu_emails').then(r=>{ if(alive) setMenuEmailCfg((r&&r.value)||null); });
     // 메뉴 «안» 의 동작 권한 — 같은 때에 함께 읽는다.
     csLoadSetting('action_roles').then(r=>{ if(alive) setActionCfg((r&&r.value)||null); });
     // ★★ 접수 문안 틀(2026-09-08) — 이름 지도와 같은 자리에서 읽는다.
