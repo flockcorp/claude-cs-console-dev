@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260916q_dup_btn_width -->
+<!-- (2026-09-16) 제니: 「③④ 에서 «이어받는 중» 이 되면 그 단추만 가로가 커져서 아래 [이어받기]·[티켓 이동] 과 세로줄이 안 맞는다. 가장 긴 «이어받는 중» 을 기준으로 폭을 공통으로」. ★★ **숫자를 박지 않았다** — 「가장 긴 이름들」을 보이지 않게 겹쳐 깔아 **브라우저가 재게** 한다(2026-09-11 에 짐작한 120px 을 박았다가 되돌려 받은 뒤로 이 콘솔의 규칙이다). 코드에 폭 숫자가 한 개도 없고, 이름이 바뀌면 폭도 저절로 따라온다. ★★★ 그 기법을 쓰는 자리가 **둘이 되어 조각으로 뽑았다**(`CsRuledLabel`) — 기법을 베끼면 언젠가 한쪽만 고쳐진다. 기존 목록 단추(`CsListBtnLabel`)도 그 조각을 쓰게 바꿨다(동작은 글자 그대로 같다). ★ 위아래로 선 단추는 **세로줄이 어긋나면 눈이 그것을 먼저 본다** — 09-11 에 목록 단추 셋에서 배운 것과 같은 자리다. ★ dev 전용. -->
 <!-- v20260916p_auto_relink -->
 <!-- (2026-09-16) 제니: 「주문번호로 조회하면 경우의 수가 너무 많다. 한 번 생성된 품목 주문으로 다시 만들 때는 **새로 생성은 없고 무조건 기존 티켓에 이어받기**로 가면 어때?」 → 맞다. 그래서 **갈림길 창을 없앴다**(방금 만든 것을 도로 걷었다). ★★★ **고를 것을 없애는 것이 «간단하게» 의 뜻이다** — 갈림길을 잘 만드는 것이 아니라. 품목이 여섯이면 갈래가 품목마다 곱해져, 아무리 잘 만든 창이어도 접수가 «판단의 연속» 이 된다. ★★★ 그리고 «새로 만들기» 는 **고르는 순간 히스토리가 끊기는데 그 사실이 아무 데도 안 남는** 갈래였다 — 되돌릴 수 없는 쪽을 사람이 실수로 고를 수 있게 두지 않는다. → 이제 **조회하면 저절로 이어진다.** ★★ **가장 최근 티켓**에 잇는다 — 사슬이라 그래야 1→2→3 차례가 곧게 선다. 2차가 있는데 1차에 이으면 사슬이 갈라져 «어느 쪽이 다음인지» 가 사라진다. ★★ 알림은 **손이 지나가는 자리**에 둔다 — 품목을 고르는 줄 «바로 아래» 에 「🔗 티켓 #43 에서 이어집니다」. 제니가 「③④ 에 작게 들어가 눈에 안 띈다」고 한 그 자리를 떠났다: **③ 은 곁눈으로 보는 칸이고 ① 은 손이 지나가는 칸이다.** ★ ③ 의 [이어받기] 는 남긴다 — 이제 «다른 티켓으로 바꾸는 길» 이다. 안내 문구도 갈래 셋에서 둘로 고쳤다(같은 것을 두 곳에서 말하지 않게 ③ 의 띠는 걷어냈다). ★ 이음을 «해제» 하는 길은 두지 않았다(제니 «무조건») — 필요해지면 한 줄이다. ★ dev 전용. -->
 <!-- v20260916o_prev_per_item -->
@@ -19490,17 +19492,31 @@ const CS_LIST_BTN_RULERS = ['+ 티켓 등록', '⚙ 보기 설정'];
 // ★ [⬇ CSV] 는 고른 건수가 붙으면(「⬇ CSV (128)」) 이 자보다 길어질 수 있다. 그때는
 //   그 단추만 넓어진다 — **글자를 자르지 않는다.** 몇 건이 나가는지는 누르기 전에
 //   봐야 하는 값이고, 그 상태는 «고르는 동안» 만이다.
-function CsListBtnLabel({children}){
+// ★★★ «가장 긴 이름» 들을 보이지 않게 겹쳐 깔아 **브라우저가 폭을 재게** 한다.
+//   코드에 폭 숫자가 한 개도 없다 — 이름이 바뀌면 폭도 저절로 따라온다
+//   (2026-09-11 에 짐작한 숫자를 박았다가 되돌려 받은 뒤로 이 콘솔의 규칙이다).
+//   ★ 2026-09-16 에 두 번째로 쓰는 자리가 생겨(③ 목록의 이어받기·티켓 이동) 조각으로 뽑았다 —
+//     기법을 베끼면 언젠가 한쪽만 고쳐진다.
+function CsRuledLabel({rulers, children}){
   const hide = {gridArea:'1/1', visibility:'hidden', height:0, overflow:'hidden',
                 whiteSpace:'nowrap'};
   return (
     <span style={{display:'grid', justifyItems:'center', alignItems:'center'}}>
-      {CS_LIST_BTN_RULERS.map(r=>(
+      {(rulers||[]).map(r=>(
         <span key={r} aria-hidden="true" style={hide}>{r}</span>
       ))}
       <span style={{gridArea:'1/1', whiteSpace:'nowrap'}}>{children}</span>
     </span>
   );
+}
+function CsListBtnLabel({children}){
+  return <CsRuledLabel rulers={CS_LIST_BTN_RULERS}>{children}</CsRuledLabel>;
+}
+// ③ 목록의 단추들 — 켜지면 「✓ 이어받는 중」이 되어 그 단추만 넓어졌다(제니 2026-09-16).
+//   ★ 위아래로 선 단추의 «세로줄» 이 어긋나면 눈이 그것을 먼저 본다.
+const CS_DUP_BTN_RULERS = ['✓ 이어받는 중', '이어받기', '티켓 이동'];
+function CsDupBtnLabel({children}){
+  return <CsRuledLabel rulers={CS_DUP_BTN_RULERS}>{children}</CsRuledLabel>;
 }
 const csDateInp = {fontSize:11,padding:'4px 7px',background:'var(--bg)',
   border:'1px solid '+CS_LINE,color:'var(--text)',borderRadius:6,
@@ -27778,7 +27794,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                       background:on?'var(--accent)':'transparent',
                       border:'1px solid '+(on?'var(--accent)':'rgba(120,170,255,.55)'),
                       color:on?'var(--on-accent)':'var(--accent)',whiteSpace:'nowrap'}}>
-                    {on ? '✓ 이어받는 중' : '이어받기'}</button>
+                    <CsDupBtnLabel>{on ? '✓ 이어받는 중' : '이어받기'}</CsDupBtnLabel></button>
                   ); })()}
                   <button onClick={()=>{
                       if(notes.length && !window.confirm('여기 적어 둔 이력 '+notes.length+'줄은 함께 옮겨지지 않습니다. 티켓 #'+d.id+' 로 이동할까요?')) return;
@@ -27787,7 +27803,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     style={{padding:'3px 9px',borderRadius:5,fontSize:10,fontFamily:'inherit',
                       cursor:'pointer',background:'transparent',
                       border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',whiteSpace:'nowrap'}}>
-                    티켓 이동</button>
+                    <CsDupBtnLabel>티켓 이동</CsDupBtnLabel></button>
                   </span>
                 </div>
               ))}
