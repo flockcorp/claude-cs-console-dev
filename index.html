@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260917d_manual_usage -->
+<!-- (2026-09-17) 🆕 **메뉴얼 4단계 ④ — «쓰임새»: 무엇이 읽히고 무엇이 «없나»**. 메뉴얼 관리에 탭 하나(`manuals.edit` 인 사람만). ★★★ **제니 결정: «누가 봤나» 는 남기지 않는다.** 날짜별 «횟수» 만 쌓는다 — 목적이 «무엇이 쓰이나·무엇이 없나» 이지 사람을 보는 것이 아니고, 사람을 담으면 ①«감시» 로 읽히고 ②이메일이 들어가 **백업 마스킹 규칙까지 함께 밀린다**(오늘 아침에 그 값을 치렀다). ★★★ **이 탭의 진짜 값어치는 «찾았는데 0건» 이다** — 조회 수는 «있는 것» 중에서만 말해 주지, 사람들이 찾다가 못 찾고 돌아간 것은 **아무 데도 안 남는다.** 창고를 키울 방향은 대개 거기서 나온다. SQL `sql/manual_usage.sql`(+`_verify`) **dev 적용·검사 통과 · 운영 미적용**. ★★ **세는 일은 DB 함수만 한다** — 두 표에 쓰기 정책이 없다. 화면이 직접 쓰면 숫자를 마음대로 올릴 수 있고, 그러면 **그 숫자를 아무도 안 믿는다.** ★★ 함수가 **«볼 수 있는 문서만»** 센다(security definer 는 RLS 를 안 지나므로 직접 묻는다) — 못 보는 문서의 수를 올릴 수 있으면 통계가 오염되고, 덤으로 «어떤 id 가 있는지» 를 눌러 보며 알아낼 수 있게 된다. 🔴 검색어는 **2~40자만** 담는다: 긴 것은 «어디선가 붙여넣은 문장» 이고 거기에 고객 이름·연락처가 섞여 온다 — **담길 «길» 부터 좁힌다**(마스킹도 함께 밀었다). ★★ **곁다리 일이 본일을 막으면 안 된다** — 기록은 기다리지 않고 보내고 실패해도 조용히 넘어간다. 세는 데 실패했다고 검색이 안 되거나 문서가 안 열리면 그것이 훨씬 나쁜 고장이다. ★★ **«열었다» 를 센다 — «탭을 눌렀다» 가 아니다**: 한 창에서 탭을 오갈 때마다 +1 하면 탭을 많이 쓴 사람이 그 문서를 여러 번 본 것처럼 된다(창을 닫고 다시 열면 다시 센다 — 그때는 «또 찾아본» 것이 맞다). ★★ 검색은 **debounce 뒤 한 번만** 적는다 — 글자를 칠 때마다 적으면 「배」「배송」「배송지」가 다 다른 말로 쌓여 «무슨 말을 많이 찾나» 가 흩어진다. ★ 두 화면(메뉴얼 목록·티켓 ④)이 **같은 함수로 찾으므로 같은 자리에서 적는다** — 한쪽만 적으면 「현장에서 무엇을 찾는지」가 통째로 빠진다. ★★★ **«언제부터 쌓고 있나» 는 기간과 상관없는 사실이라 따로 묻는다** — 기간 안의 가장 이른 날을 쓰면 30일 필터에서 «30일 전부터» 라고 말하게 되고 **화면이 거짓말을 한다.** 수가 적을 때 «기간이 모자란 것» 과 «안 쓰이는 것» 은 다른 말이고, 안 적으면 「왜 이것뿐이지」가 «고장» 으로 읽힌다. ★ 「아무도 안 본 것」은 «지워라» 가 아니다 — 필요 없어서일 수도, 있는 줄 몰라서일 수도 있다(화면에 그렇게 적었다). ★ 막대는 Chart.js 가 아니라 HTML 이다(CS 통계와 같은 판단). ★ dev 전용. -->
 <!-- v20260917c_note_blocks -->
 <!-- (2026-09-17) 🆕 **메뉴얼 4단계 ③ — 문서 블록 다루기**(끌어서 차례 바꾸기 · 접기). 🔴 **먼저 바로잡을 것: 차례 바꾸기가 «없다» 고 적었는데 있었다** — ↑↓ 단추가 이미 있었다. 다만 **2026-09-02 에 제니가 CS 설정에서 「↑↓ 를 걷고 손잡이(≡)를 잡아 끄는 방식으로」 정했는데 블록만 옛 방식으로 남아 있었다.** 한 콘솔에서 같은 일을 두 방법으로 하면 쓰는 사람이 화면마다 «여기선 어떻게 하지» 를 다시 배운다 → ↑↓ 를 걷고 ≡ 로 통일했다. ★★★ **네 번째 사본을 만들지 않으려고 끌기 훅을 갈랐다** — 이 상호작용은 `useAgentRowDrag` 안에 있었는데 **agents 의 DB 저장이 그 안에 박혀** 있어 블록(편집 중인 배열)에는 그대로 못 썼다. 같은 것(끌기)과 다른 것(놓았을 때 할 일)을 갈라 **`useRowDrag`** 로 뽑고, 근태용은 그 위에 «놓으면 DB 에 쓴다» 를 얹은 얇은 껍질로 다시 세웠다 — **근태 동작은 한 글자도 안 바뀐다.** ⏳ 아직 안 모은 곳 둘(CS 설정 «티켓 필드 조정» · 목록 [⚙ 보기 설정])은 키가 문자열이고 표 «안» 이라 옮기며 깨질 여지가 있어 뺐다 — **다음에 그 둘을 손댈 때 여기로 모을 것**이라고 코드에 적어 뒀다. ★ 줄 «전체» 를 draggable 로 두지 않는다(글자를 고르려고 끌 때 딸려 움직인다) · 놓을 자리는 색이 아니라 «선» 으로(색을 깔면 «그 줄과 자리를 바꾸는» 것처럼 보이는데 실제로는 앞뒤에 끼우는 것이다). 🆕 **접기** — 블록이 여럿이면 편집 화면이 길어져 아래 블록에 손이 멀다. ★★ **접어도 «내용이 있다» 는 보인다**(「N자」) — 소제목만 남으면 접힌 블록이 «빈 것» 으로 읽혀 **있는 글을 못 보고 넘긴다**(09-15 티켓 ③ [접기] 에서 세운 규칙 그대로다). ★★★ **접힘은 «그 블록» 의 것이지 «그 자리» 의 것이 아니다** — 인덱스에 묶어 두면 차례를 바꾸거나 하나를 지운 순간 **엉뚱한 블록이 접힌다.** 블록이 움직이는 모든 자리에서 접힘도 함께 옮긴다. ★ 접힘은 기억하지 않는다 — 글을 고치는 «한 번의 동작» 이지 취향이 아니다(칩 유지에서 세운 «수명» 규칙). ★ 블록에는 id 가 없어(저장 모양이 `{h,t}` 뿐) 자리 번호를 열쇠로 감싸 넘긴다 — **저장 모양을 건드리지 않는 편이 낫다.** ★ dev 전용. -->
 <!-- v20260917b_manual_stale_alert -->
@@ -31188,7 +31190,10 @@ function ManualsPage({currentUserEmail, role, can}){
   useEffect(()=>{ loadFacets(); },[]);
   // ★★★ 목록 탭이 «하나» 다(3단계) — 파일과 문서를 갈라 두면 찾는 사람이 먼저
   //   «어디에 있을까» 를 정해야 한다. 그건 찾는 사람이 답할 수 없는 질문이다.
+  // ★ «쓰임새» 는 **고칠 수 있는 사람만**(manuals.edit) — 읽는 사람에게는 할 일이 없는
+  //   화면이고, DB 도 같은 판정으로 막혀 있다(화면만 가리면 다른 길로 그대로 읽힌다).
   const tabs = [{id:'list',label:'메뉴얼 · 문서'}]
+    .concat(canEdit  ? [{id:'usage', label:'쓰임새'}]   : [])
     .concat(isMaster ? [{id:'facets',label:'분류 설정'}] : []);
   return (
     <div style={{padding:'24px 32px'}}>
@@ -31199,6 +31204,7 @@ function ManualsPage({currentUserEmail, role, can}){
       {tabs.length > 1 && <CsPageTabs tabs={tabs} value={tab} onChange={setTab}/>}
       {facets===null ? <div style={{padding:40,textAlign:'center',color:'var(--sub)'}}>읽는 중…</div>
         : tab==='list' ? <ManualListTab facets={facets} canEdit={canEdit} canDelete={canDelete} currentUserEmail={currentUserEmail}/>
+        : tab==='usage' ? <ManualUsageTab/>
         : <ManualFacetsTab facets={facets} row={facetsRow} currentUserEmail={currentUserEmail}
             onSaved={loadFacets}/>}
     </div>
@@ -31206,6 +31212,25 @@ function ManualsPage({currentUserEmail, role, can}){
 }
 
 const MANUAL_COLS = 'id,title,description,kind,storage_path,file_name,file_size,mime,link_url,facets,tags,view_roles,content_status,checked_at,created_at,created_by,updated_at,updated_by,body,linked_doc_ids';
+
+// ════════════════════════════════════════════════════════════════════════════
+// «무엇이 쓰이나» 를 적어 둔다 (2026-09-17 · 4단계④ · sql/manual_usage.sql)
+// ----------------------------------------------------------------------------
+// ★★★ 제니 결정: **«누가 봤나» 는 남기지 않는다.** 날짜별 «횟수» 만 쌓는다 —
+//   목적은 «무엇이 쓰이나 · 무엇이 없나» 이지 사람을 보는 것이 아니다.
+//
+// ★★ **곁다리 일이 본일을 막으면 안 된다** — 기다리지 않고(await 없이) 보내고,
+//   실패해도 조용히 넘긴다. 세는 데 실패했다고 검색이 안 되거나 문서가 안 열리면
+//   그것이 훨씬 나쁜 고장이다.
+// ★ 세는 «규칙»(2~40자만 · 볼 수 있는 것만)은 **DB 함수가 들고 있다** —
+//   화면이 다시 적으면 두 곳이 언젠가 갈린다.
+function manualLogHit(id){
+  if(!id) return;
+  try{ sb.rpc('manual_hit', {p_doc: id}).then(()=>{},()=>{}); }catch(_e){}
+}
+function manualLogSearch(q, hits){
+  try{ sb.rpc('manual_search_hit', {p_q: String(q||''), p_hits: hits|0}).then(()=>{},()=>{}); }catch(_e){}
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // 메뉴얼 · 문서 — **한 목록** (2026-09-15 · 3단계)
@@ -31248,6 +31273,9 @@ function ManualListTab({facets, canEdit, canDelete, currentUserEmail}){
       if(sbFail('메뉴얼·문서 검색', error)){ setHits({}); return; }
       const m = {}; (data||[]).forEach(r=>{ m[r.id] = r; });
       setHits(m);
+      // ★ 기다린 «뒤» 에 한 번만 적는다 — 글자를 칠 때마다 적으면 「배」「배송」「배송지」가
+      //   다 다른 말로 쌓여 «무슨 말을 많이 찾나» 가 흩어진다.
+      manualLogSearch(w, (data||[]).length);
     }, 250);
     return ()=>{ alive = false; clearTimeout(t); };
   },[q]);
@@ -32384,6 +32412,17 @@ function ManualViewer({first, editKind, facets, canEdit, canDelete, currentUserE
   const i = Math.min(at, tabs.length-1);
   const cur = tabs[i];
 
+  // ★★ «열었다» 를 센다 — «탭을 눌렀다» 가 아니다. 한 창 안에서 같은 문서를 오가며
+  //   볼 때마다 +1 하면, 탭을 많이 쓴 사람이 그 문서를 여러 번 본 것처럼 된다.
+  //   ★ 창을 닫고 다시 열면 다시 센다(그때는 «또 찾아본» 것이 맞다).
+  const counted = useRef(null);
+  if(!counted.current) counted.current = {};
+  useEffect(()=>{
+    if(!cur || !cur.id || counted.current[cur.id]) return;
+    counted.current[cur.id] = true;
+    manualLogHit(cur.id);
+  },[cur && cur.id]);
+
   const open = (d)=>{
     const j = tabs.findIndex(t=>String(t.id)===String(d.id));
     // ★ 이미 열린 것은 또 열지 않고 그 탭으로 간다 — 같은 것이 두 탭에 있으면
@@ -32508,6 +32547,9 @@ function CsKnowledgeFinder({ptitle, onInsert}){
       if(!alive) return;
       if(error){ setRes([]); setBusy(false); return; }
       const rows = data || [];
+      // ★ 두 화면이 «같은 함수» 로 찾으므로 «같은 자리» 에서 적는다 — 한쪽만 적으면
+      //   「티켓에서 찾은 말」이 통째로 빠져, 정작 현장에서 무엇을 찾는지를 못 본다.
+      manualLogSearch(w, rows.length);
       if(!rows.length){ setRes([]); setBusy(false); return; }
       const r2 = await sb.from('manual_docs').select(MANUAL_COLS).in('id', rows.map(r=>r.id));
       if(!alive) return;
@@ -32589,6 +32631,172 @@ function CsKnowledgeFinder({ptitle, onInsert}){
         readOnlyWhy="읽기 전용 · 고치려면 «메뉴얼 관리» 화면에서 여세요"
         onInsert={onInsert}
         onClose={()=>setOpen(null)} onEdit={()=>{}} onChanged={()=>setOpen(null)}/>}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// «쓰임새» — 무엇이 읽히고 무엇이 없나 (2026-09-17 · 4단계④)
+// ----------------------------------------------------------------------------
+// ★★★ 이 탭이 답하는 것은 둘이다:
+//   ① **무엇이 읽히나** — 많이 본 것 / 아무도 안 본 것
+//   ② **무엇이 «없나»** — 찾았는데 0건이던 말. **이것 말고는 알 길이 없다.**
+//      조회 수는 «있는 것» 중에서만 말해 주지, 사람들이 찾다가 못 찾고 돌아간 것은
+//      아무 데도 안 남는다. 창고를 키울 방향은 대개 여기서 나온다.
+//
+// ★★ 사람은 담지 않는다(제니 결정) — 그래서 «누가 안 봤나» 는 여기 없다.
+// ★ 막대는 Chart.js 가 아니라 HTML 이다 — CS 통계에서 세운 것과 같은 판단
+//   (가로 막대는 이 콘솔에 함정 기록이 있고, 여기선 애니메이션도 필요 없다).
+function ManualUsageTab(){
+  const [days,setDays] = useState(30);
+  const [d,setD] = useState(null);       // null=읽는 중 · undefined=못 읽음
+  useEffect(()=>{
+    let alive = true;
+    (async ()=>{
+      setD(null);
+      const t = new Date(Date.now() + 9*3600000);           // KST
+      t.setUTCDate(t.getUTCDate() - (days-1));
+      const from = t.toISOString().slice(0,10);
+      // ★★ «언제부터 쌓고 있나» 는 **기간과 상관없는 사실**이라 따로 묻는다.
+      //   기간 안에서 가장 이른 날을 쓰면 30일 필터에서 «30일 전부터» 라고 말하게 되고,
+      //   그것은 화면이 거짓말을 하는 것이다. 이 표가 쌓이기 시작한 날은 하나뿐이다.
+      const [h,s,docs,first1,first2] = await Promise.all([
+        sb.from('manual_doc_hits').select('doc_id,n,day').gte('day', from),
+        sb.from('manual_search_hits').select('q,n,zero_n').gte('day', from),
+        sb.from('manual_docs').select('id,title,kind'),
+        sb.from('manual_doc_hits').select('day').order('day',{ascending:true}).limit(1),
+        sb.from('manual_search_hits').select('day').order('day',{ascending:true}).limit(1),
+      ]);
+      if(!alive) return;
+      if(h.error || s.error || docs.error){
+        sbFail('쓰임새 조회', h.error || s.error || docs.error);
+        setD(undefined); return;
+      }
+      // ★ 조회와 검색 중 «먼저 쌓인» 쪽이 시작일이다 — 한쪽만 보면 검색만 있고 조회가
+      //   없는 날 「아직 쌓인 것이 없습니다」라고 잘못 말한다.
+      const firsts = [(first1.data||[])[0], (first2.data||[])[0]]
+        .filter(Boolean).map(r=>r.day).sort();
+      setD({hits:h.data||[], searches:s.data||[], docs:docs.data||[], since:firsts[0]||null});
+    })();
+    return ()=>{ alive = false; };
+  },[days]);
+
+  const chip = (on)=>({padding:'5px 10px',borderRadius:999,fontSize:12,cursor:'pointer',
+    fontFamily:'inherit',border:'1px solid '+(on?'var(--accent)':'var(--border)'),
+    background: on?'var(--accent)':'transparent', color: on?'var(--on-accent)':'var(--sub)'});
+  const box = {border:'1px solid var(--border)',borderRadius:10,padding:'14px 16px',
+    background:'var(--card)',marginBottom:14};
+  const h3 = {fontSize:13,fontWeight:700,color:'var(--text)',margin:'0 0 3px'};
+  const sub = {fontSize:11,color:'var(--sub)',margin:'0 0 12px'};
+
+  if(d===null) return <div style={{padding:40,textAlign:'center',color:'var(--sub)'}}>읽는 중…</div>;
+  if(d===undefined) return <div style={{padding:40,textAlign:'center',color:'var(--sub)'}}>읽지 못했습니다.</div>;
+
+  const title = {}; d.docs.forEach(x=>{ title[x.id] = x; });
+  const byDoc = {};
+  d.hits.forEach(r=>{ byDoc[r.doc_id] = (byDoc[r.doc_id]||0) + (r.n||0); });
+  const top = Object.keys(byDoc).map(k=>({id:+k, n:byDoc[k], doc:title[k]}))
+    .filter(x=>x.doc).sort((a,b)=>b.n-a.n).slice(0,10);
+  const most = top.length ? top[0].n : 0;
+  const never = d.docs.filter(x=>!byDoc[x.id]);
+  const zero = d.searches.filter(r=>(r.zero_n||0)>0)
+    .sort((a,b)=>(b.zero_n||0)-(a.zero_n||0)).slice(0,15);
+  const asked = d.searches.slice().sort((a,b)=>(b.n||0)-(a.n||0)).slice(0,10);
+  const since = d.since;
+  const nothing = !d.hits.length && !d.searches.length;
+
+  return (
+    <div>
+      <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:14,flexWrap:'wrap'}}>
+        <button type="button" style={chip(days===30)} onClick={()=>setDays(30)}>최근 30일</button>
+        <button type="button" style={chip(days===90)} onClick={()=>setDays(90)}>최근 90일</button>
+        {/* ★★ «언제부터 쌓고 있나» 를 적는다 — 안 적으면 수가 적을 때 「왜 이것뿐이지」가
+            «기능이 고장» 으로 읽힌다. 기간이 모자란 것과 안 쓰이는 것은 다른 말이다. */}
+        <span style={{flex:1}}/>
+        <span style={{fontSize:11,color:'var(--sub)'}}>
+          {since ? `${since} 부터 쌓고 있습니다` : '아직 쌓인 것이 없습니다'}</span>
+      </div>
+
+      {nothing && (
+        <div style={{...box,textAlign:'center',color:'var(--sub)',fontSize:12.5,lineHeight:1.9}}>
+          이 기간에 쌓인 것이 없습니다.<br/>
+          문서·메뉴얼을 열거나 검색하면 여기에 쌓입니다 — <b>사람은 기록하지 않습니다.</b>
+        </div>
+      )}
+
+      {top.length>0 && (
+        <div style={box}>
+          <p style={h3}>많이 본 것</p>
+          <p style={sub}>연 횟수입니다. 같은 창에서 탭을 오가며 다시 봐도 한 번으로 셉니다.</p>
+          {top.map(x=>(
+            <div key={x.id} style={{marginBottom:7}}>
+              <div style={{display:'flex',gap:8,alignItems:'baseline',fontSize:12,marginBottom:2}}>
+                <span style={{color:'var(--sub)',fontSize:10.5,flex:'0 0 auto'}}>
+                  {x.doc.kind==='note'?'문서':'메뉴얼'}</span>
+                <span style={{color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{x.doc.title}</span>
+                <span style={{flex:1}}/>
+                <span style={{color:'var(--accent)',fontWeight:700,fontSize:11.5}}>{x.n}</span>
+              </div>
+              <div style={{height:6,borderRadius:3,background:'var(--bg)',overflow:'hidden'}}>
+                <div style={{height:'100%',width:(most? Math.max(3, x.n/most*100):0)+'%',background:'var(--accent)'}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {zero.length>0 && (
+        <div style={{...box,borderColor:'rgba(246,173,9,.45)'}}>
+          <p style={h3}>🔴 찾았는데 아무것도 안 나온 말</p>
+          <p style={sub}>여기 있는 말이 <b>없는 문서</b>입니다 — 조회 수는 «있는 것» 중에서만 말해 줍니다.</p>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {zero.map(r=>(
+              <span key={r.q} style={{display:'inline-flex',alignItems:'center',gap:6,
+                padding:'4px 9px',borderRadius:999,fontSize:11.5,lineHeight:1,
+                border:'1px solid var(--border)',background:'var(--bg)',color:'var(--text)'}}>
+                {r.q}
+                <b style={{color:'var(--warn-ink)',fontSize:10.5}}>{r.zero_n}</b>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {asked.length>0 && (
+        <div style={box}>
+          <p style={h3}>많이 찾은 말</p>
+          <p style={sub}>찾은 횟수 · 그중 아무것도 안 나온 횟수.</p>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {asked.map(r=>(
+              <span key={r.q} style={{display:'inline-flex',alignItems:'center',gap:6,
+                padding:'4px 9px',borderRadius:999,fontSize:11.5,lineHeight:1,
+                border:'1px solid var(--border)',background:'var(--bg)',color:'var(--text)'}}>
+                {r.q}
+                <b style={{color:'var(--accent)',fontSize:10.5}}>{r.n}</b>
+                {(r.zero_n||0)>0 && <span style={{color:'var(--warn-ink)',fontSize:10}}>0건 {r.zero_n}</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {never.length>0 && (
+        <div style={box}>
+          <p style={h3}>이 기간에 아무도 안 본 것 — {never.length}건</p>
+          {/* ★ «지워라» 가 아니다 — 안 읽히는 까닭은 «필요 없어서» 일 수도,
+              «있는 줄 몰라서» 일 수도 있다. 그 판단은 사람이 한다. */}
+          <p style={sub}>필요 없어서일 수도, 있는 줄 몰라서일 수도 있습니다. 판단은 사람이 합니다.</p>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            {never.slice(0,30).map(x=>(
+              <span key={x.id} style={{padding:'4px 9px',borderRadius:6,fontSize:11.5,
+                border:'1px solid var(--border)',background:'var(--bg)',color:'var(--sub)'}}>
+                {x.title}</span>
+            ))}
+          </div>
+          {never.length>30 && <div style={{fontSize:11,color:'var(--sub)',marginTop:8}}>
+            그 밖에 {never.length-30}건</div>}
+        </div>
+      )}
     </div>
   );
 }
