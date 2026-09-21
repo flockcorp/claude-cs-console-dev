@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260921a_manual_self_visible -->
+<!-- (2026-09-21) **메뉴얼·문서를 «내가 못 보는 자리» 로 옮길 수 없게 했다**(09-18 전반 재점검에서 찾아 두고 안 고친 것). ★★★ `manual_docs` 의 UPDATE 정책은 `using` 에서만 보기 권한을 봤다 — `using` 은 **고치기 «전»** 줄을 보는 자리이고, **고친 «뒤»** 를 보는 `with check` 는 `manuals.edit` 만 보고 `view_roles` 를 안 봤다. 그래서 **보기 권한에서 제 역할을 빼고 저장할 수 있었다**: 저장되는 순간 그 문서가 제 목록에서 사라지고 **다시 열 수도 되돌릴 수도 없다**(master 만 손댈 수 있다). INSERT 도 같아서 **제가 못 보는 문서를 만들 수 있었다.** → `sql/manual_docs_self_visible.sql`: insert·update 의 `with check` 가 select 와 **같은 `manual_doc_visible()`** 을 보게 묶었다 — **값을 맞추는 게 아니라 «보는 곳» 을 하나로 만든다**(09-18 `refund_history` 와 같은 판단). 나중에 보기 규칙을 바꾸면 세 곳이 함께 움직인다. ★★ **화면도 같은 뜻으로 고쳤지만 막는 일은 DB 가 한다** — 보기 권한 체크칸에서 잠긴 것이 master 뿐이라 manager 가 «manager» 를 끌 수 있었다(메뉴얼·문서 두 화면 다). 이제 **자기 역할도 잠긴다**(까닭을 마우스오버 문구로 적었다). 화면이 이걸 하는 까닭은 **«막혔다» 를 저장을 눌러 본 뒤에 알게 하지 않으려는 것뿐**이고, 화면만 고치면 화면을 안 거치는 길이 그대로 남는다. ★ 저장 payload 도 `manualViewRoles()` 로 제 역할을 늘 담는다 — 체크칸을 못 건드려도 옛 값을 들고 보내면 DB 에서 튕긴다. ★★ **되돌릴 수 없는 쪽을 사람이 실수로 고를 수 있게 두지 않는다**(09-16 «2차 접수» 에서 세운 규칙과 같은 것이다). ★ master 는 아무 영향이 없다(`manual_doc_visible` 안에서 늘 참). ★ 좁히는 판이 아니다 — 「crew 만 보는 문서」는 manager 가 제 역할을 함께 남겨 두면 된다. **못 하게 된 것은 «자기 눈을 가리는 일» 뿐이다.** ★ 고칠·지울 권한(`manuals.edit`·`manuals.delete`)은 한 칸도 안 건드렸다. dev 적용·검사 통과. -->
 <!-- v20260918a_refund_history -->
 <!-- (2026-09-18) **환불 이력이 새고 있었다 — 두 구멍을 함께 막는다**(전반 재점검에서 찾음). ★★★ ①**목록의 «일괄 환불 완료 / 일괄 후처리 완료» 가 이력을 아예 안 남겼다.** 수정 창 경로는 남기는데 일괄만 빠져 있었고, 바로 옆 CS 티켓 연동은 「수정 창과 «같은 함수» 를 쓴다」고 공들여 통일해 둔 자리였다 — **한 화면에서 같은 일을 두 갈래로 하면, 나중에 고치는 사람이 한쪽만 고친다.** 운영 실측: 2026-09 후처리 완료 7건 중 **6건**에 이력이 한 줄도 없었다(2026-08 은 18건 중 12건). ★★ **화면에는 멀쩡히 보였다** — 이력이 없는 건은 상태 칸(`refund_completed_at` 등)에서 «유추» 해 그려 주기 때문이다. 그런데 **원복하면 그 칸이 NULL 로 지워진다**: 유추의 근거가 사라지는 순간 「완료했었다」가 영영 없어진다. **«보인다» 와 «남아 있다» 는 다른 말이다.** ②🔴 **매니저가 처리하면 단건 경로의 이력도 403 으로 막혔다.** `refunds` 의 UPDATE 정책은 `console_menu_allows('refunds')` 인데 그 메뉴에는 manager 가 들어 있고(운영 실측), `refund_history` 의 INSERT 정책은 `master` 뿐이었다 — **본 처리는 되고 이력만 튕긴다.** → `sql/refund_history_by_menu.sql`: 역할을 박지 않고 **같은 함수(`console_menu_allows('refunds')`)를 보게 묶었다.** 나중에 crew 에게 환불 메뉴를 열어도 둘이 함께 움직인다 — **값을 맞추는 게 아니라 «보는 곳» 을 하나로 만든다.** append-only 는 그대로(수정·삭제 정책 없음), 실제 처리 권한은 조금도 안 넓혔다(`refunds.create`·`refunds.delete` 는 여전히 master). ③**이력 기록 실패를 더는 삼키지 않는다.** 여태 `console.error` 로만 남겨서 약속이 깨진 것을 아무도 몰랐다. 「본 처리를 막지 않는다」(2026-08-07 방침)는 그대로 두고 **토스트로 알린다** — 문구는 «무엇이 됐고 무엇이 안 됐는지» 를 갈라 적는다(「실패」만 뜨면 환불이 안 된 줄 알고 한 번 더 누른다). ★ 일괄 이력은 `logRefundMany` 로 **한 번에** 넣는다 — 줄마다 보내면 서른 건에 요청이 서른 번이고 하나만 실패했을 때 어느 것이 빠졌는지 모른다. ★ 선행: `sql/refund_history_by_menu.sql`(+`_verify`) 을 **먼저** 적용한다. 화면만 가면 매니저의 이력은 계속 막힌다. dev 적용·검사 통과. -->
 <!-- (2026-09-17) 제니: 「쓰임새는 관리자만 봐도 되는 영역 같아」 → **«쓰임새» 탭을 권한(role) 기준으로 옮겼다**(master·manager). 콘솔 계정 화면이 `manager` 를 **«관리자»** 라 적으므로 그 말 그대로다. ★★★ 앞 판에서는 `manuals.edit`(메뉴얼을 고칠 수 있는가)로 걸어 두었는데, **그러면 제니가 언젠가 상담원에게 편집을 여는 날 쓰임새까지 함께 열린다.** «고칠 수 있다» 와 «운영 현황을 본다» 는 다른 일이고, 한쪽을 열려고 다른 쪽이 딸려 열리면 **그때는 알아채지도 못한다.** 기본값으로는 보이는 사람이 같지만(둘 다 master·manager) **묶여 있던 것을 푼 것**이라 앞으로 갈라 움직인다. ⚠ 반대로 **«낡은 메뉴얼» 알림은 그대로 `manuals.edit`** 다 — 그것은 «해야 할 일» 이라 **고칠 수 있는 사람에게 가야** 맞다. 두 판정은 뜻이 다르므로 값도 다르다. ★ **DB 정책도 같은 기준으로 바꿨다**(`sql/manual_usage.sql` · 검사에 「manuals.edit 에 묶여 있으면 실패」를 넣었다) — 화면만 가리고 DB 를 열어 두면 화면을 안 거치는 길로 그대로 읽힌다. -->
@@ -31025,6 +31027,20 @@ const MANUAL_ROLES = [
   {id:'manager', label:'manager'},
   {id:'crew',    label:'crew'},
 ];
+// ★★★ 자기 역할은 끌 수 없다 (2026-09-21) — 끄고 저장하면 그 문서가 **제 목록에서 사라지고
+//   다시 열 수도 되돌릴 수도 없다**(master 만 손댈 수 있다). 되돌릴 수 없는 쪽을 사람이
+//   실수로 고를 수 있게 두지 않는다(09-16 «2차 접수» 에서 세운 규칙과 같다).
+// ★★ **막는 일은 DB 가 한다**(sql/manual_docs_self_visible.sql) — 화면이 이걸 하는 까닭은
+//   «막혔다» 를 저장을 눌러 본 뒤에 알게 하지 않으려는 것뿐이다. 화면만 고치면
+//   화면을 안 거치는 길이 그대로 남는다.
+const manualRoleLocked = (r, myRole)=> !!r.lock || (!!myRole && r.id === myRole);
+const manualRoleLockWhy = (r, myRole)=>
+  r.lock ? 'master 는 늘 볼 수 있습니다'
+         : (manualRoleLocked(r, myRole) ? '내 권한은 뺄 수 없습니다 — 빼면 이 문서를 다시 열 수 없습니다' : undefined);
+// ★ 저장하는 값에도 같은 뜻을 담는다 — 체크칸을 못 건드려도 payload 가 옛 값을 들고 있으면
+//   (남이 만든 문서를 고칠 때) DB 에서 튕긴다.
+const manualViewRoles = (list, myRole)=>
+  Array.from(new Set(['master'].concat(myRole ? [myRole] : []).concat(list || [])));
 const MANUAL_STALE_DAYS = 180;          // 확인 기준일이 이만큼 지나면 «확인 필요»
 const MANUAL_MAX_MB = 50;               // 버킷 한도와 같다(sql/manuals.sql)
 const MANUAL_TEXT_MAX = 1500000;        // 파일 글자는 이만큼까지만 담는다(검색용)
@@ -31240,7 +31256,7 @@ function ManualsPage({currentUserEmail, role, can}){
       </div>
       {tabs.length > 1 && <CsPageTabs tabs={tabs} value={tab} onChange={setTab}/>}
       {facets===null ? <div style={{padding:40,textAlign:'center',color:'var(--sub)'}}>읽는 중…</div>
-        : tab==='list' ? <ManualListTab facets={facets} canEdit={canEdit} canDelete={canDelete} currentUserEmail={currentUserEmail}/>
+        : tab==='list' ? <ManualListTab facets={facets} canEdit={canEdit} canDelete={canDelete} currentUserEmail={currentUserEmail} role={role}/>
         : tab==='usage' ? <ManualUsageTab/>
         : <ManualFacetsTab facets={facets} row={facetsRow} currentUserEmail={currentUserEmail}
             onSaved={loadFacets}/>}
@@ -31280,7 +31296,7 @@ function manualLogSearch(q, hits){
 //   ★ 다른 것은 셋뿐이고 전부 **값**으로 갈린다: 갈래(kind) · 등록 단추 · 상세를 여는 조각.
 // ★ 검색은 예전부터 **한 함수**(manual_docs_search)였다 — 합치면서 바꿀 것이 없었다.
 //   «통합 검색» 을 3단계 숙제로 적어 뒀었는데, 2단계에서 한 표로 만든 순간 이미 끝나 있었다.
-function ManualListTab({facets, canEdit, canDelete, currentUserEmail}){
+function ManualListTab({facets, canEdit, canDelete, currentUserEmail, role}){
   const [docs,setDocs] = useState(null);
   const [q,setQ] = useState('');
   const [hits,setHits] = useState(null);
@@ -31481,9 +31497,9 @@ function ManualListTab({facets, canEdit, canDelete, currentUserEmail}){
       )}
 
       {/* ★ 등록·수정 창은 갈래로 갈린다 — 파일은 올리는 것이, 문서는 쓰는 것이 일이라 칸이 다르다. */}
-      {edit && edit.kind==='file' && <ManualEditModal doc={edit.doc||null} facets={facets} currentUserEmail={currentUserEmail}
+      {edit && edit.kind==='file' && <ManualEditModal doc={edit.doc||null} facets={facets} currentUserEmail={currentUserEmail} role={role}
         onClose={()=>setEdit(null)} onSaved={()=>{ setEdit(null); setOpen(null); load(); }}/>}
-      {edit && edit.kind==='note' && <ManualNoteEditModal doc={edit.doc||null} facets={facets}
+      {edit && edit.kind==='note' && <ManualNoteEditModal doc={edit.doc||null} facets={facets} role={role}
         files={(docs||[]).filter(x=>x.kind!=='note')} currentUserEmail={currentUserEmail}
         onClose={()=>setEdit(null)} onSaved={()=>{ setEdit(null); setOpen(null); load(); }}/>}
       {/* ★★ editKind="*" — 이 목록은 파일도 문서도 «제 것» 이라 둘 다 고칠 수 있다.
@@ -31559,7 +31575,7 @@ function ManualModalFrame({title, onClose, children, width, resizable}){
   ), document.querySelector('.app-wrap') || document.getElementById('root') || document.body);
 }
 
-function ManualEditModal({doc, facets, currentUserEmail, onClose, onSaved}){
+function ManualEditModal({doc, facets, currentUserEmail, role, onClose, onSaved}){
   const isNew = !doc;
   const [f,setF] = useState(()=>({
     title: doc ? doc.title : '', description: doc ? (doc.description||'') : '',
@@ -31591,7 +31607,7 @@ function ManualEditModal({doc, facets, currentUserEmail, onClose, onSaved}){
     const tags = Array.from(new Set(f.tags.split(',').map(s=>s.trim().replace(/^#/,'')).filter(Boolean)));
     const payload = {
       title, description: f.description.trim() || null, kind: f.kind,
-      facets: f.facets, tags, view_roles: Array.from(new Set(['master'].concat(f.view_roles))),
+      facets: f.facets, tags, view_roles: manualViewRoles(f.view_roles, role),
       checked_at: f.checked_at || null, updated_by: currentUserEmail,
     };
     let uploaded = null;
@@ -31690,9 +31706,9 @@ function ManualEditModal({doc, facets, currentUserEmail, onClose, onSaved}){
         <div style={row}><label style={lab}>보기 권한</label>
           <div style={{display:'flex',gap:12,alignItems:'center'}}>
             {MANUAL_ROLES.map(r=>(
-              <label key={r.id} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'var(--text)',cursor:r.lock?'not-allowed':'pointer'}}
-                title={r.lock ? 'master 는 늘 볼 수 있습니다' : undefined}>
-                <input type="checkbox" disabled={r.lock} checked={r.lock || f.view_roles.indexOf(r.id)>=0}
+              <label key={r.id} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'var(--text)',cursor:manualRoleLocked(r,role)?'not-allowed':'pointer'}}
+                title={manualRoleLockWhy(r, role)}>
+                <input type="checkbox" disabled={manualRoleLocked(r,role)} checked={manualRoleLocked(r,role) || f.view_roles.indexOf(r.id)>=0}
                   onChange={()=>toggleRole(r.id)}/>{r.label}
               </label>
             ))}
@@ -32002,7 +32018,7 @@ function ManualNoteBlocks({blocks, onChange}){
   );
 }
 
-function ManualNoteEditModal({doc, facets, files, currentUserEmail, onClose, onSaved}){
+function ManualNoteEditModal({doc, facets, files, currentUserEmail, role, onClose, onSaved}){
   const isNew = !doc;
   const [f,setF] = useState(()=>({
     title: doc ? doc.title : '', description: doc ? (doc.description||'') : '',
@@ -32037,7 +32053,7 @@ function ManualNoteEditModal({doc, facets, files, currentUserEmail, onClose, onS
     const payload = {
       title, description: f.description.trim() || null, kind:'note',
       body: blocks, linked_doc_ids: f.links.map(Number).filter(n=>n>0),
-      facets: f.facets, tags, view_roles: Array.from(new Set(['master'].concat(f.view_roles))),
+      facets: f.facets, tags, view_roles: manualViewRoles(f.view_roles, role),
       checked_at: f.checked_at || null, updated_by: currentUserEmail,
       // ★★ 검색은 파일과 «같은» 칸을 본다(content_text) — 그래서 글도 여기에 담는다.
       //   이 한 줄 덕에 검색 함수가 파일·글을 함께 찾는다.
@@ -32110,9 +32126,9 @@ function ManualNoteEditModal({doc, facets, files, currentUserEmail, onClose, onS
         <div style={row}><label style={lab}>보기 권한</label>
           <div style={{display:'flex',gap:12,alignItems:'center'}}>
             {MANUAL_ROLES.map(r=>(
-              <label key={r.id} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'var(--text)',cursor:r.lock?'not-allowed':'pointer'}}
-                title={r.lock ? 'master 는 늘 볼 수 있습니다' : undefined}>
-                <input type="checkbox" disabled={r.lock} checked={r.lock || f.view_roles.indexOf(r.id)>=0}
+              <label key={r.id} style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'var(--text)',cursor:manualRoleLocked(r,role)?'not-allowed':'pointer'}}
+                title={manualRoleLockWhy(r, role)}>
+                <input type="checkbox" disabled={manualRoleLocked(r,role)} checked={manualRoleLocked(r,role) || f.view_roles.indexOf(r.id)>=0}
                   onChange={()=>toggleRole(r.id)}/>{r.label}
               </label>
             ))}
