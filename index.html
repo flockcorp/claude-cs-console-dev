@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20260917e_usage_role -->
+<!-- v20260918a_refund_history -->
+<!-- (2026-09-18) **환불 이력이 새고 있었다 — 두 구멍을 함께 막는다**(전반 재점검에서 찾음). ★★★ ①**목록의 «일괄 환불 완료 / 일괄 후처리 완료» 가 이력을 아예 안 남겼다.** 수정 창 경로는 남기는데 일괄만 빠져 있었고, 바로 옆 CS 티켓 연동은 「수정 창과 «같은 함수» 를 쓴다」고 공들여 통일해 둔 자리였다 — **한 화면에서 같은 일을 두 갈래로 하면, 나중에 고치는 사람이 한쪽만 고친다.** 운영 실측: 2026-09 후처리 완료 7건 중 **6건**에 이력이 한 줄도 없었다(2026-08 은 18건 중 12건). ★★ **화면에는 멀쩡히 보였다** — 이력이 없는 건은 상태 칸(`refund_completed_at` 등)에서 «유추» 해 그려 주기 때문이다. 그런데 **원복하면 그 칸이 NULL 로 지워진다**: 유추의 근거가 사라지는 순간 「완료했었다」가 영영 없어진다. **«보인다» 와 «남아 있다» 는 다른 말이다.** ②🔴 **매니저가 처리하면 단건 경로의 이력도 403 으로 막혔다.** `refunds` 의 UPDATE 정책은 `console_menu_allows('refunds')` 인데 그 메뉴에는 manager 가 들어 있고(운영 실측), `refund_history` 의 INSERT 정책은 `master` 뿐이었다 — **본 처리는 되고 이력만 튕긴다.** → `sql/refund_history_by_menu.sql`: 역할을 박지 않고 **같은 함수(`console_menu_allows('refunds')`)를 보게 묶었다.** 나중에 crew 에게 환불 메뉴를 열어도 둘이 함께 움직인다 — **값을 맞추는 게 아니라 «보는 곳» 을 하나로 만든다.** append-only 는 그대로(수정·삭제 정책 없음), 실제 처리 권한은 조금도 안 넓혔다(`refunds.create`·`refunds.delete` 는 여전히 master). ③**이력 기록 실패를 더는 삼키지 않는다.** 여태 `console.error` 로만 남겨서 약속이 깨진 것을 아무도 몰랐다. 「본 처리를 막지 않는다」(2026-08-07 방침)는 그대로 두고 **토스트로 알린다** — 문구는 «무엇이 됐고 무엇이 안 됐는지» 를 갈라 적는다(「실패」만 뜨면 환불이 안 된 줄 알고 한 번 더 누른다). ★ 일괄 이력은 `logRefundMany` 로 **한 번에** 넣는다 — 줄마다 보내면 서른 건에 요청이 서른 번이고 하나만 실패했을 때 어느 것이 빠졌는지 모른다. ★ 선행: `sql/refund_history_by_menu.sql`(+`_verify`) 을 **먼저** 적용한다. 화면만 가면 매니저의 이력은 계속 막힌다. dev 적용·검사 통과. -->
 <!-- (2026-09-17) 제니: 「쓰임새는 관리자만 봐도 되는 영역 같아」 → **«쓰임새» 탭을 권한(role) 기준으로 옮겼다**(master·manager). 콘솔 계정 화면이 `manager` 를 **«관리자»** 라 적으므로 그 말 그대로다. ★★★ 앞 판에서는 `manuals.edit`(메뉴얼을 고칠 수 있는가)로 걸어 두었는데, **그러면 제니가 언젠가 상담원에게 편집을 여는 날 쓰임새까지 함께 열린다.** «고칠 수 있다» 와 «운영 현황을 본다» 는 다른 일이고, 한쪽을 열려고 다른 쪽이 딸려 열리면 **그때는 알아채지도 못한다.** 기본값으로는 보이는 사람이 같지만(둘 다 master·manager) **묶여 있던 것을 푼 것**이라 앞으로 갈라 움직인다. ⚠ 반대로 **«낡은 메뉴얼» 알림은 그대로 `manuals.edit`** 다 — 그것은 «해야 할 일» 이라 **고칠 수 있는 사람에게 가야** 맞다. 두 판정은 뜻이 다르므로 값도 다르다. ★ **DB 정책도 같은 기준으로 바꿨다**(`sql/manual_usage.sql` · 검사에 「manuals.edit 에 묶여 있으면 실패」를 넣었다) — 화면만 가리고 DB 를 열어 두면 화면을 안 거치는 길로 그대로 읽힌다. -->
 <!-- v20260917d_manual_usage -->
 <!-- (2026-09-17) 🆕 **메뉴얼 4단계 ④ — «쓰임새»: 무엇이 읽히고 무엇이 «없나»**. 메뉴얼 관리에 탭 하나(`manuals.edit` 인 사람만). ★★★ **제니 결정: «누가 봤나» 는 남기지 않는다.** 날짜별 «횟수» 만 쌓는다 — 목적이 «무엇이 쓰이나·무엇이 없나» 이지 사람을 보는 것이 아니고, 사람을 담으면 ①«감시» 로 읽히고 ②이메일이 들어가 **백업 마스킹 규칙까지 함께 밀린다**(오늘 아침에 그 값을 치렀다). ★★★ **이 탭의 진짜 값어치는 «찾았는데 0건» 이다** — 조회 수는 «있는 것» 중에서만 말해 주지, 사람들이 찾다가 못 찾고 돌아간 것은 **아무 데도 안 남는다.** 창고를 키울 방향은 대개 거기서 나온다. SQL `sql/manual_usage.sql`(+`_verify`) **dev 적용·검사 통과 · 운영 미적용**. ★★ **세는 일은 DB 함수만 한다** — 두 표에 쓰기 정책이 없다. 화면이 직접 쓰면 숫자를 마음대로 올릴 수 있고, 그러면 **그 숫자를 아무도 안 믿는다.** ★★ 함수가 **«볼 수 있는 문서만»** 센다(security definer 는 RLS 를 안 지나므로 직접 묻는다) — 못 보는 문서의 수를 올릴 수 있으면 통계가 오염되고, 덤으로 «어떤 id 가 있는지» 를 눌러 보며 알아낼 수 있게 된다. 🔴 검색어는 **2~40자만** 담는다: 긴 것은 «어디선가 붙여넣은 문장» 이고 거기에 고객 이름·연락처가 섞여 온다 — **담길 «길» 부터 좁힌다**(마스킹도 함께 밀었다). ★★ **곁다리 일이 본일을 막으면 안 된다** — 기록은 기다리지 않고 보내고 실패해도 조용히 넘어간다. 세는 데 실패했다고 검색이 안 되거나 문서가 안 열리면 그것이 훨씬 나쁜 고장이다. ★★ **«열었다» 를 센다 — «탭을 눌렀다» 가 아니다**: 한 창에서 탭을 오갈 때마다 +1 하면 탭을 많이 쓴 사람이 그 문서를 여러 번 본 것처럼 된다(창을 닫고 다시 열면 다시 센다 — 그때는 «또 찾아본» 것이 맞다). ★★ 검색은 **debounce 뒤 한 번만** 적는다 — 글자를 칠 때마다 적으면 「배」「배송」「배송지」가 다 다른 말로 쌓여 «무슨 말을 많이 찾나» 가 흩어진다. ★ 두 화면(메뉴얼 목록·티켓 ④)이 **같은 함수로 찾으므로 같은 자리에서 적는다** — 한쪽만 적으면 「현장에서 무엇을 찾는지」가 통째로 빠진다. ★★★ **«언제부터 쌓고 있나» 는 기간과 상관없는 사실이라 따로 묻는다** — 기간 안의 가장 이른 날을 쓰면 30일 필터에서 «30일 전부터» 라고 말하게 되고 **화면이 거짓말을 한다.** 수가 적을 때 «기간이 모자란 것» 과 «안 쓰이는 것» 은 다른 말이고, 안 적으면 「왜 이것뿐이지」가 «고장» 으로 읽힌다. ★ 「아무도 안 본 것」은 «지워라» 가 아니다 — 필요 없어서일 수도, 있는 줄 몰라서일 수도 있다(화면에 그렇게 적었다). ★ 막대는 Chart.js 가 아니라 HTML 이다(CS 통계와 같은 판단). ★ dev 전용. -->
@@ -7937,11 +7938,34 @@ function refundReasonOf(r, reasonById){
 
 async function logRefund(refundId, action, actor, note, createdAt){
   if(!refundId) return;
-  const { error } = await sb.from('refund_history').insert({
-    refund_id: refundId, action, actor: actor || 'unknown', note: note || null,
+  return logRefundMany([refundId], action, actor, note, createdAt);
+}
+
+// ★★★ 일괄 처리도 이력을 남긴다 (2026-09-18).
+//   목록의 «일괄 환불 완료 / 일괄 후처리 완료» 가 이력을 아예 안 남기고 있었다.
+//   화면에는 멀쩡히 보였는데, 이력이 없는 건은 상태 칸(refund_completed_at 등)에서
+//   «유추» 해 그려 주기 때문이다. 그런데 원복하면 그 칸이 NULL 로 지워진다 —
+//   **유추의 근거가 사라지는 순간 «완료했었다» 가 영영 없어진다.**
+//   운영 실측(2026-09-18): 9월 후처리 완료 7건 중 6건에 이력이 한 줄도 없었다.
+// ★★ 줄 하나씩 보내지 않고 «한 번에» 넣는다 — 서른 건이면 요청이 서른 번 나가고,
+//   그중 하나만 실패하면 어느 것이 빠졌는지 알 길이 없다. 한 번이면 전부 아니면 전무다.
+async function logRefundMany(refundIds, action, actor, note, createdAt){
+  const ids = (refundIds || []).filter(Boolean);
+  if(ids.length === 0) return;
+  const { error } = await sb.from('refund_history').insert(ids.map(id=>({
+    refund_id: id, action, actor: actor || 'unknown', note: note || null,
     ...(createdAt ? { created_at: createdAt } : {}),
-  });
-  if(error) console.error('[환불 이력 기록] 실패:', action, error);
+  })));
+  if(!error) return;
+  console.error('[환불 이력 기록] 실패:', action, error);
+  // ★★★ 본 처리는 이미 끝났다 — 되돌리지 않는다(2026-08-07 방침 그대로).
+  //   **다만 조용히 넘어가지도 않는다.** 여태 console.error 로만 삼켰더니
+  //   «모든 처리는 이력이 남는다» 는 약속이 깨진 것을 아무도 몰랐다.
+  //   문구는 «무엇이 됐고 무엇이 안 됐는지» 를 갈라 적는다 — 「실패」만 뜨면
+  //   사람은 환불 처리 자체가 안 된 줄 알고 한 번 더 누른다.
+  toast('처리는 끝났지만 이력을 남기지 못했습니다 (' + ids.length + '건).\n'
+    + (error.message || '')
+    + '\n\n환불 처리 자체는 반영되었습니다. 관리자에게 알려주세요.', 'error');
 }
 
 // ── 환불 완료 → CS 티켓 «환불 완료» (제니 2026-09-09) ────────────────────────
@@ -10032,6 +10056,8 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
       updated_by:          userTag,
     }).in('id', ids);
     if(error){ setBulkProcessing(false); toast('일괄 처리 실패: '+error.message); return; }
+    // ★ 이력은 «처리가 실제로 반영된 뒤에» 남긴다 — 수정 창과 같은 차례다.
+    await logRefundMany(ids, 'refund_complete', userTag);
     // ★ 넘어온 CS 티켓도 함께 «환불 완료» 로 옮긴다(제니 2026-09-09 · 수정 창과 같은 함수).
     const moved = await csTicketsOnRefundDone(ids, userTag);
     setBulkProcessing(false);
@@ -10062,6 +10088,8 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
     }).in('id', ids);
     setBulkProcessing(false);
     if(error){ toast('일괄 처리 실패: '+error.message); return; }
+    // ★ 이력은 «처리가 실제로 반영된 뒤에» 남긴다 — 수정 창과 같은 차례다.
+    await logRefundMany(ids, 'cafe24_done', userTag);
     setSelectedIds(new Set());
     load();
   };
