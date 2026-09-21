@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260921b_macro_vars -->
+<!-- (2026-09-21) 🆕 **매크로에 «치환자» 를 붙였다**(제니 요청 · 2026-09-08 에 「지금은 글자 그대로 들어간다」로 남겨 둔 것). 매크로 본문에 `{주문번호}`·`{주문자명(수령인명)}` 처럼 적어 두면 **넣는 순간 그 티켓 값으로 바뀐다.** ★★★ **새로 만든 것이 거의 없다 — 접수 문안이 쓰던 얼개를 그대로 쓴다.** 치환자 목록(`CS_DRAFT_VARS_ALL` · 카페24 연동값 포함)도, 치환 함수(`csFillTpl`)도, 「치환자가 들어 있는데 그 값이 모두 비면 그 줄은 통째로 빠진다」는 규칙도 **같은 것**이다. 그 규칙만 `csFillLines` 로 뽑아 두 곳이 함께 보게 했다 — 두 곳에 적어 두면 언젠가 한쪽만 고쳐지고, 그때 **«문안에서는 빠지는 줄이 매크로에서는 「운송장 번호 : 」로 남는»** 일이 된다. ★★ **상담원이 두 자리에서 다른 규칙을 외우지 않아도 된다** — 이것이 «같은 것을 쓴다» 의 진짜 값어치다. ★★★ **«어느 건의 값인가» 를 화면과 맞췄다** — 등록 화면은 품목을 여럿 고를 수 있는데, 매크로는 이력에 남길 «한 문장» 이라 한 건이라야 한다. 그 한 건을 **«메인» 품목**(`mainItem`)으로 잡았다: 이 화면이 **상품 금액·카페24 값을 이미 메인 기준으로 보여 주고 있어서**, 매크로만 «첫 품목» 을 보면 **화면에 보이는 값과 이력에 박히는 값이 갈린다**(2026-09-09 에 제니가 짚어 고친 바로 그 어긋남이다). 접수 문안 단추는 그대로 «고른 품목 전부» 다 — 공급사는 여러 품목을 한 번에 받아야 하므로 **단위가 다르다.** ★★ **두 화면의 «티켓처럼 생긴 것» 을 만드는 코드를 onClick 밖으로 뽑았다**(`draftRowOf`·`draftEvs`·`macroVars`) — 접수 문안과 매크로가 같은 것을 본다. 따로 만들면 칸 하나가 빠지는 날 한쪽에서만 줄이 사라지는데, **그 자리는 2026-09-08 에 이미 한 번 밟았다**(운송장 줄이 조용히 빠졌다). ★★ **넣는 «순간» 의 값을 읽는다**(vars 를 함수로 받는다) — 상담원이 ①에서 수량·수령인을 고치는 중일 수 있고, 조각이 만들어질 때 받아 둔 값을 들고 있으면 화면에 보이는 것과 다른 값이 이력에 박힌다. ★ **모르는 이름은 글자 그대로 남는다**(csFillTpl 의 규칙 그대로) — 지우면 오타를 낸 사람이 «왜 안 나오지» 를 어디에서도 못 본다. ★ 치환 결과가 통째로 비면 **넣지 않고 그 까닭을 말한다** — 조용히 아무 일도 안 일어나면 «고장» 으로 읽힌다. ★★ **설정 화면(CS 설정 > 매크로)에 안내·치환자 목록·미리보기를 붙였다** — 치환자를 잘못 적으면 **저장한 뒤 고객 응대 중에야** 알게 되는데 그때는 이미 이력에 들어간 뒤다. 미리보기 견본 건은 접수 문안 설정과 **같은 값**(`CS_VAR_SAMPLE`)이다: 두 화면이 다른 예시를 보여 주면 「어느 쪽이 맞나」를 되묻게 된다. 목록은 접어 둔다(길다) · 치환자를 실제로 적었을 때만 미리보기가 뜬다. ★ 치환자 목록·견본 건·카페24 «켜짐» 판정을 모듈로 끌어올려 두 설정 화면이 **한 조각**(`CsVarTable`·`useCsC24On`)을 쓴다. ★ **값으로 확인했다** — 파일에서 함수를 잘라 node 로 돌려 일곱 경우(값 있음·여러 개·빈 줄 제거·오타 보존·고정 문구·치환자만·티켓 없음)를 다 재 봤다. ★ dev 전용. -->
 <!-- v20260921a_manual_self_visible -->
 <!-- (2026-09-21) **메뉴얼·문서를 «내가 못 보는 자리» 로 옮길 수 없게 했다**(09-18 전반 재점검에서 찾아 두고 안 고친 것). ★★★ `manual_docs` 의 UPDATE 정책은 `using` 에서만 보기 권한을 봤다 — `using` 은 **고치기 «전»** 줄을 보는 자리이고, **고친 «뒤»** 를 보는 `with check` 는 `manuals.edit` 만 보고 `view_roles` 를 안 봤다. 그래서 **보기 권한에서 제 역할을 빼고 저장할 수 있었다**: 저장되는 순간 그 문서가 제 목록에서 사라지고 **다시 열 수도 되돌릴 수도 없다**(master 만 손댈 수 있다). INSERT 도 같아서 **제가 못 보는 문서를 만들 수 있었다.** → `sql/manual_docs_self_visible.sql`: insert·update 의 `with check` 가 select 와 **같은 `manual_doc_visible()`** 을 보게 묶었다 — **값을 맞추는 게 아니라 «보는 곳» 을 하나로 만든다**(09-18 `refund_history` 와 같은 판단). 나중에 보기 규칙을 바꾸면 세 곳이 함께 움직인다. ★★ **화면도 같은 뜻으로 고쳤지만 막는 일은 DB 가 한다** — 보기 권한 체크칸에서 잠긴 것이 master 뿐이라 manager 가 «manager» 를 끌 수 있었다(메뉴얼·문서 두 화면 다). 이제 **자기 역할도 잠긴다**(까닭을 마우스오버 문구로 적었다). 화면이 이걸 하는 까닭은 **«막혔다» 를 저장을 눌러 본 뒤에 알게 하지 않으려는 것뿐**이고, 화면만 고치면 화면을 안 거치는 길이 그대로 남는다. ★ 저장 payload 도 `manualViewRoles()` 로 제 역할을 늘 담는다 — 체크칸을 못 건드려도 옛 값을 들고 보내면 DB 에서 튕긴다. ★★ **되돌릴 수 없는 쪽을 사람이 실수로 고를 수 있게 두지 않는다**(09-16 «2차 접수» 에서 세운 규칙과 같은 것이다). ★ master 는 아무 영향이 없다(`manual_doc_visible` 안에서 늘 참). ★ 좁히는 판이 아니다 — 「crew 만 보는 문서」는 manager 가 제 역할을 함께 남겨 두면 된다. **못 하게 된 것은 «자기 눈을 가리는 일» 뿐이다.** ★ 고칠·지울 권한(`manuals.edit`·`manuals.delete`)은 한 칸도 안 건드렸다. dev 적용·검사 통과. -->
 <!-- v20260918a_refund_history -->
@@ -19729,7 +19731,7 @@ function csPutText(taRef, value, onChange, text, opts){
   });
 }
 
-function CsSymbolBar({taRef, value, onChange, light, right, macro, onSpace}){
+function CsSymbolBar({taRef, value, onChange, light, right, macro, onSpace, vars}){
   const put = (ch,caret)=> csPutText(taRef, value, onChange, ch, {caret});
   return (
     <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap',alignItems:'center'}}>
@@ -19746,7 +19748,7 @@ function CsSymbolBar({taRef, value, onChange, light, right, macro, onSpace}){
           둘 다 «작성칸에 무엇을 넣는» 조각이고, 오른쪽 끝은 [공급사 접수 문안] 처럼
           «다른 일을 하는» 단추의 자리다. */}
       {macro!==false && <CsMacroTools taRef={taRef} value={value} onChange={onChange}
-        light={light} onSpace={onSpace}/>}
+        light={light} onSpace={onSpace} vars={vars}/>}
       {right && <><div style={{flex:1}}></div>{right}</>}
     </div>
   );
@@ -19818,7 +19820,7 @@ function csSlashToken(el){
 }
 const csMacroNorm = (s)=>String(s||'').toLowerCase().replace(/\s+/g,'');
 
-function CsMacroTools({taRef, value, onChange, light, onSpace}){
+function CsMacroTools({taRef, value, onChange, light, onSpace, vars}){
   const [data,setData] = useState(undefined);   // undefined=아직 / null=못 읽음
   const [open,setOpen] = useState(false);       // 드롭박스
   const [q,setQ]       = useState('');          // 드롭박스 검색어
@@ -19870,9 +19872,21 @@ function CsMacroTools({taRef, value, onChange, light, onSpace}){
   // ★ 넣는 일은 `csPutText` 한 곳이 한다(2026-09-17 에 모았다) — 기호 줄·문서 블록과
   //   글자 그대로 같은 규칙으로 들어간다.
   const insert = (m, range)=>{
-    const body = String((m&&m.body)||'');
-    if(!body.trim()){
+    const raw = String((m&&m.body)||'');
+    if(!raw.trim()){
       toast('«'+((m&&m.name)||'매크로')+'» 에 내용이 없습니다 — CS 설정 > 매크로에서 채워 주세요.','warn');
+      return;
+    }
+    // ★★★ 치환자를 그 티켓 값으로 바꿔 넣는다(2026-09-21). **넣는 «순간» 의 값을 읽는다** —
+    //   상담원이 ①에서 수량·수령인을 고치는 중일 수 있고, 조각이 만들어질 때 받아 둔 값을
+    //   들고 있으면 **화면에 보이는 것과 다른 값이 이력에 박힌다.**
+    // ★ 티켓을 모르는 자리(설정 화면)에서는 vars 가 없고, 그때는 원문 그대로 들어간다.
+    const v = (typeof vars === 'function') ? (vars() || {}) : null;
+    const body = csFillMacro(raw, v && v.t, v && v.ev);
+    // ★★ 치환자만으로 된 매크로인데 값이 다 비면 **넣을 것이 없어진다.** 그때 조용히
+    //   아무 일도 안 일어나면 «고장» 으로 읽힌다 — 무엇이 비어서인지 말해 준다.
+    if(!body.trim()){
+      toast('«'+((m&&m.name)||'매크로')+'» 는 넣을 값이 모두 비어 있어 넣지 않았습니다 — 주문 정보를 먼저 채워 주세요.','warn');
       return;
     }
     csPutText(taRef, value, onChange, body, {range});
@@ -24183,17 +24197,21 @@ function CsVarPick({value, options, onChange, style, c24On}){
   );
 }
 
-function CsDraftTplSettings({currentUserEmail}){
-  const SAMPLE = {
-    id:0, order_id:'20260908-0001234', order_item_code:'20260908-0001234-01',
-    cs_type:'불량', direction:'교환', supplier_name:'○○침구',
-    orderer_name:'김하늘', receiver_name:'김바다',
-    orderer_phone:'010-1234-5678', receiver_phone:'010-9876-5432',
-    product_name:'극세사 차렵이불', option_name:'본품=그레이 Q',
-    order_qty:2, cs_qty:1, cafe24_snapshot:{tracking_no:'1234567890'},
-  };
-  const SAMPLE_EV = [{id:1, ticket_id:0, side:'고객', note:'모서리가 찢어져 왔어요'}];
-  // ★ 「카페24 연동」에서 지금 켜 둔 값 — 두 설정이 어긋났는지 여기서 잰다.
+// ── 치환자 «견본 건»·«목록» — 접수 문안 설정과 매크로 설정이 같은 것을 쓴다 (2026-09-21) ──
+// ★★ 매크로에도 치환자가 붙으면서 이 셋이 두 화면에서 필요해졌다. **사본을 만들지 않고
+//   모듈로 끌어올린다** — 치환자가 늘거나 설명이 바뀌는 날 한 곳만 고치면 되고,
+//   두 설정 화면이 «같은 예시» 를 보여 준다(다르면 어느 쪽이 맞는지 되묻게 된다).
+const CS_VAR_SAMPLE = {
+  id:0, order_id:'20260908-0001234', order_item_code:'20260908-0001234-01',
+  cs_type:'불량', direction:'교환', supplier_name:'○○침구',
+  orderer_name:'김하늘', receiver_name:'김바다',
+  orderer_phone:'010-1234-5678', receiver_phone:'010-9876-5432',
+  product_name:'극세사 차렵이불', option_name:'본품=그레이 Q',
+  order_qty:2, cs_qty:1, cafe24_snapshot:{tracking_no:'1234567890'},
+};
+const CS_VAR_SAMPLE_EV = [{id:1, ticket_id:0, side:'고객', note:'모서리가 찢어져 왔어요'}];
+// 「카페24 연동」에서 지금 켜 둔 값 — 치환자 목록이 «켜야 담긴다» 를 그 자리에서 말해 준다.
+function useCsC24On(){
   const [c24On,setC24On] = useState([]);
   useEffect(()=>{ let alive=true;
     csLoadSetting('cs_cafe24_fields').then(r=>{
@@ -24204,6 +24222,57 @@ function CsDraftTplSettings({currentUserEmail}){
     });
     return ()=>{ alive=false; };
   },[]);
+  return c24On;
+}
+// 쓸 수 있는 치환자 목록. **접수 문안 설정과 매크로 설정이 같은 조각을 쓴다**(2026-09-21).
+// ★ 설명이 «예)» 까지 담으면서 길어졌다 — 칩으로 늘어놓으면 줄이 들쭉날쭉해 훑을 수가 없다.
+//   **치환자 | 설명 두 칸으로 세운다**: 왼쪽 열이 세로로 맞으면 «무엇이 있나» 를 이름만으로
+//   먼저 훑고, 필요한 것만 오른쪽을 읽게 된다.
+// ★★ 카페24 값을 치환자로 열면서 목록이 두 배로 길어졌다(제니 2026-09-08: 「세로로 길어졌는데
+//   가로 여백이 있으니 이분할 해 달라」). **남는 가로를 쓰면 세로가 반이 되고, 세로가 짧아야
+//   «무엇이 있나» 를 한눈에 훑는다.**
+//   ★ 두 덩어리를 «각자» 격자로 둔다: 한 격자에 네 칸을 세우면 왼쪽 이름 열과 오른쪽 이름 열의
+//     폭이 서로 끌려다녀 둘 다 삐뚤어진다.
+function CsVarTable({c24On}){
+  const on = c24On || [];
+  return (
+    <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)',columnGap:22}}>
+      {[0,1].map(half=>{
+        const n = Math.ceil(CS_DRAFT_VARS_ALL.length/2);
+        const part = half===0 ? CS_DRAFT_VARS_ALL.slice(0,n) : CS_DRAFT_VARS_ALL.slice(n);
+        return (
+        <div key={half} style={{display:'grid',gridTemplateColumns:'max-content minmax(0,1fr)',
+          columnGap:12,rowGap:5,alignItems:'baseline'}}>
+          {part.map(v=>{
+            // ★ 카페24 값은 «연동에서 켜야 담기는» 것이라, 지금 켜져 있는지를 그 자리에서
+            //   말해 준다. 이름만 늘어놓으면 「썼는데 왜 안 나오지」를 여기서 못 푼다.
+            const need = !!v.c24 && on.indexOf(v.c24)<0;
+            return (
+            <React.Fragment key={v.k}>
+              <span style={{fontSize:11,fontFamily:MONO,padding:'2px 7px',borderRadius:5,
+                background:'var(--hover)',border:'1px solid var(--border)',
+                color:'var(--text)',whiteSpace:'nowrap',opacity:need?.6:1}}>{'{'+v.k+'}'}</span>
+              <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
+                {v.d}
+                {/* ★ 열 드롭박스와 «같은 조각» 이다(제니 2026-09-09: 「이 문구는 그 아래
+                    메일-표의 열 드롭박스에서도 동일하게 노출되어야」). 두 곳에 따로 적으면
+                    언젠가 한쪽만 바뀐다. */}
+                {!!v.c24 && <CsC24OnOff on={!need}/>}
+              </span>
+            </React.Fragment>
+            );
+          })}
+        </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function CsDraftTplSettings({currentUserEmail}){
+  const SAMPLE = CS_VAR_SAMPLE;
+  const SAMPLE_EV = CS_VAR_SAMPLE_EV;
+  const c24On = useCsC24On();
   const [row,setRow]     = useState(null);
   const [loaded,setLoaded] = useState(false);
   const [d,setD]         = useState(null);     // 고치는 중인 틀
@@ -24306,46 +24375,7 @@ function CsDraftTplSettings({currentUserEmail}){
       {/* ── 변수값 ─────────────────────────────────────────── */}
       <div style={card}>
         <div style={h}>변수값</div>
-        {/* ★ 설명이 «예)» 까지 담으면서 길어졌다 — 칩으로 늘어놓으면 줄이 들쭉날쭉해
-            훑을 수가 없다. **치환자 | 설명 두 칸으로 세운다**: 왼쪽 열이 세로로 맞으면
-            «무엇이 있나» 를 이름만으로 먼저 훑고, 필요한 것만 오른쪽을 읽게 된다. */}
-        {/* ★★ 카페24 값을 치환자로 열면서 목록이 두 배로 길어졌다(제니 2026-09-08:
-            「세로로 길어졌는데 가로 여백이 있으니 이분할 해 달라」). 판은 860px 인데
-            치환자 이름과 설명은 그 절반도 안 쓰고 있었다 — **남는 가로를 쓰면 세로가
-            반이 되고, 세로가 짧아야 «무엇이 있나» 를 한눈에 훑는다.**
-            ★ 두 덩어리를 «각자» 격자로 둔다: 한 격자에 네 칸을 세우면 왼쪽 이름 열과
-              오른쪽 이름 열의 폭이 서로 끌려다녀 둘 다 삐뚤어진다. */}
-        <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)',
-          columnGap:22}}>
-          {[0,1].map(half=>{
-            const n = Math.ceil(CS_DRAFT_VARS_ALL.length/2);
-            const part = half===0 ? CS_DRAFT_VARS_ALL.slice(0,n) : CS_DRAFT_VARS_ALL.slice(n);
-            return (
-            <div key={half} style={{display:'grid',gridTemplateColumns:'max-content minmax(0,1fr)',
-              columnGap:12,rowGap:5,alignItems:'baseline'}}>
-              {part.map(v=>{
-                // ★ 카페24 값은 «연동에서 켜야 담기는» 것이라, 지금 켜져 있는지를 그 자리에서
-                //   말해 준다. 이름만 늘어놓으면 「썼는데 왜 안 나오지」를 여기서 못 푼다.
-                const need = !!v.c24 && c24On.indexOf(v.c24)<0;
-                return (
-                <React.Fragment key={v.k}>
-                  <span style={{fontSize:11,fontFamily:MONO,padding:'2px 7px',borderRadius:5,
-                    background:'var(--hover)',border:'1px solid var(--border)',
-                    color:'var(--text)',whiteSpace:'nowrap',opacity:need?.6:1}}>{'{'+v.k+'}'}</span>
-                  <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
-                    {v.d}
-                    {/* ★ 열 드롭박스와 «같은 조각» 이다(제니 2026-09-09: 「이 문구는
-                        그 아래 메일-표의 열 드롭박스에서도 동일하게 노출되어야」).
-                        두 곳에 따로 적으면 언젠가 한쪽만 바뀐다. */}
-                    {!!v.c24 && <CsC24OnOff on={!need}/>}
-                  </span>
-                </React.Fragment>
-                );
-              })}
-            </div>
-            );
-          })}
-        </div>
+        <CsVarTable c24On={c24On}/>
       </div>
 
       {/* ── 두 설정이 어긋났을 때 (제니 2026-09-08) ────────────────────────
@@ -25036,7 +25066,15 @@ function CsMacroForm({draft, setD, inp, lbl, cats, onAddCat, onRemoveCat, busy, 
   // ★ 티켓의 기호 줄과 «같은 조각» 이다(제니 2026-09-08). 여기서 만드는 글이 곧 티켓에
   //   들어갈 글인데, 기호를 넣는 방법이 두 자리에서 다르면 그때마다 다시 배워야 한다.
   const bodyRef = useRef(null);
+  // 치환자 안내·미리보기 (2026-09-21) — 목록은 길어서 접어 둔다(펴는 것은 한 번 누르면 된다).
+  const [showVars,setShowVars] = useState(false);
+  const c24On = useCsC24On();
   if(!draft) return null;
+  // ★★ 미리보기는 **치환자를 실제로 적었을 때만** 뜬다 — 안 쓰는 사람에게는 판만 길어진다.
+  const hasVar = /\{[^}]+\}/.test(String(draft.body||''));
+  // ★ 견본 건은 접수 문안 설정과 **같은 값**이다(CS_VAR_SAMPLE) — 두 화면이 다른 예시를
+  //   보여 주면 「어느 쪽이 맞나」를 되묻게 된다.
+  const preview = hasVar ? csFillMacro(draft.body, CS_VAR_SAMPLE, CS_VAR_SAMPLE_EV) : '';
   return (
     <div style={{background: isNew?'var(--card)':'transparent',
       border: isNew?'1px solid var(--primary)':'none',
@@ -25082,6 +25120,45 @@ function CsMacroForm({draft, setD, inp, lbl, cats, onAddCat, onRemoveCat, busy, 
             된다(원본이 바뀌어도 안 따라오는 사본이다). */}
         <CsSymbolBar taRef={bodyRef} value={draft.body}
           onChange={v=>setD('body',v)} macro={false}/>
+        {/* ── 치환자 (2026-09-21) ────────────────────────────────────────────
+            ★★ 규칙은 접수 문안과 **글자 그대로 같다**(csFillLines) — 두 자리에서 다른
+              규칙을 외우게 하지 않는다. 그래서 설명 문구도 같은 말로 적는다. */}
+        <div style={{marginTop:8}}>
+          <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+            <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7,flex:1}}>
+              ★ <b style={{fontFamily:MONO}}>{'{중괄호}'}</b> 안은 <b>넣을 때 그 티켓 값으로 바뀝니다</b>
+              (예: <span style={{fontFamily:MONO}}>{'{주문번호}'}</span>).
+              <br/>★ 치환자가 들어 있는데 <b>그 값이 모두 비면 그 줄은 통째로 빠집니다</b> —
+              「운송장 번호 : 」 같은 줄이 남지 않게 하는 규칙입니다. 치환자가 없는 줄은 늘 남습니다.
+              <br/>★ 이름을 잘못 적으면 <b>글자 그대로 남습니다</b> — 아래 미리보기에서 바로 보입니다.
+            </div>
+            <button type="button" onClick={()=>setShowVars(v=>!v)}
+              style={{padding:'4px 10px',borderRadius:5,fontSize:11,fontFamily:'inherit',
+                cursor:'pointer',whiteSpace:'nowrap',background:'transparent',
+                border:'1px solid var(--border)',color:'var(--sub)'}}>
+              {showVars ? '치환자 닫기' : '쓸 수 있는 치환자'}</button>
+          </div>
+          {showVars && (
+            <div style={{marginTop:8,padding:'10px 12px',background:'var(--bg)',
+              border:'1px solid var(--border)',borderRadius:7}}>
+              <CsVarTable c24On={c24On}/>
+            </div>
+          )}
+          {/* ★★ 미리보기를 둔 까닭은 접수 문안 설정과 같다 — 치환자를 잘못 적으면
+              **저장한 뒤 고객에게 넣을 때야** 알게 되는데, 그때는 이미 이력에 들어간 뒤다. */}
+          {hasVar && (
+            <div style={{marginTop:8}}>
+              <div style={{fontSize:11,color:'var(--sub)',marginBottom:4}}>
+                미리보기 <span style={{opacity:.75}}>· 견본 건(김하늘/김바다) 기준</span>
+              </div>
+              <div style={{whiteSpace:'pre-wrap',fontSize:11.5,lineHeight:1.7,
+                padding:'9px 11px',borderRadius:7,background:'var(--bg)',
+                border:'1px solid var(--border)',color:'var(--text)'}}>
+                {preview || <span style={{color:'var(--sub)'}}>넣을 값이 모두 비어 남는 줄이 없습니다.</span>}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       {/* ★★ 켜고 끄기를 이 칸에서 뺐다(제니 2026-09-01). 목록의 [켜기]·[끄기] 와
            일괄 처리가 이미 같은 값(is_active)을 만진다 — 한 가지를 두 곳에서 만지면
@@ -26666,6 +26743,38 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   09-03 에 수령인을 세 번 찍어 «다를 수도 있는 값» 으로 읽힌 그 자리를 또 밟는다.
   const c24 = head ? csCafe24Snapshot(head, cafe24On) : {};
 
+  // ── 치환자가 읽는 «티켓처럼 생긴 것» (2026-09-21) ──────────────────────────
+  // ★★★ 접수 문안 단추가 제 onClick 안에서 만들던 것을 **여기로 뽑았다** — 이제 매크로
+  //   치환자도 같은 것을 쓴다. 두 곳에 따로 만들면 칸 하나가 빠지는 날 한쪽에서만 줄이
+  //   사라지는데, 그 자리는 **2026-09-08 에 이미 한 번 밟았다**(운송장 줄이 조용히 빠졌다).
+  // ★★ 문안이 티켓에서 읽는 칸은 여기에도 **다 있어야 한다** — 없는 칸은 «값이 빈 것» 으로
+  //   판정되어 그 줄이 통째로 사라진다. 저장 뒤 상세에서 누른 것과 같은 글이 나와야 한다.
+  const draftRowOf = (it)=>({
+    id:'new', cs_type:f.cs_type, direction:f.direction,
+    order_id: baseOf(it.code), supplier_name: it.supplier_name,
+    order_item_code:it.code, orderer_name:it.customer_name,
+    orderer_phone:it.customer_phone,
+    receiver_name:(itemF[it.code]||{}).receiver_name,
+    receiver_phone:(itemF[it.code]||{}).receiver_phone,
+    product_name:it.product_name,
+    option_name:(itemF[it.code]||{}).option_name,
+    order_qty: parseInt((itemF[it.code]||{}).order_qty,10) || null,
+    cs_qty: parseInt((itemF[it.code]||{}).cs_qty ?? '1',10) || 1,
+    // 저장할 때와 «같은 함수» 로 만든다 — 등록에서 본 문안과 저장 뒤 상세에서 뽑는 문안이
+    // 다르면 안 된다.
+    cafe24_snapshot: csCafe24Snapshot(it, cafe24On),
+  });
+  // ★ 티켓이 아직 없으니 «접수 사유» 도 DB 가 아니라 지금 적어 둔 이력 줄(notes)에서
+  //   가져온다 — 화면에서 보이는 것과 같은 글이 나가야 한다.
+  const draftEvs = ()=> notes.filter(n=>n.side==='고객' && n.text)
+    .map((n,i)=>({id:'n'+i, ticket_id:'new', side:'고객', note:n.text}));
+  // ★★★ 매크로 치환자는 **«메인» 품목 기준**이다 — 이 화면이 상품 금액·카페24 값을 이미
+  //   메인 기준으로 보여 주고 있어서(위 head), 매크로만 «첫 품목» 을 보면 **화면에 보이는
+  //   값과 이력에 박히는 값이 갈린다.** 2026-09-09 에 그 어긋남을 고친 자리다.
+  // ★ 접수 문안 단추는 그대로 «고른 품목 전부» 다 — 공급사는 여러 품목을 한 번에 받아야 한다.
+  //   매크로는 이력에 남길 «한 문장» 이라 단위가 다르다.
+  const macroVars = ()=>({ t: mainItem ? draftRowOf(mainItem) : null, ev: draftEvs() });
+
   // ★★★ 수령인·배송지는 «주문» 의 값이다 — 품목마다 갖지 않는다(제니 2026-09-03).
   //   「우리가 쓰는 카페24는 동일 주문번호 안의 품목별 주문번호가 같은 주문자·수령자·
   //   배송지를 갖는다. 품목별로 다른 값을 가질 수 없다.」
@@ -27602,7 +27711,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   경우가 흔하고, 공급사도 그것을 한 번에 받아야 한다.
                 ★ 형식은 «그 공급사의 창구» 가 정한다(메일이면 제목+표). */}
             <CsSymbolBar taRef={noteRef} value={draft} onChange={setDraft} light
-              onSpace={setMacroSpace}
+              onSpace={setMacroSpace} vars={macroVars}
               right={
                 <button type="button" disabled={!chosen.length}
                   title={chosen.length ? (supChannel==='email'
@@ -27620,24 +27729,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     //   ★★★ **여기서 만드는 것은 «티켓처럼 생긴 것» 이다** —
                     //     문안이 티켓에서 읽는 칸은 여기에도 다 있어야 한다.
                     //     저장 뒤 상세에서 누른 것과 같은 글이 나와야 하기 때문이다.
-                    const list = chosen.map(it=>({
-                      id:'new', cs_type:f.cs_type, direction:f.direction,
-                      order_id: baseOf(it.code), supplier_name: it.supplier_name,
-                      order_item_code:it.code, orderer_name:it.customer_name,
-                      orderer_phone:it.customer_phone,
-                      receiver_name:(itemF[it.code]||{}).receiver_name,
-                      receiver_phone:(itemF[it.code]||{}).receiver_phone,
-                      product_name:it.product_name,
-                      option_name:(itemF[it.code]||{}).option_name,
-                      order_qty: parseInt((itemF[it.code]||{}).order_qty,10) || null,
-                      cs_qty: parseInt((itemF[it.code]||{}).cs_qty ?? '1',10) || 1,
-                      // 저장할 때와 «같은 함수» 로 만든다 — 등록에서 본 문안과
-                      // 저장 뒤 상세에서 뽑는 문안이 다르면 안 된다.
-                      cafe24_snapshot: csCafe24Snapshot(it, cafe24On),
-                    }));
-                    const evs = notes.filter(n=>n.side==='고객' && n.text)
-                      .map((n,i)=>({id:'n'+i, ticket_id:'new', side:'고객', note:n.text}));
-                    const d = csDraftFor(supChannel, list, evs);
+                    // ★ 매크로 치환자와 «같은 것» 으로 만든다(draftRowOf · 2026-09-21에
+                    //   이 onClick 안에 있던 것을 위로 뽑았다).
+                    const list = chosen.map(draftRowOf);
+                    const d = csDraftFor(supChannel, list, draftEvs());
                     // ★ 뒤에 빈 줄 하나를 남긴다(제니) — 문안 다음에 한마디 덧붙이는
                     //   일이 흔한데, 커서가 표 끝에 붙어 있으면 거기서 줄을 만들어야 한다.
                     setDraft(x=> (x.trim() ? (x.replace(/\s+$/,'')+'\n\n') : '')+d.text+'\n');
@@ -28237,6 +28332,15 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
   const draftRef = useRef(null);
   // 접수 문안의 «형식» 을 정하는 값 — 이 티켓 공급사의 창구(메일·네이트온·카카오톡).
   const supChannel = useSupplierChannel(t && t.supplier_name);
+  // ★★★ 치환자가 읽는 «이 건» — 접수 문안 단추와 매크로가 **같은 것**을 본다(2026-09-21).
+  //   두 곳에 따로 적으면 언젠가 한쪽만 고쳐지고, 그때 «문안에는 고친 수량이 들어가는데
+  //   매크로에는 옛 수량이 들어가는» 일이 된다.
+  // ★ 함수로 둔다 — 부르는 «그 순간» 의 값을 읽어야 한다(①에서 고치는 중일 수 있다).
+  // ★ cs_qty 는 저장 전 편집값을 먼저 본다(화면에 보이는 것과 같아야 한다).
+  const macroVars = ()=>({
+    t: {...t, cs_qty: parseInt(edit && edit.cs_qty, 10) || (t && t.cs_qty)},
+    ev: events,
+  });
   // ── 접수 사유로 쓸 이력 줄 (제니 2026-09-04) ──────────────────────────
   // ★★ 이 표시는 «티켓» 이 기억한다 — 이력 표는 append-only 라 거기 칸을 더하면
   //   «본문 가리기 말고는 아무것도 못 바꾼다» 는 자물쇠를 풀어야 한다.
@@ -29272,14 +29376,15 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                 ★ 자리는 특수문자 줄의 «오른쪽 끝» 이다(제니) — 아래에 또 두면 작성칸
                   위가 두 줄이 된다. */}
             <CsSymbolBar taRef={draftRef} value={draft} onChange={setDraft} light
-              onSpace={setMacroSpace}
+              onSpace={setMacroSpace} vars={macroVars}
               right={
                 <button type="button" disabled={busy}
                   title={supChannel==='email' ? '이 공급사는 메일 창구 — 제목+표로 넣습니다'
                                               : '메신저용 줄글로 넣습니다'}
                   onClick={async ()=>{
-                    const d = csDraftFor(supChannel,
-                      [{...t, cs_qty: parseInt(edit.cs_qty,10) || t.cs_qty}], events);
+                    // ★ 매크로 치환자와 «같은 것» 을 본다(macroVars · 2026-09-21).
+                    const s = macroVars();
+                    const d = csDraftFor(supChannel, [s.t], s.ev);
                     // ★ 뒤에 빈 줄 하나를 남긴다(제니) — 문안 다음에 한마디 덧붙이는
                     //   일이 흔한데, 커서가 표 끝에 붙어 있으면 거기서 줄을 만들어야 한다.
                     setDraft(x=> (x.trim() ? (x.replace(/\s+$/,'')+'\n\n') : '')+d.text+'\n');
@@ -30246,12 +30351,29 @@ function csDraftSubject(){
 //     빠지고, 사람이 새로 넣은 줄에도 같은 규칙이 그냥 적용된다 —
 //     **예외를 코드에 적어 두는 대신 규칙 하나로 설명되게 한다.**
 //   ★ 치환자가 아예 없는 줄(고정 문구)은 언제나 남는다. 인사말·서명이 그런 줄이다.
-function csDraftMessengerOne(t, events){
-  return (csTpl().msg_lines||[])
-    .map(l=>csFillTpl(l, t, events))
+// ★★★ «치환자를 담고 있는데 그 값이 모두 비면 그 줄은 빠진다» 는 규칙을 **한 자리에** 둔다
+//   (2026-09-21 매크로에도 치환자가 붙으면서 뽑아냈다). 접수 문안과 매크로가 같은 규칙으로
+//   돌아야 한다 — 두 곳에 따로 적으면 언젠가 한쪽만 고쳐지고, 그때 «문안에서는 빠지는 줄이
+//   매크로에서는 「운송장 번호 : 」로 남는» 일이 된다.
+function csFillLines(lines, t, ev){
+  return (lines||[])
+    .map(l=>csFillTpl(l, t, ev))
     .filter(r=> !(r.hasVar && !r.filled))
-    .map(r=>r.text)
-    .join('\n');
+    .map(r=>r.text);
+}
+function csDraftMessengerOne(t, events){
+  return csFillLines(csTpl().msg_lines||[], t, events).join('\n');
+}
+// 매크로 본문의 치환자를 그 티켓 값으로 바꾼다 (2026-09-21).
+// ★★ 접수 문안과 **글자 그대로 같은 규칙**이다(위 csFillLines) — 상담원이 두 자리에서
+//   다른 규칙을 외우지 않아도 된다.
+// ★ 티켓을 모르는 자리(예: 매크로를 만드는 설정 화면)에서는 **원문 그대로** 둔다 —
+//   거기서 값을 채우면 «그 값이 박힌 사본» 이 매크로로 저장된다.
+// ★ 모르는 이름은 csFillTpl 이 글자 그대로 남긴다 — 오타를 낸 사람이 그 자리에서 본다.
+function csFillMacro(body, t, ev){
+  const s = String(body==null ? '' : body);
+  if(!t) return s;
+  return csFillLines(s.split('\n'), t, ev).join('\n');
 }
 function csDraftMessenger(rows, events){
   // ★ 머리말 다음은 «바로» 첫 건이다(제니 문안 그대로). 건과 건 사이만 빈 줄로 나눈다 —
