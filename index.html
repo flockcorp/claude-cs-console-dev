@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260922h_products_list_theme -->
+<!-- (2026-09-22) 🎨 **상품 정보 «목록 표» 를 테마로 옮겼다 — 46곳**(제니 「상품 정보 화면 다크로 옮기는 거 진행하자」). 오늘 hover 건으로 드러난 근본 과제다: 이 화면은 판도 행도 `#fff` 로 박힌 **«다크로 안 옮겨진 섬»** 이었고, 그래서 hover 만 테마 색이 깔리자 글자가 사라졌다(`f` 판). ★★★ **판·행·테두리·글자가 «함께» 가야 한다** — 판만 어둡게 하면 어두운 글자가 통째로 사라진다. 그래서 목록 구간(5112~5349)을 한 번에 옮겼다. **구조**: 판 `#fff`→`--card` · 표 테두리 `#c8d8f0`→`--border` · 체크된 행 `#fde8e8`→`rgba(248,113,113,.14)`(«빨간 기운» 이 뜻이므로 틴트라야 두 모드에서 함께 움직인다) · CS 펼침 줄 `#f0f5ff`→`--hover` · 공급사 팝오버 판·구분선·점선. **글자**: `#1a3060`·`#2a4080`·`#1a2060`→`--text` · `#6a80a0`·`#4a6090`·`#2a4060`·`#8fa8d0`·`#aaa`·`#545454`→`--sub` · `#1a5fcc`(링크)→`--info-ink` · `#F6AD09`→`--warn-ink` · `#c82020`→`--red-ink` · `#b88108`→`--warn-ink`. **칩**: 섹션 제목·옵션 값의 «연파랑 알약»(`#dce8ff`/`#e8f0ff`)→`--hover`+`--accent`. 🔵 **일부러 그대로 둔 것** — 상태 뱃지 `tag(...)`(판매중지·미진열·카페24 삭제·공급사 미사용)는 **불투명 밝은 칩**이고 [수정] 버튼(네이비+흰 글자) · CS 토글 버튼(네이비/연파랑 «쌍») · 첨부 수 뱃지도 **두 모드에서 같아야 맞는 짝**이다. 오늘 세운 기준 그대로다 — «박혔는가» 가 아니라 «모드에 따라 맞는 값이 달라지는가». ★★ **자가 못 보는 짝을 따로 쟀다** — 이번에 바꾼 글자는 대부분 바탕이 판이라 «같은 style 안에 둘 다» 라는 자의 조건에 안 걸린다. 그래서 «글자 토큰 × 바탕 토큰» 아홉 쌍을 손으로 재어 **가장 낮은 것이 5.54**(본문 기준 4.5 통과)임을 확인했다. **도구가 안 본다고 안 본 채로 두지 않는다.** ★ 패치는 **줄+옛 글자+새 글자** 46쌍을 적어 **하나라도 못 찾으면 아예 쓰지 않게** 했다(줄이 밀렸다는 뜻이므로). 46/46 찾았다. ⏳ 남은 것: 같은 화면의 **수정 창·필터 줄·FAQ 업로드** 쪽(이 화면 전체로는 박힌 색 111곳 중 46곳을 옮겼다). ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922g_ink_body_level -->
 <!-- (2026-09-22) 📐 **«큰 글자 기준(3.0)» 을 넘긴 것으로 끝내지 않고 «본문 기준(4.5)» 까지 올렸다.** 앞 판들에서 3.0 미만을 0으로 만들었지만, 제니가 확인하기 어려운 자리 둘(지연 메모 박스·FAQ 업로드 안내)을 숫자로 대신 확인하다가 **라이트에서 5.36 → 3.98 로 «조금 나빠지는» 것**을 발견했다. 눈으로는 못 잡을 차이지만 **본문 글자 기준에는 미달**이다. ① **`--warn-ink` 의 라이트 값을 `#9A6B06` → `#7a5b00`.** 그 잉크가 얹히는 바탕 **11종을 전수로** 재니 지금 값은 3.69~4.69 로 거의 다 기준 미달이었고, 새 값은 **4.98~6.32** 로 전부 통과한다. ★ 지어낸 값이 아니라 **상품 정보 «지연 메모» 박스가 원래 쓰던 값**이다. 이로써 그 두 자리는 라이트가 예전 그대로(5.36)면서 다크만 2.34 → 7.66 으로 고쳐진다 — **나빠지는 것이 없어졌다.** ② **글자로 쓰인 `var(--red)` 42곳 → `var(--red-ink)`.** 두 토큰은 **다크 값이 `#f87171` 로 글자 그대로 같아 다크는 한 픽셀도 안 변하고**, 라이트만 #D64545 → #C0392B 로 진해진다(3.48~3.66 → 4.33~4.43). 🔴🔴🔴 **그 과정에서 «자» 의 큰 버그를 찾았다 — 문자열 «안» 의 `/*` 를 주석 시작으로 읽고 있었다.** `accept="image/*"` 한 줄 때문에 그 뒤가 통째로 «주석» 으로 잡혀 **자가 실제 코드를 건너뛰었다**(그래서 한 줄이 치환에서 빠졌고, 그 줄로 알아챘다). ★★★ **재는 도구가 덜 재면 «없다» 가 아니라 «못 봤다» 다** — 앞 판에서 «분모를 함께 보라» 고 적어 둔 것과 같은 병이 **도구 자신** 안에 있었다. 따옴표 안은 아무것도 보지 않도록 고쳤고, 다시 재니 잰 자리가 210 → **211곳**(누락은 그 한 곳뿐이라 앞선 결론은 그대로 유효하다). ⏳ 남은 «본문 기준 미만» 18곳은 전부 **4.21~4.49 의 작고 굵은 칩·뱃지 글자**로 큰 글자 기준(3.0)은 넉넉히 넘는다 — 더 진하게 하면 칩이 칙칙해져 **여기서 멈춘다.** ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922f_prod_row_hover -->
@@ -5109,7 +5111,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
               ⚠⚠ 아래는 삼항의 «가지» 다 — 그 안에 JSX 주석을 끼우면 문법이 깨진다.
                  (실제로 밟았다 — 주석은 삼항 «밖», 곧 여기에 둔다.) */}
           {loading?<div className="loading">{search?'🔍 검색 중입니다...':'불러오는 중...'}</div>:products.length===0?<div className="empty-state">등록된 상품이 없습니다</div>:
-            <div style={{background:'#fff',borderRadius:8,overflow:'visible',border:'1px solid #c8d8f0'}}>
+            <div style={{background:'var(--card)',borderRadius:8,overflow:'visible',border:'1px solid var(--border)'}}>
               {/* prod-list — 이 표는 판·행이 흰색으로 박힌 «섬» 이라 hover 도 밝은 값이라야 한다(위 CSS) */}
               <table className="hist prod-list" style={{background:'transparent',width:'100%',borderCollapse:'collapse'}}>
                 {/* ★ 여기 박혀 있던 #2A478D 가 곧 --head-bg 다(2026-09-08 에 두 모드 값을
@@ -5140,7 +5142,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                 </tr></thead>
                 <tbody>{products.map(p=>(
                   <React.Fragment key={p.id}>
-                  <tr style={{background:checkedIds.has(p.id)?'#fde8e8':'#fff'}}>
+                  <tr style={{background:checkedIds.has(p.id)?'rgba(248,113,113,.14)':'var(--card)'}}>
                     <td style={{textAlign:'center'}}>
                       <input type="checkbox" checked={checkedIds.has(p.id)}
                         onChange={e=>{const s=new Set(checkedIds);e.target.checked?s.add(p.id):s.delete(p.id);setCheckedIds(s);}}
@@ -5148,7 +5150,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                     </td>
                     <td>{(()=>{
                       const sn=p.supplier_name||'';
-                      if(!sn) return <span style={{fontSize:11,color:'#aaa'}}>-</span>;
+                      if(!sn) return <span style={{fontSize:11,color:'var(--sub)'}}>-</span>;
                       const st=getSupStyle(sn);
                       const popId='r_'+p.id;
                       const isOpen=labelPopover&&labelPopover.anchorId===popId;
@@ -5162,19 +5164,19 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                             style={{display:'inline-block',padding:'3px 10px',background:st.bg,color:st.color,border:'1px solid '+st.border,borderRadius:4,fontSize:11,fontWeight:700,cursor:'pointer',userSelect:'none'}}
                             title={'채널: '+st.label+' (클릭하여 변경)'}>{sn}</span>
                           {isOpen&&(
-                            <div data-sup-popover style={{position:'absolute',top:'100%',left:0,marginTop:4,background:'#fff',border:'1px solid #2A478D',borderRadius:8,boxShadow:'0 6px 16px rgba(42,71,141,.18)',padding:6,zIndex:50,minWidth:160}}>
-                              <div style={{fontSize:9,color:'#6a80a0',fontWeight:700,textTransform:'uppercase',letterSpacing:'.04em',padding:'4px 8px 6px',borderBottom:'1px solid #f0f0f0',marginBottom:4}}>{sn} — 채널 변경</div>
+                            <div data-sup-popover style={{position:'absolute',top:'100%',left:0,marginTop:4,background:'var(--card)',border:'1px solid var(--primary)',borderRadius:8,boxShadow:'0 6px 16px rgba(42,71,141,.18)',padding:6,zIndex:50,minWidth:160}}>
+                              <div style={{fontSize:9,color:'var(--sub)',fontWeight:700,textTransform:'uppercase',letterSpacing:'.04em',padding:'4px 8px 6px',borderBottom:'1px solid var(--border)',marginBottom:4}}>{sn} — 채널 변경</div>
                               {['kakao','nateon','email','none'].map(ck=>{
                                 const cs=SUP_CHANNELS[ck];
                                 const cur=(supplierMap[sn]||'none')===ck;
                                 return (
                                   <div key={ck} onClick={()=>{setSupplierChannel(sn,ck==='none'?null:ck);setLabelPopover(null);}}
-                                    style={{display:'flex',alignItems:'center',gap:8,padding:'5px 8px',borderRadius:5,cursor:'pointer',fontSize:12,color:'#1a3060',fontWeight:cur?700:500,background:cur?'#dce8ff':'transparent'}}
-                                    onMouseEnter={(e)=>{if(!cur)e.currentTarget.style.background='#f0f5ff';}}
+                                    style={{display:'flex',alignItems:'center',gap:8,padding:'5px 8px',borderRadius:5,cursor:'pointer',fontSize:12,color:'var(--text)',fontWeight:cur?700:500,background:cur?'var(--hover)':'transparent'}}
+                                    onMouseEnter={(e)=>{if(!cur)e.currentTarget.style.background='var(--hover)';}}
                                     onMouseLeave={(e)=>{if(!cur)e.currentTarget.style.background='transparent';}}>
                                     <span style={{width:10,height:10,borderRadius:'50%',background:cs.bg,border:'1px solid '+cs.border,flexShrink:0}}/>
                                     <span style={{flex:1}}>{cs.label}</span>
-                                    {cur&&<span style={{color:'#2A478D'}}>✓</span>}
+                                    {cur&&<span style={{color:'var(--accent)'}}>✓</span>}
                                   </div>
                                 );
                               })}
@@ -5185,7 +5187,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                     })()}</td>
                     {/* ★ 상태 표시를 상품명이 아니라 «코드 밑» 에 단다(제니 결정) —
                         상품명은 길이가 제각각이라 뒤에 붙이면 줄마다 자리가 달라져 정렬이 무너진다. */}
-                    <td style={{fontSize:11,color:'#4a6090',fontFamily:'monospace'}}>
+                    <td style={{fontSize:11,color:'var(--sub)',fontFamily:'monospace'}}>
                       <div>{p.product_code||'-'}</div>
                       <Cafe24Tags p={p}/>
                     </td>
@@ -5193,17 +5195,17 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                       /* ★ 이름이 길어 잘렸을 때만 전체를 보여 준다 — 공용 헬퍼를 쓴다. */
                       {...tipIfClipped(p.product_name)}>{p.product_name}</td>
 
-                    <td style={{fontSize:11,color:'#1a3060'}}>
+                    <td style={{fontSize:11,color:'var(--text)'}}>
                       <div style={{fontWeight:500}}>{p.shipping_method||'-'}</div>
-                      <div style={{color:'#6a80a0',fontSize:10}}>
-                        {p.payment_type&&p.payment_type!=='선결제'?<span style={{color:'#F6AD09',marginRight:3}}>[{p.payment_type}]</span>:null}
+                      <div style={{color:'var(--sub)',fontSize:10}}>
+                        {p.payment_type&&p.payment_type!=='선결제'?<span style={{color:'var(--warn-ink)',marginRight:3}}>[{p.payment_type}]</span>:null}
                         {p.shipping_cond==='금액 조건부 무료'&&p.shipping_threshold
                           ?Number(p.shipping_threshold).toLocaleString()+'원 이상 무료'
                           :p.shipping_cond||'-'}
                       </div>
-                      <div style={{color:'#2a4060',fontSize:10}}>{p.shipping_fee?Number(p.shipping_fee).toLocaleString()+'원':'무료'}</div>
+                      <div style={{color:'var(--sub)',fontSize:10}}>{p.shipping_fee?Number(p.shipping_fee).toLocaleString()+'원':'무료'}</div>
                     </td>
-                    <td style={{fontSize:11,color:'#1a3060'}}>
+                    <td style={{fontSize:11,color:'var(--text)'}}>
                       {p.return_fee_type==='B'
                         ?(p.return_fee_text||p.return_fee||'-')
                         :(p.return_fee?'왕복 '+Number(p.return_fee).toLocaleString()+'원':'-')}
@@ -5213,12 +5215,12 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                         <button onClick={()=>toggleCs(p.id)} style={{padding:'3px 10px',background:expandedCs.has(p.id)?'#DCE8FF':'#2A478D',border:'1px solid #2A478D',borderRadius:5,color:expandedCs.has(p.id)?'#1A3A8F':'#FFFFFF',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit',whiteSpace:'nowrap'}}>
                           {expandedCs.has(p.id)?'CS 닫기 ▲':'CS 보기 ▼'}
                         </button>
-                      ):<span style={{fontSize:11,color:'#aaa'}}>-</span>}
+                      ):<span style={{fontSize:11,color:'var(--sub)'}}>-</span>}
                     </td>
-                    <td>{p.product_url?<a href={p.product_url} target="_blank" rel="noreferrer" style={{color:'#1a5fcc',fontSize:12}}>링크</a>:'-'}</td>
+                    <td>{p.product_url?<a href={p.product_url} target="_blank" rel="noreferrer" style={{color:'var(--info-ink)',fontSize:12}}>링크</a>:'-'}</td>
                     <td>
                       <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                        <span style={{fontSize:11,color:'#2a4060',fontWeight:500}}>{p.created_at?p.created_at.slice(0,10):'-'}</span>
+                        <span style={{fontSize:11,color:'var(--sub)',fontWeight:500}}>{p.created_at?p.created_at.slice(0,10):'-'}</span>
                         <span style={{fontSize:10,color:'var(--sub)'}}>수정 {p.updated_at?p.updated_at.slice(0,10):'-'}</span>
                         {/* ★ 「맞춤 MM-DD」 줄은 2026-08-31 에 뺐다(제니 지시).
                             08-26 에 수정 동기화를 300건씩 손으로 돌리던 때는 «이번에 무엇을
@@ -5233,40 +5235,40 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                       {canDelete&&<button onClick={()=>del(p.id)} style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.5)',color:'var(--red-ink)',borderRadius:5,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>}
                     </td>
                   </tr>
-                  {expandedCs.has(p.id)&&<tr style={{background:'#f0f5ff'}}>
-                      <td colSpan={10} style={{padding:0,borderBottom:'2px solid #2A478D'}}>
+                  {expandedCs.has(p.id)&&<tr style={{background:'var(--hover)'}}>
+                      <td colSpan={10} style={{padding:0,borderBottom:'2px solid var(--primary)'}}>
                         <div style={{display:'grid',gridTemplateColumns:'300px 1fr 400px',width:'100%',minWidth:0}}>
                           {/* 좌측: 반품배송비 + 옵션 통합 */}
-                          <div className="cs-toggle-col" style={{padding:'14px 16px',borderRight:'1px solid #dde8f8',borderLeft:'3px solid #2A478D',display:'flex',flexDirection:'column',gap:12,maxHeight:380,overflowY:'auto'}}>
+                          <div className="cs-toggle-col" style={{padding:'14px 16px',borderRight:'1px solid var(--border)',borderLeft:'3px solid var(--primary)',display:'flex',flexDirection:'column',gap:12,maxHeight:380,overflowY:'auto'}}>
                             <div>
-                              <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'#1a3a8f',background:'#dce8ff',borderRadius:4,padding:'2px 8px',marginBottom:8}}>반품배송비</div>
-                              <div style={{fontSize:12,color:'#1a3060',lineHeight:1.8}}>
+                              <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'var(--accent)',background:'var(--hover)',borderRadius:4,padding:'2px 8px',marginBottom:8}}>반품배송비</div>
+                              <div style={{fontSize:12,color:'var(--text)',lineHeight:1.8}}>
                                 {p.return_fee_type==='B'?(p.return_fee_text||p.return_fee||'-'):(p.return_fee?Number(p.return_fee).toLocaleString()+'원 (왕복)':'-')}
                               </div>
                             </div>
-                            <div style={{borderTop:'1px dashed #c8d8f0'}}/>
+                            <div style={{borderTop:'1px dashed var(--border)'}}/>
                             <div>
-                              <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'#1a3a8f',background:'#dce8ff',borderRadius:4,padding:'2px 8px',marginBottom:8}}>옵션</div>
+                              <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'var(--accent)',background:'var(--hover)',borderRadius:4,padding:'2px 8px',marginBottom:8}}>옵션</div>
                               <div>
                                 {(p.options||[]).length>0
                                   ?(p.options||[]).map((opt,oi)=>opt.values&&opt.values.length>0&&(
                                     <div key={oi} style={{marginBottom:6}}>
-                                      <div style={{fontSize:10,color:'#8fa8d0',fontWeight:600,marginBottom:3}}>{opt.name}</div>
+                                      <div style={{fontSize:10,color:'var(--sub)',fontWeight:600,marginBottom:3}}>{opt.name}</div>
                                       <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
                                         {opt.values.map((v,vi)=>(
-                                          <span key={vi} style={{padding:'2px 7px',background:'#e8f0ff',border:'1px solid #c4d4f0',borderRadius:10,fontSize:11,color:'#2a5090',whiteSpace:'nowrap'}}>{v}</span>
+                                          <span key={vi} style={{padding:'2px 7px',background:'var(--hover)',border:'1px solid var(--border)',borderRadius:10,fontSize:11,color:'var(--text)',whiteSpace:'nowrap'}}>{v}</span>
                                         ))}
                                       </div>
                                     </div>
                                   ))
-                                  :<span style={{fontSize:12,color:'#aaa'}}>-</span>
+                                  :<span style={{fontSize:12,color:'var(--sub)'}}>-</span>
                                 }
                               </div>
                             </div>
                           </div>
                           {/* CS 정보 */}
-                          <div className="cs-toggle-col" style={{padding:'14px 16px',borderRight:'1px solid #dde8f8',borderLeft:'3px solid #2A478D',maxHeight:380,overflowY:'auto'}}>
-                            <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'#1a3a8f',background:'#dce8ff',borderRadius:4,padding:'2px 8px',marginBottom:10}}>CS 정보</div>
+                          <div className="cs-toggle-col" style={{padding:'14px 16px',borderRight:'1px solid var(--border)',borderLeft:'3px solid var(--primary)',maxHeight:380,overflowY:'auto'}}>
+                            <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'var(--accent)',background:'var(--hover)',borderRadius:4,padding:'2px 8px',marginBottom:10}}>CS 정보</div>
                             {/* Q&A 카테고리별 그룹핑 — 불량 > 변심 > 상품 > 기타 순 */}
                             {(()=>{
                               try{
@@ -5275,10 +5277,10 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                                 const cats=['불량','변심','상품','기타'];
                                 // 카테고리별 뱃지 색상 (기존 팔레트 재사용)
                                 const catStyle={
-                                  '불량':{bg:'rgba(248,113,113,.15)',color:'#c82020'},
-                                  '변심':{bg:'rgba(246,173,9,.15)',color:'#b88108'},
-                                  '상품':{bg:'#dce8ff',color:'#1a3a8f'},
-                                  '기타':{bg:'rgba(84,84,84,.12)',color:'#545454'}
+                                  '불량':{bg:'rgba(248,113,113,.15)',color:'var(--red-ink)'},
+                                  '변심':{bg:'rgba(246,173,9,.15)',color:'var(--warn-ink)'},
+                                  '상품':{bg:'var(--hover)',color:'var(--accent)'},
+                                  '기타':{bg:'rgba(84,84,84,.12)',color:'var(--sub)'}
                                 };
                                 const sections=cats
                                   .filter(cat=>(qaMap[cat]||[]).length>0)
@@ -5294,8 +5296,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                                   // 구조화된 Q&A로 파싱 안 될 경우 (예: 엑셀 업로드로 자유 형식 텍스트 입력)
                                   // cs_info 원본을 그대로 표시 (빈 값이면 '-')
                                   return p.cs_info
-                                    ? <div style={{fontSize:12,color:'#2a4080',whiteSpace:'pre-wrap',wordBreak:'break-all',lineHeight:1.7}}>{p.cs_info}</div>
-                                    : <div style={{fontSize:12,color:'#6a80a0'}}>-</div>;
+                                    ? <div style={{fontSize:12,color:'var(--text)',whiteSpace:'pre-wrap',wordBreak:'break-all',lineHeight:1.7}}>{p.cs_info}</div>
+                                    : <div style={{fontSize:12,color:'var(--sub)'}}>-</div>;
                                 }
                                 return sections.map((section,si)=>(
                                   <div key={section.cat} style={{marginTop:si>0?14:0,paddingTop:si>0?14:0,borderTop:si>0?'2px solid rgba(42,71,141,.15)':'none'}}>
@@ -5306,11 +5308,11 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                                       <div key={key} style={{paddingTop:bi>0?10:0,marginTop:bi>0?10:0,borderTop:bi>0?'1px dashed rgba(42,71,141,.3)':'none'}}>
                                         <div style={{display:'flex',gap:6,alignItems:'flex-start',marginBottom:4}}>
                                           <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',flexShrink:0}}>Q</span>
-                                          <span style={{fontSize:12,color:'#1a2060',fontWeight:700,lineHeight:1.6,wordBreak:'break-all',whiteSpace:'pre-wrap',minWidth:0,flex:1}}>{qa.q}</span>
+                                          <span style={{fontSize:12,color:'var(--text)',fontWeight:700,lineHeight:1.6,wordBreak:'break-all',whiteSpace:'pre-wrap',minWidth:0,flex:1}}>{qa.q}</span>
                                         </div>
                                         {qa.a&&<div style={{display:'flex',gap:6,alignItems:'flex-start',marginBottom:4}}>
                                           <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'rgba(34,211,160,.1)',color:'var(--ok-ink)',flexShrink:0}}>A</span>
-                                          <span style={{fontSize:12,color:'#2a4080',lineHeight:1.6,wordBreak:'break-all',whiteSpace:'pre-wrap',minWidth:0,flex:1}}>{qa.a}</span>
+                                          <span style={{fontSize:12,color:'var(--text)',lineHeight:1.6,wordBreak:'break-all',whiteSpace:'pre-wrap',minWidth:0,flex:1}}>{qa.a}</span>
                                         </div>}
                                         {imgs.length>0&&(
                                           <div style={{display:'flex',justifyContent:'flex-end',marginTop:4}}>
@@ -5325,20 +5327,20 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                                   </div>
                                 ));
                               }catch(err){
-                                return <div style={{fontSize:12,color:'#6a80a0',whiteSpace:'pre-wrap',wordBreak:'break-all'}}>{p.cs_info||'-'}</div>;
+                                return <div style={{fontSize:12,color:'var(--sub)',whiteSpace:'pre-wrap',wordBreak:'break-all'}}>{p.cs_info||'-'}</div>;
                               }
                             })()}
                           </div>
                           {/* 메모 */}
                           {/* 메모 */}
-                          <div className="cs-toggle-col" style={{padding:'14px 16px',borderLeft:'3px solid #2A478D',maxHeight:380,overflowY:'auto'}}>
-                            <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'#1a3a8f',background:'#dce8ff',borderRadius:4,padding:'2px 8px',marginBottom:8}}>메모</div>
+                          <div className="cs-toggle-col" style={{padding:'14px 16px',borderLeft:'3px solid var(--primary)',maxHeight:380,overflowY:'auto'}}>
+                            <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'var(--accent)',background:'var(--hover)',borderRadius:4,padding:'2px 8px',marginBottom:8}}>메모</div>
                             {p.delay_memo && (
                               <div style={{fontSize:12,color:'var(--warn-ink)',background:'rgba(246,173,9,.12)',border:'1px solid rgba(246,173,9,.4)',borderRadius:5,padding:'8px 10px',marginBottom:8,whiteSpace:'pre-wrap',lineHeight:1.7}}>
                                 {p.delay_memo}
                               </div>
                             )}
-                            <div style={{fontSize:12,color:'#6a80a0',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{p.memo||'-'}</div>
+                            <div style={{fontSize:12,color:'var(--sub)',lineHeight:1.8,whiteSpace:'pre-wrap'}}>{p.memo||'-'}</div>
                           </div>
                         </div>
                       </td>
