@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260922d_contrast_zero -->
+<!-- (2026-09-22) 📐 **«라이트에서 안 읽히는 글자» 를 눈이 아니라 «자» 로 찾아 31곳을 0으로 만들었다.** ★★★ 제니가 찾아 준 버그는 「안 읽힌다」였지 「색이 박혀 있다」가 아니었다 — **안 읽히는 것은 계산으로 찾을 수 있다.** 글자색과 바탕색을 라이트 값으로 풀고(var() 를 팔레트로, rgba 를 바탕 위에 얹어서) WCAG 명암비를 재는 자를 만들었다(`scratchpad/contrast.py`). 한 style 안에 color 와 background 가 **둘 다** 있는 자리 210곳을 재니 **라이트에서 3.0 미만이 31곳**이었고 **31곳 전부가 «다크는 멀쩡한데 라이트만 깨진» 것**이었다. ★★ **둘 다 있는 자리만 본다** — 그래야 «무엇 위의 무엇» 인지 지어내지 않는다. ① **22곳은 노란 글자를 노란 틴트 위에** 올린 것이었다(명암비 1.58~1.77 · 사실상 안 읽힘). 그 자리 토큰은 **이미 있었다**(`--warn-ink`) → 치환. 다크 값이 #F6AD09 로 지금과 같아 **다크는 변할 수 없다.** ② 남은 9곳은 **토큰이 아예 없는 색**(파랑 #78AAFF·#60a5fa · 주황 #FFA94D · 빨강 #FF6B6B)이라 잉크 둘을 더했다: **`--info-ink`(다크 #78AAFF / 라이트 #2A478D) · `--held-ink`(다크 #FFA94D / 라이트 #A85800)**, 빨강은 기존 `--red-ink` 가 흡수. ★★★ **라이트 값을 짐작하지 않고 명암비로 골랐다** — 후보 다섯을 재어 브랜드 남색 #2A478D 가 7.1~7.6 으로 가장 좋았다. **새 색을 지어낼 필요가 없었다.** ⚠ **이 둘째 묶음은 다크도 «아주 조금» 바뀐다**(6곳): #60a5fa→#78AAFF · #FF6B6B→#f87171. 같은 계열의 이웃 값이지만 앞 판들과 달리 «다크 불변» 이 아니다. 🔴🔴 **밟은 것: 팔레트 블록 주석에 「--info-ink : 설명」 꼴로 적었더니 팔레트를 읽는 도구가 세미콜론까지를 값으로 삼아 주석 문장을 그 변수의 값으로 읽었다.** CSS 는 멀쩡한데 **자가 고장 나** 5곳을 «못 재고» 0곳으로 통과시켰다. **«0» 이 «없다» 가 아니라 «못 봤다» 일 수 있다 — 잰 자리 수(210)가 그대로인지를 함께 봐야 안다.** 주석 문구를 바꿔 고쳤고, 그 함정을 그 자리에 적어 뒀다. ⏳ **남은 것: 다크에서 낮은 9곳**(어두운 글자를 틴트 위에 올린 자리 · 전부 원래 있던 것) — 다음 판. ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922c_modal_title_ink -->
 <!-- (2026-09-22) 🔴 **모달 머리 띠 제목이 라이트에서 «안 보였다»**(제니 제보: 배송지연 「지연 상품 추가」). 띠 배경은 `var(--panel-bg)`(다크 #162244 · **라이트 #EDF2FA**)인데 제목 글자만 **`color:'#fff'` 로 박혀** 있어, 라이트에서 옅은 하늘 위 흰 글자가 됐다. ★★ **한 곳이 아니라 다섯이었다** — 공급사 CSV 업로드 미리보기(7667) · 배송지연 지연 상품 추가(11911) · 자동 발송 템플릿(12985) · 테스트 발송(13156) · 수동 발송(13750). **제니가 본 것은 그중 하나다.** 하나를 고칠 때 같은 모양이 어디 또 있나를 먼저 세면 다섯을 한 번에 끝낸다. ★★★ **값을 지어내지 않았다 — 이미 올바른 규칙이 있었다.** 같은 자리를 `var(--text)` 로 쓰는 머리 띠가 둘(5779·34449) 있어서 그 값을 그대로 가져왔다(다크 #e8edf8 · 라이트 #1B2436). **좋다고 확인된 화면에서 값을 재 오면 지어낼 필요가 없다**(09-08 제목행 남색에서 세운 규칙 그대로). ★★ **같은 병이 더 없는지 전수로 셌다** — 흰색으로 박힌 글자 43곳을 훑어 «모드 따라 밝아지는 바탕 위» 인 것만 골랐다. 버그는 이 다섯뿐이고 나머지 37곳은 두 모드에서 안 바뀌는 바탕(`--primary`·`#2A478D`·`--red` 등) 위라 **맞다**. ★ 오탐 하나(5696)는 같은 줄에 `background:'var(--primary)'` 가 «색 뒤» 에 적혀 있어 앞줄 배경을 잘못 집은 것이었다 — **줄을 앞에서만 읽으면 뒤에 오는 값을 놓친다.** ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922b_theme_ink -->
@@ -726,6 +728,15 @@
          ★ 다크에서는 위의 --yellow/--red/--green 을 그대로 글자로 써도 읽힌다.
            라이트에서는 흰 바탕 위 #F6AD09 가 거의 안 보여 어두운 쪽으로 내려야 한다. */
       --warn-ink:#F6AD09; --red-ink:#f87171; --ok-ink:#22d3a0;
+      /* 2026-09-22 — 잉크 둘을 더했다. «틴트 위의 글자» 가 라이트에서 안 읽히던 자리다.
+         info = 파란 알림·링크 글자(#78AAFF·#60a5fa 가 파란 틴트 위에서 명암비 1.9~2.1)
+         held = ⏸ 보류 칩(#FFA94D 가 주황 틴트 위에서 1.57)
+         ★ 라이트 값은 짐작하지 않고 «명암비로 골랐다» — 파랑은 브랜드 남색 #2A478D 가
+           7.1~7.6 으로 가장 좋아 새 색을 지어낼 필요가 없었다.
+         🔴 여기에 «변수이름 : 설명» 꼴로 적지 말 것. 팔레트를 읽는 도구가 세미콜론까지를
+           값으로 삼아 **주석 문장을 그 변수의 값으로 읽는다** — 실제로 한 번 밟았고,
+           그 바람에 명암비 검사가 5곳을 «못 재고» 통과시켰다. */
+      --info-ink:#78AAFF; --held-ink:#FFA94D;
       /* 옅은 강조 배경(뱃지·선택 표시) */
       --brand-soft:rgba(210,229,255,.10);
       --login-glow:#1a2e5a;
@@ -777,6 +788,7 @@
       --red:#D64545; --yellow:#F6AD09; --accent:#2A478D; --gray:#545454;
       --text:#1B2436; --sub:#545454; --hover:#E7EFFC;
       --warn-ink:#9A6B06; --red-ink:#C0392B; --ok-ink:#0B7A5E;
+      --info-ink:#2A478D; --held-ink:#A85800;
       --brand-soft:#D2E5FF;
       --login-glow:#DCE9FF;
       --toast-bg:#FFFFFF; --toast-line:#2A478D;
@@ -3173,17 +3185,17 @@ function EntryPage({ editDate: propEditDate, onSaved, can }) {
                             <td><input type="text" inputMode="numeric" value={getAD(a.id,'board')} onChange={e=>setAD(a.id,'board',e.target.value)} style={{...inputStyle,width:70,padding:'6px 8px',fontSize:13}}/></td>
                             <td><input type="text" inputMode="numeric" value={getAD(a.id,'chat')} onChange={e=>setAD(a.id,'chat',e.target.value)} style={{...inputStyle,width:70,padding:'6px 8px',fontSize:13}}/></td>
                             <td><input type="text" inputMode="numeric" value={getAD(a.id,'etc')} onChange={e=>setAD(a.id,'etc',e.target.value)} style={{...inputStyle,width:70,padding:'6px 8px',fontSize:13}}/></td>
-                            <td><input type="text" value={calcUph({answered:getAD(a.id,'answered'),board:getAD(a.id,'board'),chat:getAD(a.id,'chat'),ob:getAD(a.id,'ob'),etc:getAD(a.id,'etc')}, ops.date)} readOnly style={{...inputStyle,width:70,padding:'6px 8px',fontSize:13,background:'var(--surface)',color:'var(--yellow)'}}/></td>
+                            <td><input type="text" value={calcUph({answered:getAD(a.id,'answered'),board:getAD(a.id,'board'),chat:getAD(a.id,'chat'),ob:getAD(a.id,'ob'),etc:getAD(a.id,'etc')}, ops.date)} readOnly style={{...inputStyle,width:70,padding:'6px 8px',fontSize:13,background:'var(--surface)',color:'var(--warn-ink)'}}/></td>
                           </tr>
                         ))}
                       </tbody>
                       <tfoot><tr>
                         <td style={{fontWeight:700,color:'var(--accent)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>합계</td>
-                        <td style={{fontWeight:700,color:'var(--yellow)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('answered')}</td>
-                        <td style={{fontWeight:700,color:'var(--yellow)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('ob')}</td>
-                        <td style={{fontWeight:700,color:'var(--yellow)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('board')}</td>
-                        <td style={{fontWeight:700,color:'var(--yellow)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('chat')}</td>
-                        <td style={{fontWeight:700,color:'var(--yellow)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('etc')}</td>
+                        <td style={{fontWeight:700,color:'var(--warn-ink)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('answered')}</td>
+                        <td style={{fontWeight:700,color:'var(--warn-ink)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('ob')}</td>
+                        <td style={{fontWeight:700,color:'var(--warn-ink)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('board')}</td>
+                        <td style={{fontWeight:700,color:'var(--warn-ink)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('chat')}</td>
+                        <td style={{fontWeight:700,color:'var(--warn-ink)',padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}>{sumAgents('etc')}</td>
                         <td style={{padding:'8px 10px',borderTop:'2px solid var(--primary)',background:'var(--bg)'}}></td>
                       </tr></tfoot>
                     </table>
@@ -5272,7 +5284,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                                     {section.items.map(({qa,imgs,key},bi)=>(
                                       <div key={key} style={{paddingTop:bi>0?10:0,marginTop:bi>0?10:0,borderTop:bi>0?'1px dashed rgba(42,71,141,.3)':'none'}}>
                                         <div style={{display:'flex',gap:6,alignItems:'flex-start',marginBottom:4}}>
-                                          <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'rgba(246,173,9,.15)',color:'#F6AD09',flexShrink:0}}>Q</span>
+                                          <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',flexShrink:0}}>Q</span>
                                           <span style={{fontSize:12,color:'#1a2060',fontWeight:700,lineHeight:1.6,wordBreak:'break-all',whiteSpace:'pre-wrap',minWidth:0,flex:1}}>{qa.q}</span>
                                         </div>
                                         {qa.a&&<div style={{display:'flex',gap:6,alignItems:'flex-start',marginBottom:4}}>
@@ -5504,7 +5516,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                           setForm(p=>({...p,_qaMap:map,cs_info:buildCs(map)}));
                         }} style={{position:'absolute',top:6,right:8,background:'none',border:'none',color:'var(--sub)',fontSize:12,cursor:'pointer',lineHeight:1}}>✕</button>
                         <div style={{display:'flex',gap:6,marginBottom:4,alignItems:'flex-start',marginTop:isNew?12:0}}>
-                          <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'rgba(246,173,9,.15)',color:'#F6AD09',flexShrink:0,marginTop:2}}>Q</span>
+                          <span style={{fontSize:10,fontWeight:700,padding:'2px 6px',borderRadius:4,background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',flexShrink:0,marginTop:2}}>Q</span>
                           <textarea value={qa.q} onChange={e=>{
                             const cat=form._csTab||'불량';
                             const map={...(form._qaMap||{})};
@@ -6457,7 +6469,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                       <div style={{fontSize:10,color:'var(--sub)',marginBottom:4}}>{lbl}</div>
                       <div style={{fontSize:12,color:'var(--text)',fontWeight:600}}>
                         {lbl==='③ 선결제 설정'&&val==='착불'
-                          ?<span><span style={{background:'rgba(246,173,9,.15)',color:'#F6AD09',padding:'1px 7px',borderRadius:4,fontWeight:700,fontSize:11}}>{val}</span>{detailProd.shipping_fee?<span style={{color:'var(--sub)',fontSize:11,marginLeft:6}}>{Number(detailProd.shipping_fee).toLocaleString()}원</span>:null}</span>
+                          ?<span><span style={{background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',padding:'1px 7px',borderRadius:4,fontWeight:700,fontSize:11}}>{val}</span>{detailProd.shipping_fee?<span style={{color:'var(--sub)',fontSize:11,marginLeft:6}}>{Number(detailProd.shipping_fee).toLocaleString()}원</span>:null}</span>
                           :val}
                       </div>
                     </div>
@@ -8358,7 +8370,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
                         return (
                           <div
                             onMouseDown={e=>{e.preventDefault(); setBankName(typedBank); setBankQuery(''); setBankOpen(false);}}
-                            style={{padding:'8px 12px',fontSize:12,color:'#F6AD09',cursor:'pointer',background:'rgba(255,255,255,.04)',borderTop:'1px solid var(--border)',fontWeight:600}}>
+                            style={{padding:'8px 12px',fontSize:12,color:'var(--warn-ink)',cursor:'pointer',background:'rgba(255,255,255,.04)',borderTop:'1px solid var(--border)',fontWeight:600}}>
                             + '{typedBank}' 직접 입력
                           </div>
                         );
@@ -8405,7 +8417,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
             style={{...inp,minHeight:70,resize:'vertical',fontFamily:'inherit'}}/>
 
           {/* 에러 메시지 */}
-          {err && <div style={{marginTop:12,padding:'8px 10px',background:'rgba(255,107,107,.12)',border:'1px solid rgba(255,107,107,.4)',color:'#FF6B6B',borderRadius:6,fontSize:12}}>{err}</div>}
+          {err && <div style={{marginTop:12,padding:'8px 10px',background:'rgba(255,107,107,.12)',border:'1px solid rgba(255,107,107,.4)',color:'var(--red-ink)',borderRadius:6,fontSize:12}}>{err}</div>}
         </div>
 
         {/* 푸터 */}
@@ -8880,7 +8892,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
                 </div>
               ))}
               <button type="button" onClick={applyFetchDiff}
-                style={{marginTop:7,fontSize:11,padding:'6px 10px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:5,cursor:'pointer',fontWeight:600,fontFamily:'inherit'}}>
+                style={{marginTop:7,fontSize:11,padding:'6px 10px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'var(--warn-ink)',borderRadius:5,cursor:'pointer',fontWeight:600,fontFamily:'inherit'}}>
                 카페24 값으로 바꾸기
               </button>
             </div>
@@ -9001,7 +9013,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
                         return (
                           <div
                             onMouseDown={e=>{e.preventDefault(); setBankName(typedBank); setBankQuery(''); setBankOpen(false);}}
-                            style={{padding:'8px 12px',fontSize:12,color:'#F6AD09',cursor:'pointer',background:'rgba(255,255,255,.04)',borderTop:'1px solid var(--border)',fontWeight:600}}>
+                            style={{padding:'8px 12px',fontSize:12,color:'var(--warn-ink)',cursor:'pointer',background:'rgba(255,255,255,.04)',borderTop:'1px solid var(--border)',fontWeight:600}}>
                             + '{typedBank}' 직접 입력
                           </div>
                         );
@@ -9204,7 +9216,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
           </div>
 
           {/* 에러 메시지 */}
-          {err && <div style={{marginTop:12,padding:'8px 10px',background:'rgba(255,107,107,.12)',border:'1px solid rgba(255,107,107,.4)',color:'#FF6B6B',borderRadius:6,fontSize:12}}>{err}</div>}
+          {err && <div style={{marginTop:12,padding:'8px 10px',background:'rgba(255,107,107,.12)',border:'1px solid rgba(255,107,107,.4)',color:'var(--red-ink)',borderRadius:6,fontSize:12}}>{err}</div>}
         </div>
 
         {/* 푸터: 상태별 액션 버튼 */}
@@ -9519,14 +9531,14 @@ function RefundReasonsModal({ reasons: initialReasons, refundsUsageMap, onClose,
           </div>
 
           {/* 안내 */}
-          <div style={{marginTop:14,padding:'10px 12px',background:'rgba(120,170,255,.08)',borderRadius:6,fontSize:11,color:'#78AAFF',lineHeight:1.6}}>
+          <div style={{marginTop:14,padding:'10px 12px',background:'rgba(120,170,255,.08)',borderRadius:6,fontSize:11,color:'var(--info-ink)',lineHeight:1.6}}>
             ℹ️ 이름·색상·순서 변경은 [저장] 클릭 시 일괄 반영됩니다.<br/>
             추가·비활성화·삭제·재활성화는 즉시 반영됩니다.<br/>
             사용 중인 사유는 삭제할 수 없고 비활성화만 가능합니다 (과거 데이터 보존).
           </div>
 
           {/* 에러 */}
-          {err && <div style={{marginTop:12,padding:'8px 10px',background:'rgba(255,107,107,.12)',border:'1px solid rgba(255,107,107,.4)',color:'#FF6B6B',borderRadius:6,fontSize:12}}>{err}</div>}
+          {err && <div style={{marginTop:12,padding:'8px 10px',background:'rgba(255,107,107,.12)',border:'1px solid rgba(255,107,107,.4)',color:'var(--red-ink)',borderRadius:6,fontSize:12}}>{err}</div>}
         </div>
 
         {/* 푸터 */}
@@ -9534,7 +9546,7 @@ function RefundReasonsModal({ reasons: initialReasons, refundsUsageMap, onClose,
           <button onClick={()=>{if(!saving) onClose();}} disabled={saving}
             style={{fontSize:13,padding:'8px 16px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:6,cursor:saving?'not-allowed':'pointer'}}>닫기</button>
           <button onClick={saveChanges} disabled={saving}
-            style={{fontSize:13,padding:'8px 16px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:6,cursor:saving?'not-allowed':'pointer',fontWeight:600}}>
+            style={{fontSize:13,padding:'8px 16px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'var(--warn-ink)',borderRadius:6,cursor:saving?'not-allowed':'pointer',fontWeight:600}}>
             {saving?'저장 중...':'변경사항 저장'}
           </button>
         </div>
@@ -10199,7 +10211,7 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
         <button onClick={()=>setReasonsModalOpen(true)}
           style={{fontSize:12,padding:'8px 12px',background:'var(--surface)',border:'1px solid var(--border)',color:'var(--text)',borderRadius:6,cursor:'pointer'}} title="환불 사유 마스터 관리">⚙️ 사유 관리</button>
         {canCreate&&<button onClick={()=>setAddOpen(true)}
-          style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:6,cursor:'pointer',fontWeight:600}}>+ 환불 요청 추가</button>}
+          style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'var(--warn-ink)',borderRadius:6,cursor:'pointer',fontWeight:600}}>+ 환불 요청 추가</button>}
       </div>
 
       {/* 재개 예정일이 된 보류를 화면 맨 위에서 알린다(2026-08-19 사용자 요청 — 알림 강화).
@@ -10334,13 +10346,13 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             {selectedAllPending2 && (
               <button onClick={bulkMarkRefundComplete} disabled={bulkProcessing}
-                style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'#F6AD09',borderRadius:6,cursor:bulkProcessing?'not-allowed':'pointer',fontWeight:600}}>
+                style={{fontSize:13,padding:'8px 14px',background:'rgba(246,173,9,.18)',border:'1px solid rgba(246,173,9,.5)',color:'var(--warn-ink)',borderRadius:6,cursor:bulkProcessing?'not-allowed':'pointer',fontWeight:600}}>
                 {bulkProcessing?'처리 중...':'✓ 일괄 환불 완료 처리'}
               </button>
             )}
             {selectedAllPending3 && (
               <button onClick={bulkMarkCafe24Done} disabled={bulkProcessing}
-                style={{fontSize:13,padding:'8px 14px',background:'rgba(120,170,255,.18)',border:'1px solid rgba(120,170,255,.5)',color:'#78AAFF',borderRadius:6,cursor:bulkProcessing?'not-allowed':'pointer',fontWeight:600}}>
+                style={{fontSize:13,padding:'8px 14px',background:'rgba(120,170,255,.18)',border:'1px solid rgba(120,170,255,.5)',color:'var(--info-ink)',borderRadius:6,cursor:bulkProcessing?'not-allowed':'pointer',fontWeight:600}}>
                 {bulkProcessing?'처리 중...':'✓ 일괄 후처리 완료'}
               </button>
             )}
@@ -10471,7 +10483,7 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
                         {isHeldRow(r) ? (
                           <span title={(r.hold_reason||'사유 미기재')+'\n보류: '+(r.hold_by||'-')
                                        +'\n최초 요청 사유: '+(r.review_note||'미기재')}
-                            style={{background:'rgba(255,169,77,.18)',color:'#FFA94D',padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap',fontWeight:600,cursor:'help'}}>
+                            style={{background:'rgba(255,169,77,.18)',color:'var(--held-ink)',padding:'3px 8px',borderRadius:4,fontSize:11,whiteSpace:'nowrap',fontWeight:600,cursor:'help'}}>
                             ⏸ 보류{r.hold_until ? ` (~${r.hold_until.slice(5)})` : ''}
                             {r.hold_until && r.hold_until <= todayLocal() && <span style={{color:'#FF6B6B'}}> !</span>}
                           </span>
@@ -11399,11 +11411,11 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
                   <td style={{padding:'12px 8px',color:'var(--text)'}}>
                     <div>{r.delay_reason||'-'}</div>
                     {r.send_mode==='elapsed_days' ? (
-                      <span style={{display:'inline-block',marginTop:4,fontSize:10,padding:'1px 6px',background:'rgba(246,173,9,.15)',color:'#F6AD09',borderRadius:3,fontWeight:600,whiteSpace:'nowrap'}}>주문일+{r.elapsed_days||'?'}일</span>
+                      <span style={{display:'inline-block',marginTop:4,fontSize:10,padding:'1px 6px',background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',borderRadius:3,fontWeight:600,whiteSpace:'nowrap'}}>주문일+{r.elapsed_days||'?'}일</span>
                     ) : r.initial_send_type==='blast' ? (
                       <div style={{marginTop:4}}>
                         {/* ★ title= 은 커서 바로 아래에 떠 가린다(제니) → 뱃지 «위» 에 뜨는 CsHint 풍선 */}
-                        <CsHint width={520} trigger={<span style={{display:'inline-block',fontSize:10,padding:'1px 6px',background:'rgba(246,173,9,.15)',color:'#F6AD09',borderRadius:3,fontWeight:600,whiteSpace:'nowrap',cursor:'help'}}>즉시발송</span>}>
+                        <CsHint width={520} trigger={<span style={{display:'inline-block',fontSize:10,padding:'1px 6px',background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',borderRadius:3,fontWeight:600,whiteSpace:'nowrap',cursor:'help'}}>즉시발송</span>}>
                           {/* ★ 이 문구만 한 줄로(제니 2026-09-14) — 폭 한도(236)에 걸려 애매하게 접혔다 */}
                           <span style={{whiteSpace:'nowrap'}}>즉시 발송 후 30분 마다 새주문에 대해 알림을 발송합니다.</span>
                         </CsHint>
@@ -11458,7 +11470,7 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
                           /* ★ 권한이 없으면 «발송 대기» 라고 적는다 — 빈 칸으로 두면
                              그 줄이 «할 일이 없는 건» 으로 읽혀 아무도 안 챙긴다. */
                           : <span style={{background:'rgba(143,168,208,.15)',color:'var(--sub)',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>발송 대기</span>)
-                        : <span style={{background:'rgba(246,173,9,.15)',color:'#F6AD09',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>진행</span>}
+                        : <span style={{background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',fontSize:10,padding:'2px 8px',borderRadius:3,fontWeight:700,letterSpacing:'.04em'}}>진행</span>}
                   </td>
                   <td style={{padding:'12px 8px',textAlign:'center'}}>
                     <div style={{display:'inline-flex',gap:4,justifyContent:'center'}}>
@@ -11997,7 +12009,7 @@ function DelayAddModal({ editingRow, onClose, onSaved, canSend=false }){
                 <div style={{padding:'12px 14px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,fontSize:12,color:'var(--sub)'}}>⏳ 카페24에서 옵션 조회 중...</div>
               ) : (
                 <>
-                  {variantError && <div style={{padding:'10px 14px',background:'rgba(246,173,9,.1)',border:'1px solid rgba(246,173,9,.4)',borderRadius:6,fontSize:11,color:'#F6AD09',marginBottom:8,whiteSpace:'pre-wrap'}}>{variantError}</div>}
+                  {variantError && <div style={{padding:'10px 14px',background:'rgba(246,173,9,.1)',border:'1px solid rgba(246,173,9,.4)',borderRadius:6,fontSize:11,color:'var(--warn-ink)',marginBottom:8,whiteSpace:'pre-wrap'}}>{variantError}</div>}
                   <div style={{padding:'10px 14px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6}}>
                     <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',padding:'4px 0',fontSize:13,color:'var(--text)',fontWeight:600}}>
                       <input type="checkbox" checked={allVariants} onChange={e=>setAllVariants(e.target.checked)}/>
@@ -12021,7 +12033,7 @@ function DelayAddModal({ editingRow, onClose, onSaved, canSend=false }){
                                 onChange={()=>toggleVariant(v.variant_code)}/>
                               <span style={{fontFamily:'monospace',fontSize:11,color:'var(--sub)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={v.variant_code}>{v.variant_code}</span>
                               <span style={{display:'flex',alignItems:'center',gap:6,overflow:'hidden',minWidth:0}} title={isAlreadyDelayed?`이미 지연 등록됨 (${delayedInfo.reason||''}${delayedInfo.eta?' / '+delayedInfo.eta:''})`:v.option_text}>
-                                {isAlreadyDelayed && <span style={{fontSize:10,padding:'1px 6px',background:'rgba(246,173,9,.18)',color:'#F6AD09',borderRadius:3,whiteSpace:'nowrap',flexShrink:0,fontWeight:600}}>이미 지연중</span>}
+                                {isAlreadyDelayed && <span style={{fontSize:10,padding:'1px 6px',background:'rgba(246,173,9,.18)',color:'var(--warn-ink)',borderRadius:3,whiteSpace:'nowrap',flexShrink:0,fontWeight:600}}>이미 지연중</span>}
                                 <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',minWidth:0}}>{v.option_text}</span>
                               </span>
                               <span style={v.is_displayed?badgeOn:badgeOff('143,168,208')}>
@@ -12154,9 +12166,9 @@ function DelayAddModal({ editingRow, onClose, onSaved, canSend=false }){
               <label style={labelStyle}>처리 방향 <span style={{fontSize:10,color:'var(--sub)',fontWeight:400}}>(등록 시 결정, 변경 불가)</span></label>
               <div style={{padding:'10px 14px',background:'var(--bg)',border:'1px solid var(--border)',borderRadius:6,fontSize:13,color:'var(--text)'}}>
                 {editingRow.send_mode==='elapsed_days'
-                  ? <><span style={{display:'inline-block',fontSize:10,padding:'2px 8px',background:'rgba(246,173,9,.15)',color:'#F6AD09',borderRadius:3,fontWeight:600,marginRight:8}}>주문일+N일</span>주문일로부터 {editingRow.elapsed_days||'-'}일 경과 후 배송준비중인 주문에 발송</>
+                  ? <><span style={{display:'inline-block',fontSize:10,padding:'2px 8px',background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',borderRadius:3,fontWeight:600,marginRight:8}}>주문일+N일</span>주문일로부터 {editingRow.elapsed_days||'-'}일 경과 후 배송준비중인 주문에 발송</>
                   : editingRow.initial_send_type==='blast'
-                  ? <><span style={{display:'inline-block',fontSize:10,padding:'2px 8px',background:'rgba(246,173,9,.15)',color:'#F6AD09',borderRadius:3,fontWeight:600,marginRight:8}}>즉시발송</span>등록 시점 기존 주문에 일괄 발송</>
+                  ? <><span style={{display:'inline-block',fontSize:10,padding:'2px 8px',background:'rgba(246,173,9,.15)',color:'var(--warn-ink)',borderRadius:3,fontWeight:600,marginRight:8}}>즉시발송</span>등록 시점 기존 주문에 일괄 발송</>
                   : <><span style={{display:'inline-block',fontSize:10,padding:'2px 8px',background:'rgba(143,168,208,.12)',color:'var(--sub)',borderRadius:3,fontWeight:600,marginRight:8}}>신규주문</span>등록 후 신규 주문 발생 시 발송</>}
                 {editingRow.initial_send_type==='blast' && editingRow.blast_sent_at && editingRow.send_mode!=='elapsed_days' && (
                   <div style={{marginTop:6,fontSize:11,color:'var(--sub)'}}>
@@ -13021,7 +13033,7 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:14}}>
               <div>
                 <label style={labelStyle}>발송 채널</label>
-                <div style={{background:'rgba(96,165,250,.15)',color:'#60a5fa',fontSize:12,fontWeight:600,padding:'8px 10px',borderRadius:6,textAlign:'center',border:'1px solid rgba(96,165,250,.3)'}}>메일</div>
+                <div style={{background:'rgba(96,165,250,.15)',color:'var(--info-ink)',fontSize:12,fontWeight:600,padding:'8px 10px',borderRadius:6,textAlign:'center',border:'1px solid rgba(96,165,250,.3)'}}>메일</div>
               </div>
               <div>
                 <label style={labelStyle}>발송 시점</label>
@@ -13614,7 +13626,7 @@ function AutoDeliveryRegisterTab({ currentUserEmail, canSend=false }) {
               <div style={{fontSize:10,color:'var(--sub)',marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.product_code}</div>
             </div>
             <div>
-              <span style={{background:'rgba(96,165,250,.15)',color:'#60a5fa',fontSize:10,padding:'3px 8px',borderRadius:4,fontWeight:600}}>메일</span>
+              <span style={{background:'rgba(96,165,250,.15)',color:'var(--info-ink)',fontSize:10,padding:'3px 8px',borderRadius:4,fontWeight:600}}>메일</span>
             </div>
             <div style={{color:'var(--sub)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',minWidth:0,paddingRight:8}}>
               {stripHtml(t.body).slice(0, 80) || '(본문 없음)'}
@@ -13636,7 +13648,7 @@ function AutoDeliveryRegisterTab({ currentUserEmail, canSend=false }) {
             </div>
             <div style={{textAlign:'center'}}>
               {canSend ? <button onClick={()=>handleManualSend(t)}
-                style={{padding:'4px 10px',background:'rgba(96,165,250,.15)',border:'1px solid rgba(96,165,250,.3)',borderRadius:4,color:'#60a5fa',fontSize:11,cursor:'pointer',fontFamily:'inherit',fontWeight:600}}
+                style={{padding:'4px 10px',background:'rgba(96,165,250,.15)',border:'1px solid rgba(96,165,250,.3)',borderRadius:4,color:'var(--info-ink)',fontSize:11,cursor:'pointer',fontFamily:'inherit',fontWeight:600}}
                 title="해당 템플릿으로 특정 주문에 수동 발송 (Phase D 후 활성화)">
                 📨 발송
               </button>
