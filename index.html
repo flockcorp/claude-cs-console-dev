@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260922e_dark_ink -->
+<!-- (2026-09-22) 📐 **이번엔 «다크에서 안 읽히는» 쪽 — 9곳을 3곳으로.** 앞 판(`d`)이 만든 자를 그대로 다시 썼다. 남아 있던 아홉은 **라이트용 어두운 잉크를 다크에도 그대로 쓴 자리**였다(명암비 1.58~2.94) — 앞 판에서 고친 것의 **거울상**이다. ★★ **여섯은 토큰 하나씩으로 끝났다**: 공급사 CSV 미리보기의 「신규」→`--ok-ink` · 「제외」→`--warn-ink` · 상품 정보 칩 `#2A478D`→`--info-ink` · 안내 박스 둘(`#7a5b00`·`#B45309`)→`--warn-ink`. 다크가 1.9~2.9 → 5.6~7.7 로 올라가고 라이트는 4.0~6.7 로 유지된다. 🔴 **「업데이트」 뱃지 하나만 토큰을 끼워도 2.58 로 모자랐다** — 재 보니 **형제 뱃지는 옅은 틴트(`.18`·`.25`)인데 이것만 밝은 하늘색 `.4` 로 혼자 달랐다.** 바탕을 형제와 같은 옅은 파란 틴트(`rgba(120,170,255,.18)`)로 맞추자 **다크 5.57 · 라이트 7.12** 로 둘 다 풀렸다. ★★★ **글자가 안 읽힐 때 답이 늘 글자에 있는 것은 아니다 — «혼자 다른 바탕» 이 원인일 수 있다.** 형제와 맞추는 것이 값을 새로 고르는 것보다 낫다. ⏳ **남긴 셋은 의도된 자리다**: ①수동 발송 창의 «발송 차단» 버튼(`cursor:not-allowed` · 흐린 것이 곧 «못 누른다» 는 표시이고 접근성 기준도 비활성 컨트롤은 제외한다) ②③상품 정보의 **일괄 삭제 버튼**과 **작은 ✕ 동그라미**(흰 글자 on `--red` · 다크 2.77 로 큰 글자 기준 3.0 에 0.23 모자란다). **②③은 «흰 글자 + 빨강» 이라는 위험 단추의 관례라 내 판단으로 바꾸지 않았다 — 제니에게 묻는다.** ★ 분모를 함께 확인했다: 잰 자리 210곳으로 앞 판과 같다(줄어들면 «고쳤다» 가 아니라 «못 재게 됐다» 일 수 있다 — 앞 판에서 실제로 밟았다). ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922d_contrast_zero -->
 <!-- (2026-09-22) 📐 **«라이트에서 안 읽히는 글자» 를 눈이 아니라 «자» 로 찾아 31곳을 0으로 만들었다.** ★★★ 제니가 찾아 준 버그는 「안 읽힌다」였지 「색이 박혀 있다」가 아니었다 — **안 읽히는 것은 계산으로 찾을 수 있다.** 글자색과 바탕색을 라이트 값으로 풀고(var() 를 팔레트로, rgba 를 바탕 위에 얹어서) WCAG 명암비를 재는 자를 만들었다(`scratchpad/contrast.py`). 한 style 안에 color 와 background 가 **둘 다** 있는 자리 210곳을 재니 **라이트에서 3.0 미만이 31곳**이었고 **31곳 전부가 «다크는 멀쩡한데 라이트만 깨진» 것**이었다. ★★ **둘 다 있는 자리만 본다** — 그래야 «무엇 위의 무엇» 인지 지어내지 않는다. ① **22곳은 노란 글자를 노란 틴트 위에** 올린 것이었다(명암비 1.58~1.77 · 사실상 안 읽힘). 그 자리 토큰은 **이미 있었다**(`--warn-ink`) → 치환. 다크 값이 #F6AD09 로 지금과 같아 **다크는 변할 수 없다.** ② 남은 9곳은 **토큰이 아예 없는 색**(파랑 #78AAFF·#60a5fa · 주황 #FFA94D · 빨강 #FF6B6B)이라 잉크 둘을 더했다: **`--info-ink`(다크 #78AAFF / 라이트 #2A478D) · `--held-ink`(다크 #FFA94D / 라이트 #A85800)**, 빨강은 기존 `--red-ink` 가 흡수. ★★★ **라이트 값을 짐작하지 않고 명암비로 골랐다** — 후보 다섯을 재어 브랜드 남색 #2A478D 가 7.1~7.6 으로 가장 좋았다. **새 색을 지어낼 필요가 없었다.** ⚠ **이 둘째 묶음은 다크도 «아주 조금» 바뀐다**(6곳): #60a5fa→#78AAFF · #FF6B6B→#f87171. 같은 계열의 이웃 값이지만 앞 판들과 달리 «다크 불변» 이 아니다. 🔴🔴 **밟은 것: 팔레트 블록 주석에 「--info-ink : 설명」 꼴로 적었더니 팔레트를 읽는 도구가 세미콜론까지를 값으로 삼아 주석 문장을 그 변수의 값으로 읽었다.** CSS 는 멀쩡한데 **자가 고장 나** 5곳을 «못 재고» 0곳으로 통과시켰다. **«0» 이 «없다» 가 아니라 «못 봤다» 일 수 있다 — 잰 자리 수(210)가 그대로인지를 함께 봐야 안다.** 주석 문구를 바꿔 고쳤고, 그 함정을 그 자리에 적어 뒀다. ⏳ **남은 것: 다크에서 낮은 9곳**(어두운 글자를 틴트 위에 올린 자리 · 전부 원래 있던 것) — 다음 판. ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922c_modal_title_ink -->
@@ -5294,7 +5296,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                                         {imgs.length>0&&(
                                           <div style={{display:'flex',justifyContent:'flex-end',marginTop:4}}>
                                             <button onClick={()=>setImgModal({images:imgs,title:(p.product_name||p.product_code)+' - '+section.cat+' Q'+(bi+1)})}
-                                              style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',background:'rgba(42,71,141,.12)',border:'1px solid rgba(42,71,141,.45)',borderRadius:5,color:'#2A478D',fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+                                              style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',background:'rgba(42,71,141,.12)',border:'1px solid rgba(42,71,141,.45)',borderRadius:5,color:'var(--info-ink)',fontSize:10,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
                                               🖼 첨부 이미지 <span style={{background:'var(--primary)',color:'#fff',borderRadius:8,padding:'0 5px',fontSize:9}}>{imgs.length}</span>
                                             </button>
                                           </div>
@@ -5313,7 +5315,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                           <div className="cs-toggle-col" style={{padding:'14px 16px',borderLeft:'3px solid #2A478D',maxHeight:380,overflowY:'auto'}}>
                             <div style={{display:'inline-block',fontSize:11,fontWeight:700,color:'#1a3a8f',background:'#dce8ff',borderRadius:4,padding:'2px 8px',marginBottom:8}}>메모</div>
                             {p.delay_memo && (
-                              <div style={{fontSize:12,color:'#7a5b00',background:'rgba(246,173,9,.12)',border:'1px solid rgba(246,173,9,.4)',borderRadius:5,padding:'8px 10px',marginBottom:8,whiteSpace:'pre-wrap',lineHeight:1.7}}>
+                              <div style={{fontSize:12,color:'var(--warn-ink)',background:'rgba(246,173,9,.12)',border:'1px solid rgba(246,173,9,.4)',borderRadius:5,padding:'8px 10px',marginBottom:8,whiteSpace:'pre-wrap',lineHeight:1.7}}>
                                 {p.delay_memo}
                               </div>
                             )}
@@ -6110,7 +6112,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
 
             {/* ★★ 통째로 바꾼다는 것과 색인이 초기화된다는 것을 «확정 전에» 못 박는다.
                 되돌릴 수 없는 일은 누르기 전에 알아야 한다. */}
-            <div style={{fontSize:12,color:'#B45309',background:'rgba(246,173,9,.12)',border:'1px solid #F6AD09',borderRadius:8,padding:'10px 12px',marginBottom:14,lineHeight:1.7}}>
+            <div style={{fontSize:12,color:'var(--warn-ink)',background:'rgba(246,173,9,.12)',border:'1px solid #F6AD09',borderRadius:8,padding:'10px 12px',marginBottom:14,lineHeight:1.7}}>
               업로드 파일로 <b>전체 변경</b>이 됩니다. FAQ를 추가하고 싶은 경우는 <b>「추가 등록」</b> 양식으로 업로드 하세요.
               <div style={{marginTop:4}}>
                 문답 {Number(csPreview.rows||0).toLocaleString()}줄을 읽었습니다
@@ -7747,10 +7749,10 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
                     <tr key={i} style={{borderBottom:'1px solid #ECF1F8',color:'#1A2240',background:r.skip?'#fef3e8':'transparent',opacity:r.skip?0.7:1}}>
                       <td style={{padding:'6px'}}>
                         {r.skip?
-                          <span style={{padding:'2px 6px',background:'rgba(246,173,9,.25)',color:'#a85800',borderRadius:3,fontSize:10,fontWeight:600}} title={r.skipReason}>제외</span>:
+                          <span style={{padding:'2px 6px',background:'rgba(246,173,9,.25)',color:'var(--warn-ink)',borderRadius:3,fontSize:10,fontWeight:600}} title={r.skipReason}>제외</span>:
                           r.action==='new'?
-                          <span style={{padding:'2px 6px',background:'rgba(34,211,160,.18)',color:'#0a6a3a',borderRadius:3,fontSize:10,fontWeight:600}}>신규</span>:
-                          <span style={{padding:'2px 6px',background:'rgba(168,222,251,.4)',color:'#0F4A6B',borderRadius:3,fontSize:10,fontWeight:600}}>업데이트</span>
+                          <span style={{padding:'2px 6px',background:'rgba(34,211,160,.18)',color:'var(--ok-ink)',borderRadius:3,fontSize:10,fontWeight:600}}>신규</span>:
+                          <span style={{padding:'2px 6px',background:'rgba(120,170,255,.18)',color:'var(--info-ink)',borderRadius:3,fontSize:10,fontWeight:600}}>업데이트</span>
                         }
                       </td>
                       <td style={{padding:'6px',fontFamily:'monospace',color:'#5F7195'}}>{r.code}</td>
