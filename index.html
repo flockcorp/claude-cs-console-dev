@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260922c_modal_title_ink -->
+<!-- (2026-09-22) 🔴 **모달 머리 띠 제목이 라이트에서 «안 보였다»**(제니 제보: 배송지연 「지연 상품 추가」). 띠 배경은 `var(--panel-bg)`(다크 #162244 · **라이트 #EDF2FA**)인데 제목 글자만 **`color:'#fff'` 로 박혀** 있어, 라이트에서 옅은 하늘 위 흰 글자가 됐다. ★★ **한 곳이 아니라 다섯이었다** — 공급사 CSV 업로드 미리보기(7667) · 배송지연 지연 상품 추가(11911) · 자동 발송 템플릿(12985) · 테스트 발송(13156) · 수동 발송(13750). **제니가 본 것은 그중 하나다.** 하나를 고칠 때 같은 모양이 어디 또 있나를 먼저 세면 다섯을 한 번에 끝낸다. ★★★ **값을 지어내지 않았다 — 이미 올바른 규칙이 있었다.** 같은 자리를 `var(--text)` 로 쓰는 머리 띠가 둘(5779·34449) 있어서 그 값을 그대로 가져왔다(다크 #e8edf8 · 라이트 #1B2436). **좋다고 확인된 화면에서 값을 재 오면 지어낼 필요가 없다**(09-08 제목행 남색에서 세운 규칙 그대로). ★★ **같은 병이 더 없는지 전수로 셌다** — 흰색으로 박힌 글자 43곳을 훑어 «모드 따라 밝아지는 바탕 위» 인 것만 골랐다. 버그는 이 다섯뿐이고 나머지 37곳은 두 모드에서 안 바뀌는 바탕(`--primary`·`#2A478D`·`--red` 등) 위라 **맞다**. ★ 오탐 하나(5696)는 같은 줄에 `background:'var(--primary)'` 가 «색 뒤» 에 적혀 있어 앞줄 배경을 잘못 집은 것이었다 — **줄을 앞에서만 읽으면 뒤에 오는 값을 놓친다.** ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922b_theme_ink -->
 <!-- (2026-09-22) 🎨 **라이트 모드 스윕 1판 — «글자 빨강·초록» 75곳을 잉크 토큰으로**(제니 「라이트 모드 화면 스윕」). 콘솔은 지금도 스스로 「화면을 하나씩 옮기는 중」이라고 띄운다. ★★★ **기준을 다시 세웠다: «색이 박혔는가» 가 아니라 «모드에 따라 맞는 값이 달라지는가» 다.** 노란 단추(#F6AD09 는 두 모드가 같다) 위의 어두운 글자처럼 **바탕이 안 바뀌는 자리의 박힌 색은 이미 맞다** — 그런 자리를 «박혔으니 고친다» 로 손대면 라이트에서 노랑 위 흰 글자가 된다(실제로 `--on-accent` 로 바꿀 뻔했다). ★★ 이번 판은 **글자(color/fg)로 쓰인 `#f87171`→`var(--red-ink)` 48곳 · `#22d3a0`→`var(--ok-ink)` 27곳**뿐이다. 그 둘은 다크에서 값이 글자 그대로 같아 **다크 화면은 한 픽셀도 안 변하고**, 라이트에서만 읽히는 진한 값(#C0392B·#0B7A5E)으로 바뀐다. 얹힌 바탕이 전부 rgba 틴트라 두 모드에서 함께 움직인다 — **바뀐 74줄을 훑어 «바탕이 고정인데 글자만 바뀐» 자리가 0곳임을 기계로 확인했다.** 🔴🔴 **바탕·테두리(#162244·#1e3060·#D2E5FF·#0d1628)는 이 판에서 뺐다** — 기계로 될 것처럼 보였지만 다섯 곳 다 틀렸고 이유가 저마다 달랐다: ①`.agent-badge` 는 바탕이 두 모드에서 같은 네이비라 글자만 바꾸면 네이비 위 네이비가 된다 ②`csInk()` 는 `#` 로 시작하지 않으면 그대로 돌려줘(1466행) 계산이 무력화된다 ③계정 화면 테마 «미리보기» 표는 **모드별 값을 손으로 적어 둔 사본**이라 var() 를 넣으면 두 칸이 같은 색이 된다. **그 셋은 한 곳씩 눈으로 보고 옮긴다.** 🔴 패치 스크립트에서 두 번 밟았다: **팔레트 정의 줄**(`--accent:#D2E5FF` → `var(--accent)` 자기참조)과 **여러 줄 주석의 이어지는 줄**(줄머리가 `//` 가 아니라 필터를 빠져나갔다 · 「#D2E5FF(옅은 하늘)」이 「var(--accent)(옅은 하늘)」이 됐다). 둘 다 되돌리고 구간을 계산해 막았다(팔레트 39줄 · 주석 8,499줄). ★ 고객 메일 본문(`composeEmailHtml` 12474~12525)은 콘솔 테마를 따라가면 안 되므로 처음부터 뺐다. ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922a_session_expired_msg -->
@@ -7664,7 +7666,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
             {/* 헤더 */}
             <div style={{padding:'16px 22px',background:'var(--panel-bg)',borderBottom:'1px solid #DCE8FF',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <div>
-                <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>📤 카페24 CSV 업로드 미리보기</div>
+                <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>📤 카페24 CSV 업로드 미리보기</div>
                 <div style={{fontSize:11,color:'#a8defb',marginTop:3}}>{csvModal.fileName} · 총 {csvModal.stats.total}건</div>
               </div>
               <button onClick={()=>{if(!csvUploading){setCsvModal(null);setCsvResult(null);}}} style={{background:'none',border:'none',color:'#a8defb',fontSize:20,cursor:'pointer'}}>✕</button>
@@ -11908,7 +11910,7 @@ function DelayAddModal({ editingRow, onClose, onSaved, canSend=false }){
         {/* 헤더 */}
         <div style={{padding:'16px 22px',background:'var(--panel-bg)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
-            <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>🚚 {isEdit?'지연 정보 편집':'지연 상품 추가'}</div>
+            <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>🚚 {isEdit?'지연 정보 편집':'지연 상품 추가'}</div>
             <div style={{fontSize:11,color:'var(--sub)',marginTop:3}}>
               {isEdit?'사유·날짜·주문상태·메모만 수정 가능합니다. 상품·옵션 변경 시 해제 후 새로 등록해주세요.':'상품·옵션을 선택하고 사유·예상 발송일을 입력하세요'}
             </div>
@@ -12982,7 +12984,7 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
       <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:14,width:'100%',maxWidth:1100,maxHeight:'92vh',display:'flex',flexDirection:'column',overflow:'hidden'}} onClick={e => e.stopPropagation()}>
         <div style={{padding:'16px 22px',background:'var(--panel-bg)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
           <div>
-            <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>📧 {isEdit ? '자동 발송 템플릿 수정' : '자동 발송 템플릿 추가'}</div>
+            <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>📧 {isEdit ? '자동 발송 템플릿 수정' : '자동 발송 템플릿 추가'}</div>
             <div style={{fontSize:11,color:'var(--sub)',marginTop:3}}>
               {isEdit ? '제목·본문·버튼·활성 여부만 수정 가능합니다.' : '상품을 선택하고 메일 내용 + 다운로드 버튼을 설정하세요.'}
             </div>
@@ -13153,7 +13155,7 @@ function AutoDeliveryModal({ editingTemplate, currentUserEmail, onClose, onSaved
           >
             <div style={{padding:'14px 18px',background:'var(--panel-bg)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
               <div>
-                <div style={{fontSize:14,fontWeight:700,color:'#fff'}}>🧪 테스트 발송</div>
+                <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>🧪 테스트 발송</div>
                 <div style={{fontSize:11,color:'var(--sub)',marginTop:3,lineHeight:1.5}}>
                   입력한 이메일로 실제 메일이 발송됩니다 (변수는 더미값으로 치환).
                 </div>
@@ -13747,7 +13749,7 @@ function ManualSendDialog({ tpl, orderId, setOrderId, step, lookup, email, setEm
       >
         <div style={{padding:'14px 18px',background:'var(--panel-bg)',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
           <div>
-            <div style={{fontSize:14,fontWeight:700,color:'#fff'}}>📨 수동 발송</div>
+            <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>📨 수동 발송</div>
             <div style={{fontSize:11,color:'var(--sub)',marginTop:3,lineHeight:1.5}}>
               {tpl?.product_name || tpl?.product_code} · 주문번호로 조회 후 발송합니다.
             </div>
