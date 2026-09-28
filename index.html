@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260928c_white_film -->
+<!-- (2026-09-28) 🎨 **라이트 스윕 «바탕» 편 — 흰 반투명 필름 일곱 곳.** ★★★ **이번에 찾은 것은 명암비 자가 원리상 못 보는 병이다** — 흰 반투명(`rgba(255,255,255,.07)` 등)은 어두운 바탕을 «한 겹 밝히는» 장치인데, **밝은 바탕에서는 아무 일도 안 한다**(흰 종이 위의 흰 7% = 흰 종이). 즉 라이트에서 그 선·띠가 **«안 읽히는» 게 아니라 «없어진다»** — 글자색과 바탕색을 재는 도구의 눈에는 아무 문제가 없어 보인다. **«무엇이 안 읽히나» 만 묻는 자로는 «무엇이 사라졌나» 를 찾을 수 없다.** 🔴🔴🔴 **그리고 이 판의 진짜 교훈: 내 자가 처음에 «0곳» 이라고 답했다.** 선언 값을 `[^;,}\n]` 로 읽어 **첫 쉼표에서 잘랐기 때문에** `rgba(255,255,255,0.1)` 이 통째로 안 잡혔다. 색을 먼저 찾고 그 앞을 거슬러 속성을 읽는 방식으로 고치니 **분모가 2,298 → 592(바탕·테두리·그림자 속성)로 바뀌고 열 곳이 드러났다.** ★★★ **«0» 을 봤을 때 먼저 물어야 하는 것은 «없나» 가 아니라 «내 자가 그것을 볼 수 있나» 다** — 09-22 에 두 번, 09-28 오전에 한 번, 이번이 네 번째다. **분모를 함께 찍지 않으면 매번 다시 밟는다.** ✅ **고친 일곱**: 환불 등록·수정 창의 은행 드롭다운 «+ '○○' 직접 입력» 줄의 옅은 강조(2) · CS 카페24 설정의 묶음 머리 띠(1) · CS 티켓 **등록·상세**의 2뎁스 묶음 구분선(2)과 줄 아래 구분선(2). ★★ **도우미 하나로 처리했다** — `csFilm(alpha)` 는 **다크에서 받은 문자열을 글자 그대로 돌려주므로 다크 화면이 변할 수 없다**(csInk 와 같은 꼴이다. 토큰을 일곱 개 파는 길도 있었지만 alpha 마다 하나씩 생겨 팔레트가 부풀고, 다음에 새 alpha 가 나오면 또 파야 한다). ★★★ **라이트 alpha 를 짐작하지 않았다** — `--card` 기준으로 «같은 세기가 되는 값» 을 계산했다: 흰 .02→1.056 · .04→1.118 · .05→1.152 · .07→1.225 의 세기에 맞추는 남색 필름 alpha 가 각각 .03 · .06 · .075 · .105 로 **네 값 모두 정확히 1.5배**여서 표 대신 곱셈으로 뒀다(새 alpha 가 와도 맞는다). ★ 필름색 `#16233F` 은 **이 콘솔이 이미 이 목적으로 쓰는 색**이다(`--pop-shadow` 라이트 · `CsStageSubmit` 의 밝은 판 분리선) — 새 색을 지어내지 않았다. ⚠ 다만 그 기존 짝(흰 .14 ↔ 남색 .12)은 **엄격한 대등이 아니었다**(1.543 대 1.265) — 값을 가져올 때 «그 값이 무엇을 맞춘 것인지» 는 따로 재야 한다. 🚫 **일부러 손대지 않은 셋 — 다 «어두운 판 위의 흰 테두리» 다.** 첨부이미지 ✕ 동그라미(`background:rgba(22,35,63,.88)`) · 사진 내려받기 단추(`rgba(11,22,45,.78)`) · 저장 단추의 두 쪽 분리선. **그 판이 두 모드에서 안 바뀌면 그 위의 흰 테두리도 그대로가 맞다** — 09-22 판정 기준 그대로다. ★ 저장 단추 분리선은 **이미 `pale` 분기로 해결돼 있었다**(`on ? 흰 .22 : (pale ? 남색 .12 : 흰 .14)`) — 2026-09-08 의 그 결론이 여기까지 와 있었다. 🔴 **검산 도구에서 또 한 번 헛짚었다** — 되돌려 풀었을 때 네 줄이 «다르다» 고 나왔는데, 값은 같고 **`'1px solid '+'rgba(…)'` 처럼 이어붙이기 꼴만 달랐다.** 접어서 비교하도록 고치니 **다른 줄 0개.** ★★ **도구가 «달라졌다» 고 할 때, 정말 달라진 것인지 «적는 방식» 만 달라진 것인지 가려야 한다**(오늘 아침 «한쪽만 풀어 오탐» 과 같은 계열이다). 🟡 **안 한 것 하나 — 검정 반투명 42곳.** 세어 보니 대부분이 **모달 뒤 어둡게 덮는 막**(`rgba(0,0,0,.55)`)인데 그것은 두 모드 다 맞다(페이지를 눌러 두는 자리다). 나머지는 떠 있는 목록의 그림자(`rgba(0,0,0,.3~.45)`)로, 흰 바탕에서 조금 무겁게 읽히지만 «사라지거나 안 읽히는» 것은 아니다 — **제니 판단을 받고 하는 편이 낫다.** ★ SQL·엣지 함수 변경 없음. 화면만. `npm run check` 통과. ★ dev 전용. -->
 <!-- v20260928b_rest_ink_islands -->
 <!-- (2026-09-28) 🎨 **라이트 스윕 마무리 — 남은 밝은 글자 다섯 + «어두운 섬» 둘.**(제니 「남은 15곳이랑 어두운 섬 둘도 진행해줘」) ⚠ **먼저 정정**: 앞 판에서 「남은 것 15곳」이라 적었는데 다시 세니 **13곳**이었다(값별 수를 더할 때 두 곳을 겹쳐 셌다). 그리고 그 13곳 중 **손대야 하는 것은 다섯뿐**이었다 — 나머지 여덟은 «라이트에서만 깨진 것» 이 아니어서 이번 일의 대상이 아니다(아래 🚫). ★★★ **원칙은 그대로**: 새로 두는 토큰의 «다크 값» 이 지금 박혀 있는 값과 **글자 그대로** 같다. 겸해 이번에는 **바뀐 줄마다 새 값을 «다크에서 무엇이 되는가» 로 되돌려 풀어 고치기 «전» 의 줄과 대조했다**(`var(--토큰)`→다크 팔레트 값 · `csInk('#x')`→`'#x'` · `csOffBg()`→`#38425A`). **다른 줄 0개 — 다크 불변이 주장이 아니라 계산 결과다.** 🔴 그 검산에서 한 번 헛짚었다: 처음엔 «후» 줄만 풀고 «전» 줄은 그대로 비교해 **내가 건드리지도 않은 기존 `var(--border)`·`var(--primary)` 가 차이로 잡혔다**(4건). ★★ **대조는 양쪽을 같은 방식으로 풀어야 한다** — 한쪽만 풀면 도구가 «변했다» 고 거짓말한다. ① **글자 셋은 `csInk()` 로** — 이 콘솔이 2026-09-07 에 바로 이 목적으로 만든 함수이고 **다크에서는 인자를 그대로 돌려준다**(코드로 가드를 확인했다). 환불 확인요청 「✓ 확인 완료」 `#7ED957`(흰 바탕 1.76→5.09 · **같은 색을 `csInk` 로 쓰는 선례가 바로 위 7870행에 이미 있었다**) · 공급사 CSV 모달의 파일명 줄 `#a8defb`(옅은 판 `--panel-bg` 위에서 1.29→5.89) · CS 티켓 「지울 대목을 드래그하세요」 `#FF9B9B`(2.02→8.92). ★ 새 토큰을 파지 않은 까닭: 이 파일엔 이미 «옅은 빨강» 다크가 셋(`#f87171`·`#FF6B6B`·`#FF9B9B`)이라 넷째 토큰을 더하면 **값으로 찾는 훑기가 또 길어진다.** ② **중립 표시만 토큰으로** — 상담원 분석의 「━ ±0%」 `#c4d3e6` → **`--flat-ink`**(다크 `#c4d3e6` / 라이트 `#545454`). ★★★ **여기서 `csInk` 를 쓰면 안 된다**: 계산해 보니 `#2a486f` 가 나오는데 그것은 브랜드 남색(`--accent` 라이트 `#2A478D`)과 사실상 같은 색이라, **«변화 없음» 이 «뜻이 있는 값» 으로 읽힌다.** 형제인 ▲▼ 가 `--ok-ink`·`--red-ink` 토큰을 쓰므로 중립도 토큰이어야 짝이 맞고, 라이트 값은 `--sub` 라이트와 같은 중립 회색을 그대로 가져왔다(흰 바탕 7.57). ③ **어두운 섬 ① 문서 편집기 이미지 도구막대** — 이미지를 누르면 뜨는 막대가 라이트에서 **흰 화면 위의 검은 막대**였다. 토큰 넷을 두었다(다크 값 = 지금 값): `--qltool-bg`(#1f2937 / #FFFFFF) · `--qltool-ink`(#cbd5e1 / #1B2436) · `--qltool-line`(구분선) · `--qltool-shadow`. ★ 그림자도 함께 뒤집었다 — **흰 종이 위의 검정 그림자는 «먹구름» 이다**(`--pop-shadow` 에서 이미 배운 것). ★ 막대 hover 의 `#F6AD09` 는 앞 판과 같은 `--warn-ink` 로(흰 막대 위 노란 글자가 될 자리였다). ④ **어두운 섬 ② «저장됨» 꺼진 저장 단추** — `background:#38425A` + `color:#93A0BA` 가 흰 카드 위의 어두운 덩어리였다. ★★★ **값을 지어내지 않았다: 이 파일이 이미 답을 갖고 있었다.** 그 두 값은 `CS_TONE_DIM.gray` 와 **글자 그대로 같고**, 그 짝인 `CS_TONE_SOFT.gray`(bg #D3D8E2 / fg #6B7488)는 **제니가 2026-09-08 에 CS 저장 단추에서 확인한 값**이다. → 도우미 둘(`csOffBg()`·`csOffInk()`)을 두어 **«옅게 하는 방향은 판이 아니라 바탕이 밝은가가 정한다»** 는 그날의 결론을 그대로 적용했다. 🔴 **찾은 자리가 둘이 아니라 셋이었다** — 앞 판의 자(바탕·테두리 훑기)는 `CsMenuRoles`·`CsActionRoles` 둘만 찾았는데 `CsClaimTypeNames` 에도 같은 단추가 있었다. **문자열로 전수를 세니 3곳**(`background: dirty?…'#38425A'`). ★★ 도우미는 `CS_TONE_DIM` **뒤**에 두었다 — 앞에 두면 선언 순서 검사가 «없는 이름» 으로 잡는다. 🚫 **일부러 손대지 않은 여덟 곳 — 까닭이 다 다르다.** ㉠**상품 정보 목록의 「-」 셋(`#aaa`)**: 그 목록은 제니 지시로 **두 모드에서 밝은 판 + 어두운 글자**다(2026-09-22). 즉 `#aaa` 는 다크에서도 똑같이 약하고, 고치면 **다크가 바뀐다** → 범위 밖. ㉡**자동발송 미리보기 판 셋(`#cbd5e1`×2·`#9ca3af`)**: 조상이 `#fff` 로 **박혀 있는** 판이다 — 여기는 **고객 메일함에서 보이는 모습을 흉내내는 자리**라 콘솔 테마를 따라가면 안 된다(`composeEmailHtml` 과 같은 까닭). 같은 판의 `#1a1a1a` 단추 미리보기도 그래서 그대로 둔다. ㉢**`CS_ROLES` 의 `#A8DEF6`·`#dce8ff`**(+ 앞 판에서 뺀 `#F6AD09`): **네이비 밴드 위라 이미 맞다.** 🔴🔴 **처음엔 «쓰이는 곳이 없는 죽은 값» 이라고 판단했다가 세어 보니 틀렸다** — `r.color` 참조가 2곳 있었고(CS 설정의 권한 열 제목 `<th>`), 그 `<th>` 의 배경은 전역 규칙 `thead th{background:var(--head-bg)}` 가 주는 **브랜드 남색(#2A478D, 두 모드 동일)** 이다. 실제로 재니 **4.57 / 6.06 / 7.14 로 두 모드 다 잘 읽힌다** — 이것이 바로 09-22 에 세운 판정 기준의 「바탕이 안 바뀌는 자리의 박힌 색은 이미 맞다」 경우다. 잉크로 바꿨으면 `--warn-ink` 라이트가 네이비 위에서 **1.39** 가 되어 **고치기 전보다 나빠졌다.** ★★★ **«안 쓰인다» 는 말을 하기 전에 세어 볼 것**(이 파일에서 두 번째로 밟았다 — 09-17 의 「블록 차례 바꾸기가 없다」와 같은 꼴이다). 🔴🔴🔴 **여기서 내 «조상 자» 의 구멍이 드러났다 — 배경이 «CSS 클래스» 에서 오는 경우를 못 본다.** 자는 인라인 `style` 만 거슬러 올랐으므로 `thead th` 가 칠하는 네이비를 «못 찾음» 으로 봤다. → **태그를 거슬러 `th`/`thead` 안인지 따로 판정하는 자를 만들어**, 이번 두 판이 손댄 것뿐 아니라 **파일 안의 잉크·토큰 글자 880줄을 전수로** 확인했다: **`th`/`thead` 안은 한 곳뿐이고 그것은 내가 손대지 않은 기존 줄**이며, 게다가 `thead th{color:var(--head-ink)}` 가 그 `th` 에 직접 걸려 실제 글자는 흰색이다(8.81) — **문제 없음.** ★ 즉 **앞 판(v20260928a, 이미 운영)도 안전하다**는 것을 사후로 확인했다. ★ SQL·엣지 함수 변경 없음. 화면만. `npm run check` 통과. ★ dev 전용. -->
 <!-- v20260928a_inherit_ink -->
@@ -1565,6 +1567,25 @@ function csInk(hex){
   const out = '#'+to(rr)+to(gg)+to(bb);
   csInkCache[hex] = out;
   return out;
+}
+
+// ★★★ «흰 반투명 필름» — 어두운 바탕을 한 겹 밝히는 장치다. **밝은 바탕에서는 아무 일도
+//   안 한다**(흰 종이 위의 흰 7% = 흰 종이). 그래서 선·칸막이·옅은 강조로 쓰인 자리가
+//   라이트에서 **통째로 사라진다.**
+// ★★ 이 병은 **명암비 자로는 절대 안 잡힌다** — «안 읽히는» 것이 아니라 «없어지는» 것이라
+//   글자색·바탕색을 재는 도구의 눈에는 아무 문제가 없어 보인다. 2026-09-28 에 rgba 를
+//   «첫 쉼표에서 자르던» 내 자를 고치고 나서야 열 곳이 드러났다.
+// ★★ 다크에서는 **받은 문자열을 그대로 돌려준다** — 다크 화면은 변할 수 없다.
+// ★★★ 라이트 alpha 는 짐작이 아니라 «같은 세기가 되는 값» 을 계산해 골랐다(--card 기준
+//   명암비): 흰 .02→1.056 · .04→1.118 · .05→1.152 · .07→1.225 에 맞추면 남색 필름의
+//   alpha 가 각각 .03 · .06 · .075 · .105 다 — 네 값 모두 **정확히 1.5배**라 표 대신 곱셈.
+// ★ 필름색 #16233F 은 이 콘솔이 이미 이 목적으로 쓰는 색이다(--pop-shadow 라이트 ·
+//   CsStageSubmit 의 밝은 판 분리선). 새 색을 지어내지 않았다.
+// 🔴 «어두운 판 위» 의 흰 테두리는 이 함수로 바꾸면 안 된다 — 그 판이 두 모드에서 안
+//   바뀌면 흰 테두리도 그대로가 맞다(첨부이미지 ✕ 동그라미·사진 내려받기 단추가 그렇다).
+function csFilm(a){
+  if(!csIsLight()) return 'rgba(255,255,255,'+a+')';
+  return 'rgba(22,35,63,'+(+a*1.5).toFixed(3)+')';
 }
 
 // ── 토스트 알림 ───────────────────────────────────────────────────────
@@ -8428,7 +8449,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
                         return (
                           <div
                             onMouseDown={e=>{e.preventDefault(); setBankName(typedBank); setBankQuery(''); setBankOpen(false);}}
-                            style={{padding:'8px 12px',fontSize:12,color:'var(--warn-ink)',cursor:'pointer',background:'rgba(255,255,255,.04)',borderTop:'1px solid var(--border)',fontWeight:600}}>
+                            style={{padding:'8px 12px',fontSize:12,color:'var(--warn-ink)',cursor:'pointer',background:csFilm('.04'),borderTop:'1px solid var(--border)',fontWeight:600}}>
                             + '{typedBank}' 직접 입력
                           </div>
                         );
@@ -9071,7 +9092,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
                         return (
                           <div
                             onMouseDown={e=>{e.preventDefault(); setBankName(typedBank); setBankQuery(''); setBankOpen(false);}}
-                            style={{padding:'8px 12px',fontSize:12,color:'var(--warn-ink)',cursor:'pointer',background:'rgba(255,255,255,.04)',borderTop:'1px solid var(--border)',fontWeight:600}}>
+                            style={{padding:'8px 12px',fontSize:12,color:'var(--warn-ink)',cursor:'pointer',background:csFilm('.04'),borderTop:'1px solid var(--border)',fontWeight:600}}>
                             + '{typedBank}' 직접 입력
                           </div>
                         );
@@ -23811,7 +23832,7 @@ function CsCafe24Settings({currentUserEmail}){
           {CS_CAFE24_GROUPS.map(g=>(
             <div key={g}>
               <div style={{fontSize:11,color:'var(--sub)',fontWeight:600,padding:'8px 12px 5px',
-                background:'rgba(255,255,255,.02)'}}>{g}</div>
+                background:csFilm('.02')}}>{g}</div>
               {CS_CAFE24_FIELDS.filter(f=>f.g===g).map(f=>(
                 <label key={f.id} title={f.note||undefined}
                   style={{display:'flex',alignItems:'center',gap:9,padding:'5px 12px',
@@ -27271,7 +27292,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     borderTop:'1px solid var(--sub)'};
   // 2뎁스 — 같은 묶음 «안» 을 나눈다. 이름 없이 선과 여백만 둘 때도 쓴다.
   const sec2 = {marginTop:12,paddingTop:10,
-    borderTop:'1px solid rgba(255,255,255,.07)'};
+    borderTop:'1px solid '+csFilm('.07')};
   // 맨 위 묶음용 — 선 없이 이름만. 패널 제목 바로 아래라 선을 그으면 줄이 둘로 보인다.
   const secTop = {...sec, marginTop:0, paddingTop:0, borderTop:'none'};
   // ★★ 항목 한 줄 — 읽기 전용이든 입력칸이든 «같은 틀» 을 쓴다(제니 2026-09-02:
@@ -27995,7 +28016,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               {(allRecent ? byPhone : byPhone.slice(0,CS_LIST_PEEK)).map(t=>(
                 <div key={t.id} style={{display:'flex',alignItems:'flex-start',gap:6,
                   fontSize:11,color:'var(--sub)',lineHeight:1.6,padding:'3px 0',
-                  borderBottom:'1px solid rgba(255,255,255,.05)'}}>
+                  borderBottom:'1px solid '+csFilm('.05')}}>
                   <span style={{flex:1,minWidth:0}}>
                     <span style={{fontFamily:"Consolas,'Segoe UI Mono',monospace",
                       fontWeight:700,color:'var(--accent)'}}>#{t.id}</span>
@@ -28768,7 +28789,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
     borderTop:'1px solid var(--sub)'};
   // 2뎁스 — 같은 묶음 «안» 을 나눈다. 이름 없이 선과 여백만 둘 때도 쓴다.
   const sec2 = {marginTop:12,paddingTop:10,
-    borderTop:'1px solid rgba(255,255,255,.07)'};
+    borderTop:'1px solid '+csFilm('.07')};
   // 맨 위 묶음용 — 선 없이 이름만. 패널 제목 바로 아래라 선을 그으면 줄이 둘로 보인다.
   const secTop = {...sec, marginTop:0, paddingTop:0, borderTop:'none'};
   // ★★ 접을 수 있는 묶음 제목 — 이름 오른쪽 끝에 [접기]/[펼치기] (제니 2026-09-09).
@@ -29660,7 +29681,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
               {(allRecent ? byPhone : byPhone.slice(0,CS_LIST_PEEK)).map(x=>(
                 <div key={x.id} style={{display:'flex',alignItems:'flex-start',gap:6,
                   fontSize:11,color:'var(--sub)',lineHeight:1.6,padding:'3px 0',
-                  borderBottom:'1px solid rgba(255,255,255,.05)'}}>
+                  borderBottom:'1px solid '+csFilm('.05')}}>
                   <span style={{flex:1,minWidth:0}}>
                     <span style={{fontFamily:"Consolas,'Segoe UI Mono',monospace",
                       fontWeight:700,color:'var(--accent)'}}>#{x.id}</span>
