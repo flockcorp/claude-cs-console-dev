@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260928b_rest_ink_islands -->
+<!-- (2026-09-28) 🎨 **라이트 스윕 마무리 — 남은 밝은 글자 다섯 + «어두운 섬» 둘.**(제니 「남은 15곳이랑 어두운 섬 둘도 진행해줘」) ⚠ **먼저 정정**: 앞 판에서 「남은 것 15곳」이라 적었는데 다시 세니 **13곳**이었다(값별 수를 더할 때 두 곳을 겹쳐 셌다). 그리고 그 13곳 중 **손대야 하는 것은 다섯뿐**이었다 — 나머지 여덟은 «라이트에서만 깨진 것» 이 아니어서 이번 일의 대상이 아니다(아래 🚫). ★★★ **원칙은 그대로**: 새로 두는 토큰의 «다크 값» 이 지금 박혀 있는 값과 **글자 그대로** 같다. 겸해 이번에는 **바뀐 줄마다 새 값을 «다크에서 무엇이 되는가» 로 되돌려 풀어 고치기 «전» 의 줄과 대조했다**(`var(--토큰)`→다크 팔레트 값 · `csInk('#x')`→`'#x'` · `csOffBg()`→`#38425A`). **다른 줄 0개 — 다크 불변이 주장이 아니라 계산 결과다.** 🔴 그 검산에서 한 번 헛짚었다: 처음엔 «후» 줄만 풀고 «전» 줄은 그대로 비교해 **내가 건드리지도 않은 기존 `var(--border)`·`var(--primary)` 가 차이로 잡혔다**(4건). ★★ **대조는 양쪽을 같은 방식으로 풀어야 한다** — 한쪽만 풀면 도구가 «변했다» 고 거짓말한다. ① **글자 셋은 `csInk()` 로** — 이 콘솔이 2026-09-07 에 바로 이 목적으로 만든 함수이고 **다크에서는 인자를 그대로 돌려준다**(코드로 가드를 확인했다). 환불 확인요청 「✓ 확인 완료」 `#7ED957`(흰 바탕 1.76→5.09 · **같은 색을 `csInk` 로 쓰는 선례가 바로 위 7870행에 이미 있었다**) · 공급사 CSV 모달의 파일명 줄 `#a8defb`(옅은 판 `--panel-bg` 위에서 1.29→5.89) · CS 티켓 「지울 대목을 드래그하세요」 `#FF9B9B`(2.02→8.92). ★ 새 토큰을 파지 않은 까닭: 이 파일엔 이미 «옅은 빨강» 다크가 셋(`#f87171`·`#FF6B6B`·`#FF9B9B`)이라 넷째 토큰을 더하면 **값으로 찾는 훑기가 또 길어진다.** ② **중립 표시만 토큰으로** — 상담원 분석의 「━ ±0%」 `#c4d3e6` → **`--flat-ink`**(다크 `#c4d3e6` / 라이트 `#545454`). ★★★ **여기서 `csInk` 를 쓰면 안 된다**: 계산해 보니 `#2a486f` 가 나오는데 그것은 브랜드 남색(`--accent` 라이트 `#2A478D`)과 사실상 같은 색이라, **«변화 없음» 이 «뜻이 있는 값» 으로 읽힌다.** 형제인 ▲▼ 가 `--ok-ink`·`--red-ink` 토큰을 쓰므로 중립도 토큰이어야 짝이 맞고, 라이트 값은 `--sub` 라이트와 같은 중립 회색을 그대로 가져왔다(흰 바탕 7.57). ③ **어두운 섬 ① 문서 편집기 이미지 도구막대** — 이미지를 누르면 뜨는 막대가 라이트에서 **흰 화면 위의 검은 막대**였다. 토큰 넷을 두었다(다크 값 = 지금 값): `--qltool-bg`(#1f2937 / #FFFFFF) · `--qltool-ink`(#cbd5e1 / #1B2436) · `--qltool-line`(구분선) · `--qltool-shadow`. ★ 그림자도 함께 뒤집었다 — **흰 종이 위의 검정 그림자는 «먹구름» 이다**(`--pop-shadow` 에서 이미 배운 것). ★ 막대 hover 의 `#F6AD09` 는 앞 판과 같은 `--warn-ink` 로(흰 막대 위 노란 글자가 될 자리였다). ④ **어두운 섬 ② «저장됨» 꺼진 저장 단추** — `background:#38425A` + `color:#93A0BA` 가 흰 카드 위의 어두운 덩어리였다. ★★★ **값을 지어내지 않았다: 이 파일이 이미 답을 갖고 있었다.** 그 두 값은 `CS_TONE_DIM.gray` 와 **글자 그대로 같고**, 그 짝인 `CS_TONE_SOFT.gray`(bg #D3D8E2 / fg #6B7488)는 **제니가 2026-09-08 에 CS 저장 단추에서 확인한 값**이다. → 도우미 둘(`csOffBg()`·`csOffInk()`)을 두어 **«옅게 하는 방향은 판이 아니라 바탕이 밝은가가 정한다»** 는 그날의 결론을 그대로 적용했다. 🔴 **찾은 자리가 둘이 아니라 셋이었다** — 앞 판의 자(바탕·테두리 훑기)는 `CsMenuRoles`·`CsActionRoles` 둘만 찾았는데 `CsClaimTypeNames` 에도 같은 단추가 있었다. **문자열로 전수를 세니 3곳**(`background: dirty?…'#38425A'`). ★★ 도우미는 `CS_TONE_DIM` **뒤**에 두었다 — 앞에 두면 선언 순서 검사가 «없는 이름» 으로 잡는다. 🚫 **일부러 손대지 않은 여덟 곳 — 까닭이 다 다르다.** ㉠**상품 정보 목록의 「-」 셋(`#aaa`)**: 그 목록은 제니 지시로 **두 모드에서 밝은 판 + 어두운 글자**다(2026-09-22). 즉 `#aaa` 는 다크에서도 똑같이 약하고, 고치면 **다크가 바뀐다** → 범위 밖. ㉡**자동발송 미리보기 판 셋(`#cbd5e1`×2·`#9ca3af`)**: 조상이 `#fff` 로 **박혀 있는** 판이다 — 여기는 **고객 메일함에서 보이는 모습을 흉내내는 자리**라 콘솔 테마를 따라가면 안 된다(`composeEmailHtml` 과 같은 까닭). 같은 판의 `#1a1a1a` 단추 미리보기도 그래서 그대로 둔다. ㉢**`CS_ROLES` 의 `#A8DEF6`·`#dce8ff`**(+ 앞 판에서 뺀 `#F6AD09`): **네이비 밴드 위라 이미 맞다.** 🔴🔴 **처음엔 «쓰이는 곳이 없는 죽은 값» 이라고 판단했다가 세어 보니 틀렸다** — `r.color` 참조가 2곳 있었고(CS 설정의 권한 열 제목 `<th>`), 그 `<th>` 의 배경은 전역 규칙 `thead th{background:var(--head-bg)}` 가 주는 **브랜드 남색(#2A478D, 두 모드 동일)** 이다. 실제로 재니 **4.57 / 6.06 / 7.14 로 두 모드 다 잘 읽힌다** — 이것이 바로 09-22 에 세운 판정 기준의 「바탕이 안 바뀌는 자리의 박힌 색은 이미 맞다」 경우다. 잉크로 바꿨으면 `--warn-ink` 라이트가 네이비 위에서 **1.39** 가 되어 **고치기 전보다 나빠졌다.** ★★★ **«안 쓰인다» 는 말을 하기 전에 세어 볼 것**(이 파일에서 두 번째로 밟았다 — 09-17 의 「블록 차례 바꾸기가 없다」와 같은 꼴이다). 🔴🔴🔴 **여기서 내 «조상 자» 의 구멍이 드러났다 — 배경이 «CSS 클래스» 에서 오는 경우를 못 본다.** 자는 인라인 `style` 만 거슬러 올랐으므로 `thead th` 가 칠하는 네이비를 «못 찾음» 으로 봤다. → **태그를 거슬러 `th`/`thead` 안인지 따로 판정하는 자를 만들어**, 이번 두 판이 손댄 것뿐 아니라 **파일 안의 잉크·토큰 글자 880줄을 전수로** 확인했다: **`th`/`thead` 안은 한 곳뿐이고 그것은 내가 손대지 않은 기존 줄**이며, 게다가 `thead th{color:var(--head-ink)}` 가 그 `th` 에 직접 걸려 실제 글자는 흰색이다(8.81) — **문제 없음.** ★ 즉 **앞 판(v20260928a, 이미 운영)도 안전하다**는 것을 사후로 확인했다. ★ SQL·엣지 함수 변경 없음. 화면만. `npm run check` 통과. ★ dev 전용. -->
 <!-- v20260928a_inherit_ink -->
 <!-- (2026-09-28) 🎨 **라이트 모드 스윕 — «바탕을 물려받는 밝은 글자» 73곳을 잉크 토큰으로.** ★★★ **이 판의 값어치는 고친 곳이 아니라 «옛 자가 못 보던 자리» 를 찾아낸 것이다.** 2026-09-22 의 명암비 자는 「한 style 안에 `color` 와 `background` 가 **둘 다** 있는 자리」만 봤다 — 그래야 «무엇 위의 무엇» 인지 지어내지 않기 때문이다. 그런데 그 규칙 때문에 **바탕을 조상에게서 물려받는 글자는 통째로 안 재졌다.** 그 자리만 따로 세니 **91곳**이었고, 흰 카드(라이트 `--card`=#FFFFFF) 기준 명암비가 **#F6AD09 1.94 · #FFA94D 1.92 · #78AAFF 2.36 · #8FA8D0 2.43** 였다. **«0곳 통과» 는 «없다» 가 아니라 «내 자가 보는 범위에 없다» 였다.** ★★ 바꾼 것은 글자 리터럴 다섯 → 그 값을 **다크 값으로 글자 그대로 가진** 토큰이다: `#F6AD09`→`--warn-ink`(53) · `#FFA94D`→`--held-ink`(8) · `#78AAFF`→`--info-ink`(6) · `#8FA8D0`→`--sub`(4) · `#60a5fa`→`--mail-ink`(2). **다섯 다 다크 값 == 지금 박힌 값이므로 다크 화면은 정의상 한 픽셀도 안 변한다**(패치 스크립트가 치환 «전» 에 그것을 검산하고, 아니면 멈춘다). 라이트에서만 진한 값(#7a5b00·#A85800·#2A478D·#545454)으로 바뀐다. 👁 **눈에 보이는 것**: CS 티켓 등록 화면의 **필수 표시 별표 `*`**(어느 칸이 필수인지 안 보였다) · 환불 관리 **KPI 큰 숫자 셋**(환불 대기·후처리 대기·보류) · **⏸ 보류 확인 알림 배너** · 공급사 「거래중 총 공급사」의 ⚙ · 상품 «수정 동기화» 목록의 「CS정보」·「메모」 딱지 · 계정 정보 「확인이 필요합니다」. 🔴 **일부러 뺀 것 — 그 까닭이 이 판의 절반이다.** ①**`csInk(…)` 의 인자**: `csInk` 는 라이트에서 이미 같은 색을 눌러 준다(2026-09-07 에 그 목적으로 만들었다) — 토큰으로 바꾸면 **이중으로 눌리고**, 게다가 `#` 로 시작하지 않는 값은 그대로 돌려주므로 계산이 무력화된다. ②**같은 style 에 `background` 가 있는 28곳**: 09-22 에 명암비 자가 이미 보고 지나간 자리다. ③**`CS_ROLES` 색 표**: 형제 값 둘(`#A8DEF6`·`#dce8ff`)에 맞는 토큰이 없어 하나만 바꾸면 **세 뱃지의 밝기가 어긋난다** — «색을 모아 둔 표» 는 한꺼번에 옮겨야 한다. ④`CsThemePick`·`SWATCH`(모드별 값을 손으로 적은 사본) · `composeEmailHtml`(고객 메일함에서 열린다). ★★★ **조상 판을 «짐작하지 않고 쟀다»** — 들여쓰기로 거슬러 올라 가장 가까운 `background` 를 찾고, 그것이 **라이트에서도 어두운 값**(`--head-bg`·`--primary`·`--accent`·#2A478D)이면 대상에서 뺀다. 그런 자리에서는 잉크로 바꾸면 **고치기 전보다 더 안 보인다**(#7a5b00 on 네이비 = 1.41). 결과 **네이비 조상 0곳**. 🔴 다만 셋이 «네이비 의심» 으로 걸렸는데 다 **형제 요소의 배경**이었다(바로 위 [목록으로]·[+ 칩 추가] 단추) — **조상과 형제는 다르다.** 🔴🔴 **조상을 «못 찾음» 으로 나온 46곳을 «안전» 으로 읽지 않았다** — 09-22 의 교훈(「조상 판을 모를 때는 못 잰다고 해야지 페이지 바탕으로 짐작하면 안 된다」)이 그대로 걸리는 자리다. 한 줄씩 훑어 `<th>`·`thead`·네이비 계열이 조상에 없음을 확인한 뒤에야 넣었다. ⏳ **남은 것**: ①맞는 토큰이 없는 **15곳**(`#aaa`·`#cbd5e1`·`#c4d3e6`·`#A8DEF6`·`#dce8ff`·`#9ca3af`·`#7ED957`·`#ff9b9b`) — 새 토큰을 파야 하고, 조상 판을 한 곳씩 봐야 한다. ②**라이트의 «어두운 섬» 둘**: 문서 편집기에서 이미지를 눌렀을 때 뜨는 도구막대(`.ql-image-toolbar` #1f2937)와 계정 정보의 «저장됨» 꺼진 단추(#38425A). ★ 바꾼 줄 73개는 **1:1 치환**이라 줄 수가 안 변했고, **주석 줄에 들어간 치환 0건**(09-22 에 여러 줄 주석을 망가뜨린 함정) · 줄바꿈도 LF 그대로다. ★ SQL·엣지 함수 변경 없음. 화면만. ★ dev 전용. -->
 <!-- v20260922j_dark_identical -->
@@ -797,6 +799,17 @@
       /* 떠 있는 작은 패널의 그림자. ★ 같은 검정 그림자가 두 바탕에서 정반대로 읽힌다 —
          흰 종이 위의 .55 검정은 «먹구름» 이다. 라이트는 브랜드 남색을 옅게 깐다. */
       --pop-shadow:0 12px 30px rgba(0,0,0,.55);
+      /* 2026-09-28 — 라이트 스윕의 마지막 묶음. 넷 다 «다크 값 = 그 자리 원본 리터럴» 이라
+         다크 화면은 변할 수 없다.
+         flat-ink 는 «변화 없음»(━ ±0%)의 중립색이다 — 형제인 ▲▼ 가 ok-ink/red-ink 토큰을
+           쓰므로 중립도 토큰이어야 짝이 맞는다. csInk 로 누르면 브랜드 남색과 같아져
+           «변화 없음» 이 «뜻이 있는 값» 으로 읽힌다(그래서 회색을 골랐다).
+         qltool-* 는 문서 편집기에서 이미지를 눌렀을 때 뜨는 도구막대다 — 라이트에서
+           흰 화면 위에 검은 막대가 떠 있었다. */
+      --flat-ink:#c4d3e6;
+      --qltool-bg:#1f2937; --qltool-ink:#cbd5e1;
+      --qltool-line:rgba(255,255,255,0.1);
+      --qltool-shadow:0 4px 12px rgba(0,0,0,0.4);
       --date-icon:invert(1) brightness(2);
     }
     :root[data-theme="light"] {
@@ -824,6 +837,13 @@
       --on-accent:#FFFFFF;
       --panel-bg:#EDF2FA;
       --pop-shadow:0 12px 30px rgba(22,35,63,.22);
+      /* 2026-09-28 — 위 넷의 라이트 짝. 중립은 --sub 라이트와 같은 회색(#545454, 흰 바탕
+         7.57)이고, 도구막대는 떠 있는 밝은 판으로 뒤집는다(글자 15.53). 그림자도 검정에서
+         브랜드 남색으로 바꾼다 — 흰 종이 위의 검정 그림자는 «먹구름» 이다. */
+      --flat-ink:#545454;
+      --qltool-bg:#FFFFFF; --qltool-ink:#1B2436;
+      --qltool-line:rgba(22,35,63,.14);
+      --qltool-shadow:0 4px 12px rgba(22,35,63,.18);
       --date-icon:none;
     }
     body { font-family:'Pretendard Variable','Pretendard','Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:auto; }
@@ -1379,10 +1399,10 @@
     /* Quill 에디터 안에서도 연속 blockquote 끊김 방지 */
     .ql-editor blockquote + blockquote { margin-top:0; padding-top:0; }
     /* 이미지 사이즈/정렬 조절 toolbar */
-    .ql-image-toolbar { position:fixed; background:#1f2937; border:1px solid var(--border); border-radius:6px; padding:4px; display:flex; gap:2px; z-index:1100; box-shadow:0 4px 12px rgba(0,0,0,0.4); font-family:inherit; }
-    .ql-image-toolbar button { background:transparent; border:none; color:#cbd5e1; padding:4px 9px; font-size:11px; cursor:pointer; border-radius:3px; font-family:inherit; line-height:1.2; }
-    .ql-image-toolbar button:hover { background:rgba(246,173,9,0.15); color:#F6AD09; }
-    .ql-image-toolbar .ql-image-toolbar-divider { width:1px; background:rgba(255,255,255,0.1); margin:2px 2px; }
+    .ql-image-toolbar { position:fixed; background:var(--qltool-bg); border:1px solid var(--border); border-radius:6px; padding:4px; display:flex; gap:2px; z-index:1100; box-shadow:var(--qltool-shadow); font-family:inherit; }
+    .ql-image-toolbar button { background:transparent; border:none; color:var(--qltool-ink); padding:4px 9px; font-size:11px; cursor:pointer; border-radius:3px; font-family:inherit; line-height:1.2; }
+    .ql-image-toolbar button:hover { background:rgba(246,173,9,0.15); color:var(--warn-ink); }
+    .ql-image-toolbar .ql-image-toolbar-divider { width:1px; background:var(--qltool-line); margin:2px 2px; }
     .ql-editor img.ql-selected { outline:2px solid #F6AD09; outline-offset:2px; cursor:pointer; }
     .ql-editor img { cursor:pointer; }
 
@@ -7717,7 +7737,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
             <div style={{padding:'16px 22px',background:'var(--panel-bg)',borderBottom:'1px solid #DCE8FF',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <div>
                 <div style={{fontSize:15,fontWeight:700,color:'var(--modal-title)'}}>📤 카페24 CSV 업로드 미리보기</div>
-                <div style={{fontSize:11,color:'#a8defb',marginTop:3}}>{csvModal.fileName} · 총 {csvModal.stats.total}건</div>
+                <div style={{fontSize:11,color:csInk('#a8defb'),marginTop:3}}>{csvModal.fileName} · 총 {csvModal.stats.total}건</div>
               </div>
               <button onClick={()=>{if(!csvUploading){setCsvModal(null);setCsvResult(null);}}} style={{background:'none',border:'none',color:'#a8defb',fontSize:20,cursor:'pointer'}}>✕</button>
             </div>
@@ -8800,7 +8820,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
     request: {label:'요청',        color:'var(--sub)', border:'rgba(248,113,113,.45)'},
     hold:    {label:'⏸ 보류',      color:'var(--held-ink)',    border:'rgba(255,169,77,.6)'},
     resume:  {label:'🔎 보류 해제', color:'var(--red-ink)',    border:'rgba(248,113,113,.45)'},
-    resolve: {label:'✓ 확인 완료',  color:'#7ED957',    border:'rgba(126,217,87,.5)'},
+    resolve: {label:'✓ 확인 완료',  color:csInk('#7ED957'),    border:'rgba(126,217,87,.5)'},
   };
   const stepLine = (kind, at, by, note, key)=>{
     const s = REVIEW_STEP[kind];
@@ -10767,11 +10787,11 @@ function AgentAnalysisPage(){
 
   // 화살표 + 색상 헬퍼
   const fmtPct=(v)=>{
-    if(Math.abs(v)<1) return {arrow:'━', text:'±0%', color:'#c4d3e6'};
+    if(Math.abs(v)<1) return {arrow:'━', text:'±0%', color:'var(--flat-ink)'};
     if(v>=15) return {arrow:'▲', text:'+'+Math.round(v)+'%', color:'var(--ok-ink)'};
     if(v>=1) return {arrow:'▲', text:'+'+Math.round(v)+'%', color:'var(--ok-ink)'};
     if(v<=-15) return {arrow:'▼', text:Math.round(v)+'%', color:'var(--red-ink)'};
-    return {arrow:'━', text:Math.round(v)+'%', color:'#c4d3e6'};
+    return {arrow:'━', text:Math.round(v)+'%', color:'var(--flat-ink)'};
   };
 
   return (
@@ -20434,6 +20454,16 @@ const CS_TONE_DIM = {
   red:   {bg:'#6B2B24', fg:'#D19A93'},
   gray:  {bg:'#38425A', fg:'#93A0BA'},
 };
+
+// ★★★ «못 누르는» 저장 단추의 색. 2026-09-08 에 CS 저장 단추에서 얻은 결론을 그대로
+//   쓴다 — **옅게 하는 방향을 정하는 것은 «판» 이 아니라 «바탕이 밝은가» 다.** 밝은 바탕에서
+//   옅게 한다는 것은 파스텔로 «밝히는» 것이고, 어두운 바탕에서는 «가라앉히는» 것이다.
+//   한쪽 표를 두 곳에 쓰면 못 누르는 단추가 화면에서 가장 밝은(또는 가장 어두운) 조각이 된다.
+// ★★ 다크 값은 CS_TONE_DIM.gray 이고 그것이 여태 이 세 단추에 박혀 있던 값과 «글자 그대로»
+//   같다(bg #38425A · fg #93A0BA) — 그래서 다크 화면은 변하지 않는다.
+// ★ opacity 로 눕히지 않는다(같은 판단) — 바탕과 글자를 각각 준다.
+function csOffBg(){  return (csIsLight() ? CS_TONE_SOFT : CS_TONE_DIM).gray.bg; }
+function csOffInk(){ return (csIsLight() ? CS_TONE_SOFT : CS_TONE_DIM).gray.fg; }
 // 받침이 있으면 «으로», 없거나 ㄹ 받침이면 «로». 「접수됨으로」·「회신 대기로」.
 // ★ 버튼 글자는 사람이 매번 읽는 자리라 조사가 틀리면 눈에 걸린다.
 function csRo(word){
@@ -24033,8 +24063,8 @@ function CsClaimTypeNames({currentUserEmail}){
         <button onClick={save} disabled={busy||!dirty}
           style={{padding:'7px 15px',borderRadius:7,fontSize:12,fontWeight:700,
             fontFamily:'inherit',border:'none',
-            color: dirty?'#fff':'#93A0BA',
-            background: dirty?'var(--primary)':'#38425A',
+            color: dirty?'#fff':csOffInk(),
+            background: dirty?'var(--primary)':csOffBg(),
             cursor:(busy||!dirty)?'default':'pointer'}}>
           {busy?'저장 중…':dirty?'저장':'저장됨'}</button>
       </div>
@@ -29376,7 +29406,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                     border:'1px solid rgba(248,113,113,.55)',
                     borderLeft:'3px solid var(--red)'}}>
                     <span style={{fontSize:13,lineHeight:1}}>⚠</span>
-                    <span style={{fontSize:12,fontWeight:700,color:'#FF9B9B',lineHeight:1.5}}>
+                    <span style={{fontSize:12,fontWeight:700,color:csInk('#FF9B9B'),lineHeight:1.5}}>
                       지울 대목을 드래그하세요 — 놓는 순간 지워지고, 되돌릴 수 없습니다.
                     </span>
                   </div>
@@ -34122,8 +34152,8 @@ function CsMenuRoles({currentUserEmail, card, head, onSaved}){
               <button onClick={save} disabled={busy||!dirty}
                 style={{padding:'7px 15px',borderRadius:7,fontSize:12,fontWeight:700,
                   fontFamily:'inherit',border:'none',
-                  color: dirty?'#fff':'#93A0BA',
-                  background: dirty?'var(--primary)':'#38425A',
+                  color: dirty?'#fff':csOffInk(),
+                  background: dirty?'var(--primary)':csOffBg(),
                   cursor: (busy||!dirty)?'default':'pointer'}}>
                 {busy?'저장 중…':dirty?'저장':'저장됨'}</button>
             </div>
@@ -34295,8 +34325,8 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
               <button onClick={save} disabled={busy||!dirty}
                 style={{padding:'7px 15px',borderRadius:7,fontSize:12,fontWeight:700,
                   fontFamily:'inherit',border:'none',
-                  color: dirty?'#fff':'#93A0BA',
-                  background: dirty?'var(--primary)':'#38425A',
+                  color: dirty?'#fff':csOffInk(),
+                  background: dirty?'var(--primary)':csOffBg(),
                   cursor: (busy||!dirty)?'default':'pointer'}}>
                 {busy?'저장 중…':dirty?'저장':'저장됨'}</button>
             </div>
