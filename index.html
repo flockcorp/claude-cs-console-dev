@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20260928a_inherit_ink -->
+<!-- (2026-09-28) 🎨 **라이트 모드 스윕 — «바탕을 물려받는 밝은 글자» 73곳을 잉크 토큰으로.** ★★★ **이 판의 값어치는 고친 곳이 아니라 «옛 자가 못 보던 자리» 를 찾아낸 것이다.** 2026-09-22 의 명암비 자는 「한 style 안에 `color` 와 `background` 가 **둘 다** 있는 자리」만 봤다 — 그래야 «무엇 위의 무엇» 인지 지어내지 않기 때문이다. 그런데 그 규칙 때문에 **바탕을 조상에게서 물려받는 글자는 통째로 안 재졌다.** 그 자리만 따로 세니 **91곳**이었고, 흰 카드(라이트 `--card`=#FFFFFF) 기준 명암비가 **#F6AD09 1.94 · #FFA94D 1.92 · #78AAFF 2.36 · #8FA8D0 2.43** 였다. **«0곳 통과» 는 «없다» 가 아니라 «내 자가 보는 범위에 없다» 였다.** ★★ 바꾼 것은 글자 리터럴 다섯 → 그 값을 **다크 값으로 글자 그대로 가진** 토큰이다: `#F6AD09`→`--warn-ink`(53) · `#FFA94D`→`--held-ink`(8) · `#78AAFF`→`--info-ink`(6) · `#8FA8D0`→`--sub`(4) · `#60a5fa`→`--mail-ink`(2). **다섯 다 다크 값 == 지금 박힌 값이므로 다크 화면은 정의상 한 픽셀도 안 변한다**(패치 스크립트가 치환 «전» 에 그것을 검산하고, 아니면 멈춘다). 라이트에서만 진한 값(#7a5b00·#A85800·#2A478D·#545454)으로 바뀐다. 👁 **눈에 보이는 것**: CS 티켓 등록 화면의 **필수 표시 별표 `*`**(어느 칸이 필수인지 안 보였다) · 환불 관리 **KPI 큰 숫자 셋**(환불 대기·후처리 대기·보류) · **⏸ 보류 확인 알림 배너** · 공급사 「거래중 총 공급사」의 ⚙ · 상품 «수정 동기화» 목록의 「CS정보」·「메모」 딱지 · 계정 정보 「확인이 필요합니다」. 🔴 **일부러 뺀 것 — 그 까닭이 이 판의 절반이다.** ①**`csInk(…)` 의 인자**: `csInk` 는 라이트에서 이미 같은 색을 눌러 준다(2026-09-07 에 그 목적으로 만들었다) — 토큰으로 바꾸면 **이중으로 눌리고**, 게다가 `#` 로 시작하지 않는 값은 그대로 돌려주므로 계산이 무력화된다. ②**같은 style 에 `background` 가 있는 28곳**: 09-22 에 명암비 자가 이미 보고 지나간 자리다. ③**`CS_ROLES` 색 표**: 형제 값 둘(`#A8DEF6`·`#dce8ff`)에 맞는 토큰이 없어 하나만 바꾸면 **세 뱃지의 밝기가 어긋난다** — «색을 모아 둔 표» 는 한꺼번에 옮겨야 한다. ④`CsThemePick`·`SWATCH`(모드별 값을 손으로 적은 사본) · `composeEmailHtml`(고객 메일함에서 열린다). ★★★ **조상 판을 «짐작하지 않고 쟀다»** — 들여쓰기로 거슬러 올라 가장 가까운 `background` 를 찾고, 그것이 **라이트에서도 어두운 값**(`--head-bg`·`--primary`·`--accent`·#2A478D)이면 대상에서 뺀다. 그런 자리에서는 잉크로 바꾸면 **고치기 전보다 더 안 보인다**(#7a5b00 on 네이비 = 1.41). 결과 **네이비 조상 0곳**. 🔴 다만 셋이 «네이비 의심» 으로 걸렸는데 다 **형제 요소의 배경**이었다(바로 위 [목록으로]·[+ 칩 추가] 단추) — **조상과 형제는 다르다.** 🔴🔴 **조상을 «못 찾음» 으로 나온 46곳을 «안전» 으로 읽지 않았다** — 09-22 의 교훈(「조상 판을 모를 때는 못 잰다고 해야지 페이지 바탕으로 짐작하면 안 된다」)이 그대로 걸리는 자리다. 한 줄씩 훑어 `<th>`·`thead`·네이비 계열이 조상에 없음을 확인한 뒤에야 넣었다. ⏳ **남은 것**: ①맞는 토큰이 없는 **15곳**(`#aaa`·`#cbd5e1`·`#c4d3e6`·`#A8DEF6`·`#dce8ff`·`#9ca3af`·`#7ED957`·`#ff9b9b`) — 새 토큰을 파야 하고, 조상 판을 한 곳씩 봐야 한다. ②**라이트의 «어두운 섬» 둘**: 문서 편집기에서 이미지를 눌렀을 때 뜨는 도구막대(`.ql-image-toolbar` #1f2937)와 계정 정보의 «저장됨» 꺼진 단추(#38425A). ★ 바꾼 줄 73개는 **1:1 치환**이라 줄 수가 안 변했고, **주석 줄에 들어간 치환 0건**(09-22 에 여러 줄 주석을 망가뜨린 함정) · 줄바꿈도 LF 그대로다. ★ SQL·엣지 함수 변경 없음. 화면만. ★ dev 전용. -->
 <!-- v20260922j_dark_identical -->
 <!-- (2026-09-22) 🔒 **«다크 불변» 을 숫자로 증명되는 상태로 만들었다.** 제니 지시로 모달 제목의 다크 값을 원래 `#fff` 로 되돌리되 라이트만 어둡게 — `--modal-title`(다크 `#FFFFFF` · 라이트 `#1B2436`)을 두었다. `--text` 로 묶으면 다크가 `#e8edf8` 이 되어 7/255 만큼 달라지는데, **눈으로 구분이 안 되더라도 «다크를 안 바꾼다» 는 규칙에는 어긋난다.** 🔴 **되돌리면서 라이트가 다시 깨진 6곳이 드러났다** — 「메일」 파란 뱃지 셋(`#60a5fa` 라이트 2.07) · 환불 창 빨간 오류 박스 셋(`#FF6B6B` 라이트 2.26). 앞서 쓴 `--info-ink`·`--red-ink` 는 **다크 값이 원본과 달라** 쓰면 다크가 바뀐다. → **다크 값이 원본과 글자 그대로 같은 토큰**을 새로 두었다: `--mail-ink`(다크 `#60a5fa` · 라이트 `#2A478D`) · `--error-ink`(다크 `#FF6B6B` · 라이트 `#C0392B`). ★★★ **이것이 이 일의 올바른 꼴이다 — «라이트를 고치려면 다크 값이 지금 값과 같은 토큰을 만든다».** 기존 토큰이 가깝다고 끌어다 쓰면 그 순간 다크가 바뀐다. ✅ **오늘 쓴 토큰 아홉 종을 전수로 검사했다 — 다크 값이 원본 리터럴과 다른 것이 0건이다**(`--red-ink`·`--ok-ink`·`--warn-ink`·`--info-ink`·`--held-ink`·`--mail-ink`·`--error-ink`·`--modal-title`, 그리고 `var(--red)`→`var(--red-ink)`). **«다크는 한 픽셀도 안 변한다» 가 이제 주장이 아니라 계산 결과다.** ✅ 라이트에서 명암비 3.0 미만 **0곳**. ⚪ 다크 3.0 미만 9곳은 **내 자가 잘못 판정한 자리**(밝은 판 안의 틴트를 어두운 페이지 바탕으로 계산)와 의도된 비활성·위험 단추다 — **손대지 않는다.** ★ SQL·엣지 함수 변경 없음. 화면만. -->
 <!-- v20260922i_dark_untouched -->
@@ -1345,17 +1347,17 @@
     .ql-toolbar.ql-snow button:hover .ql-fill,
     .ql-toolbar.ql-snow .ql-active .ql-fill { fill:#F6AD09; }
     .ql-toolbar.ql-snow .ql-picker-label:hover,
-    .ql-toolbar.ql-snow .ql-active .ql-picker-label { color:#F6AD09; }
+    .ql-toolbar.ql-snow .ql-active .ql-picker-label { color:var(--warn-ink); }
     .ql-toolbar.ql-snow .ql-picker-options { background:var(--card); border-color:var(--border); }
     .ql-toolbar.ql-snow .ql-picker-item { color:var(--text); }
-    .ql-toolbar.ql-snow .ql-picker-item:hover { color:#F6AD09; }
+    .ql-toolbar.ql-snow .ql-picker-item:hover { color:var(--warn-ink); }
     .ql-editor { min-height:180px; color:var(--text); line-height:1.6; }
     .ql-editor.ql-blank::before { color:var(--sub); font-style:normal; }
-    .ql-editor a { color:#60a5fa; }
+    .ql-editor a { color:var(--mail-ink); }
     .ql-snow .ql-tooltip { background:var(--card); border:1px solid var(--border); color:var(--text); box-shadow:0 4px 12px rgba(0,0,0,0.3); border-radius:6px; }
     .ql-snow .ql-tooltip input[type=text] { background:var(--bg); border-color:var(--border); color:var(--text); }
     .ql-snow .ql-tooltip a.ql-action,
-    .ql-snow .ql-tooltip a.ql-preview { color:#60a5fa; }
+    .ql-snow .ql-tooltip a.ql-preview { color:var(--mail-ink); }
     /* 미리보기 영역 (메일 카드 안 — 라이트) */
     .auto-delivery-preview { color:#1f2937; }
     .auto-delivery-preview p { margin:0 0 2px; }
@@ -4976,7 +4978,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
               {/* ★ 세는 기준을 «상품이 있는 공급사» 에서 «거래중인 공급사» 로 바꿨다(제니 지시).
                   옛 문구 「상품 정보가 있는 총 공급사 수만 가져옵니다」 는 «상품 정보» 를
                   «상품 데이터» 로도 «CS 정보» 로도 읽을 수 있어 뜻이 흐렸다. */}
-              <div style={{fontSize:11,color:'var(--sub)',marginBottom:2}}>거래중 총 공급사{canManageSupplier&&<span style={{color:'#F6AD09'}}> ⚙</span>}</div>
+              <div style={{fontSize:11,color:'var(--sub)',marginBottom:2}}>거래중 총 공급사{canManageSupplier&&<span style={{color:'var(--warn-ink)'}}> ⚙</span>}</div>
               <div style={{fontSize:20,fontWeight:700,color:'var(--accent)'}}>{totalCount.suppliers===null?'—':totalCount.suppliers}<span style={{fontSize:12,fontWeight:400,color:'var(--sub)',marginLeft:2}}>개</span></div>
               <div style={{fontSize:10,color:'var(--sub)',marginTop:2,lineHeight:1.3}}>거래중인 공급사의 수를 가져옵니다.</div>
             </div>
@@ -5211,7 +5213,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                     <td style={{fontSize:11,color:'#1a3060'}}>
                       <div style={{fontWeight:500}}>{p.shipping_method||'-'}</div>
                       <div style={{color:'#6a80a0',fontSize:10}}>
-                        {p.payment_type&&p.payment_type!=='선결제'?<span style={{color:'#F6AD09',marginRight:3}}>[{p.payment_type}]</span>:null}
+                        {p.payment_type&&p.payment_type!=='선결제'?<span style={{color:'var(--warn-ink)',marginRight:3}}>[{p.payment_type}]</span>:null}
                         {p.shipping_cond==='금액 조건부 무료'&&p.shipping_threshold
                           ?Number(p.shipping_threshold).toLocaleString()+'원 이상 무료'
                           :p.shipping_cond||'-'}
@@ -5266,7 +5268,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                                 {(p.options||[]).length>0
                                   ?(p.options||[]).map((opt,oi)=>opt.values&&opt.values.length>0&&(
                                     <div key={oi} style={{marginBottom:6}}>
-                                      <div style={{fontSize:10,color:'#8fa8d0',fontWeight:600,marginBottom:3}}>{opt.name}</div>
+                                      <div style={{fontSize:10,color:'var(--sub)',fontWeight:600,marginBottom:3}}>{opt.name}</div>
                                       <div style={{display:'flex',flexWrap:'wrap',gap:3}}>
                                         {opt.values.map((v,vi)=>(
                                           <span key={vi} style={{padding:'2px 7px',background:'#e8f0ff',border:'1px solid #c4d4f0',borderRadius:10,fontSize:11,color:'#2a5090',whiteSpace:'nowrap'}}>{v}</span>
@@ -6180,10 +6182,10 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                     <div onClick={()=>setCsOpenCodes(s2=>{const n=new Set(s2);n.has(p.code)?n.delete(p.code):n.add(p.code);return n;})}
                       style={{display:'flex',gap:10,alignItems:'center',padding:'6px 8px',cursor:'pointer'}}>
                       <span style={{color:'var(--sub)',width:12}}>{open?'▾':'▸'}</span>
-                      <span style={{fontFamily:'monospace',fontSize:11,color:'#8FA8D0',width:110,flexShrink:0}}>{p.code}</span>
+                      <span style={{fontFamily:'monospace',fontSize:11,color:'var(--sub)',width:110,flexShrink:0}}>{p.code}</span>
                       <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
-                      {p.patch.cs_info!==undefined&&<span style={{color:'#F6AD09',flexShrink:0}}>CS정보</span>}
-                      {p.patch.memo!==undefined&&<span style={{color:'#78AAFF',flexShrink:0}}>메모</span>}
+                      {p.patch.cs_info!==undefined&&<span style={{color:'var(--warn-ink)',flexShrink:0}}>CS정보</span>}
+                      {p.patch.memo!==undefined&&<span style={{color:'var(--info-ink)',flexShrink:0}}>메모</span>}
                       {p.hadIndex&&<span style={{color:'var(--red-ink)',flexShrink:0}}>색인 초기화</span>}
                     </div>
                     {open&&(
@@ -6193,7 +6195,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                           <pre style={{margin:0,padding:8,background:'var(--bg)',color:'var(--sub)',fontSize:11,whiteSpace:'pre-wrap',maxHeight:200,overflowY:'auto',borderRadius:6}}>{p.before.cs||'(비어 있음)'}</pre>
                         </div>
                         <div>
-                          <div style={{fontSize:10,color:'#F6AD09',marginBottom:3}}>바뀐 뒤</div>
+                          <div style={{fontSize:10,color:'var(--warn-ink)',marginBottom:3}}>바뀐 뒤</div>
                           <pre style={{margin:0,padding:8,background:'var(--bg)',color:'var(--text)',fontSize:11,whiteSpace:'pre-wrap',maxHeight:200,overflowY:'auto',borderRadius:6}}>{p.patch.cs_info!==undefined?p.patch.cs_info:(p.before.cs||'(그대로)')}</pre>
                         </div>
                       </div>
@@ -6272,9 +6274,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                 <tbody>
                   {shown.slice(0,LIMIT).map(m=>(
                     <tr key={m.faq_id} style={{borderBottom:'1px solid var(--border)'}}>
-                      <td style={{padding:'6px 10px',fontFamily:'monospace',fontSize:11,color:'#8FA8D0',whiteSpace:'nowrap'}}>{m.faq_id}</td>
+                      <td style={{padding:'6px 10px',fontFamily:'monospace',fontSize:11,color:'var(--sub)',whiteSpace:'nowrap'}}>{m.faq_id}</td>
                       <td style={{padding:'6px 10px',whiteSpace:'nowrap'}}>{m.type}</td>
-                      <td style={{padding:'6px 10px',whiteSpace:'nowrap',color:m.required==='필수'?'#F6AD09':'var(--sub)'}}>{m.required||'-'}</td>
+                      <td style={{padding:'6px 10px',whiteSpace:'nowrap',color:m.required==='필수'?'var(--warn-ink)':'var(--sub)'}}>{m.required||'-'}</td>
                       <td style={{padding:'6px 10px',color:'var(--sub)',whiteSpace:'nowrap'}}>{[m.scope,m.category,m.keyword].filter(Boolean).join(' · ')||'-'}</td>
                       <td style={{padding:'6px 10px'}}>{m.question}</td>
                     </tr>
@@ -6419,10 +6421,10 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                     <div onClick={()=>setFaqOpenCodes(s=>{const n=new Set(s);n.has(p.code)?n.delete(p.code):n.add(p.code);return n;})}
                       style={{display:'flex',gap:10,alignItems:'center',padding:'6px 8px',cursor:'pointer'}}>
                       <span style={{color:'var(--sub)',width:12}}>{open?'▾':'▸'}</span>
-                      <span style={{fontFamily:'monospace',fontSize:11,color:'#8FA8D0',width:110,flexShrink:0}}>{p.code}</span>
+                      <span style={{fontFamily:'monospace',fontSize:11,color:'var(--sub)',width:110,flexShrink:0}}>{p.code}</span>
                       <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name}</span>
                       <span style={{color:'var(--ok-ink)',flexShrink:0}}>신규 {p.added}</span>
-                      <span style={{color:'#F6AD09',flexShrink:0}}>갱신 {p.updated}</span>
+                      <span style={{color:'var(--warn-ink)',flexShrink:0}}>갱신 {p.updated}</span>
                       {p.unchanged>0&&<span style={{color:'var(--sub)',flexShrink:0}}>그대로 {p.unchanged}</span>}
                     </div>
                     {open&&(
@@ -7415,7 +7417,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
                 boxShadow:active?'0 0 0 2px rgba(246,173,9,.30)':'none',
                 borderRadius:8,padding:'14px 18px',cursor:'pointer',transition:'border-color .15s'}}>
               <div style={{fontSize:11,color:'var(--sub)',marginBottom:4}}>{label}</div>
-              <div style={{fontSize:22,color:warn?'#F6AD09':'var(--text)',fontWeight:700}}>{value}
+              <div style={{fontSize:22,color:warn?'var(--warn-ink)':'var(--text)',fontWeight:700}}>{value}
                 <span style={{fontSize:12,color:'var(--sub)',fontWeight:400,marginLeft:4}}>개</span></div>
             </div>
           );
@@ -8112,7 +8114,7 @@ function OrderInfoLine({info}){
   if(info.bank)  parts.push(`입금 ${info.bank}`);
   if(parts.length===0) return null;
   return (
-    <div style={{fontSize:10,color: info.market ? '#F6AD09' : 'var(--sub)',marginTop:-8,marginBottom:14}}>
+    <div style={{fontSize:10,color: info.market ? 'var(--warn-ink)' : 'var(--sub)',marginTop:-8,marginBottom:14}}>
       {info.market ? '🛒 ' : '↩ '}{parts.join(' · ')}
     </div>
   );
@@ -8307,7 +8309,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
                   <span
                     onClick={()=>setRefundAmount(Number(refPaymentAmount).toLocaleString())}
                     title="클릭하면 이 금액으로 입력됩니다"
-                    style={{fontSize:10,color:'#78AAFF',cursor:'pointer',fontWeight:400}}>
+                    style={{fontSize:10,color:'var(--info-ink)',cursor:'pointer',fontWeight:400}}>
                     결제액 {KRW(refPaymentAmount)} ↵
                   </span>
                 )}
@@ -8436,7 +8438,7 @@ function RefundAddModal({ reasons, currentUserEmail, onClose, onSaved }){
               <span
                 onClick={()=>setPgInfo(refPaymentMethod)}
                 title="클릭하면 카페24 조회값으로 바꿉니다"
-                style={{fontSize:10,color:'#78AAFF',cursor:'pointer',fontWeight:400}}>
+                style={{fontSize:10,color:'var(--info-ink)',cursor:'pointer',fontWeight:400}}>
                 카페24 · {refPaymentMethod} ↵
               </span>
             )}
@@ -8796,7 +8798,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
   // 같은 모양을 써야 눈이 흔들리지 않는다. 메모는 없을 수 있다(보류 해제·확인 완료는 선택 입력).
   const REVIEW_STEP = {
     request: {label:'요청',        color:'var(--sub)', border:'rgba(248,113,113,.45)'},
-    hold:    {label:'⏸ 보류',      color:'#FFA94D',    border:'rgba(255,169,77,.6)'},
+    hold:    {label:'⏸ 보류',      color:'var(--held-ink)',    border:'rgba(255,169,77,.6)'},
     resume:  {label:'🔎 보류 해제', color:'var(--red-ink)',    border:'rgba(248,113,113,.45)'},
     resolve: {label:'✓ 확인 완료',  color:'#7ED957',    border:'rgba(126,217,87,.5)'},
   };
@@ -8918,13 +8920,13 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
           {/* 카페24와 다른 항목 — 무엇이 어떻게 다른지 보여주고, 바꿀지는 사람이 정한다 */}
           {!isReadOnly && fetchDiff.length>0 && (
             <div style={{marginTop:6,padding:'8px 10px',background:'rgba(246,173,9,.10)',border:'1px solid rgba(246,173,9,.35)',borderRadius:5}}>
-              <div style={{fontSize:11,color:'#F6AD09',fontWeight:600,marginBottom:5}}>
+              <div style={{fontSize:11,color:'var(--warn-ink)',fontWeight:600,marginBottom:5}}>
                 카페24 값과 다릅니다 — 입력돼 있던 값을 그대로 뒀습니다
               </div>
               {fetchDiff.map(d=>(
                 <div key={d.label} style={{fontSize:11,color:'var(--sub)',lineHeight:1.8,wordBreak:'break-all'}}>
                   {d.label}: <span style={{color:'var(--text)'}}>{d.cur}</span>
-                  {' → '}<span style={{color:'#F6AD09'}}>{d.next}</span>
+                  {' → '}<span style={{color:'var(--warn-ink)'}}>{d.next}</span>
                 </div>
               ))}
               <button type="button" onClick={applyFetchDiff}
@@ -8953,7 +8955,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
                   <span
                     onClick={()=>setRefundAmount(Number(refPaymentAmount).toLocaleString())}
                     title="클릭하면 이 금액으로 입력됩니다"
-                    style={{fontSize:10,color:'#78AAFF',cursor:'pointer',fontWeight:400}}>
+                    style={{fontSize:10,color:'var(--info-ink)',cursor:'pointer',fontWeight:400}}>
                     결제액 {KRW(refPaymentAmount)} ↵
                   </span>
                 )}
@@ -9092,7 +9094,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
             <div style={{padding:'12px 14px',borderRadius:6,
               background: isHeld?'rgba(255,169,77,.12)':'rgba(248,113,113,.12)',
               border:'1px solid '+(isHeld?'rgba(255,169,77,.5)':'rgba(248,113,113,.45)')}}>
-              <div style={{fontSize:12,fontWeight:700,color:isHeld?'#FFA94D':'var(--red-ink)',marginBottom:8,
+              <div style={{fontSize:12,fontWeight:700,color:isHeld?'var(--held-ink)':'var(--red-ink)',marginBottom:8,
                 display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
                 {isHeld ? '⏸ 보류 중' : '🔎 추가 확인 필요'}
                 {isHeld && row.hold_until && (
@@ -9291,7 +9293,7 @@ function RefundEditModal({ row, reasons, currentUserEmail, goTicket, onClose, on
             )}
             {/* 보류 중에는 환불·후처리 처리를 막는다. 회색 버튼에는 이유를 함께 적는다(v20260810a 와 같은 방식). */}
             {!isReadOnly && isValid && isHeld && (
-              <span style={{fontSize:11,color:'#FFA94D',lineHeight:1.5}}>
+              <span style={{fontSize:11,color:'var(--held-ink)',lineHeight:1.5}}>
                 보류 중 — 위에서 해제한 뒤 처리할 수 있습니다
               </span>
             )}
@@ -10261,9 +10263,9 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
           background:'rgba(255,169,77,.12)',border:'1px solid rgba(255,169,77,.5)',borderRadius:8}}>
           <span style={{fontSize:16}}>⏸</span>
           <div style={{flex:1,fontSize:13,color:'var(--text)'}}>
-            [보류 확인 알림] 재개 예정일 확인 <b style={{color:'#FFA94D'}}>{kpi.heldDue}건</b>이 있습니다. 확인 후 보류 해제 하거나 재개일을 재설정 해주세요.
+            [보류 확인 알림] 재개 예정일 확인 <b style={{color:'var(--held-ink)'}}>{kpi.heldDue}건</b>이 있습니다. 확인 후 보류 해제 하거나 재개일을 재설정 해주세요.
           </div>
-          <span style={{fontSize:11,color:'#FFA94D',fontWeight:600,whiteSpace:'nowrap'}}>보류만 보기 →</span>
+          <span style={{fontSize:11,color:'var(--held-ink)',fontWeight:600,whiteSpace:'nowrap'}}>보류만 보기 →</span>
         </div>
       )}
 
@@ -10309,14 +10311,14 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
             <div onClick={()=>setActiveKpi(card2Active?null:'pendingRefund')}
               className={kpi.pendingRefund>0?'alert-pulse':undefined}
               style={{...baseStyle, ...(kpi.pendingRefund>0?{borderColor:'#F6AD09','--alert-glow':'rgba(246,173,9,.7)'}:{}), ...(card2Active?activeStyle('#F6AD09'):{})}}>
-              <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>환불 대기 {card2Active && <span style={{fontSize:9,color:'#F6AD09'}}>● 필터 적용 중</span>}</div>
-              <div style={{fontSize:22,fontWeight:700,marginTop:4,color:'#F6AD09'}}>{kpi.pendingRefund}건</div>
+              <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>환불 대기 {card2Active && <span style={{fontSize:9,color:'var(--warn-ink)'}}>● 필터 적용 중</span>}</div>
+              <div style={{fontSize:22,fontWeight:700,marginTop:4,color:'var(--warn-ink)'}}>{kpi.pendingRefund}건</div>
             </div>
             <div onClick={()=>setActiveKpi(card3Active?null:'pendingCafe24')}
               className={kpi.pendingCafe24>0?'alert-pulse':undefined}
               style={{...baseStyle, ...(kpi.pendingCafe24>0?{borderColor:'#78AAFF','--alert-glow':'rgba(120,170,255,.7)'}:{}), ...(card3Active?activeStyle('#78AAFF'):{})}}>
-              <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>후처리 대기 {card3Active && <span style={{fontSize:9,color:'#78AAFF'}}>● 필터 적용 중</span>}</div>
-              <div style={{fontSize:22,fontWeight:700,marginTop:4,color:'#78AAFF'}}>{kpi.pendingCafe24}건</div>
+              <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>후처리 대기 {card3Active && <span style={{fontSize:9,color:'var(--info-ink)'}}>● 필터 적용 중</span>}</div>
+              <div style={{fontSize:22,fontWeight:700,marginTop:4,color:'var(--info-ink)'}}>{kpi.pendingCafe24}건</div>
             </div>
             {/* 추가 확인 필요 — 기간과 무관하게 전체에서 센다. 0건이면 색을 죽여 눈에 안 띄게 한다. */}
             <div onClick={()=>setActiveKpi(cardReviewActive?null:'needsReview')}
@@ -10328,8 +10330,8 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
                 재개 예정일이 지난 건이 있으면 그 수를 함께 띄운다. 보류는 잊히는 게 가장 큰 위험이다. */}
             <div onClick={()=>setActiveKpi(cardHeldActive?null:'held')}
               style={{...baseStyle, ...(cardHeldActive?activeStyle('#FFA94D'):{})}}>
-              <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>보류 {cardHeldActive && <span style={{fontSize:9,color:'#FFA94D'}}>● 필터 적용 중</span>}</div>
-              <div style={{fontSize:22,fontWeight:700,marginTop:4,color:kpi.held?'#FFA94D':'var(--sub)'}}>
+              <div style={{fontSize:11,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>보류 {cardHeldActive && <span style={{fontSize:9,color:'var(--held-ink)'}}>● 필터 적용 중</span>}</div>
+              <div style={{fontSize:22,fontWeight:700,marginTop:4,color:kpi.held?'var(--held-ink)':'var(--sub)'}}>
                 {kpi.held}건
                 {kpi.heldDue>0 && <span style={{fontSize:11,color:'#FF6B6B',marginLeft:6,fontWeight:600}}>재개일 알림 {kpi.heldDue}</span>}
               </div>
@@ -10372,7 +10374,7 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
       {selectedIds.size>0 && (
         <div style={{marginBottom:12,padding:'10px 14px',background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.4)',borderRadius:6,display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'}}>
           <div style={{fontSize:12,color:'var(--text)'}}>
-            <b style={{color:'#F6AD09'}}>{selectedIds.size}건</b> 선택됨
+            <b style={{color:'var(--warn-ink)'}}>{selectedIds.size}건</b> 선택됨
             <button onClick={()=>setSelectedIds(new Set())}
               style={{marginLeft:10,fontSize:11,padding:'3px 8px',background:'transparent',border:'1px solid var(--border)',color:'var(--sub)',borderRadius:4,cursor:'pointer'}}>선택 해제</button>
             {!selectedAllPending2 && !selectedAllPending3 && (
@@ -10464,7 +10466,7 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
                       {/* 보류 행은 체크칸을 그냥 비우지 않고 왜 못 고르는지 남긴다 — 빈 칸이면 고장으로 읽힌다. */}
                       {!selectable && isHeldRow(r) && (
                         <span title="보류 중 — 일괄 처리에서 제외됩니다. 행을 열어 보류를 해제한 뒤 처리하세요."
-                          style={{fontSize:11,color:'#FFA94D',cursor:'help'}}>⏸</span>
+                          style={{fontSize:11,color:'var(--held-ink)',cursor:'help'}}>⏸</span>
                       )}
                       {selectable && (
                         <input type="checkbox" checked={checked}
@@ -10483,7 +10485,7 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
                       {isInGroup && isFirstInGroup && (
                         <div title={`주문 그룹 합계: ${KRW(groupSum)}`} style={{display:'inline-flex',flexDirection:'column',alignItems:'center',gap:1}}>
                           <span style={{fontSize:14}}>🔗</span>
-                          <span style={{fontSize:9,color:'#F6AD09'}}>{KRW(groupSum)}</span>
+                          <span style={{fontSize:9,color:'var(--warn-ink)'}}>{KRW(groupSum)}</span>
                         </div>
                       )}
                     </td>
@@ -10542,7 +10544,7 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
           <span style={{display:'flex',alignItems:'center',gap:12}}>
             <span>행 클릭 → 수정 · 삭제 · 처리</span>
             <span style={{display:'flex',alignItems:'center',gap:4}}>
-              <span style={{color:'#F6AD09'}}>🔗</span>
+              <span style={{color:'var(--warn-ink)'}}>🔗</span>
               <span>= 같은 카페24 주문 그룹</span>
             </span>
           </span>
@@ -10923,7 +10925,7 @@ function DelayPlaceholder({title,phase,desc}){
   return (
     <div style={{textAlign:'center',padding:'80px 24px',background:'var(--card)',border:'1px dashed var(--border)',borderRadius:12,color:'var(--sub)'}}>
       <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:6}}>{title}</div>
-      <div style={{fontSize:11,color:'#F6AD09',fontWeight:600,letterSpacing:'.04em',marginBottom:14,fontFamily:'monospace'}}>{phase}</div>
+      <div style={{fontSize:11,color:'var(--warn-ink)',fontWeight:600,letterSpacing:'.04em',marginBottom:14,fontFamily:'monospace'}}>{phase}</div>
       <div style={{fontSize:12,maxWidth:540,margin:'0 auto',lineHeight:1.6}}>{desc}</div>
     </div>
   );
@@ -11304,7 +11306,7 @@ function DelayRegisterTab({isMaster,isManager,canCreate=false,canUpdate=false,ca
         )}
         <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'8px 14px',minWidth:100,display:'flex',flexDirection:'column',justifyContent:'center'}}>
           <div style={{fontSize:10,color:'var(--sub)',fontWeight:700,letterSpacing:'.05em',textTransform:'uppercase'}}>진행 중</div>
-          <div style={{fontSize:18,fontWeight:700,color:'#F6AD09',marginTop:2}}>
+          <div style={{fontSize:18,fontWeight:700,color:'var(--warn-ink)',marginTop:2}}>
             {activeCount.toLocaleString()}<span style={{fontSize:11,fontWeight:400,color:'var(--sub)',marginLeft:3}}>건</span>
           </div>
         </div>
@@ -12161,7 +12163,7 @@ function DelayAddModal({ editingRow, onClose, onSaved, canSend=false }){
                 </div>
                 {sendType==='immediate' && (
                   <div style={{marginTop:8,padding:'10px 14px',background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.3)',borderRadius:6,fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
-                    등록 후 테이블에서 <strong style={{color:'#F6AD09'}}>발송하기</strong> 버튼을 클릭하면 아래 기간 내 주문에 일괄 발송됩니다.<br/>
+                    등록 후 테이블에서 <strong style={{color:'var(--warn-ink)'}}>발송하기</strong> 버튼을 클릭하면 아래 기간 내 주문에 일괄 발송됩니다.<br/>
                     중복 발송 방지 처리로 안전합니다. 발송 시간 외에는 자동 예약됩니다.
                   </div>
                 )}
@@ -12175,7 +12177,7 @@ function DelayAddModal({ editingRow, onClose, onSaved, canSend=false }){
                       <span style={{fontSize:12,color:'var(--text)'}}>일 경과 시 발송 (1~14)</span>
                     </div>
                     <div style={{marginTop:8,padding:'10px 14px',background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.3)',borderRadius:6,fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
-                      주문일로부터 N일이 지났는데 아직 <strong style={{color:'#F6AD09'}}>배송준비중</strong>인 주문에 자동 발송됩니다.<br/>
+                      주문일로부터 N일이 지났는데 아직 <strong style={{color:'var(--warn-ink)'}}>배송준비중</strong>인 주문에 자동 발송됩니다.<br/>
                       오전 9시 기준: 9시 이전 주문은 그날부터, 9시 이후 주문은 다음날부터 N일 계산.<br/>
                       배송중·배송완료 등 다른 상태로 넘어간 주문에는 발송하지 않습니다. 매시간 자동 확인합니다.
                     </div>
@@ -13885,7 +13887,7 @@ function ManualSendDialog({ tpl, orderId, setOrderId, step, lookup, email, setEm
               {/* 경고 표시 */}
               {Array.isArray(lookup.warnings) && lookup.warnings.length > 0 && (
                 <div style={{marginBottom:14,padding:'10px 12px',background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.25)',borderRadius:6}}>
-                  <div style={{fontSize:11,color:'#F6AD09',fontWeight:600,marginBottom:4}}>⚠️ 확인 필요</div>
+                  <div style={{fontSize:11,color:'var(--warn-ink)',fontWeight:600,marginBottom:4}}>⚠️ 확인 필요</div>
                   {lookup.warnings.map((w, i) => (
                     <div key={i} style={{fontSize:11,color:'var(--text)',lineHeight:1.6}}>• {w}</div>
                   ))}
@@ -14093,7 +14095,7 @@ function AutoDeliveryHistoryTab() {
     const map = {
       success: { bg:'rgba(34,211,160,.15)', color:'var(--ok-ink)', label:'성공' },
       failed:  { bg:'rgba(248,113,113,.15)', color:'var(--red-ink)', label:'실패' },
-      pending: { bg:'rgba(246,173,9,.15)',  color:'#F6AD09', label:'대기' },
+      pending: { bg:'rgba(246,173,9,.15)',  color:'var(--warn-ink)', label:'대기' },
     };
     const s = map[status] || { bg:'var(--border)', color:'var(--sub)', label:status };
     return <span style={{background:s.bg,color:s.color,fontSize:10,padding:'3px 8px',borderRadius:4,fontWeight:600}}>{s.label}</span>;
@@ -14128,7 +14130,7 @@ function AutoDeliveryHistoryTab() {
         </div>
         <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:14}}>
           <div style={{fontSize:11,color:'var(--sub)',marginBottom:6}}>대기</div>
-          <div style={{fontSize:22,fontWeight:700,color:'#F6AD09'}}>{pendingCount}</div>
+          <div style={{fontSize:22,fontWeight:700,color:'var(--warn-ink)'}}>{pendingCount}</div>
         </div>
       </div>
 
@@ -14392,7 +14394,7 @@ function DelayAlimtalkPreview({ selectedProduct, variants, selectedVariantCodes,
       <div style={{marginTop:4,fontSize:10,color:'var(--sub)',lineHeight:1.6,fontStyle:'italic'}}>
         미리보기는 실제 단말기와 차이가 있을 수 있습니다.
       </div>
-      <div style={{marginTop:8,fontSize:11,color:'#F6AD09',lineHeight:1.6,fontWeight:600}}>
+      <div style={{marginTop:8,fontSize:11,color:'var(--warn-ink)',lineHeight:1.6,fontWeight:600}}>
         ※ 옵션명은 주문 시점의 옵션명으로 발송이 됩니다.
       </div>
     </div>
@@ -14707,11 +14709,11 @@ function DelayHistoryTab({canSend=false}){
     if(st==='success')   return {bg:'rgba(34,211,160,.15)', color:'var(--ok-ink)', label:'성공'};
     if(st==='failed')    return {bg:'rgba(248,113,113,.15)', color:'var(--red-ink)', label:'실패'};
     if(st==='scheduled') return {bg:'rgba(123,111,232,.15)', color:'#7B6FE8', label:'예약'};
-    if(st==='queued')    return {bg:'rgba(246,173,9,.15)', color:'#F6AD09', label:'대기'};
+    if(st==='queued')    return {bg:'rgba(246,173,9,.15)', color:'var(--warn-ink)', label:'대기'};
     return {bg:'rgba(143,168,208,.1)', color:'var(--sub)', label:st||'-'};
   };
   const triggerBadge = (tt)=>{
-    if(tt==='blast')  return {bg:'rgba(246,173,9,.15)', color:'#F6AD09', label:'즉시발송'};
+    if(tt==='blast')  return {bg:'rgba(246,173,9,.15)', color:'var(--warn-ink)', label:'즉시발송'};
     if(tt==='poll')   return {bg:'rgba(143,168,208,.12)', color:'var(--sub)', label:'신규주문'};
     if(tt==='manual') return {bg:'rgba(123,111,232,.15)', color:'#7B6FE8', label:'수동재발송'};
     return {bg:'rgba(143,168,208,.1)', color:'var(--sub)', label:tt||'-'};
@@ -19711,7 +19713,7 @@ function csLinesOf(text, rawQ, style){
         return (
           <div key={i} style={{display:'grid',gridTemplateColumns:'11px 1fr',gap:3,
             background: on?'rgba(246,173,9,.10)':'transparent',borderRadius:4}}>
-            <span style={{color:'#F6AD09',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
+            <span style={{color:'var(--warn-ink)',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
             <span style={{whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
               {csMarkText(ln, q)}</span>
           </div>
@@ -21799,7 +21801,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
       <div className="kpi-grid" style={{marginBottom:18}}>
         <div className="kpi-card">
           <div className="kpi-label">오늘 리체크</div>
-          <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'#F6AD09'}}>{kpi.recheck}</div>
+          <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'var(--warn-ink)'}}>{kpi.recheck}</div>
           <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>
             {kpi.over? '기한 지남 '+kpi.over+'건' : '기한 지난 건 없음'}</div>
         </div>
@@ -22815,7 +22817,7 @@ function CsSaveBar({row, dirty, busy, onSave, onReset}){
            : '아직 화면에서 저장한 적이 없습니다 (설치할 때 넣은 값)'}
       </span>
       <div style={{flex:1}}></div>
-      {dirty && <span style={{fontSize:11,color:'#F6AD09'}}>● 저장하지 않은 변경이 있습니다</span>}
+      {dirty && <span style={{fontSize:11,color:'var(--warn-ink)'}}>● 저장하지 않은 변경이 있습니다</span>}
       <button onClick={onReset} disabled={!dirty||busy} style={{...btn(false),
         opacity:(!dirty||busy)?.4:1, cursor:(!dirty||busy)?'default':'pointer'}}>되돌리기</button>
       <button onClick={onSave} disabled={!dirty||busy||row===undefined} style={{...btn(true),
@@ -23176,7 +23178,7 @@ function CsChipRoleSettings({currentUserEmail}){
                             {/* ★ 값을 하나도 안 고른 기준은 «안 보는» 것과 같다 —
                                 그 사실을 그 줄에서 말해 준다. */}
                             {!((c.where||{})[k]||[]).length && (
-                              <span style={{fontSize:10.5,color:'#F6AD09'}}>
+                              <span style={{fontSize:10.5,color:'var(--warn-ink)'}}>
                                 값을 고르지 않으면 이 기준은 안 봅니다</span>
                             )}
                             <div style={{flex:1}}></div>
@@ -23230,7 +23232,7 @@ function CsChipRoleSettings({currentUserEmail}){
       </div>
 
       {!!extra.length && (
-        <div style={{marginTop:10,fontSize:11.5,color:'#F6AD09',lineHeight:1.6}}>
+        <div style={{marginTop:10,fontSize:11.5,color:'var(--warn-ink)',lineHeight:1.6}}>
           ⚠ 이 설정에만 있고 화면에는 없는 칩이 있습니다 —
           <span style={{fontFamily:'monospace'}}> {extra.join(' · ')}</span>.
           목록 화면은 이 값을 조용히 무시합니다. 지우지 않고 그대로 두었으니,
@@ -23504,7 +23506,7 @@ function CsFieldRuleSettings({currentUserEmail}){
                   <td colSpan={2+CS_ROLES.length} style={{...csSetTd,fontSize:11,
                     color:'var(--text)',background:'var(--brand-soft)',
                     fontWeight:700,letterSpacing:'.02em'}}>
-                    {g}{g==='정산' && <span style={{marginLeft:8,color:'#F6AD09',fontWeight:400}}>
+                    {g}{g==='정산' && <span style={{marginLeft:8,color:'var(--warn-ink)',fontWeight:400}}>
                       금액 관련 항목 · 권한 설정에 유의하세요</span>}
                   </td>
                 </tr>
@@ -23549,7 +23551,7 @@ function CsFieldRuleSettings({currentUserEmail}){
       </div>
 
       {!!extra.length && (
-        <div style={{marginTop:10,fontSize:11.5,color:'#F6AD09',lineHeight:1.6}}>
+        <div style={{marginTop:10,fontSize:11.5,color:'var(--warn-ink)',lineHeight:1.6}}>
           ⚠ 이 설정에만 있고 화면 목록에는 없는 칸이 있습니다 —
           <span style={{fontFamily:'monospace'}}> {extra.join(' · ')}</span>.
           지우지 않고 그대로 둡니다(트리거는 이 값도 읽습니다).
@@ -23800,7 +23802,7 @@ function CsCafe24Settings({currentUserEmail}){
                   {f.key && <span style={{fontSize:9.5,color:'var(--sub)',
                     border:'1px solid var(--border)',borderRadius:8,padding:'0 5px'}}>
                     {f.lockLabel || '검색값'}</span>}
-                  {f.pii && <span style={{fontSize:9.5,color:'#F6AD09',opacity:.85,
+                  {f.pii && <span style={{fontSize:9.5,color:'var(--warn-ink)',opacity:.85,
                     border:'1px solid rgba(246,173,9,.4)',borderRadius:8,padding:'0 5px'}}>개인정보</span>}
                   {/* ★★ 「접수 문안이 이 값을 쓴다」 — 끄면 문안의 그 줄이 통째로 빠진다.
                       두 설정을 가른 대가는 «한쪽만 하면 조용히 안 나오는 것» 이라,
@@ -23872,7 +23874,7 @@ function CsCafe24Settings({currentUserEmail}){
                     padding:'0 2px',userSelect:'none',lineHeight:1}}>≡</span>
                 <span style={{fontFamily:'monospace',fontSize:10,color:'var(--sub)',
                   opacity:.55,width:16}}>{i+1}</span>
-                <span style={{fontSize:11.5,color:f?'var(--text)':'#F6AD09',flex:1,
+                <span style={{fontSize:11.5,color:f?'var(--text)':'var(--warn-ink)',flex:1,
                   minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
                   {f ? f.label : id}</span>
                 {/* ★★ 복붙 단추를 달지 고른다(제니 2026-09-09). 켜면 티켓 ① 의 그 값
@@ -23896,7 +23898,7 @@ function CsCafe24Settings({currentUserEmail}){
       </div>
 
       {!!unknown.length && (
-        <div style={{marginTop:10,fontSize:11.5,color:'#F6AD09',lineHeight:1.6}}>
+        <div style={{marginTop:10,fontSize:11.5,color:'var(--warn-ink)',lineHeight:1.6}}>
           ⚠ 설정에만 있고 화면 목록에는 없는 값이 있습니다 —
           <span style={{fontFamily:'monospace'}}> {unknown.join(' · ')}</span>.
           지우지 않고 차례에 그대로 두었습니다.
@@ -24218,7 +24220,7 @@ function CsPaneBar({onMouseDown}){
 function CsC24OnOff({on}){
   return on
     ? <b style={{color:'var(--green)'}}> 연동 켜짐</b>
-    : <b style={{color:'#F6AD09'}}> 연동 꺼짐</b>;
+    : <b style={{color:'var(--warn-ink)'}}> 연동 꺼짐</b>;
 }
 // ★ c24On 은 «지금 켜져 있는 카페24 값의 id 목록» 이다. 없으면 상태말을 안 붙인다 —
 //   이 조각을 다른 자리에서 부를 때 «늘 꺼짐» 으로 보이면 그게 더 나쁜 거짓말이다.
@@ -24465,7 +24467,7 @@ function CsDraftTplSettings({currentUserEmail}){
       {missC24.length>0 && (
         <div style={{...card, borderColor:'rgba(246,173,9,.55)',
           background:'rgba(246,173,9,.10)'}}>
-          <div style={{fontSize:12,fontWeight:700,color:'#F6AD09',marginBottom:6}}>
+          <div style={{fontSize:12,fontWeight:700,color:'var(--warn-ink)',marginBottom:6}}>
             ⚠ 문안에 썼는데 <b>카페24 연동에서 꺼져 있는</b> 값이 {missC24.length}개 있습니다
           </div>
           <div style={{fontSize:11,color:'var(--text)',lineHeight:1.8}}>
@@ -24973,7 +24975,7 @@ function CsMacroSettings({currentUserEmail}){
             <span style={{fontSize:11,color:'var(--accent)',fontFamily:'monospace'}}>
               /{r.shortcut}</span>
             {(!r.body || !r.body.trim()) && (
-              <span style={{fontSize:10,color:'#F6AD09',border:'1px solid rgba(246,173,9,.45)',
+              <span style={{fontSize:10,color:'var(--warn-ink)',border:'1px solid rgba(246,173,9,.45)',
                 borderRadius:4,padding:'1px 6px'}}>본문 없음</span>
             )}
             {!r.is_active && (
@@ -27288,7 +27290,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   같은 여백을 주면 오히려 붙어 보인다(제니 — 주문·고객 뎁스 행 간격이 커졌다).
   const roRow = (k,node,extra)=> row(k,node,
     {padding:'2px 0 2px '+rowPad+'px', ...(extra||{})});
-  const req = <span style={{color:'#F6AD09'}}> *</span>;
+  const req = <span style={{color:'var(--warn-ink)'}}> *</span>;
 
   // ★ 상품 한 벌(이름·코드·CS 정보·메모)을 그리는 자리를 하나로 둔다 —
   //   «이 주문 상품» 과 «검색 결과» 가 같은 모양이어야 눈이 다시 익히지 않는다.
@@ -27308,7 +27310,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
       {(()=>{ const n = csHitCount((p.cs_info||'') + '\n' + (p.memo||''));
         return n===null ? null : (
           <div style={{fontSize:10,marginBottom:6,
-            color: n>0 ? '#F6AD09' : 'var(--sub)'}}>
+            color: n>0 ? 'var(--warn-ink)' : 'var(--sub)'}}>
             {n>0 ? '찾은 줄 '+n+'개' : '이 상품 정보에는 없습니다'}</div>
         ); })()}
       {p.cs_info
@@ -27541,7 +27543,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               품목을 고르면 카페24 주문서의 수령인·배송지가 여기 나옵니다.</div>
           )}
           {ordUnmatched && (
-            <div style={{fontSize:10.5,color:'#F6AD09',lineHeight:1.6,marginBottom:5}}>
+            <div style={{fontSize:10.5,color:'var(--warn-ink)',lineHeight:1.6,marginBottom:5}}>
               ⚠ 카페24에서 이 주문의 수령인·배송지를 찾지 못했습니다.
               확인해서 직접 넣어 주세요.
             </div>
@@ -27898,7 +27900,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           </div>
 
           <div style={{display:'flex',alignItems:'center',gap:10,marginTop:16,flexWrap:'wrap'}}>
-            <div style={{flex:1,fontSize:11,color: missing.length?'#F6AD09':'var(--sub)'}}>
+            <div style={{flex:1,fontSize:11,color: missing.length?'var(--warn-ink)':'var(--sub)'}}>
               {/* ★ 「담당자 : …」 를 여기서 뺐다(제니 2026-09-08) — 바로 위에 «담당자»
                   칸이 생겨 같은 말이 두 번 나온다. **화면에 자리가 생기면 그 값을
                   대신 말해 주던 문장은 없애야 한다** — 안 그러면 어느 쪽이 진짜인지
@@ -27993,7 +27995,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
               티켓이 하나 더 생기는 것이 정상이라 unique 를 안 걸었다. 판단은 사람이 한다. */}
           {head && dups && dups.length>0 && (
             <div style={{marginTop:14,paddingTop:12,borderTop:'1px solid var(--border)'}}>
-              <div style={{fontSize:11,fontWeight:700,color:'#F6AD09',marginBottom:7}}>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--warn-ink)',marginBottom:7}}>
                 고른 품목에 이미 {dups.length}건 있습니다</div>
               {/* ★★ 이어받는 중이라는 것이 **저장 버튼 가까이에서도** 보여야 한다 —
                   목록 안의 작은 «✓» 만으로는 스크롤을 내리면 안 보인다. */}
@@ -29546,7 +29548,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
           {changes.length>0 && (
             <div style={{marginTop:10,padding:'8px 10px',borderRadius:6,
               background:'rgba(246,173,9,.08)',border:'1px solid rgba(246,173,9,.35)'}}>
-              <div style={{fontSize:10,fontWeight:700,color:'#F6AD09',marginBottom:5}}>
+              <div style={{fontSize:10,fontWeight:700,color:'var(--warn-ink)',marginBottom:5}}>
                 티켓 정보에서 바꾼 것</div>
               {changes.map((c,i)=>(
                 <div key={i} style={{fontSize:11,color:'var(--text)',lineHeight:1.75}}>{c}</div>
@@ -29686,7 +29688,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
               {(()=>{ const n = csHitCount([csInfo.cs_info||'', csInfo.memo||''].join('\n'));
                 return n===null ? null : (
                   <div style={{fontSize:10,marginBottom:6,
-                    color: n>0 ? '#F6AD09' : 'var(--sub)'}}>
+                    color: n>0 ? 'var(--warn-ink)' : 'var(--sub)'}}>
                     {n>0 ? '찾은 줄 '+n+'개' : '이 상품 정보에는 없습니다'}</div>
                 ); })()}
               <div style={{maxHeight:260,overflowY:'auto'}}>
@@ -30847,7 +30849,7 @@ function CsSupplierDraft({rows, events, photoMap, supMap, busy, onSent, onBack, 
           cursor:'pointer',fontFamily:'inherit'}}>목록으로</button>
       </div>
       {/* ★★★ 이 한 줄이 이 화면에서 가장 중요하다 — 콘솔은 «보내지 않는다». */}
-      <div style={{fontSize:11.5,color:'#F6AD09',lineHeight:1.7,margin:'2px 0 14px'}}>
+      <div style={{fontSize:11.5,color:'var(--warn-ink)',lineHeight:1.7,margin:'2px 0 14px'}}>
         내용만 만듭니다 — <b>복사해서 메일·네이트온·카카오톡으로 직접 보내세요.</b>
         보낸 뒤에 <b>[보냈음 · 진행중으로]</b> 를 누르면 그 공급사 건이 «진행중» 이 되고
         이 목록에서 빠집니다.
@@ -30940,7 +30942,7 @@ function CsSupplierDraft({rows, events, photoMap, supMap, busy, onSent, onBack, 
                 <span style={{fontSize:10,color:'var(--sub)'}}>이 공급사의 창구는 메일입니다</span>
               )}
               {!known && (
-                <span style={{fontSize:10,color:'#F6AD09'}}>창구를 모르는 공급사입니다</span>
+                <span style={{fontSize:10,color:'var(--warn-ink)'}}>창구를 모르는 공급사입니다</span>
               )}
             </div>
 
@@ -33895,7 +33897,7 @@ function CsAccountAdmin({session, card, head}){
                         {u.email}
                         {/* ★★ console_users 에 없는 auth 계정도 보여 준다 — 안 보이면
                             «있는데 못 들어오는» 계정이 있다는 사실조차 모른다. */}
-                        {!u.registered && <span style={{color:'#F6AD09',marginLeft:6,
+                        {!u.registered && <span style={{color:'var(--warn-ink)',marginLeft:6,
                           fontFamily:'inherit'}}>콘솔 미등록</span>}
                         {u.user_id===session.user.id && <span style={{color:'var(--accent)',
                           marginLeft:6,fontFamily:'inherit'}}>나</span>}
@@ -34041,7 +34043,7 @@ function CsMenuRoles({currentUserEmail, card, head, onSaved}){
           권한마다 <b>어느 메뉴가 보이는지</b>(= 메뉴 접근) 정합니다.
           목록은 <b>사이드바 차례 그대로</b>이고, 화면이 있는 메뉴는 모두 들어 있습니다.
           <br/>메뉴 <b>안에서 무엇을 할 수 있는지</b>는 아래 <b>동작 권한</b>에서 따로 정합니다.
-          <br/><b style={{color:'#F6AD09'}}>⚠ 데이터 권한은 따로입니다</b> — 표시가 있는 메뉴는
+          <br/><b style={{color:'var(--warn-ink)'}}>⚠ 데이터 권한은 따로입니다</b> — 표시가 있는 메뉴는
           열어도 <b>목록이 비어 보일 수 있습니다</b>(DB 권한을 함께 열어야 합니다).
           연 뒤에 그 권한 계정으로 직접 확인해 주세요.
         </div>
@@ -34081,7 +34083,7 @@ function CsMenuRoles({currentUserEmail, card, head, onSaved}){
                         {kid&&<span style={{color:'var(--sub)',marginRight:5}}>└</span>}
                         {d.label}
                         {d.rls && <span title="DB 권한도 함께 열어야 목록이 보입니다"
-                          style={{marginLeft:6,fontSize:10,color:'#F6AD09'}}>⚠ DB</span>}
+                          style={{marginLeft:6,fontSize:10,color:'var(--warn-ink)'}}>⚠ DB</span>}
                         {/* ★★ 역할 «위에» 사람으로 한 겹 더 좁힌 메뉴는 그 사실을 여기 적는다
                             (2026-09-16). 안 적으면 체크가 거짓말을 한다 — master 에 체크가
                             있는데 어떤 master 에게는 안 보이기 때문이다. */}
@@ -35436,7 +35438,7 @@ function App() {
                 borderTop:'7px solid transparent',borderBottom:'7px solid transparent',
                 borderRight:'7px solid rgba(246,173,9,.5)'}}></span>
               <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:8}}>
-                <span style={{fontSize:11,fontWeight:700,color:'#F6AD09'}}>확인이 필요합니다</span>
+                <span style={{fontSize:11,fontWeight:700,color:'var(--warn-ink)'}}>확인이 필요합니다</span>
                 <span style={{flex:1}}></span>
                 <button onClick={()=>setBellOpen(false)} title="접어 둡니다"
                   style={{background:'transparent',border:'none',color:'var(--sub)',fontSize:14,
