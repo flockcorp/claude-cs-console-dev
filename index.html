@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261007f_alimtalk_dropdowns -->
+<!-- (2026-10-07) 💬 **안내 템플릿 — 알림톡 둘.** ① **앱링크를 콘솔에서 뺐다**(제니: 「버튼의 실제 링크만」) — 상세의 «앱링크» 줄을 지우고 dev 데이터에서도 `extra.applink` 14줄을 지웠다(`sql/msg_templates_applink_dev.sql`). 남은 링크 줄은 이름을 «연결 링크» → **«버튼 링크»** 로(무엇의 링크인지 이름이 말하게). ② **발송처·상태를 드롭박스로** — 발송처 `알리고·카페24·데이터라이즈·솔라피` · 상태 `승인대기·승인완료·발송중·사용중지`(제니 지정 · `MSG_TPL_SENDERS`·`MSG_TPL_STATUSES` 한 곳). 옛 값 «알리고 - 넥젠리뷰» 는 «알리고» 로 맞췄다(1줄). ★ 목록에 없는 값이 들어 있으면 «(목록 밖)» 으로 보기에 남긴다 — 안 남기면 열자마자 첫 항목으로 보이고 그대로 저장하면 값이 몰래 바뀐다. ★ dev 전용. `npm run check` 통과. -->
 <!-- v20261007e_symbol_button -->
 <!-- (2026-10-07) 💬 **안내 템플릿 — 제니 확인 뒤 둘.** ① **«실제 화면 캡처» 를 화면에서 뺐다**(상세·수정 창 둘 다) — 알림톡 그림은 그대로. 옮겨 둔 캡처 값(`preview_path` · 버킷 파일 19장)은 지우지 않았다(제니가 말할 때). ② **특수문자는 위에 펼쳐 두지 않고 «템플릿마다 [★ 특수문자] 단추»** — 누르면 전체 기호가 펼쳐지고, 고른 것이 **그 템플릿의 커서 자리**에 들어간다. 판은 고른 뒤에도 열려 있어 «★ … ★» 처럼 이어 넣을 수 있고 바깥을 누르면 닫힌다. ★ 그 글칸에 커서를 둔 적이 없으면 맨 끝에 붙인다(안 쓴 칸의 커서는 맨 앞이라 엉뚱한 데 들어간다). ★ dev 전용. `npm run check` 통과. -->
 <!-- v20261007d_tpl_images_symbols -->
@@ -33263,6 +33265,9 @@ async function msgTplCopy(text){
 // ★ 화면 이름만 «문자» 다(제니 2026-10-07: 「'상담안내' 를 '문자' 로」). DB 값(script)은 그대로 —
 //   이름은 «보이는 말» 이고 값은 «가리키는 키» 라, 이름을 바꿀 때마다 값을 옮기지 않는다.
 const MSG_TPL_KINDS = {script:'문자', alimtalk:'알림톡'};
+// 알림톡 발송처·상태 — 드롭박스 값(제니 2026-10-07 지정). 늘릴 때는 여기만 고친다.
+const MSG_TPL_SENDERS  = ['알리고','카페24','데이터라이즈','솔라피'];
+const MSG_TPL_STATUSES = ['승인대기','승인완료','발송중','사용중지'];
 // 특수문자 판(제니 2026-10-07: 「문자 템플릿에 특수문자를 넣는 경우가 많아서」).
 // ★ 시트 머리에 놓여 있던 «★ ※ ▶️ ▶» 를 앞에 두고, 시트 본문에 실제로 쓰인 것들을 이어 붙였다.
 const MSG_TPL_SYMBOLS = ['★','☆','※','▶','▶️','▷','▼','▲','►','■','□','●','○','◆','◇','✔','✓','✅','❗','⚠','☞',
@@ -33693,8 +33698,8 @@ function MsgTemplatesPage({currentUserEmail, can}){
               {sel.kind==='alimtalk' && (
                 <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7}}>
                   <div>※ <span style={{fontFamily:'monospace'}}>#{'{NAME}'}</span> · <span style={{fontFamily:'monospace'}}>[NAME]</span> 같은 자리는 발송할 때 시스템이 채웁니다.</div>
-                  {sel.link && <div>연결 링크: <span style={{color:'var(--text)',wordBreak:'break-all'}}>{sel.link}</span></div>}
-                  {sel.extra && sel.extra.applink && <div>앱링크: <span style={{wordBreak:'break-all'}}>{sel.extra.applink}</span></div>}
+                  {/* ★ 앱링크(extra.applink)는 콘솔에서 뺐다(제니 2026-10-07: 「버튼의 실제 링크만」) — 데이터도 지웠다. */}
+                  {sel.link && <div>버튼 링크: <span style={{color:'var(--text)',wordBreak:'break-all'}}>{sel.link}</span></div>}
                   {sel.extra && sel.extra.old_body && <details style={{marginTop:4}}>
                     <summary style={{cursor:'pointer'}}>이전 문구 보기</summary>
                     <div style={{whiteSpace:'pre-wrap',marginTop:6,padding:'8px 10px',border:'1px solid var(--border)',borderRadius:6}}>{sel.extra.old_body}</div>
@@ -33927,11 +33932,17 @@ function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved,
 
         {d.kind==='alimtalk' && (
           <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-            <div style={{flex:'1 1 160px'}}><span style={lbl}>발송처</span>
-              <input value={d.sender} onChange={e=>set('sender',e.target.value)} style={inp}/></div>
-            <div style={{flex:'1 1 120px'}}><span style={lbl}>상태</span>
-              <input value={d.status} onChange={e=>set('status',e.target.value)} style={inp}/></div>
-            <div style={{flex:'2 1 260px'}}><span style={lbl}>연결 링크</span>
+            {/* ★ 발송처·상태는 드롭박스(제니 2026-10-07). 목록에 없는 옛 값이 들어 있으면 그 값도
+                 보기에 남긴다 — 안 남기면 열자마자 첫 항목으로 보이고, 그대로 저장하면 값이 바뀐다. */}
+            {[['sender','발송처',MSG_TPL_SENDERS],['status','상태',MSG_TPL_STATUSES]].map(([k,label,list])=>(
+              <div key={k} style={{flex:'1 1 150px'}}><span style={lbl}>{label}</span>
+                <select value={d[k]||''} onChange={e=>set(k,e.target.value)} style={inp}>
+                  <option value="">— 고르세요 —</option>
+                  {list.map(x=><option key={x} value={x}>{x}</option>)}
+                  {d[k] && list.indexOf(d[k])<0 && <option value={d[k]}>{d[k]} (목록 밖)</option>}
+                </select></div>
+            ))}
+            <div style={{flex:'2 1 260px'}}><span style={lbl}>버튼 링크</span>
               <input value={d.link} onChange={e=>set('link',e.target.value)} style={inp}/></div>
           </div>
         )}
