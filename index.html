@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261007d_tpl_images_symbols -->
+<!-- (2026-10-07) 💬 **안내 템플릿 — 제니 요청 넷.** ① **알림톡 그림** — 시트 «알림톡 워딩_260618» 의 D열(이미지 15장 = 메시지 위에 실리는 그림)·G열(미리보기 19장 = 카톡 화면 캡처)을 옮겼다. 그림은 **비공개 버킷 `msg-templates` + 서명 주소**(cs-images·manuals 와 같은 기준 · `sql/msg_templates_images.sql`), 표에는 경로만(`image_path`·`preview_path`). 상세: 카톡 미리보기의 노란 머리 아래에 그림이 폭 가득 실리고(실제 모양), 옆에 «실제 화면 캡처»(누르면 원래 크기 새 탭). 편집기: 두 칸 각각 [올리기/바꾸기]·[빼기] — **고른 파일은 저장할 때 올린다**(고르자마자 올리면 [취소] 했을 때 주인 없는 파일이 남는다) · 표 저장이 실패하면 방금 올린 것을 치우고, **저장된 뒤에만** 옛 그림을 지운다(먼저 지우면 실패 시 그림만 사라진다) · 템플릿 삭제 시 그림도 치운다. ② **종류 이름 «상담 안내» → «문자»** — 화면 이름만(DB 값 `script` 그대로 · 이름은 «보이는 말», 값은 «가리키는 키»). ③ **특수문자 판** — 추가·수정 창 위에 붙어 있고(긴 템플릿을 내려 써도 손이 닿게 sticky), 누르면 «마지막으로 쓰던 칸» 의 커서 자리에 들어간다. 시트 머리에 있던 «★ ※ ▶️ ▶» 를 앞에, 시트 본문에 실제로 쓰인 기호들을 이어 붙였다. ★ 단추는 onMouseDown 을 막는다 — 안 막으면 누르는 순간 포커스가 단추로 넘어가 «마지막 칸» 을 잃는다. ④ **정렬** — 그전에는 sort_order(시트 순서)였는데 두 종류가 각자 10·20·30… 이라 **섞여** 나왔다. → **문자 위 · 알림톡 아래 고정, 각 종류 안에서 가나다순**(같은 제목은 등록 순서). ★ dev 전용. `npm run check` 통과. -->
 <!-- v20261007c_cat_picker_keys -->
 <!-- (2026-10-07) ⌨ **안내 템플릿 · 분류 검색 — 키보드로 고르기**(제니: 「검색어 입력하고 화살표로 목록으로 내려서 고른 다음 엔터」). ↑↓ 로 줄을 짚고(목록이 따라 스크롤) Enter 로 고른다 · 마우스를 올려도 같은 줄을 짚는다. 짚은 줄은 진한 바탕, 지금 고른 값은 굵은 글자로 가른다(같은 색이면 내려가는 중에 위치를 잃는다). ★★ **한글 조합 중에는 브라우저가 화살표·엔터를 `Process` 로 삼킨다** — 마지막 글자를 치자마자 ↓ 를 누르면 그 한 번이 사라진다. 조합 중에 눌린 키는 keyup 에서 마저 처리한다(엔터가 두 번 먹는 것도 이것으로 막는다). ★ dev 전용. -->
 <!-- v20261007b_msg_templates_v2 -->
@@ -33256,7 +33258,24 @@ async function msgTplCopy(text){
   document.body.removeChild(ta);
   return ok;
 }
-const MSG_TPL_KINDS = {script:'상담 안내', alimtalk:'알림톡'};
+// ★ 화면 이름만 «문자» 다(제니 2026-10-07: 「'상담안내' 를 '문자' 로」). DB 값(script)은 그대로 —
+//   이름은 «보이는 말» 이고 값은 «가리키는 키» 라, 이름을 바꿀 때마다 값을 옮기지 않는다.
+const MSG_TPL_KINDS = {script:'문자', alimtalk:'알림톡'};
+// 특수문자 판(제니 2026-10-07: 「문자 템플릿에 특수문자를 넣는 경우가 많아서」).
+// ★ 시트 머리에 놓여 있던 «★ ※ ▶️ ▶» 를 앞에 두고, 시트 본문에 실제로 쓰인 것들을 이어 붙였다.
+const MSG_TPL_SYMBOLS = ['★','☆','※','▶','▶️','▷','▼','▲','►','■','□','●','○','◆','◇','✔','✓','✅','❗','⚠','☞',
+  '→','←','↑','↓','>>','>>>','~','·','•','♥','♡','♪','🙏','✨','📦','💬','📘','😊',':)',
+  '「','」','『','』','【','】','[',']','①','②','③','④','⑤','─','━','=>'];
+// 버킷 msg-templates 의 그림 경로 → 서명 주소 (한 번에 받는다 · 한 시간짜리)
+async function msgTplSignUrls(paths){
+  const uniq = Array.from(new Set((paths||[]).filter(Boolean)));
+  if(!uniq.length) return {};
+  const {data,error} = await sb.storage.from('msg-templates').createSignedUrls(uniq, 3600);
+  if(error){ console.error('[템플릿 그림] 서명 주소 실패:', error); return {}; }
+  const out = {};
+  (data||[]).forEach(d=>{ if(d && d.path && d.signedUrl) out[d.path] = d.signedUrl; });
+  return out;
+}
 // ★ 종류는 «색» 으로도 가른다(제니 2026-10-07). 알림톡은 카카오 노랑 — 두 모드에서 같은 색이다
 //   (카카오 노랑은 «카카오» 라는 뜻을 가진 색이라 모드에 따라 바뀌면 안 된다 · 글자는 어두운 갈색 고정).
 const MSG_TPL_TONE = {
@@ -33291,7 +33310,7 @@ function MsgTplBody({text, light}){
 
 // 카카오 알림톡 모양 미리보기 — 배송지연 등록 창의 미리보기(DelayAlimtalkPreview)와 같은 모양.
 // ★ 판은 두 모드에서 같다(실제 카톡 화면을 흉내내는 자리라 콘솔 테마를 따라가면 안 된다).
-function MsgTplKakao({text, title, link}){
+function MsgTplKakao({text, title, link, image}){
   return (
     <div style={{background:'#9BBBD4',borderRadius:12,padding:'12px 10px',maxWidth:380}}>
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,paddingLeft:4}}>
@@ -33304,9 +33323,11 @@ function MsgTplKakao({text, title, link}){
         <span>알림톡 도착</span>
         <span style={{fontSize:9,background:'#fff',padding:'1px 6px',borderRadius:3,color:'#444'}}>kakao</span>
       </div>
+      {/* ★ 알림톡 그림은 노란 머리 바로 아래 · 글 위에 폭 가득 실린다(실제 카톡 모양 — 시트 미리보기 캡처 기준) */}
+      {image && <img src={image} alt="알림톡 그림" style={{display:'block',width:'100%',background:'#fff'}}/>}
       <div style={{background:'#fff',padding:'14px',borderBottomLeftRadius:10,borderBottomRightRadius:10,
         fontSize:12.5,lineHeight:1.7,color:'#222',whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
-        {title && <div style={{fontWeight:700,marginBottom:8}}>{title}</div>}
+        {title &&<div style={{fontWeight:700,marginBottom:8}}>{title}</div>}
         <MsgTplBody text={text} light/>
         {link && <div title={link} style={{marginTop:12,border:'1px solid #DADADA',borderRadius:6,padding:'7px 0',
           textAlign:'center',fontSize:12,color:'#222',background:'#F7F7F7',whiteSpace:'nowrap',overflow:'hidden',
@@ -33410,6 +33431,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
   const [edit,setEdit]   = useState(null);    // 고치는 중인 초안
   const [catOpen,setCatOpen] = useState(false);
   const [copied,setCopied]   = useState('');
+  const [imgUrls,setImgUrls] = useState({});   // 그림 경로 → 서명 주소
 
   const load = async ()=>{
     const [t, c] = await Promise.all([
@@ -33419,6 +33441,9 @@ function MsgTemplatesPage({currentUserEmail, can}){
     if(sbFail('안내 템플릿 조회', t.error)){ setRows([]); return; }
     if(sbFail('템플릿 분류 조회', c.error)){ setCats([]); } else setCats(c.data||[]);
     setRows(t.data||[]);
+    const paths = [];
+    (t.data||[]).forEach(r=>{ if(r.image_path) paths.push(r.image_path); if(r.preview_path) paths.push(r.preview_path); });
+    setImgUrls(await msgTplSignUrls(paths));
   };
   useEffect(()=>{ load(); },[]);
 
@@ -33443,12 +33468,18 @@ function MsgTemplatesPage({currentUserEmail, can}){
     if(c2!=='all' && r.cat_id!==c2) return false;
     return true;
   });
+  // ★ 정렬(제니 2026-10-07): **문자 위 · 알림톡 아래 고정**, 각 종류 안에서는 **가나다순**.
+  //   그전에는 sort_order(시트 순서)였는데 두 종류가 각자 10·20·30… 이라 **섞여** 나왔다.
+  //   ★ 제목이 같으면(«상품별 cs 안내» 넷) 등록 순서로 — 매번 차례가 바뀌면 «아까 그거» 를 못 찾는다.
+  const KIND_ORDER = {script:0, alimtalk:1};
   const shown = inCat.filter(r=>{
     if(!terms.length) return true;
     const vs = msgTplVariants(r).map(v=>(v.name||'')+' '+(v.body||'')).join(' ');
     const hay = msgTplNorm([r.title, r.note, vs, r.legacy_cat, catPath(r), r.sender].join(' '));
     return terms.every(t=> hay.indexOf(t) >= 0);
-  });
+  }).sort((a,b)=> ((KIND_ORDER[a.kind]!=null?KIND_ORDER[a.kind]:9) - (KIND_ORDER[b.kind]!=null?KIND_ORDER[b.kind]:9))
+                || String(a.title||'').localeCompare(String(b.title||''), 'ko')
+                || (a.id - b.id));
   const sel = (rows||[]).find(r=>r.id===selId) || null;
   const pick = (r)=>{ setSelId(r.id); setVi(0); setVals({}); };
   const pickC1 = (v)=>{ setC1(v); setC2('all'); };
@@ -33489,7 +33520,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
 
   const header = (
     <div className="page-header"><div><div className="page-title">💬 안내 템플릿</div>
-      <div className="page-sub">상담 안내 문구·알림톡 문구를 찾아 복사합니다 · 빈칸이 있는 템플릿은 채워서 완성본으로</div></div></div>
+      <div className="page-sub">문자·알림톡 문구를 찾아 복사합니다 · 빈칸이 있는 템플릿은 채워서 완성본으로</div></div></div>
   );
   if(rows===null) return <div>{header}<div style={{padding:'0 32px',color:'var(--sub)',fontSize:13}}>불러오는 중…</div></div>;
 
@@ -33503,7 +33534,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
         <input value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 찾기 — 제목·내용·확인 사항 (띄어쓰기 무시)"
           style={{flex:'1 1 280px',maxWidth:460,fontSize:13,padding:'8px 11px',background:'var(--bg)',
             border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,fontFamily:'inherit'}}/>
-        {[['all','전체'],['script','상담 안내'],['alimtalk','알림톡']].map(([id,label])=>(
+        {[['all','전체'],['script',MSG_TPL_KINDS.script],['alimtalk',MSG_TPL_KINDS.alimtalk]].map(([id,label])=>(
           <div key={id} onClick={()=>setKind(id)} style={chip(kind===id)}>
             {id!=='all' && <span style={{display:'inline-block',width:8,height:8,borderRadius:2,marginRight:5,
               background:MSG_TPL_TONE[id].bar,verticalAlign:'middle'}}></span>}
@@ -33644,7 +33675,21 @@ function MsgTemplatesPage({currentUserEmail, can}){
                       {copied==='filled' ? '✓ 복사됨' : '복사'}</button>
                   </div>
                   {sel.kind==='alimtalk'
-                    ? <MsgTplKakao text={filled} link={sel.link && /^https?:\/\//.test(sel.link) ? sel.link : ''}/>
+                    ? <div style={{display:'flex',gap:16,flexWrap:'wrap',alignItems:'flex-start'}}>
+                        <MsgTplKakao text={filled} link={sel.link && /^https?:\/\//.test(sel.link) ? sel.link : ''}
+                          image={sel.image_path ? imgUrls[sel.image_path] : ''}/>
+                        {/* ★ 시트의 «미리보기» 캡처 — 실제 카톡에서 어떻게 보였는지(버튼까지). 콘솔 미리보기가
+                             흉내라면 이쪽은 증거다. 누르면 원래 크기로 새 탭. */}
+                        {sel.preview_path && imgUrls[sel.preview_path] && (
+                          <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                            <span style={{fontSize:11,color:'var(--sub)',fontWeight:600}}>실제 화면 캡처</span>
+                            <a href={imgUrls[sel.preview_path]} target="_blank" rel="noopener noreferrer" title="원래 크기로 보기">
+                              <img src={imgUrls[sel.preview_path]} alt="실제 화면 캡처"
+                                style={{display:'block',width:220,borderRadius:10,border:'1px solid var(--border)'}}/>
+                            </a>
+                          </div>
+                        )}
+                      </div>
                     : <div style={{fontSize:13,lineHeight:1.7,color:'var(--text)',whiteSpace:'pre-wrap',wordBreak:'break-word',
                         background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'12px 14px'}}>
                         <MsgTplBody text={filled}/>
@@ -33674,7 +33719,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
       </div>
       </div>
 
-      {edit && <MsgTplEditor draft={edit} cats={cats} currentUserEmail={currentUserEmail}
+      {edit && <MsgTplEditor draft={edit} cats={cats} currentUserEmail={currentUserEmail} imgUrls={imgUrls}
         onClose={()=>setEdit(null)}
         onSaved={(id)=>{ setEdit(null); if(id){ setSelId(id); setVi(0); setVals({}); } load(); }}
         onDeleted={()=>{ setEdit(null); setSelId(null); load(); }}/>}
@@ -33683,11 +33728,45 @@ function MsgTemplatesPage({currentUserEmail, can}){
   );
 }
 
-function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDeleted}){
+function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved, onDeleted}){
   const [d,setD]   = useState(draft);
   const [busy,setBusy] = useState(false);
   const refs = useRef({});
   const set = (k,v)=> setD(p=>({...p,[k]:v}));
+  // ── 그림(알림톡) — 고른 파일은 «저장할 때» 올린다. 고르자마자 올리면 [취소] 했을 때 주인 없는 파일이 남는다.
+  const [imgNew,setImgNew]   = useState({image:null, preview:null});    // 새로 고른 File
+  const [imgDrop,setImgDrop] = useState({image:false, preview:false});  // 빼기
+  const [objUrl,setObjUrl]   = useState({});
+  useEffect(()=>()=>{ Object.values(objUrl).forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(_e){} }); }, [objUrl]);
+  const pathKey = (k)=> k==='image' ? 'image_path' : 'preview_path';
+  const imgShown = (k)=> imgNew[k] ? objUrl[k] : (!imgDrop[k] && d[pathKey(k)] ? (imgUrls||{})[d[pathKey(k)]] : '');
+  const pickImg = (k, file)=>{
+    if(!file) return;
+    if(!/^image\/(png|jpeg|gif|webp)$/.test(file.type)){ toast('그림 파일(png·jpg·gif·webp)만 올릴 수 있습니다.','warn'); return; }
+    if(file.size > 5*1024*1024){ toast('5MB 보다 큰 그림은 올릴 수 없습니다.','warn'); return; }
+    setImgNew(p=>({...p,[k]:file})); setImgDrop(p=>({...p,[k]:false}));
+    setObjUrl(p=>({...p,[k]:URL.createObjectURL(file)}));
+  };
+  const dropImg = (k)=>{ setImgNew(p=>({...p,[k]:null})); setImgDrop(p=>({...p,[k]:true})); };
+
+  // ── 특수문자 — «마지막으로 쓰던 칸» 의 커서 자리에 넣는다(제니 2026-10-07).
+  //   ★ 판의 단추는 onMouseDown 에서 기본 동작을 막는다 — 안 막으면 누르는 순간 칸의 포커스가
+  //     단추로 넘어가 «마지막 칸» 이 사라진다.
+  const lastField = useRef('b0');
+  const fieldVal = (key)=> key==='note' ? (d.note||'') : key==='title' ? (d.title||'')
+    : key[0]==='b' ? (vs[+key.slice(1)]||{}).body||'' : (vs[+key.slice(1)]||{}).name||'';
+  const setField = (key, v)=> key==='note' ? set('note', v) : key==='title' ? set('title', v)
+    : setV(+key.slice(1), key[0]==='b' ? 'body' : 'name', v);
+  const insertAt = (key, txt)=>{
+    if(key[0]!=='n' && key[0]!=='b' && key!=='note' && key!=='title') key = 'b0';
+    if((key[0]==='b' || key[0]==='n') && !vs[+key.slice(1)]) key = 'b0';
+    const el = refs.current[key];
+    const cur = fieldVal(key);
+    const s = el ? el.selectionStart : cur.length, e = el ? el.selectionEnd : cur.length;
+    setField(key, cur.slice(0,s)+txt+cur.slice(e));
+    setTimeout(()=>{ if(el){ el.focus(); el.selectionStart = el.selectionEnd = s+txt.length; } }, 0);
+  };
+  const track = (key)=>({ref:el=>{ refs.current[key] = el; }, onFocus:()=>{ lastField.current = key; }});
   const isNew = !d.id;
   const vs = d.variants || [];
   const setV = (i, k, v)=> setD(p=>({...p, variants: p.variants.map((x,j)=> j===i ? {...x,[k]:v} : x)}));
@@ -33709,13 +33788,9 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
   const addVar = (i)=>{
     const name = window.prompt('빈칸 이름 (예: 입금 금액, 상품명, 출고 송장)');
     if(!name || !name.trim()) return;
-    const tag = '{'+name.trim().replace(/[{}]/g,'')+'}';
-    const el = refs.current[i];
-    const cur = vs[i].body||'';
-    const s = el ? el.selectionStart : cur.length, e = el ? el.selectionEnd : cur.length;
-    setV(i, 'body', cur.slice(0,s)+tag+cur.slice(e));
-    setTimeout(()=>{ if(el){ el.focus(); el.selectionStart = el.selectionEnd = s+tag.length; } }, 0);
+    insertAt('b'+i, '{'+name.trim().replace(/[{}]/g,'')+'}');
   };
+  const bucket = ()=> sb.storage.from('msg-templates');
 
   const save = async ()=>{
     if(!String(d.title||'').trim()){ toast('제목을 넣어 주세요.','warn'); return; }
@@ -33726,8 +33801,23 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
     if(names.some((x,i)=> names.indexOf(x)!==i)){ toast('템플릿 이름이 겹칩니다 — 이름을 서로 다르게 해 주세요.','warn'); return; }
     if(variants.length > MSG_TPL_MAX){ toast('템플릿은 '+MSG_TPL_MAX+'개까지입니다.','warn'); return; }
     setBusy(true);
+    // ① 새 그림부터 올린다 — 표를 먼저 고치면 «경로는 있는데 파일이 없는» 행이 생길 수 있다.
+    const uploaded = [];
+    const paths = {image_path: d.image_path||null, preview_path: d.preview_path||null};
+    for(const k of ['image','preview']){
+      if(imgDrop[k]) paths[pathKey(k)] = null;
+      const f = imgNew[k]; if(!f) continue;
+      const ext = (f.type.split('/')[1]||'png').replace('jpeg','jpg');
+      const path = 't/'+Date.now()+'-'+Math.random().toString(36).slice(2,8)+'.'+ext;
+      const up = await bucket().upload(path, f, {contentType:f.type, upsert:false});
+      if(up.error){
+        if(uploaded.length) await bucket().remove(uploaded);
+        setBusy(false); sbFail('그림 올리기', up.error); return;
+      }
+      uploaded.push(path); paths[pathKey(k)] = path;
+    }
     const row = {kind:d.kind, title:d.title.trim(), cat_id:d.cat_id||null,
-      note:String(d.note||'').trim()||null, variants,
+      note:String(d.note||'').trim()||null, variants, ...paths,
       sender:d.kind==='alimtalk' ? (String(d.sender||'').trim()||null) : null,
       status:d.kind==='alimtalk' ? (String(d.status||'').trim()||null) : null,
       link:d.kind==='alimtalk' ? (String(d.link||'').trim()||null) : null,
@@ -33735,10 +33825,16 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
     const r = isNew
       ? await sb.from('msg_templates').insert({...row, created_by:currentUserEmail}).select('id')
       : await sb.from('msg_templates').update(row).eq('id', d.id).select('id');
+    const failed = !!r.error || !r.data || !r.data.length;
+    // ② 표 저장이 안 됐으면 방금 올린 그림을 치운다(주인 없는 파일을 남기지 않는다).
+    if(failed && uploaded.length) await bucket().remove(uploaded);
     setBusy(false);
     if(sbFail('템플릿 저장', r.error)) return;
     // ★ 0행이면 «저장됐다» 가 거짓말이다 — 권한(RLS)에 막히면 오류 없이 0행이 온다.
-    if(!r.data || !r.data.length){ toast('저장되지 않았습니다 — 고칠 권한이 없을 수 있습니다.','error'); return; }
+    if(failed){ toast('저장되지 않았습니다 — 고칠 권한이 없을 수 있습니다.','error'); return; }
+    // ③ 저장된 뒤에만 옛 그림을 지운다 — 먼저 지우면 저장이 실패했을 때 그림만 사라진다.
+    const old = ['image_path','preview_path'].map(k=> d[k] && d[k]!==paths[k] ? d[k] : null).filter(Boolean);
+    if(old.length){ const rm = await bucket().remove(old); if(rm.error) console.error('[템플릿 그림] 옛 그림 치우기 실패:', rm.error); }
     toast('저장했습니다.','ok');
     onSaved(r.data[0].id);
   };
@@ -33749,6 +33845,8 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
     setBusy(false);
     if(sbFail('템플릿 지우기', r.error)) return;
     if(!r.data || !r.data.length){ toast('지워지지 않았습니다 — 권한이 없을 수 있습니다.','error'); return; }
+    const old = [d.image_path, d.preview_path].filter(Boolean);
+    if(old.length){ const rm = await bucket().remove(old); if(rm.error) console.error('[템플릿 그림] 치우기 실패:', rm.error); }
     onDeleted();
   };
 
@@ -33759,6 +33857,21 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
   return (
     <ManualModalFrame title={isNew ? '템플릿 추가' : '템플릿 수정'} onClose={onClose} width={820}>
       <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        {/* ── 특수문자 판 — 창 안에서 위에 붙어 있다(긴 템플릿을 내려 쓰는 중에도 손이 닿게) ── */}
+        <div style={{position:'sticky',top:-16,zIndex:3,background:'var(--card)',margin:'-16px -18px 0',
+          padding:'10px 18px 8px',borderBottom:'1px solid var(--border)'}}>
+          <div style={{fontSize:11,color:'var(--sub)',marginBottom:6}}>
+            <b style={{color:'var(--text)'}}>특수문자</b> — 누르면 마지막으로 쓰던 칸의 커서 자리에 들어갑니다</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:4}}>
+            {MSG_TPL_SYMBOLS.map(sym=>(
+              <button key={sym} type="button" title={sym}
+                onMouseDown={e=>e.preventDefault()}
+                onClick={()=>insertAt(lastField.current, sym)}
+                style={{minWidth:28,height:26,padding:'0 6px',fontSize:13,lineHeight:1,cursor:'pointer',fontFamily:'inherit',
+                  background:'var(--bg)',border:'1px solid var(--border)',borderRadius:5,color:'var(--text)'}}>{sym}</button>
+            ))}
+          </div>
+        </div>
         <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
           <div style={{flex:'0 0 auto'}}>
             <span style={lbl}>종류</span>
@@ -33770,7 +33883,7 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
           </div>
           <div style={{flex:'1 1 240px'}}>
             <span style={lbl}>제목 (찾을 때 쓰는 이름)</span>
-            <input value={d.title} onChange={e=>set('title',e.target.value)} style={inp}/>
+            <input {...track('title')} value={d.title} onChange={e=>set('title',e.target.value)} style={inp}/>
           </div>
           <div style={{flex:'1 1 220px'}}>
             <span style={lbl}>분류 (몇 글자 치면 좁혀집니다)</span>
@@ -33780,7 +33893,7 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
         {!d.cat_id && d.legacy_cat && <div style={{fontSize:11,color:'var(--sub)',marginTop:-6}}>시트에서의 분류: {d.legacy_cat}</div>}
         <div>
           <span style={lbl}>확인 사항 — 언제 쓰나</span>
-          <textarea value={d.note} onChange={e=>set('note',e.target.value)} rows={3} style={{...inp,resize:'vertical',lineHeight:1.6}}/>
+          <textarea {...track('note')} value={d.note} onChange={e=>set('note',e.target.value)} rows={3} style={{...inp,resize:'vertical',lineHeight:1.6}}/>
         </div>
 
         {/* ── 템플릿 목록 (이름 직접 · 최대 10) ── */}
@@ -33794,7 +33907,7 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
           <div key={i} style={{border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px',display:'flex',flexDirection:'column',gap:6}}>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
               <span style={{fontSize:11,color:'var(--sub)',fontFamily:'monospace',width:18}}>{i+1}</span>
-              <input value={v.name} onChange={e=>setV(i,'name',e.target.value)} placeholder={'템플릿 이름 (예: 채팅용, 문자용)'}
+              <input {...track('n'+i)} value={v.name} onChange={e=>setV(i,'name',e.target.value)} placeholder={'템플릿 이름 (예: 채팅용, 문자용)'}
                 style={{...inp,flex:'1 1 auto',width:'auto',fontWeight:600}}/>
               <button type="button" onClick={()=>addVar(i)} title="커서 자리에 {빈칸} 을 넣습니다 — 쓸 때 칸이 생겨 채울 수 있습니다"
                 style={{...miniBtn,fontSize:11}}>+ 빈칸</button>
@@ -33803,7 +33916,7 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
               <button type="button" onClick={()=>delV(i)} disabled={vs.length<=1} title="이 템플릿 빼기"
                 style={{...miniBtn,color:'#FF9B9B',opacity:vs.length<=1?.4:1}}>✕</button>
             </div>
-            <textarea ref={el=>{ refs.current[i] = el; }} value={v.body} onChange={e=>setV(i,'body',e.target.value)}
+            <textarea {...track('b'+i)} value={v.body} onChange={e=>setV(i,'body',e.target.value)}
               rows={i===0 ? 10 : 6} style={{...inp,resize:'vertical',lineHeight:1.6}}/>
             {msgTplVars(v.body).length>0 && <div style={{fontSize:11,color:'var(--accent)'}}>
               빈칸 {msgTplVars(v.body).length}개: {msgTplVars(v.body).join(' · ')}</div>}
@@ -33818,6 +33931,30 @@ function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDelete
               <input value={d.status} onChange={e=>set('status',e.target.value)} style={inp}/></div>
             <div style={{flex:'2 1 260px'}}><span style={lbl}>연결 링크</span>
               <input value={d.link} onChange={e=>set('link',e.target.value)} style={inp}/></div>
+          </div>
+        )}
+        {d.kind==='alimtalk' && (
+          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+            {[['image','알림톡 그림 (메시지 위에 실리는 그림)'],['preview','실제 화면 캡처 (참고용)']].map(([k,label])=>{
+              const u = imgShown(k);
+              return (
+                <div key={k} style={{flex:'1 1 240px',border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px'}}>
+                  <span style={lbl}>{label}</span>
+                  {u ? <img src={u} alt={label} style={{display:'block',maxWidth:'100%',maxHeight:180,borderRadius:6,
+                         border:'1px solid var(--border)',marginBottom:8}}/>
+                     : <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:8}}>없음</div>}
+                  <div style={{display:'flex',gap:6}}>
+                    <label style={{...miniBtn,fontSize:11.5,cursor:'pointer',display:'inline-flex',alignItems:'center'}}>
+                      {u ? '바꾸기' : '올리기'}
+                      <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" style={{display:'none'}}
+                        onChange={e=>{ pickImg(k, e.target.files && e.target.files[0]); e.target.value=''; }}/>
+                    </label>
+                    {u && <button type="button" onClick={()=>dropImg(k)} style={{...miniBtn,fontSize:11.5,color:'#FF9B9B'}}>빼기</button>}
+                    {(imgNew[k] || imgDrop[k]) && <span style={{fontSize:11,color:'var(--accent)',alignSelf:'center'}}>저장하면 반영</span>}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
         <div style={{display:'flex',gap:8,alignItems:'center',borderTop:'1px solid var(--border)',paddingTop:12}}>
