@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261007a_msg_templates -->
+<!-- (2026-10-07) 💬 **새 메뉴 «안내 템플릿» — dev 초안**(제니 요청). 시트 «CS 스크립트 › 안내 템플릿 가이드(전체)»(36줄)와 «원룸만들기 알림톡 발송 워딩_정리본 › 260618»(20줄)을 콘솔로 옮겼다. 제니: 「원본까지 아예 콘솔로」 → **원본은 이제 DB(`msg_templates`)** 다. ① **찾기** — 제목·확인 사항·본문·시트 분류를 띄어쓰기 무시 + 낱말마다 AND 로 찾는다(「반품 배송비」 → 「반품배송비입금안내」). 종류 칩(상담 안내 / 알림톡) · 분류 칩(1단계 → 2단계). ② **자동 작성(B안 · 0원 · AI 없음)** — 본문에 `{입금 금액}` 처럼 중괄호로 빈칸을 두면 상세에서 칸이 생기고, 채운 만큼 «완성본» 이 바로 바뀌어 [복사] 된다. ★ 안 채운 빈칸은 지우지 않고 그대로 둔다(빈자리가 티 안 나게 고객에게 나가면 안 된다) · 남은 채 복사하면 경고. ★ 알림톡의 `#{NAME}` 은 시스템이 채우는 자리라 빈칸으로 잡지 않는다(앞에 `#` 가 붙은 것은 건너뜀). 편집기에 커서 자리에 빈칸을 넣는 [+ 빈칸]. ③ **분류는 2단계까지**(제니 지시) · **값은 비워 두고 제니가 채운다** — [분류 관리] 창에서 1·2단계 추가·이름·차례·삭제. 분류를 지워도 템플릿은 «미분류» 로 남는다(DB `on delete set null`) · 3단계는 DB 트리거가 막는다. 시트의 원래 분류(1·2·3차)는 «시트에서의 분류» 로 미분류 템플릿에 보여 준다(옮기는 동안의 참고). 권한: 메뉴 `msgTemplates`(기본 전원) · 동작 `msgTemplates.edit`(기본 master·manager) — **DB 정책이 같은 설정을 읽는다.** 저장·삭제는 «0행» 을 세어 권한에 막힌 것을 «저장됨» 으로 말하지 않는다. ★ SQL 먼저: `sql/msg_templates.sql`(+`_verify` 통과) · 옮겨 담기 `sql/msg_templates_seed_dev.sql` — **둘 다 dev 만.** 본문이 빈 줄 6개(시트에 자리만 있던 것)도 옮겼다. 백업 마스킹 규칙(`mask_dump.py`)도 함께 더했다. ★ dev 전용. `npm run check` 통과. -->
 <!-- v20260928c_white_film -->
 <!-- (2026-09-28) 🎨 **라이트 스윕 «바탕» 편 — 흰 반투명 필름 일곱 곳.** ★★★ **이번에 찾은 것은 명암비 자가 원리상 못 보는 병이다** — 흰 반투명(`rgba(255,255,255,.07)` 등)은 어두운 바탕을 «한 겹 밝히는» 장치인데, **밝은 바탕에서는 아무 일도 안 한다**(흰 종이 위의 흰 7% = 흰 종이). 즉 라이트에서 그 선·띠가 **«안 읽히는» 게 아니라 «없어진다»** — 글자색과 바탕색을 재는 도구의 눈에는 아무 문제가 없어 보인다. **«무엇이 안 읽히나» 만 묻는 자로는 «무엇이 사라졌나» 를 찾을 수 없다.** 🔴🔴🔴 **그리고 이 판의 진짜 교훈: 내 자가 처음에 «0곳» 이라고 답했다.** 선언 값을 `[^;,}\n]` 로 읽어 **첫 쉼표에서 잘랐기 때문에** `rgba(255,255,255,0.1)` 이 통째로 안 잡혔다. 색을 먼저 찾고 그 앞을 거슬러 속성을 읽는 방식으로 고치니 **분모가 2,298 → 592(바탕·테두리·그림자 속성)로 바뀌고 열 곳이 드러났다.** ★★★ **«0» 을 봤을 때 먼저 물어야 하는 것은 «없나» 가 아니라 «내 자가 그것을 볼 수 있나» 다** — 09-22 에 두 번, 09-28 오전에 한 번, 이번이 네 번째다. **분모를 함께 찍지 않으면 매번 다시 밟는다.** ✅ **고친 일곱**: 환불 등록·수정 창의 은행 드롭다운 «+ '○○' 직접 입력» 줄의 옅은 강조(2) · CS 카페24 설정의 묶음 머리 띠(1) · CS 티켓 **등록·상세**의 2뎁스 묶음 구분선(2)과 줄 아래 구분선(2). ★★ **도우미 하나로 처리했다** — `csFilm(alpha)` 는 **다크에서 받은 문자열을 글자 그대로 돌려주므로 다크 화면이 변할 수 없다**(csInk 와 같은 꼴이다. 토큰을 일곱 개 파는 길도 있었지만 alpha 마다 하나씩 생겨 팔레트가 부풀고, 다음에 새 alpha 가 나오면 또 파야 한다). ★★★ **라이트 alpha 를 짐작하지 않았다** — `--card` 기준으로 «같은 세기가 되는 값» 을 계산했다: 흰 .02→1.056 · .04→1.118 · .05→1.152 · .07→1.225 의 세기에 맞추는 남색 필름 alpha 가 각각 .03 · .06 · .075 · .105 로 **네 값 모두 정확히 1.5배**여서 표 대신 곱셈으로 뒀다(새 alpha 가 와도 맞는다). ★ 필름색 `#16233F` 은 **이 콘솔이 이미 이 목적으로 쓰는 색**이다(`--pop-shadow` 라이트 · `CsStageSubmit` 의 밝은 판 분리선) — 새 색을 지어내지 않았다. ⚠ 다만 그 기존 짝(흰 .14 ↔ 남색 .12)은 **엄격한 대등이 아니었다**(1.543 대 1.265) — 값을 가져올 때 «그 값이 무엇을 맞춘 것인지» 는 따로 재야 한다. 🚫 **일부러 손대지 않은 셋 — 다 «어두운 판 위의 흰 테두리» 다.** 첨부이미지 ✕ 동그라미(`background:rgba(22,35,63,.88)`) · 사진 내려받기 단추(`rgba(11,22,45,.78)`) · 저장 단추의 두 쪽 분리선. **그 판이 두 모드에서 안 바뀌면 그 위의 흰 테두리도 그대로가 맞다** — 09-22 판정 기준 그대로다. ★ 저장 단추 분리선은 **이미 `pale` 분기로 해결돼 있었다**(`on ? 흰 .22 : (pale ? 남색 .12 : 흰 .14)`) — 2026-09-08 의 그 결론이 여기까지 와 있었다. 🔴 **검산 도구에서 또 한 번 헛짚었다** — 되돌려 풀었을 때 네 줄이 «다르다» 고 나왔는데, 값은 같고 **`'1px solid '+'rgba(…)'` 처럼 이어붙이기 꼴만 달랐다.** 접어서 비교하도록 고치니 **다른 줄 0개.** ★★ **도구가 «달라졌다» 고 할 때, 정말 달라진 것인지 «적는 방식» 만 달라진 것인지 가려야 한다**(오늘 아침 «한쪽만 풀어 오탐» 과 같은 계열이다). 🟡 **안 한 것 하나 — 검정 반투명 42곳.** 세어 보니 대부분이 **모달 뒤 어둡게 덮는 막**(`rgba(0,0,0,.55)`)인데 그것은 두 모드 다 맞다(페이지를 눌러 두는 자리다). 나머지는 떠 있는 목록의 그림자(`rgba(0,0,0,.3~.45)`)로, 흰 바탕에서 조금 무겁게 읽히지만 «사라지거나 안 읽히는» 것은 아니다 — **제니 판단을 받고 하는 편이 낫다.** ★ SQL·엣지 함수 변경 없음. 화면만. `npm run check` 통과. ★ dev 전용. -->
 <!-- v20260928b_rest_ink_islands -->
@@ -33205,6 +33207,555 @@ function ManualFacetsTab({facets, row, currentUserEmail, onSaved}){
   );
 }
 
+// ── 안내 템플릿 (2026-10-07 · 제니 요청 · dev 초안) ──────────────────────────────
+// 시트 «CS 스크립트 › 안내 템플릿 가이드(전체)» + «알림톡 워딩» 을 옮겨 온 자리.
+// 제니: 「원본까지 아예 콘솔로」 — 원본은 이제 DB(msg_templates)다. 시트는 고치지 않는다.
+// ★ 하는 일 셋: ①찾는다(띄어쓰기 무시) ②빈칸을 채워 완성한다(자동 작성 B안 — 0원)
+//   ③고친다(분류 2단계·값은 제니가 채운다).
+// ★★ 자동 작성은 «틀에 채워 넣기» 다(제니가 B안을 골랐다 · AI 없음).
+//   본문에 `{입금 금액}` 처럼 중괄호로 빈칸을 만들면 여기서 칸이 생기고, 채운 만큼 완성된다.
+//   ★ 알림톡의 `#{NAME}` 은 «시스템이 채우는 자리» 라 빈칸으로 잡지 않는다 — 앞에 # 가 붙은
+//     것은 건너뛴다(같은 중괄호라 안 가르면 상담원이 채울 칸으로 잘못 뜬다).
+const MSG_TPL_VAR_RE = /(#?)\{([^{}\n]{1,30})\}/g;
+function msgTplVars(text){
+  const out = [];
+  String(text||'').replace(MSG_TPL_VAR_RE, (m, hash, name)=>{
+    const k = name.trim();
+    if(!hash && k && out.indexOf(k) < 0) out.push(k);
+    return m;
+  });
+  return out;
+}
+// ★ 안 채운 빈칸은 «그대로» 둔다 — 지우면 빈 자리가 티 안 나게 고객에게 나간다.
+function msgTplFill(text, vals){
+  return String(text||'').replace(MSG_TPL_VAR_RE, (m, hash, name)=>{
+    if(hash) return m;
+    const v = vals[name.trim()];
+    return (v!=null && String(v).trim()!=='') ? String(v) : m;
+  });
+}
+const msgTplNorm = (s)=> String(s||'').toLowerCase().replace(/\s+/g,'');
+async function msgTplCopy(text){
+  try{
+    if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); return true; }
+  }catch(_e){ /* 아래로 물러선다 */ }
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try{ ok = document.execCommand('copy'); }catch(_e2){}
+  document.body.removeChild(ta);
+  return ok;
+}
+const MSG_TPL_KINDS = {script:'상담 안내', alimtalk:'알림톡'};
+
+// 본문을 그대로 보여 주되 빈칸은 눈에 띄게, 알림톡 변수는 옅게.
+function MsgTplBody({text}){
+  const parts = [];
+  let last = 0, i = 0;
+  String(text||'').replace(MSG_TPL_VAR_RE, (m, hash, name, off)=>{
+    if(off > last) parts.push(<span key={i++}>{text.slice(last, off)}</span>);
+    parts.push(hash
+      ? <span key={i++} style={{color:'var(--sub)',fontFamily:'monospace',fontSize:'.95em'}}>{m}</span>
+      : <span key={i++} style={{background:'rgba(120,170,255,.16)',color:'var(--accent)',borderRadius:4,padding:'0 3px',fontWeight:600}}>{m}</span>);
+    last = off + m.length;
+    return m;
+  });
+  if(last < String(text||'').length) parts.push(<span key={i++}>{text.slice(last)}</span>);
+  return <>{parts}</>;
+}
+
+function MsgTemplatesPage({currentUserEmail, can}){
+  const canEdit = typeof can==='function' ? can('msgTemplates.edit') : false;
+  const [rows,setRows]   = useState(null);
+  const [cats,setCats]   = useState([]);
+  const [q,setQ]         = useState('');
+  const [kind,setKind]   = useState('all');
+  const [c1,setC1]       = useState('all');   // 'all' | 'none'(미분류) | 1단계 id
+  const [c2,setC2]       = useState('all');   // 'all' | 2단계 id
+  const [selId,setSelId] = useState(null);
+  const [which,setWhich] = useState('body');  // 템플릿 1 / 2
+  const [vals,setVals]   = useState({});
+  const [edit,setEdit]   = useState(null);    // 고치는 중인 초안
+  const [catOpen,setCatOpen] = useState(false);
+  const [copied,setCopied]   = useState('');
+
+  const load = async ()=>{
+    const [t, c] = await Promise.all([
+      sb.from('msg_templates').select('*').order('sort_order',{ascending:true}).order('id',{ascending:true}),
+      sb.from('msg_template_cats').select('*').order('sort_order',{ascending:true}).order('id',{ascending:true}),
+    ]);
+    if(sbFail('안내 템플릿 조회', t.error)){ setRows([]); return; }
+    if(sbFail('템플릿 분류 조회', c.error)){ setCats([]); } else setCats(c.data||[]);
+    setRows(t.data||[]);
+  };
+  useEffect(()=>{ load(); },[]);
+
+  const catById = {}; cats.forEach(c=>{ catById[c.id] = c; });
+  const tops = cats.filter(c=>!c.parent_id);
+  const kidsOf = (id)=> cats.filter(c=>c.parent_id===id);
+  const topOf = (r)=>{ const c = r.cat_id && catById[r.cat_id]; return c ? (c.parent_id || c.id) : null; };
+  const catPath = (r)=>{
+    const c = r.cat_id && catById[r.cat_id];
+    if(!c) return '';
+    const p = c.parent_id && catById[c.parent_id];
+    return p ? p.name+' › '+c.name : c.name;
+  };
+
+  // ★ 띄어쓰기 무시 + 낱말마다 AND — 「반품 배송비」 가 「반품배송비입금안내」 를 찾는다.
+  const terms = q.trim().split(/\s+/).map(msgTplNorm).filter(Boolean);
+  const base = (rows||[]).filter(r=> kind==='all' || r.kind===kind);
+  const inCat = base.filter(r=>{
+    if(c1==='none') return !r.cat_id || !catById[r.cat_id];
+    if(c1!=='all' && topOf(r)!==c1) return false;
+    if(c2!=='all' && r.cat_id!==c2) return false;
+    return true;
+  });
+  const shown = inCat.filter(r=>{
+    if(!terms.length) return true;
+    const hay = msgTplNorm([r.title, r.note, r.body, r.body2, r.legacy_cat, catPath(r), r.sender].join(' '));
+    return terms.every(t=> hay.indexOf(t) >= 0);
+  });
+  const sel = (rows||[]).find(r=>r.id===selId) || null;
+  const pick = (r)=>{ setSelId(r.id); setWhich('body'); setVals({}); };
+  const pickC1 = (v)=>{ setC1(v); setC2('all'); };
+
+  const text = sel ? (which==='body2' && sel.body2 ? sel.body2 : sel.body) || '' : '';
+  const vars = msgTplVars(text);
+  const filled = msgTplFill(text, vals);
+  const left = vars.filter(v=> !String(vals[v]||'').trim()).length;
+
+  const doCopy = async (t, tag)=>{
+    if(!t.trim()){ toast('복사할 내용이 없습니다.','warn'); return; }
+    const ok = await msgTplCopy(t);
+    if(!ok){ toast('복사하지 못했습니다. 직접 긁어서 복사해 주세요.','warn'); return; }
+    setCopied(tag); setTimeout(()=>setCopied(''), 1200);
+    if(tag==='filled' && left) toast('빈칸 '+left+'개를 안 채운 채 복사했습니다 — 보내기 전에 확인해 주세요.','warn');
+  };
+
+  const chip = (on)=>({padding:'4px 11px',borderRadius:14,fontSize:11.5,cursor:'pointer',userSelect:'none',
+    border:'1px solid '+(on?'var(--primary)':'var(--border)'),
+    background: on?'rgba(120,170,255,.12)':'transparent', color: on?'var(--accent)':'var(--sub)'});
+  const n = (arr)=> <span style={{marginLeft:5,fontFamily:'monospace',opacity:.75}}>{arr.length}</span>;
+  const box = {background:'var(--card)',border:'1px solid var(--border)',borderRadius:10};
+  const btn = (primary)=>({padding:'6px 14px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
+    background: primary?'var(--primary)':'transparent', color: primary?'#fff':'var(--text)',
+    border: primary?'none':'1px solid var(--border)'});
+
+  if(rows===null) return <div style={{padding:30,color:'var(--sub)',fontSize:13}}>불러오는 중…</div>;
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:10,minHeight:0}}>
+      <div className="page-header"><div><div className="page-title">💬 안내 템플릿</div>
+        <div className="page-sub">상담 안내 문구·알림톡 문구를 찾아 복사합니다 · 빈칸이 있는 템플릿은 채워서 완성본으로</div></div></div>
+      {/* ── 윗줄: 찾기 · 종류 · 단추 ── */}
+      <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 찾기 — 제목·내용·확인 사항 (띄어쓰기 무시)"
+          style={{flex:'1 1 280px',maxWidth:460,fontSize:13,padding:'8px 11px',background:'var(--bg)',
+            border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,fontFamily:'inherit'}}/>
+        {[['all','전체'],['script','상담 안내'],['alimtalk','알림톡']].map(([id,label])=>(
+          <div key={id} onClick={()=>setKind(id)} style={chip(kind===id)}>
+            {label}{n((rows||[]).filter(r=> id==='all' || r.kind===id))}
+          </div>
+        ))}
+        <div style={{flex:1}}></div>
+        {canEdit && <button onClick={()=>setCatOpen(true)} style={btn(false)}>분류 관리</button>}
+        {canEdit && <button onClick={()=>setEdit({kind: kind==='alimtalk'?'alimtalk':'script', title:'', cat_id:null,
+          note:'', body:'', body2:'', sender:'', status:'', link:''})} style={btn(true)}>+ 템플릿 추가</button>}
+      </div>
+
+      {/* ── 분류 1단계 · 2단계 ── */}
+      <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap'}}>
+        <div onClick={()=>pickC1('all')} style={chip(c1==='all')}>전체 분류{n(base)}</div>
+        {tops.map(t=>(
+          <div key={t.id} onClick={()=>pickC1(t.id)} style={chip(c1===t.id)}>
+            {t.name}{n(base.filter(r=>topOf(r)===t.id))}
+          </div>
+        ))}
+        <div onClick={()=>pickC1('none')} style={chip(c1==='none')}>미분류{n(base.filter(r=>!r.cat_id||!catById[r.cat_id]))}</div>
+        {!tops.length && <span style={{fontSize:11.5,color:'var(--sub)'}}>
+          {canEdit ? '아직 분류가 없습니다 — [분류 관리] 에서 만들어 주세요.' : '아직 분류가 없습니다.'}</span>}
+      </div>
+      {c1!=='all' && c1!=='none' && kidsOf(c1).length>0 && (
+        <div style={{display:'flex',gap:6,alignItems:'center',flexWrap:'wrap',paddingLeft:14}}>
+          <span style={{fontSize:11,color:'var(--sub)'}}>└</span>
+          <div onClick={()=>setC2('all')} style={chip(c2==='all')}>전체</div>
+          {kidsOf(c1).map(k=>(
+            <div key={k.id} onClick={()=>setC2(k.id)} style={chip(c2===k.id)}>
+              {k.name}{n(base.filter(r=>r.cat_id===k.id))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 목록 | 상세 ── */}
+      <div style={{display:'grid',gridTemplateColumns:'minmax(240px,340px) minmax(0,1fr)',gap:12,alignItems:'start'}}>
+        <div style={{...box,maxHeight:'calc(100vh - 230px)',overflowY:'auto'}}>
+          <div style={{padding:'8px 12px',fontSize:11.5,color:'var(--sub)',borderBottom:'1px solid var(--border)'}}>
+            {terms.length ? '찾은 템플릿 ' : '템플릿 '}<b style={{color:'var(--text)'}}>{shown.length}</b>개
+          </div>
+          {shown.length===0 && <div style={{padding:16,fontSize:12,color:'var(--sub)'}}>
+            {terms.length ? '찾는 말과 맞는 템플릿이 없습니다.' : '이 분류에는 템플릿이 없습니다.'}</div>}
+          {shown.map(r=>{
+            const empty = !String(r.body||'').trim();
+            const on = r.id===selId;
+            return (
+              <div key={r.id} onClick={()=>pick(r)}
+                style={{padding:'9px 12px',cursor:'pointer',borderBottom:'1px solid var(--border)',
+                  background: on?'rgba(120,170,255,.12)':'transparent',
+                  borderLeft:'3px solid '+(on?'var(--primary)':'transparent')}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontSize:10,padding:'1px 6px',borderRadius:4,flexShrink:0,
+                    border:'1px solid var(--border)',color:'var(--sub)'}}>{MSG_TPL_KINDS[r.kind]||r.kind}</span>
+                  <span style={{fontSize:12.5,fontWeight:600,color:'var(--text)',overflow:'hidden',
+                    textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.title}</span>
+                </div>
+                <div style={{fontSize:11,color:'var(--sub)',marginTop:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {empty ? '⚠ 본문 없음' : (catPath(r) || (r.kind==='alimtalk' ? (r.sender||'') : '미분류'))}
+                  {msgTplVars(r.body).length>0 && <span style={{marginLeft:6,color:'var(--accent)'}}>빈칸 {msgTplVars(r.body).length}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{...box,padding:'16px 18px',minHeight:240}}>
+          {!sel && <div style={{fontSize:13,color:'var(--sub)',padding:'30px 0',textAlign:'center'}}>
+            왼쪽에서 템플릿을 고르세요.</div>}
+          {sel && (
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:16,fontWeight:700,color:'var(--text)'}}>{sel.title}</div>
+                  <div style={{fontSize:11.5,color:'var(--sub)',marginTop:4,display:'flex',gap:8,flexWrap:'wrap'}}>
+                    <span>{MSG_TPL_KINDS[sel.kind]||sel.kind}</span>
+                    <span>· {catPath(sel) || '미분류'}</span>
+                    {sel.sender && <span>· 발송처 {sel.sender}</span>}
+                    {sel.status && <span>· {sel.status}</span>}
+                  </div>
+                  {/* ★ 분류를 채우는 동안만 쓸모 있는 줄 — 시트에서 어디 있었는지 */}
+                  {!sel.cat_id && sel.legacy_cat && <div style={{fontSize:11,color:'var(--sub)',marginTop:3,opacity:.8}}>
+                    시트에서의 분류: {sel.legacy_cat}</div>}
+                </div>
+                {canEdit && <button onClick={()=>setEdit({...sel, note:sel.note||'', body:sel.body||'', body2:sel.body2||'',
+                  sender:sel.sender||'', status:sel.status||'', link:sel.link||''})} style={btn(false)}>수정</button>}
+              </div>
+
+              {sel.note && <div style={{fontSize:12,color:'var(--text)',background:'var(--bg)',border:'1px solid var(--border)',
+                borderRadius:8,padding:'9px 11px',whiteSpace:'pre-wrap',lineHeight:1.6}}>
+                <div style={{fontSize:11,color:'var(--sub)',fontWeight:600,marginBottom:4}}>확인 사항 — 언제 쓰나</div>
+                {sel.note}</div>}
+
+              {sel.body2 && <div style={{display:'flex',gap:6}}>
+                {[['body','템플릿 1'],['body2','템플릿 2']].map(([k,l])=>(
+                  <div key={k} onClick={()=>{ setWhich(k); setVals({}); }} style={chip(which===k)}>{l}</div>))}
+              </div>}
+
+              {!text.trim() && <div style={{fontSize:12.5,color:'var(--sub)'}}>⚠ 본문이 비어 있습니다
+                {canEdit ? ' — [수정] 에서 채워 주세요.' : '.'}</div>}
+
+              {/* ── 빈칸 채우기 (자동 작성 B안) ── */}
+              {vars.length>0 && (
+                <div style={{border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px'}}>
+                  <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>
+                    빈칸 채우기 <span style={{fontWeight:400,color:'var(--sub)',fontSize:11.5}}>— 채운 만큼 아래 완성본에 바로 들어갑니다</span></div>
+                  <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:8}}>
+                    {vars.map(v=>(
+                      <label key={v} style={{display:'flex',flexDirection:'column',gap:3}}>
+                        <span style={{fontSize:11,color:'var(--sub)'}}>{v}</span>
+                        <input value={vals[v]||''} onChange={e=>setVals(p=>({...p,[v]:e.target.value}))}
+                          style={{fontSize:12.5,padding:'6px 9px',background:'var(--bg)',border:'1px solid var(--border)',
+                            color:'var(--text)',borderRadius:6,fontFamily:'inherit'}}/>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {text.trim() && (
+                <div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                    <span style={{fontSize:12,fontWeight:700,color:'var(--text)'}}>{vars.length ? '완성본' : '본문'}</span>
+                    {vars.length>0 && <span style={{fontSize:11,color: left?'var(--warn-ink, #F6AD09)':'var(--sub)'}}>
+                      {left ? '남은 빈칸 '+left+'개' : '빈칸을 다 채웠습니다'}</span>}
+                    <div style={{flex:1}}></div>
+                    <button onClick={()=>doCopy(filled,'filled')} style={btn(true)}>
+                      {copied==='filled' ? '✓ 복사됨' : '복사'}</button>
+                  </div>
+                  <div style={{fontSize:13,lineHeight:1.7,color:'var(--text)',whiteSpace:'pre-wrap',wordBreak:'break-word',
+                    background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'12px 14px'}}>
+                    <MsgTplBody text={filled}/>
+                  </div>
+                </div>
+              )}
+
+              {sel.kind==='alimtalk' && (
+                <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7}}>
+                  <div>※ <span style={{fontFamily:'monospace'}}>#{'{NAME}'}</span> · <span style={{fontFamily:'monospace'}}>[NAME]</span> 같은 자리는 발송할 때 시스템이 채웁니다.</div>
+                  {sel.link && <div>연결 링크: <span style={{color:'var(--text)',wordBreak:'break-all'}}>{sel.link}</span></div>}
+                  {sel.extra && sel.extra.applink && <div>앱링크: <span style={{wordBreak:'break-all'}}>{sel.extra.applink}</span></div>}
+                  {sel.extra && sel.extra.old_body && <details style={{marginTop:4}}>
+                    <summary style={{cursor:'pointer'}}>이전 문구 보기</summary>
+                    <div style={{whiteSpace:'pre-wrap',marginTop:6,padding:'8px 10px',border:'1px solid var(--border)',borderRadius:6}}>{sel.extra.old_body}</div>
+                  </details>}
+                </div>
+              )}
+
+              <div style={{fontSize:10.5,color:'var(--sub)',opacity:.8}}>
+                {sel.source ? '출처: '+sel.source+' · ' : ''}마지막 수정 {String(sel.updated_at||'').slice(0,10)}
+                {sel.updated_by && sel.updated_by.indexOf('sql:')!==0 ? ' · '+csShortUser(sel.updated_by) : ''}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {edit && <MsgTplEditor draft={edit} cats={cats} currentUserEmail={currentUserEmail}
+        onClose={()=>setEdit(null)}
+        onSaved={(id)=>{ setEdit(null); if(id) setSelId(id); load(); }}
+        onDeleted={()=>{ setEdit(null); setSelId(null); load(); }}/>}
+      {catOpen && <MsgTplCatManager cats={cats} rows={rows||[]} onClose={()=>setCatOpen(false)} onChanged={load}/>}
+    </div>
+  );
+}
+
+function MsgTplEditor({draft, cats, currentUserEmail, onClose, onSaved, onDeleted}){
+  const [d,setD]   = useState(draft);
+  const [busy,setBusy] = useState(false);
+  const refs = {body: useRef(null), body2: useRef(null)};
+  const set = (k,v)=> setD(p=>({...p,[k]:v}));
+  const isNew = !d.id;
+  const tops = cats.filter(c=>!c.parent_id);
+
+  // ★ [+ 빈칸] — 커서 자리에 `{이름}` 을 넣는다. 이름을 묻는 까닭: 빈칸 이름이 곧
+  //   상담원이 채울 칸의 제목이라, «무엇을 넣는 칸인지» 가 보여야 한다.
+  const addVar = (field)=>{
+    const name = window.prompt('빈칸 이름 (예: 입금 금액, 상품명, 출고 송장)');
+    if(!name || !name.trim()) return;
+    const tag = '{'+name.trim().replace(/[{}]/g,'')+'}';
+    const el = refs[field].current;
+    const cur = d[field]||'';
+    const s = el ? el.selectionStart : cur.length, e = el ? el.selectionEnd : cur.length;
+    set(field, cur.slice(0,s)+tag+cur.slice(e));
+    setTimeout(()=>{ if(el){ el.focus(); el.selectionStart = el.selectionEnd = s+tag.length; } }, 0);
+  };
+
+  const save = async ()=>{
+    if(!String(d.title||'').trim()){ toast('제목을 넣어 주세요.','warn'); return; }
+    setBusy(true);
+    const row = {kind:d.kind, title:d.title.trim(), cat_id:d.cat_id||null,
+      note:d.note.trim()||null, body:d.body.replace(/\s+$/,'')||null, body2:d.body2.replace(/\s+$/,'')||null,
+      sender:d.kind==='alimtalk' ? (d.sender.trim()||null) : null,
+      status:d.kind==='alimtalk' ? (d.status.trim()||null) : null,
+      link:d.kind==='alimtalk' ? (d.link.trim()||null) : null,
+      updated_at:new Date().toISOString(), updated_by:currentUserEmail};
+    const r = isNew
+      ? await sb.from('msg_templates').insert({...row, created_by:currentUserEmail}).select('id')
+      : await sb.from('msg_templates').update(row).eq('id', d.id).select('id');
+    setBusy(false);
+    if(sbFail('템플릿 저장', r.error)) return;
+    // ★ 0행이면 «저장됐다» 가 거짓말이다 — 권한(RLS)에 막히면 오류 없이 0행이 온다.
+    if(!r.data || !r.data.length){ toast('저장되지 않았습니다 — 고칠 권한이 없을 수 있습니다.','error'); return; }
+    toast('저장했습니다.','ok');
+    onSaved(r.data[0].id);
+  };
+  const remove = async ()=>{
+    if(!window.confirm('«'+d.title+'» 템플릿을 지웁니다. 되돌릴 수 없습니다.')) return;
+    setBusy(true);
+    const r = await sb.from('msg_templates').delete().eq('id', d.id).select('id');
+    setBusy(false);
+    if(sbFail('템플릿 지우기', r.error)) return;
+    if(!r.data || !r.data.length){ toast('지워지지 않았습니다 — 권한이 없을 수 있습니다.','error'); return; }
+    onDeleted();
+  };
+
+  const inp = {width:'100%',fontSize:12.5,padding:'7px 9px',background:'var(--bg)',border:'1px solid var(--border)',
+    color:'var(--text)',borderRadius:6,fontFamily:'inherit',boxSizing:'border-box'};
+  const lbl = {fontSize:11,color:'var(--sub)',display:'block',marginBottom:4,fontWeight:600};
+  const area = (field, label, rows)=>(
+    <div>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+        <span style={{...lbl,marginBottom:0}}>{label}</span>
+        <div style={{flex:1}}></div>
+        {d.kind==='script' && <button type="button" onClick={()=>addVar(field)}
+          title="커서 자리에 {빈칸} 을 넣습니다 — 쓸 때 칸이 생겨 채울 수 있습니다"
+          style={{...miniBtn,fontSize:11}}>+ 빈칸</button>}
+      </div>
+      <textarea ref={refs[field]} value={d[field]} onChange={e=>set(field,e.target.value)} rows={rows}
+        style={{...inp,resize:'vertical',lineHeight:1.6}}/>
+      {msgTplVars(d[field]).length>0 && <div style={{fontSize:11,color:'var(--accent)',marginTop:3}}>
+        빈칸 {msgTplVars(d[field]).length}개: {msgTplVars(d[field]).join(' · ')}</div>}
+    </div>
+  );
+
+  return (
+    <ManualModalFrame title={isNew ? '템플릿 추가' : '템플릿 수정'} onClose={onClose} width={760}>
+      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+        <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+          <div style={{flex:'0 0 auto'}}>
+            <span style={lbl}>종류</span>
+            <div style={{display:'flex',gap:6}}>
+              {Object.keys(MSG_TPL_KINDS).map(k=>(
+                <label key={k} style={{fontSize:12.5,color:'var(--text)',display:'flex',alignItems:'center',gap:4,cursor:'pointer'}}>
+                  <input type="radio" checked={d.kind===k} onChange={()=>set('kind',k)}/>{MSG_TPL_KINDS[k]}</label>))}
+            </div>
+          </div>
+          <div style={{flex:'1 1 240px'}}>
+            <span style={lbl}>제목 (찾을 때 쓰는 이름)</span>
+            <input value={d.title} onChange={e=>set('title',e.target.value)} style={inp}/>
+          </div>
+          <div style={{flex:'1 1 200px'}}>
+            <span style={lbl}>분류</span>
+            <select value={d.cat_id||''} onChange={e=>set('cat_id', e.target.value ? Number(e.target.value) : null)} style={inp}>
+              <option value="">미분류</option>
+              {tops.map(t=>[
+                <option key={t.id} value={t.id}>{t.name}</option>,
+                ...cats.filter(c=>c.parent_id===t.id).map(k=><option key={k.id} value={k.id}>{'  └ '+k.name}</option>)
+              ])}
+            </select>
+          </div>
+        </div>
+        {!d.cat_id && d.legacy_cat && <div style={{fontSize:11,color:'var(--sub)',marginTop:-6}}>시트에서의 분류: {d.legacy_cat}</div>}
+        <div>
+          <span style={lbl}>확인 사항 — 언제 쓰나</span>
+          <textarea value={d.note} onChange={e=>set('note',e.target.value)} rows={3} style={{...inp,resize:'vertical',lineHeight:1.6}}/>
+        </div>
+        {area('body', d.kind==='alimtalk' ? '발송 문구' : '템플릿 1', 10)}
+        {d.kind==='script' && area('body2', '템플릿 2 (있을 때만)', 5)}
+        {d.kind==='alimtalk' && (
+          <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+            <div style={{flex:'1 1 160px'}}><span style={lbl}>발송처</span>
+              <input value={d.sender} onChange={e=>set('sender',e.target.value)} style={inp}/></div>
+            <div style={{flex:'1 1 120px'}}><span style={lbl}>상태</span>
+              <input value={d.status} onChange={e=>set('status',e.target.value)} style={inp}/></div>
+            <div style={{flex:'2 1 260px'}}><span style={lbl}>연결 링크</span>
+              <input value={d.link} onChange={e=>set('link',e.target.value)} style={inp}/></div>
+          </div>
+        )}
+        <div style={{display:'flex',gap:8,alignItems:'center',borderTop:'1px solid var(--border)',paddingTop:12}}>
+          {!isNew && <button onClick={remove} disabled={busy}
+            style={{...miniBtn,color:'#FF9B9B',borderColor:'rgba(248,113,113,.55)'}}>삭제</button>}
+          <div style={{flex:1}}></div>
+          <button onClick={onClose} disabled={busy} style={{...miniBtn,padding:'6px 14px',fontSize:12}}>취소</button>
+          <button onClick={save} disabled={busy}
+            style={{padding:'6px 16px',background:'var(--primary)',border:'none',borderRadius:8,color:'#fff',
+              fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>{busy ? '저장 중…' : '저장'}</button>
+        </div>
+      </div>
+    </ManualModalFrame>
+  );
+}
+
+// 분류 관리 — 2단계까지. ★ 3단계는 DB 트리거가 막는다(여기는 그 길을 아예 안 그린다).
+function MsgTplCatManager({cats, rows, onClose, onChanged}){
+  const [busy,setBusy] = useState(false);
+  const [newTop,setNewTop] = useState('');
+  const [newKid,setNewKid] = useState({});
+  const tops = cats.filter(c=>!c.parent_id);
+  const used = (id)=> rows.filter(r=>r.cat_id===id).length;
+
+  const run = async (what, q)=>{
+    setBusy(true);
+    const r = await q;
+    setBusy(false);
+    if(r.error){
+      const dup = String(r.error.message||'').indexOf('msg_template_cats_name_uq')>=0;
+      toast(dup ? '같은 자리에 같은 이름의 분류가 이미 있습니다.' : what+' 실패: '+r.error.message, 'error');
+      return false;
+    }
+    if(r.data && !r.data.length){ toast(what+' — 반영되지 않았습니다(권한).','error'); return false; }
+    onChanged();
+    return true;
+  };
+  const nextOrder = (list)=> list.reduce((m,c)=>Math.max(m,c.sort_order||0),0)+10;
+  const add = async (parentId, name)=>{
+    const v = String(name||'').trim(); if(!v) return false;
+    const sib = cats.filter(c=>(c.parent_id||null)===(parentId||null));
+    return run('분류 추가', sb.from('msg_template_cats').insert({parent_id:parentId||null, name:v, sort_order:nextOrder(sib)}).select('id'));
+  };
+  const rename = async (c)=>{
+    const v = window.prompt('분류 이름 바꾸기', c.name);
+    if(!v || !v.trim() || v.trim()===c.name) return;
+    run('이름 바꾸기', sb.from('msg_template_cats').update({name:v.trim()}).eq('id', c.id).select('id'));
+  };
+  const remove = async (c)=>{
+    const kids = cats.filter(k=>k.parent_id===c.id);
+    if(kids.length){ toast('아래에 2단계 분류가 '+kids.length+'개 있습니다. 먼저 지워 주세요.','warn'); return; }
+    const u = used(c.id);
+    if(!window.confirm('분류 «'+c.name+'» 을(를) 지웁니다.'+(u ? '\n\n이 분류의 템플릿 '+u+'개는 «미분류» 로 남습니다(지워지지 않습니다).' : ''))) return;
+    run('분류 지우기', sb.from('msg_template_cats').delete().eq('id', c.id).select('id'));
+  };
+  const move = async (c, dir)=>{
+    const sib = cats.filter(x=>(x.parent_id||null)===(c.parent_id||null));
+    const i = sib.findIndex(x=>x.id===c.id), j = i+(dir<0?-1:1);
+    if(j<0 || j>=sib.length) return;
+    const o = sib[j];
+    setBusy(true);
+    // ★ 같은 sort_order 끼리면 맞바꿔도 안 움직인다 — 차례대로 다시 매긴다.
+    const order = sib.map(x=>x.id); order[i] = o.id; order[j] = c.id;
+    for(let k=0;k<order.length;k++){
+      const {error} = await sb.from('msg_template_cats').update({sort_order:(k+1)*10}).eq('id', order[k]);
+      if(sbFail('분류 차례 바꾸기', error)) break;
+    }
+    setBusy(false);
+    onChanged();
+  };
+
+  const inp = {fontSize:12.5,padding:'6px 9px',background:'var(--bg)',border:'1px solid var(--border)',
+    color:'var(--text)',borderRadius:6,fontFamily:'inherit',flex:1,minWidth:0};
+  const rowBtns = (c)=>(
+    <span style={{display:'flex',gap:4,flexShrink:0}}>
+      <button disabled={busy} onClick={()=>move(c,-1)} title="위로" style={miniBtn}>↑</button>
+      <button disabled={busy} onClick={()=>move(c,1)} title="아래로" style={miniBtn}>↓</button>
+      <button disabled={busy} onClick={()=>rename(c)} style={miniBtn}>이름</button>
+      <button disabled={busy} onClick={()=>remove(c)} style={{...miniBtn,color:'#FF9B9B'}}>삭제</button>
+    </span>
+  );
+
+  return (
+    <ManualModalFrame title="분류 관리 (2단계까지)" onClose={onClose} width={560}>
+      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+        <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.6}}>
+          1단계 아래에 2단계를 둘 수 있습니다. 템플릿은 1단계나 2단계 어디에든 넣을 수 있고,
+          분류를 지워도 템플릿은 «미분류» 로 남습니다.</div>
+        {tops.length===0 && <div style={{fontSize:12,color:'var(--sub)'}}>아직 분류가 없습니다.</div>}
+        {tops.map(t=>(
+          <div key={t.id} style={{border:'1px solid var(--border)',borderRadius:8,padding:'8px 10px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:13,fontWeight:700,color:'var(--text)',flex:1}}>{t.name}
+                <span style={{fontWeight:400,fontSize:11,color:'var(--sub)',marginLeft:6}}>템플릿 {used(t.id)}</span></span>
+              {rowBtns(t)}
+            </div>
+            {cats.filter(k=>k.parent_id===t.id).map(k=>(
+              <div key={k.id} style={{display:'flex',alignItems:'center',gap:8,paddingLeft:16,marginTop:6}}>
+                <span style={{fontSize:12.5,color:'var(--text)',flex:1}}>└ {k.name}
+                  <span style={{fontSize:11,color:'var(--sub)',marginLeft:6}}>템플릿 {used(k.id)}</span></span>
+                {rowBtns(k)}
+              </div>
+            ))}
+            <div style={{display:'flex',gap:6,paddingLeft:16,marginTop:6}}>
+              <input value={newKid[t.id]||''} onChange={e=>setNewKid(p=>({...p,[t.id]:e.target.value}))}
+                onKeyDown={async e=>{ if(e.key==='Enter' && await add(t.id, newKid[t.id])) setNewKid(p=>({...p,[t.id]:''})); }}
+                placeholder="2단계 분류 이름" style={inp}/>
+              <button disabled={busy} onClick={async()=>{ if(await add(t.id, newKid[t.id])) setNewKid(p=>({...p,[t.id]:''})); }}
+                style={miniBtn}>+ 2단계</button>
+            </div>
+          </div>
+        ))}
+        <div style={{display:'flex',gap:6,borderTop:'1px solid var(--border)',paddingTop:10}}>
+          <input value={newTop} onChange={e=>setNewTop(e.target.value)}
+            onKeyDown={async e=>{ if(e.key==='Enter' && await add(null, newTop)) setNewTop(''); }}
+            placeholder="새 1단계 분류 이름" style={inp}/>
+          <button disabled={busy} onClick={async()=>{ if(await add(null, newTop)) setNewTop(''); }}
+            style={{padding:'6px 14px',background:'var(--primary)',border:'none',borderRadius:8,color:'#fff',
+              fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>+ 1단계</button>
+        </div>
+      </div>
+    </ManualModalFrame>
+  );
+}
+
 function NoAccessPage(){
   return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',padding:'40px 20px',textAlign:'center'}}>
@@ -33304,7 +33855,9 @@ const CS_MENU_DEFS = [
   {id:'refunds',       label:'환불 관리',        base:['master'], rls:true},
   // ★ 메뉴얼 관리(2026-09-14) — 실무자가 찾아보는 곳이라 기본 전원. 메뉴얼마다 보기 권한은 따로(view_roles).
   {id:'manuals',       label:'메뉴얼 관리',      base:['master','manager','crew'], rls:true},
-  {id:'costs',         label:'비용 비교 도구',   base:['master']},
+  // ★ 안내 템플릿(2026-10-07) — 실무자가 찾아 복사하는 곳이라 기본 전원. 고치기는 동작 권한(msgTemplates.edit).
+  {id:'msgTemplates',  label:'안내 템플릿',      base:['master','manager','crew'], rls:true},
+  {id:'costs',        label:'비용 비교 도구',   base:['master']},
   {id:'auditLog',      label:'변경 이력',        base:['master'], rls:true},
   {id:'agents',        label:'인력 관리',        base:['master']},
 ];
@@ -33422,6 +33975,8 @@ const CS_ACTION_DEFS = [
    hint:'[+ 메뉴얼 등록] · 상세의 [수정] (파일 올리기 포함)', base:['master','manager']},
   {id:'manuals.delete', menu:'메뉴얼 관리', label:'메뉴얼 삭제', guard:'db',
    hint:'상세의 [삭제] — 이전 파일까지 지워지고 되돌릴 수 없다', base:['master']},
+  {id:'msgTemplates.edit', menu:'안내 템플릿', label:'템플릿 · 분류 고치기', guard:'db',
+   hint:'[+ 템플릿 추가] · 상세의 [수정]·[삭제] · [분류 관리]', base:['master','manager']},
   {id:'refunds.create', menu:'환불 관리', label:'환불 만들기', guard:'db',
    hint:'[+ 환불 추가] · CS 티켓의 [환불 요청 하기]', base:['master']},
   {id:'refunds.delete', menu:'환불 관리', label:'환불 삭제', guard:'db',
@@ -33442,7 +33997,7 @@ const PAGE_LABELS = {
   products:'상품 관리', delays:'배송지연', suppliers:'공급사',
   autoDelivery:'자동발송', refunds:'환불 관리', costs:'비용 비교 도구', agents:'인력 관리',
   csTickets:'CS 관리', csNew:'새 티켓', csTicket:'티켓 상세', csSettings:'CS 설정',
-  csDraft:'공급사 접수 문안', csStats:'CS 통계', manuals:'메뉴얼 관리',
+  csDraft:'공급사 접수 문안', csStats:'CS 통계', manuals:'메뉴얼 관리', msgTemplates:'안내 템플릿',
 };
 
 // ── 화면별 에러 경계 ──────────────────────────────────────────────────
@@ -35314,6 +35869,15 @@ function App() {
             </div>
           )}
 
+          {/* 안내 템플릿 (2026-10-07) — 상담 안내 문구·알림톡 문구를 찾아 복사한다. */}
+          {canMenu('msgTemplates') && (
+            <div className="nav-parent" onClick={()=>navigateTo('msgTemplates')}
+              title={navCollapsed?'안내 템플릿':undefined}
+              style={page==='msgTemplates' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}>
+              <span style={{width:16,display:'inline-block',textAlign:'center',fontSize:14,lineHeight:1}}>💬</span><span className="nav-label">안내 템플릿</span><RoleTag on={masterOnly('msgTemplates')}/>
+            </div>
+          )}
+
           {/* 부모: 비용 비교 — 자식은 도구 안의 프로젝트 목록이다(누가 보나는 설정이 정한다) */}
           {canMenu('costs') && (
             <div className="nav-group">
@@ -35548,6 +36112,7 @@ function App() {
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='csStats'&&(canMenu('csStats')?<CsStatsPage/>:<NoAccessPage/>)}
         {page==='manuals'&&(canMenu('manuals')?<ManualsPage currentUserEmail={session.user.email} role={role} can={canAction}/>:<NoAccessPage/>)}
+        {page==='msgTemplates'&&(canMenu('msgTemplates')?<MsgTemplatesPage currentUserEmail={session.user.email} can={canAction}/>:<NoAccessPage/>)}
         {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket} can={canAction}/>:<NoAccessPage/>)}
         {page==='costs'&&(canMenu('costs')?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&canMenu('agentAnalysis')&&<AgentAnalysisPage/>}
