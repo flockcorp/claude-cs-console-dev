@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261007g_sender_label -->
+<!-- (2026-10-07) 💬 안내 템플릿 상세 머리줄에서 «발송처» 낱말을 뺐다(제니) — 「미분류 · 카페24 · 승인완료」. 값만 남긴다. ★ dev 전용. -->
 <!-- v20261007f_alimtalk_dropdowns -->
 <!-- (2026-10-07) 💬 **안내 템플릿 — 알림톡 둘.** ① **앱링크를 콘솔에서 뺐다**(제니: 「버튼의 실제 링크만」) — 상세의 «앱링크» 줄을 지우고 dev 데이터에서도 `extra.applink` 14줄을 지웠다(`sql/msg_templates_applink_dev.sql`). 남은 링크 줄은 이름을 «연결 링크» → **«버튼 링크»** 로(무엇의 링크인지 이름이 말하게). ② **발송처·상태를 드롭박스로** — 발송처 `알리고·카페24·데이터라이즈·솔라피` · 상태 `승인대기·승인완료·발송중·사용중지`(제니 지정 · `MSG_TPL_SENDERS`·`MSG_TPL_STATUSES` 한 곳). 옛 값 «알리고 - 넥젠리뷰» 는 «알리고» 로 맞췄다(1줄). ★ 목록에 없는 값이 들어 있으면 «(목록 밖)» 으로 보기에 남긴다 — 안 남기면 열자마자 첫 항목으로 보이고 그대로 저장하면 값이 몰래 바뀐다. ★ dev 전용. `npm run check` 통과. -->
 <!-- v20261007e_symbol_button -->
@@ -33627,7 +33629,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
                   </div>
                   <div style={{fontSize:11.5,color:'var(--sub)',marginTop:4,display:'flex',gap:8,flexWrap:'wrap'}}>
                     <span>{catPath(sel) || '미분류'}</span>
-                    {sel.sender && <span>· 발송처 {sel.sender}</span>}
+                    {sel.sender && <span>· {sel.sender}</span>}
                     {sel.status && <span>· {sel.status}</span>}
                   </div>
                   {/* ★ 분류를 채우는 동안만 쓸모 있는 줄 — 시트에서 어디 있었는지 */}
