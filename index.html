@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261007h_tags_quad_bytes -->
+<!-- (2026-10-07) 💬 **안내 템플릿 — 제니 요청 넷.** ① **태그(줄임말)** — 추가·수정 창에 태그 칸(Enter·쉼표로 칩 · 빈 칸에서 ⌫ 는 마지막 칩 빼기 · 앞 # 떼기 · 띄어쓰기·대소문자 무시 중복 제거 · 30개·20자) · 저장할 때 «치다 만» 글자도 태그로 넣는다(놓치면 넣은 줄 안 태그가 사라진다) · 한글 조합 중 Enter 는 keyup 에서 마저. 찾기 대상에 태그가 들어가고, 상세 제목 아래 `#태그` 칩을 누르면 그 태그로 찾는다. SQL `sql/msg_templates_tags.sql`(tags text[] · CHECK 안 하위질의 금지라 판정 함수로). ② **템플릿 최대 10 → 4.** ③ **상세는 칩이 아니라 «사분할»** — 하나면 한 칸 가득, 둘 이상이면 2열(최대 2×2) · 칸마다 [복사]·byte. 빈칸 채우기는 «한 번» 이고 같은 이름의 빈칸은 네 칸에 함께 들어간다. ④ **템플릿마다 2,000byte**(문자 LMS) — 아스키 1 · 그 밖 2. 편집기 본문 아래 «n / 2,000 byte»(90% 노랑 · 한도 빨강) · 넘치는 입력은 들어가지 않는다(붙여넣기·특수문자·빈칸 넣기 모두 한 길 · 한글 한 글자를 반으로 쪼개지 않는다). 상세에서 채운 뒤 넘으면 byte 가 빨갛고 복사할 때 알린다. ★ DB 도 같은 규칙으로 막는다(`sql/msg_templates_limits.sql` · `msg_tpl_bytes` · 개수 4) — 화면과 DB 가 다르게 세면 화면이 통과시킨 것을 DB 가 막는다. 검산: «불량교환안내» 화면 1,539 = DB 1,539. 지금 가장 긴 템플릿 1,539byte. ★ dev 전용. `npm run check` 통과. -->
 <!-- v20261007g_sender_label -->
 <!-- (2026-10-07) 💬 안내 템플릿 상세 머리줄에서 «발송처» 낱말을 뺐다(제니) — 「미분류 · 카페24 · 승인완료」. 값만 남긴다. ★ dev 전용. -->
 <!-- v20261007f_alimtalk_dropdowns -->
@@ -33230,7 +33232,14 @@ function ManualFacetsTab({facets, row, currentUserEmail, onSaved}){
 //     것은 건너뛴다(같은 중괄호라 안 가르면 상담원이 채울 칸으로 잘못 뜬다).
 // ★ v2(같은 날 · 제니 둘째 요청) — 템플릿은 «이름 붙인 목록, 최대 10개»(variants).
 //   칸 둘(템플릿 1·2)이던 것을 목록 한 칸으로 바꿨다. 상한은 DB 제약이 지킨다.
-const MSG_TPL_MAX = 10;
+// ★ 최대 4개(제니 2026-10-07: 10 → 4 · 상세에서 «사분할» 로 한눈에 보려고). DB 제약도 4다.
+const MSG_TPL_MAX = 4;
+// ★ 템플릿마다 2,000byte(문자 LMS 한도 · 제니). 세는 법은 DB 의 msg_tpl_bytes 와 «같다» —
+//   아스키(영문·숫자·공백·기본 기호) 1 · 그 밖(한글·특수문자·이모지) 2. 다르게 세면 화면은 통과한 것을 DB 가 막는다.
+const MSG_TPL_BYTES = 2000;
+function msgTplBytes(s){ let n = 0; for(const ch of String(s||'')) n += ch.codePointAt(0) < 128 ? 1 : 2; return n; }
+// 한도를 넘는 뒷부분을 잘라 낸다(글자 단위 — 한글 한 글자를 반으로 쪼개지 않는다).
+function msgTplClip(s, max){ let n = 0, out = ''; for(const ch of String(s||'')){ const w = ch.codePointAt(0) < 128 ? 1 : 2; if(n + w > max) break; n += w; out += ch; } return out; }
 const MSG_TPL_VAR_RE = /(#?)\{([^{}\n]{1,30})\}/g;
 function msgTplVars(text){
   const out = [];
@@ -33484,7 +33493,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
   const shown = inCat.filter(r=>{
     if(!terms.length) return true;
     const vs = msgTplVariants(r).map(v=>(v.name||'')+' '+(v.body||'')).join(' ');
-    const hay = msgTplNorm([r.title, r.note, vs, r.legacy_cat, catPath(r), r.sender].join(' '));
+    const hay = msgTplNorm([r.title, (r.tags||[]).join(' '), r.note, vs, r.legacy_cat, catPath(r), r.sender].join(' '));
     return terms.every(t=> hay.indexOf(t) >= 0);
   }).sort((a,b)=> ((KIND_ORDER[a.kind]!=null?KIND_ORDER[a.kind]:9) - (KIND_ORDER[b.kind]!=null?KIND_ORDER[b.kind]:9))
                 || String(a.title||'').localeCompare(String(b.title||''), 'ko')
@@ -33501,19 +33510,21 @@ function MsgTemplatesPage({currentUserEmail, can}){
     if(c && c.parent_id){ setC1(c.parent_id); setC2(id); } else pickC1(id);
   };
 
-  const vlist = sel ? msgTplVariants(sel) : [];
-  const cur = vlist[Math.min(vi, Math.max(vlist.length-1,0))] || null;
-  const text = cur ? String(cur.body||'') : '';
-  const vars = msgTplVars(text);
-  const filled = msgTplFill(text, vals);
+  // ★ 템플릿(최대 4개)은 칩으로 고르지 않고 «사분할» 로 한눈에 본다(제니 2026-10-07).
+  //   빈칸 채우기는 «한 번» — 같은 이름의 빈칸은 네 칸에 함께 들어간다(템플릿마다 따로 채우면 같은 값을 네 번 친다).
+  const vlist = sel ? msgTplVariants(sel).filter(v=>String(v.body||'').trim()) : [];
+  const vars = [];
+  vlist.forEach(v=> msgTplVars(v.body).forEach(k=>{ if(vars.indexOf(k)<0) vars.push(k); }));
+  const leftOf = (body)=> msgTplVars(body).filter(v=> !String(vals[v]||'').trim()).length;
   const left = vars.filter(v=> !String(vals[v]||'').trim()).length;
 
-  const doCopy = async (t, tag)=>{
+  const doCopy = async (t, tag, remain)=>{
     if(!t.trim()){ toast('복사할 내용이 없습니다.','warn'); return; }
     const ok = await msgTplCopy(t);
     if(!ok){ toast('복사하지 못했습니다. 직접 긁어서 복사해 주세요.','warn'); return; }
     setCopied(tag); setTimeout(()=>setCopied(''), 1200);
-    if(tag==='filled' && left) toast('빈칸 '+left+'개를 안 채운 채 복사했습니다 — 보내기 전에 확인해 주세요.','warn');
+    if(remain) toast('빈칸 '+remain+'개를 안 채운 채 복사했습니다 — 보내기 전에 확인해 주세요.','warn');
+    else if(msgTplBytes(t) > MSG_TPL_BYTES) toast('채운 뒤 '+msgTplBytes(t).toLocaleString()+'byte 로 2,000byte 를 넘습니다 — 문자로 보내기 전에 줄여 주세요.','warn');
   };
 
   const chip = (on)=>({padding:'4px 11px',borderRadius:14,fontSize:11.5,cursor:'pointer',userSelect:'none',
@@ -33524,7 +33535,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
   const btn = (primary)=>({padding:'6px 14px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
     background: primary?'var(--primary)':'transparent', color: primary?'#fff':'var(--text)',
     border: primary?'none':'1px solid var(--border)'});
-  const newDraft = ()=>({kind: kind==='alimtalk'?'alimtalk':'script', title:'', cat_id:null, note:'',
+  const newDraft = ()=>({kind: kind==='alimtalk'?'alimtalk':'script', title:'', cat_id:null, note:'', tags:[],
     variants:[{name: kind==='alimtalk' ? '발송 문구' : '템플릿 1', body:''}], sender:'', status:'', link:''});
 
   const header = (
@@ -33540,7 +33551,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
       <div style={{display:'flex',flexDirection:'column',gap:10,minHeight:0,padding:'0 32px 28px'}}>
       {/* ── 윗줄: 찾기 · 종류 · 단추 ── */}
       <div style={{display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
-        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 찾기 — 제목·내용·확인 사항 (띄어쓰기 무시)"
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="🔍 찾기 — 제목·태그·내용·확인 사항 (띄어쓰기 무시)"
           style={{flex:'1 1 280px',maxWidth:460,fontSize:13,padding:'8px 11px',background:'var(--bg)',
             border:'1px solid var(--border)',color:'var(--text)',borderRadius:8,fontFamily:'inherit'}}/>
         {[['all','전체'],['script',MSG_TPL_KINDS.script],['alimtalk',MSG_TPL_KINDS.alimtalk]].map(([id,label])=>(
@@ -33632,11 +33643,18 @@ function MsgTemplatesPage({currentUserEmail, can}){
                     {sel.sender && <span>· {sel.sender}</span>}
                     {sel.status && <span>· {sel.status}</span>}
                   </div>
+                  {/* 태그(줄임말) — 누르면 그 태그로 찾는다 */}
+                  {(sel.tags||[]).length>0 && <div style={{display:'flex',gap:4,flexWrap:'wrap',marginTop:6}}>
+                    {sel.tags.map(t=>(
+                      <span key={t} onClick={()=>setQ(t)} title={'«'+t+'» 로 찾기'}
+                        style={{fontSize:11,padding:'1px 8px',borderRadius:10,cursor:'pointer',
+                          background:'rgba(120,170,255,.12)',color:'var(--accent)'}}>#{t}</span>))}
+                  </div>}
                   {/* ★ 분류를 채우는 동안만 쓸모 있는 줄 — 시트에서 어디 있었는지 */}
                   {!sel.cat_id && sel.legacy_cat && <div style={{fontSize:11,color:'var(--sub)',marginTop:3,opacity:.8}}>
                     시트에서의 분류: {sel.legacy_cat}</div>}
                 </div>
-                {canEdit && <button onClick={()=>setEdit({...sel, note:sel.note||'',
+                {canEdit && <button onClick={()=>setEdit({...sel, note:sel.note||'', tags:(sel.tags||[]).slice(),
                   variants: vlist.length ? vlist.map(v=>({name:v.name||'', body:v.body||''})) : [{name:'템플릿 1', body:''}],
                   sender:sel.sender||'', status:sel.status||'', link:sel.link||''})} style={btn(false)}>수정</button>}
               </div>
@@ -33646,19 +33664,16 @@ function MsgTemplatesPage({currentUserEmail, can}){
                 <div style={{fontSize:11,color:'var(--sub)',fontWeight:600,marginBottom:4}}>확인 사항 — 언제 쓰나</div>
                 {sel.note}</div>}
 
-              {vlist.length>1 && <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-                {vlist.map((v,k)=>(
-                  <div key={k} onClick={()=>{ setVi(k); setVals({}); }} style={chip(vi===k)}>{v.name || ('템플릿 '+(k+1))}</div>))}
-              </div>}
-
-              {!text.trim() && <div style={{fontSize:12.5,color:'var(--sub)'}}>⚠ 본문이 비어 있습니다
+              {!vlist.length && <div style={{fontSize:12.5,color:'var(--sub)'}}>⚠ 본문이 비어 있습니다
                 {canEdit ? ' — [수정] 에서 채워 주세요.' : '.'}</div>}
 
               {/* ── 빈칸 채우기 (자동 작성 B안) ── */}
               {vars.length>0 && (
                 <div style={{border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px'}}>
                   <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>
-                    빈칸 채우기 <span style={{fontWeight:400,color:'var(--sub)',fontSize:11.5}}>— 채운 만큼 아래 완성본에 바로 들어갑니다</span></div>
+                    빈칸 채우기 <span style={{fontWeight:400,color:'var(--sub)',fontSize:11.5}}>— 채운 만큼 아래 템플릿{vlist.length>1?' 모두':''}에 바로 들어갑니다</span>
+                    <span style={{fontWeight:400,fontSize:11,marginLeft:8,color: left?'var(--warn-ink, #F6AD09)':'var(--sub)'}}>
+                      {left ? '남은 빈칸 '+left+'개' : '빈칸을 다 채웠습니다'}</span></div>
                   <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:8}}>
                     {vars.map(v=>(
                       <label key={v} style={{display:'flex',flexDirection:'column',gap:3}}>
@@ -33672,28 +33687,35 @@ function MsgTemplatesPage({currentUserEmail, can}){
                 </div>
               )}
 
-              {text.trim() && (
-                <div>
-                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                    <span style={{fontSize:12,fontWeight:700,color:'var(--text)'}}>
-                      {sel.kind==='alimtalk' ? '알림톡 미리보기' : (vars.length ? '완성본' : '본문')}</span>
-                    {vars.length>0 && <span style={{fontSize:11,color: left?'var(--warn-ink, #F6AD09)':'var(--sub)'}}>
-                      {left ? '남은 빈칸 '+left+'개' : '빈칸을 다 채웠습니다'}</span>}
-                    <div style={{flex:1}}></div>
-                    <button onClick={()=>doCopy(filled,'filled')} style={btn(true)}>
-                      {copied==='filled' ? '✓ 복사됨' : '복사'}</button>
-                  </div>
-                  {sel.kind==='alimtalk'
-                    ? <div style={{display:'flex',gap:16,flexWrap:'wrap',alignItems:'flex-start'}}>
-                        <MsgTplKakao text={filled} link={sel.link && /^https?:\/\//.test(sel.link) ? sel.link : ''}
-                          image={sel.image_path ? imgUrls[sel.image_path] : ''}/>
-                        {/* ★ «실제 화면 캡처»(preview_path)는 화면에서 뺐다(제니 2026-10-07: 「캡처 부분은 빼줘」).
-                             옮겨 둔 값은 표·버킷에 그대로 있다 — 지우는 것은 제니가 말할 때. */}
+              {/* ── 템플릿 사분할 — 하나면 한 칸 가득, 둘 이상이면 2열(최대 4 = 2×2) ──
+                  ★ «실제 화면 캡처»(preview_path)는 화면에서 뺐다(제니 2026-10-07) — 값은 표·버킷에 남아 있다. */}
+              {vlist.length>0 && (
+                <div style={{display:'grid',gridTemplateColumns: vlist.length>1 ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,1fr)',gap:12}}>
+                  {vlist.map((v,k)=>{
+                    const f = msgTplFill(v.body, vals);
+                    const remain = leftOf(v.body);
+                    const b = msgTplBytes(f);
+                    return (
+                      <div key={k} style={{display:'flex',flexDirection:'column',gap:6,minWidth:0}}>
+                        <div style={{display:'flex',alignItems:'center',gap:8}}>
+                          <span style={{fontSize:12,fontWeight:700,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                            {v.name || ('템플릿 '+(k+1))}</span>
+                          <span style={{fontSize:10.5,fontFamily:'monospace',color: b>MSG_TPL_BYTES ? '#FF6B6B' : 'var(--sub)'}}
+                            title="문자 기준(한글·특수문자 2 · 영문·숫자·공백 1)">{b.toLocaleString()}byte</span>
+                          <div style={{flex:1}}></div>
+                          <button onClick={()=>doCopy(f,'v'+k, remain)} style={{...btn(true),padding:'4px 12px'}}>
+                            {copied===('v'+k) ? '✓ 복사됨' : '복사'}</button>
+                        </div>
+                        {sel.kind==='alimtalk'
+                          ? <MsgTplKakao text={f} link={sel.link && /^https?:\/\//.test(sel.link) ? sel.link : ''}
+                              image={sel.image_path ? imgUrls[sel.image_path] : ''}/>
+                          : <div style={{fontSize:13,lineHeight:1.7,color:'var(--text)',whiteSpace:'pre-wrap',wordBreak:'break-word',
+                              background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'12px 14px',flex:1}}>
+                              <MsgTplBody text={f}/>
+                            </div>}
                       </div>
-                    : <div style={{fontSize:13,lineHeight:1.7,color:'var(--text)',whiteSpace:'pre-wrap',wordBreak:'break-word',
-                        background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'12px 14px'}}>
-                        <MsgTplBody text={filled}/>
-                      </div>}
+                    );
+                  })}
                 </div>
               )}
 
@@ -33773,9 +33795,37 @@ function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved,
     setTimeout(()=>{ if(el){ el.focus(); el.selectionStart = el.selectionEnd = s+txt.length; } }, 0);
   };
   const track = (key)=>({ref:el=>{ refs.current[key] = el; }, onFocus:()=>{ lastField.current = key; }});
+
+  // ── 태그(줄임말 · 제니 2026-10-07) — Enter·쉼표로 칩이 되고, 칸이 비었을 때 ⌫ 는 마지막 칩을 뺀다.
+  //   ★ 저장할 때 칸에 «치다 만» 글자가 남아 있으면 그것도 태그로 넣는다(놓치면 «넣은 줄 안» 태그가 사라진다).
+  //   ★ 앞의 # 은 떼고, 겹치는 것(띄어쓰기·대소문자 무시)은 하나만 남긴다.
+  const [tagDraft,setTagDraft] = useState('');
+  const tagComposing = useRef(false);
+  const mergeTags = (cur, raw)=>{
+    const out = (cur||[]).slice();
+    String(raw||'').split(/[,\n]/).forEach(x=>{
+      const t = x.trim().replace(/^#+/,'').trim();
+      if(!t) return;
+      if(t.length > 20){ toast('태그는 20자까지입니다: «'+t+'»','warn'); return; }
+      if(out.some(o=> msgTplNorm(o)===msgTplNorm(t))) return;
+      if(out.length >= 30){ toast('태그는 30개까지입니다.','warn'); return; }
+      out.push(t);
+    });
+    return out;
+  };
+  const commitTag = ()=>{ if(!tagDraft.trim()) return; set('tags', mergeTags(d.tags, tagDraft)); setTagDraft(''); };
   const isNew = !d.id;
   const vs = d.variants || [];
-  const setV = (i, k, v)=> setD(p=>({...p, variants: p.variants.map((x,j)=> j===i ? {...x,[k]:v} : x)}));
+  // ★ 본문은 2,000byte 에서 더 안 들어간다(붙여넣기·특수문자·빈칸 넣기 모두 이 길을 지난다).
+  const clipWarned = useRef(false);
+  const setV = (i, k, v)=>{
+    if(k==='body' && msgTplBytes(v) > MSG_TPL_BYTES){
+      v = msgTplClip(v, MSG_TPL_BYTES);
+      if(!clipWarned.current){ clipWarned.current = true; setTimeout(()=>{ clipWarned.current = false; }, 1500);
+        toast('템플릿은 2,000byte 까지입니다 — 넘치는 부분은 들어가지 않습니다.','warn'); }
+    }
+    setD(p=>({...p, variants: p.variants.map((x,j)=> j===i ? {...x,[k]:v} : x)}));
+  };
   const addV = ()=>{
     if(vs.length >= MSG_TPL_MAX){ toast('템플릿은 '+MSG_TPL_MAX+'개까지 둘 수 있습니다.','warn'); return; }
     setD(p=>({...p, variants: p.variants.concat([{name:'템플릿 '+(p.variants.length+1), body:''}])}));
@@ -33824,6 +33874,7 @@ function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved,
     }
     const row = {kind:d.kind, title:d.title.trim(), cat_id:d.cat_id||null,
       note:String(d.note||'').trim()||null, variants, ...paths,
+      tags: mergeTags(d.tags, tagDraft),
       sender:d.kind==='alimtalk' ? (String(d.sender||'').trim()||null) : null,
       status:d.kind==='alimtalk' ? (String(d.status||'').trim()||null) : null,
       link:d.kind==='alimtalk' ? (String(d.link||'').trim()||null) : null,
@@ -33883,6 +33934,32 @@ function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved,
         </div>
         {!d.cat_id && d.legacy_cat && <div style={{fontSize:11,color:'var(--sub)',marginTop:-6}}>시트에서의 분류: {d.legacy_cat}</div>}
         <div>
+          <span style={lbl}>태그 (줄임말 · 찾기에 걸립니다 — 치고 Enter 또는 쉼표)</span>
+          <div onClick={e=>{ const i = e.currentTarget.querySelector('input'); if(i) i.focus(); }}
+            style={{...inp,display:'flex',flexWrap:'wrap',gap:4,alignItems:'center',cursor:'text',minHeight:34,padding:'4px 6px'}}>
+            {(d.tags||[]).map(t=>(
+              <span key={t} style={{display:'inline-flex',alignItems:'center',gap:3,fontSize:11.5,padding:'2px 4px 2px 8px',
+                borderRadius:10,background:'rgba(120,170,255,.14)',color:'var(--accent)',lineHeight:1.4}}>
+                #{t}
+                <button type="button" title="태그 빼기" onClick={ev=>{ ev.stopPropagation(); set('tags', (d.tags||[]).filter(x=>x!==t)); }}
+                  style={{background:'transparent',border:'none',color:'inherit',cursor:'pointer',fontSize:11,padding:'0 3px',lineHeight:1}}>✕</button>
+              </span>
+            ))}
+            <input value={tagDraft} placeholder={(d.tags||[]).length ? '' : '예: 네페반배, 기취불, 사진철회'}
+              onChange={e=>{ const v = e.target.value; if(v.indexOf(',')>=0){ set('tags', mergeTags(d.tags, v)); setTagDraft(''); } else setTagDraft(v); }}
+              onKeyDown={e=>{
+                // ★ 한글 조합 중 Enter 는 «조합 끝내기» 로 먹힌다 — keyup 에서 마저 넣는다(분류 검색과 같은 처리).
+                tagComposing.current = e.key==='Process' || (e.nativeEvent && e.nativeEvent.isComposing);
+                if(tagComposing.current) return;
+                if(e.key==='Enter'){ e.preventDefault(); commitTag(); }
+                else if(e.key==='Backspace' && !tagDraft && (d.tags||[]).length){ set('tags', d.tags.slice(0,-1)); } }}
+              onKeyUp={e=>{ if(tagComposing.current && e.key==='Enter'){ tagComposing.current = false; commitTag(); } else if(e.key!=='Process') tagComposing.current = false; }}
+              onBlur={commitTag}
+              style={{flex:'1 1 120px',minWidth:100,border:'none',outline:'none',background:'transparent',color:'var(--text)',
+                fontSize:12.5,fontFamily:'inherit',padding:'3px 2px'}}/>
+          </div>
+        </div>
+        <div>
           <span style={lbl}>확인 사항 — 언제 쓰나</span>
           <textarea {...track('note')} value={d.note} onChange={e=>set('note',e.target.value)} rows={3} style={{...inp,resize:'vertical',lineHeight:1.6}}/>
         </div>
@@ -33927,8 +34004,15 @@ function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved,
             </div>
             <textarea {...track('b'+i)} value={v.body} onChange={e=>setV(i,'body',e.target.value)}
               rows={i===0 ? 10 : 6} style={{...inp,resize:'vertical',lineHeight:1.6}}/>
-            {msgTplVars(v.body).length>0 && <div style={{fontSize:11,color:'var(--accent)'}}>
-              빈칸 {msgTplVars(v.body).length}개: {msgTplVars(v.body).join(' · ')}</div>}
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              {msgTplVars(v.body).length>0 && <span style={{fontSize:11,color:'var(--accent)'}}>
+                빈칸 {msgTplVars(v.body).length}개: {msgTplVars(v.body).join(' · ')}</span>}
+              <div style={{flex:1}}></div>
+              {(()=>{ const b = msgTplBytes(v.body); return (
+                <span title="문자 기준(한글·특수문자 2 · 영문·숫자·공백 1)"
+                  style={{fontSize:11,fontFamily:'monospace',color: b>=MSG_TPL_BYTES ? '#FF6B6B' : b>=MSG_TPL_BYTES*0.9 ? 'var(--warn-ink, #F6AD09)' : 'var(--sub)'}}>
+                  {b.toLocaleString()} / {MSG_TPL_BYTES.toLocaleString()} byte</span>); })()}
+            </div>
           </div>
         ))}
 
