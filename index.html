@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261007c_cat_picker_keys -->
+<!-- (2026-10-07) ⌨ **안내 템플릿 · 분류 검색 — 키보드로 고르기**(제니: 「검색어 입력하고 화살표로 목록으로 내려서 고른 다음 엔터」). ↑↓ 로 줄을 짚고(목록이 따라 스크롤) Enter 로 고른다 · 마우스를 올려도 같은 줄을 짚는다. 짚은 줄은 진한 바탕, 지금 고른 값은 굵은 글자로 가른다(같은 색이면 내려가는 중에 위치를 잃는다). ★★ **한글 조합 중에는 브라우저가 화살표·엔터를 `Process` 로 삼킨다** — 마지막 글자를 치자마자 ↓ 를 누르면 그 한 번이 사라진다. 조합 중에 눌린 키는 keyup 에서 마저 처리한다(엔터가 두 번 먹는 것도 이것으로 막는다). ★ dev 전용. -->
 <!-- v20261007b_msg_templates_v2 -->
 <!-- (2026-10-07) 💬 **안내 템플릿 — 제니 확인 뒤 고친 다섯.** ① **가로 여백** — 본문을 page-header 와 같은 32px 안으로(「양끝이 꽉 차 있다」). ② **종류를 색으로** — 목록 줄 왼쪽 띠·종류 꼬리표·종류 칩에 색: 상담 안내=파랑(테마 토큰) · **알림톡=카카오 노랑 `#FEE500`**(두 모드 고정 — «카카오» 라는 뜻을 가진 색이라 모드로 바뀌면 안 된다). 알림톡 상세는 **배송지연 등록 창의 미리보기(DelayAlimtalkPreview)와 같은 카톡 모양**(`MsgTplKakao` · 하늘 바탕·노란 «알림톡 도착»·흰 말풍선·링크가 있으면 [바로가기]). ★ 그 흰 판 위의 변수 강조는 테마 토큰이 아니라 고정색 — 다크에서 토큰이 밝은 글자가 되어 흰 판 위에서 사라진다(`MsgTplBody light`). ③ **템플릿 «이름 직접 · 최대 10개»** — 칸 둘(body·body2)을 목록 한 칸 `variants=[{name,body}]` 로(SQL `msg_templates_v2.sql` · 옮긴 뒤 옛 칸 삭제 · 상한은 DB 제약). 편집기에서 이름 입력·추가·빼기·↑↓, 상세에서 이름 칩으로 고른다. 이름이 겹치면 저장을 막는다(칩이 둘 다 같은 이름이면 고를 수 없다). ④ **분류 «검색해서 고르기»** — `MsgTplCatPicker`: 몇 글자 치면 «1단계 › 2단계» 경로로 좁혀지고 Enter 로 첫 줄. 편집기의 분류 칸 + 목록 위 «🔍 분류 찾기»(칩과 같은 상태를 본다 — 둘이 따로 놀면 «칩은 전체인데 목록은 좁은» 화면이 된다). ⑤ **시트 빈자리를 {빈칸} 으로**(제니 지시 · SQL `msg_templates_blanks_dev.sql`) — 템플릿 10개 · 21군데(「▶ 입금 금액 : 」→`{입금 금액}` · 「[ 상품명 ]」→`[{상품명}]` · 「0월 0일」→`{순차출고일}` · 도선료 5,000/3,000/2,000원 → `{추가 배송비}`·`{결제한 배송비}`·`{차액}` 등). 회사 계좌처럼 늘 같은 값과 «상품별 cs 안내» 의 특정 상품명은 안 바꿨다. 🔴 첫 실행이 0줄로 멈췄다 — `~` 는 줄 단위가 아니라 `$` 가 «글 끝» 에만 걸린다 → `(?n)`. 통째 되돌아가 반쪽 변경은 없었다. ★ dev 전용. `npm run check` 통과. -->
 <!-- v20261007a_msg_templates -->
@@ -33333,26 +33335,58 @@ function MsgTplCatPicker({cats, value, onChange, allowAll, placeholder, width}){
   const shown = nq ? opts.filter(o=> msgTplNorm(o.label).indexOf(nq) >= 0) : opts;
   const cur = value==='all' ? '전체 분류' : (value!=null && byId[value] ? pathOf(byId[value]) : '미분류');
   const pickOpt = (o)=>{ onChange(o.id); setOpen(false); setQ(''); };
+  // ★ 키보드로 고르기(제니 2026-10-07: 「화살표로 목록으로 내려서 고른 다음 엔터」).
+  //   hi = 지금 짚은 줄. 글자를 치면 맨 위로, 열 때는 «지금 고른 것» 에 둔다.
+  const [hi,setHi] = useState(0);
+  const listRef = useRef(null);
+  const hiAt = Math.min(hi, Math.max(shown.length-1, 0));
+  useEffect(()=>{
+    const box = listRef.current; if(!box) return;
+    const el = box.children[hiAt + (shown.length===0 ? 1 : 0)];
+    if(el && el.scrollIntoView) el.scrollIntoView({block:'nearest'});
+  }, [hiAt, open, q]);
+  // ★★ 한글 입력 중(조합 중)에는 브라우저가 화살표·엔터를 «Process» 로 삼킨다 — 마지막 글자를
+  //   치자마자 ↓ 를 누르면 그 한 번이 사라져 «화살표가 안 먹는다» 로 보인다.
+  //   그래서 조합 중에 눌린 키는 keyup 에서 마저 처리한다(엔터가 두 번 먹는 것도 이것으로 막는다).
+  const composing = useRef(false);
+  const doKey = (key, e)=>{
+    if(key==='ArrowDown'){ if(e) e.preventDefault(); setOpen(true); setHi(h=> Math.min(Math.min(h, shown.length-1)+1, shown.length-1)); return true; }
+    if(key==='ArrowUp'){ if(e) e.preventDefault(); setHi(h=> Math.max(Math.min(h, shown.length-1)-1, 0)); return true; }
+    if(key==='Enter'){ if(e) e.preventDefault(); if(shown.length){ pickOpt(shown[hiAt]); if(e) e.target.blur(); } return true; }
+    return false;
+  };
   return (
     <div style={{position:'relative',width:width||'100%'}}>
       <input value={open ? q : cur} placeholder={placeholder||'분류 찾기'}
-        onFocus={()=>{ setOpen(true); setQ(''); }}
+        onFocus={()=>{ setOpen(true); setQ(''); const k = opts.findIndex(o=>o.id===value); setHi(k<0?0:k); }}
         onBlur={()=>setTimeout(()=>setOpen(false), 120)}
-        onChange={e=>setQ(e.target.value)}
-        onKeyDown={e=>{ if(e.key==='Enter' && shown.length){ e.preventDefault(); pickOpt(shown[0]); e.target.blur(); }
-                        if(e.key==='Escape'){ e.target.blur(); } }}
+        onChange={e=>{ setQ(e.target.value); setHi(0); setOpen(true); }}
+        onKeyDown={e=>{
+          composing.current = e.key==='Process' || (e.nativeEvent && e.nativeEvent.isComposing);
+          if(composing.current) return;
+          if(doKey(e.key, e)) return;
+          if(e.key==='Escape'){ e.target.blur(); } }}
+        onKeyUp={e=>{
+          if(!composing.current) return;
+          composing.current = false;
+          if(e.key==='ArrowDown' || e.key==='ArrowUp'){ doKey(e.key, null); }
+          else if(e.key==='Enter' && shown.length){ pickOpt(shown[hiAt]); e.target.blur(); } }}
         style={{width:'100%',fontSize:12.5,padding:'7px 26px 7px 9px',background:'var(--bg)',border:'1px solid var(--border)',
           color:'var(--text)',borderRadius:6,fontFamily:'inherit',boxSizing:'border-box'}}/>
       <span style={{position:'absolute',right:9,top:'50%',transform:'translateY(-50%)',fontSize:10,color:'var(--sub)',pointerEvents:'none'}}>▼</span>
       {open && (
-        <div style={{position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:50,maxHeight:260,overflowY:'auto',
+        <div ref={listRef} style={{position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:50,maxHeight:260,overflowY:'auto',
           background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,boxShadow:'var(--pop-shadow, 0 8px 24px rgba(0,0,0,.3))'}}>
           {shown.length===0 && <div style={{padding:'8px 10px',fontSize:12,color:'var(--sub)'}}>맞는 분류가 없습니다.</div>}
-          {shown.map(o=>(
+          {shown.map((o,k)=>(
             <div key={String(o.id)} onMouseDown={e=>{ e.preventDefault(); pickOpt(o); }}
+              onMouseEnter={()=>setHi(k)}
               style={{padding:'7px 10px',fontSize:12.5,cursor:'pointer',color:'var(--text)',
                 paddingLeft: o.kid && !nq ? 22 : 10,
-                background: (o.id===value) ? 'rgba(120,170,255,.12)' : 'transparent'}}>
+                fontWeight: o.id===value ? 700 : 400,
+                // ★ 짚은 줄(키보드·마우스)은 진하게, 지금 고른 값은 굵은 글자로 — 둘을 같은 색으로 칠하면
+                //   ↓ 로 내려가는 중에 «어느 줄에 있는지» 를 잃는다.
+                background: k===hiAt ? 'rgba(120,170,255,.22)' : 'transparent'}}>
               {o.kid && !nq ? '└ '+o.label.split(' › ').pop() : o.label}
             </div>
           ))}
