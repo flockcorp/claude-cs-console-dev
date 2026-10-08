@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261008c_tpl_hide_source -->
+<!-- (2026-10-08) 💬 **안내 템플릿 — 상세 아래 «출처: 시트 …» 를 뺐다**(제니: 「분류값 넣는 작업을 마쳤고 이후엔 콘솔에서 추가·수정 · "마지막 수정" 만 뜨게」). 이제 «마지막 수정 날짜 · 누가» 만. ★ `source` 값은 표에 그대로 둔다 — dev→운영 템플릿 반영 워크플로(`msg-templates-sync-sheet-to-prod.yml`)가 이 값으로 짝을 짓는다. 화면 한 줄 고침 · SQL 없음. ★ dev 전용. -->
 <!-- v20261008b_alimtalk_button_name -->
 <!-- (2026-10-08) 💬 **안내 템플릿 — 알림톡 «버튼 이름»**(제니: 「알림톡의 경우, 템플릿 내에서 버튼 명도 입력할 수 있게」). 추가·수정 창의 발송처·상태 줄에 **버튼 이름** 칸(버튼 링크 바로 앞 · «n/14» · 비우면 «바로가기»). 상세의 카톡 미리보기 버튼이 그 이름으로 그려지고(이름만 있고 링크가 없어도 버튼을 그린다) 아래 안내에 «버튼 이름:» 줄 · 찾기 대상에도 넣었다. ★ 링크와 짝이라 템플릿 «한 건» 에 하나(사분할 칸마다가 아니다). ★ 카카오 버튼 14자 — 화면 `MSG_TPL_BTN_MAX` = DB `msg_templates_button_name_check`(글자 수로 센다 · 이모지 반쪽 안 자름). SQL `sql/msg_templates_button_name.sql` **dev 적용**(운영 올릴 때 SQL 먼저). 문자(script)는 저장할 때 비운다. ★ dev 전용. -->
 <!-- v20261008a_tpl_count_crisp -->
@@ -33740,7 +33742,9 @@ function MsgTemplatesPage({currentUserEmail, can}){
               )}
 
               <div style={{fontSize:10.5,color:'var(--sub)',opacity:.8}}>
-                {sel.source ? '출처: '+sel.source+' · ' : ''}마지막 수정 {String(sel.updated_at||'').slice(0,10)}
+                {/* ★ «출처: 시트 …» 는 화면에서 뺐다(제니 2026-10-08: 분류 정리를 마쳤고 이제 콘솔에서 고친다).
+                     source 값은 표에 남긴다 — dev→운영 템플릿 반영 워크플로가 이 값으로 짝을 짓는다. */}
+                마지막 수정 {String(sel.updated_at||'').slice(0,10)}
                 {sel.updated_by && sel.updated_by.indexOf('sql:')!==0 ? ' · '+csShortUser(sel.updated_by) : ''}
               </div>
             </div>
