@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261008b_alimtalk_button_name -->
+<!-- (2026-10-08) 💬 **안내 템플릿 — 알림톡 «버튼 이름»**(제니: 「알림톡의 경우, 템플릿 내에서 버튼 명도 입력할 수 있게」). 추가·수정 창의 발송처·상태 줄에 **버튼 이름** 칸(버튼 링크 바로 앞 · «n/14» · 비우면 «바로가기»). 상세의 카톡 미리보기 버튼이 그 이름으로 그려지고(이름만 있고 링크가 없어도 버튼을 그린다) 아래 안내에 «버튼 이름:» 줄 · 찾기 대상에도 넣었다. ★ 링크와 짝이라 템플릿 «한 건» 에 하나(사분할 칸마다가 아니다). ★ 카카오 버튼 14자 — 화면 `MSG_TPL_BTN_MAX` = DB `msg_templates_button_name_check`(글자 수로 센다 · 이모지 반쪽 안 자름). SQL `sql/msg_templates_button_name.sql` **dev 적용**(운영 올릴 때 SQL 먼저). 문자(script)는 저장할 때 비운다. ★ dev 전용. -->
 <!-- v20261008a_tpl_count_crisp -->
 <!-- (2026-10-08) 💬 **안내 템플릿 — 칩 건수 숫자를 선명하게**(제니: 「화면 비율 줄이니까 뭉그러져 보인다」). 원인 둘: 고정폭 글꼴(`monospace` → 윈도우의 가는 Courier 계열) + `opacity:.75`(글자를 따로 합성해 흐리게 만든다). → 칩 글꼴 그대로 · 굵게(700) · 숫자 폭만 맞춤(`tabular-nums`) · 투명도 없음(색은 칩 색을 그대로 물려받는다 — 두 모드 다 칩 글자색과 같다). 종류·분류 1단계·2단계 칩 모두 같은 `n()` 하나라 한 줄 고침. ★ dev 전용. -->
 <!-- v20261007h_tags_quad_bytes -->
@@ -33330,7 +33332,8 @@ function MsgTplBody({text, light}){
 
 // 카카오 알림톡 모양 미리보기 — 배송지연 등록 창의 미리보기(DelayAlimtalkPreview)와 같은 모양.
 // ★ 판은 두 모드에서 같다(실제 카톡 화면을 흉내내는 자리라 콘솔 테마를 따라가면 안 된다).
-function MsgTplKakao({text, title, link, image}){
+const MSG_TPL_BTN_MAX = 14;   // 알림톡 버튼 이름 글자 수(카카오) — DB msg_templates_button_name_check 와 같은 수
+function MsgTplKakao({text, title, link, image, button}){
   return (
     <div style={{background:'#9BBBD4',borderRadius:12,padding:'12px 10px',maxWidth:380}}>
       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8,paddingLeft:4}}>
@@ -33349,9 +33352,9 @@ function MsgTplKakao({text, title, link, image}){
         fontSize:12.5,lineHeight:1.7,color:'#222',whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
         {title &&<div style={{fontWeight:700,marginBottom:8}}>{title}</div>}
         <MsgTplBody text={text} light/>
-        {link && <div title={link} style={{marginTop:12,border:'1px solid #DADADA',borderRadius:6,padding:'7px 0',
+        {(link || button) && <div title={link||''} style={{marginTop:12,border:'1px solid #DADADA',borderRadius:6,padding:'7px 0',
           textAlign:'center',fontSize:12,color:'#222',background:'#F7F7F7',whiteSpace:'nowrap',overflow:'hidden',
-          textOverflow:'ellipsis'}}>바로가기</div>}
+          textOverflow:'ellipsis'}}>{button || '바로가기'}</div>}
       </div>
     </div>
   );
@@ -33495,7 +33498,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
   const shown = inCat.filter(r=>{
     if(!terms.length) return true;
     const vs = msgTplVariants(r).map(v=>(v.name||'')+' '+(v.body||'')).join(' ');
-    const hay = msgTplNorm([r.title, (r.tags||[]).join(' '), r.note, vs, r.legacy_cat, catPath(r), r.sender].join(' '));
+    const hay = msgTplNorm([r.title, (r.tags||[]).join(' '), r.note, vs, r.legacy_cat, catPath(r), r.sender, r.button_name].join(' '));
     return terms.every(t=> hay.indexOf(t) >= 0);
   }).sort((a,b)=> ((KIND_ORDER[a.kind]!=null?KIND_ORDER[a.kind]:9) - (KIND_ORDER[b.kind]!=null?KIND_ORDER[b.kind]:9))
                 || String(a.title||'').localeCompare(String(b.title||''), 'ko')
@@ -33540,7 +33543,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
     background: primary?'var(--primary)':'transparent', color: primary?'#fff':'var(--text)',
     border: primary?'none':'1px solid var(--border)'});
   const newDraft = ()=>({kind: kind==='alimtalk'?'alimtalk':'script', title:'', cat_id:null, note:'', tags:[],
-    variants:[{name: kind==='alimtalk' ? '발송 문구' : '템플릿 1', body:''}], sender:'', status:'', link:''});
+    variants:[{name: kind==='alimtalk' ? '발송 문구' : '템플릿 1', body:''}], sender:'', status:'', link:'', button_name:''});
 
   const header = (
     <div className="page-header"><div><div className="page-title">💬 안내 템플릿</div>
@@ -33660,7 +33663,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
                 </div>
                 {canEdit && <button onClick={()=>setEdit({...sel, note:sel.note||'', tags:(sel.tags||[]).slice(),
                   variants: vlist.length ? vlist.map(v=>({name:v.name||'', body:v.body||''})) : [{name:'템플릿 1', body:''}],
-                  sender:sel.sender||'', status:sel.status||'', link:sel.link||''})} style={btn(false)}>수정</button>}
+                  sender:sel.sender||'', status:sel.status||'', link:sel.link||'', button_name:sel.button_name||''})} style={btn(false)}>수정</button>}
               </div>
 
               {sel.note && <div style={{fontSize:12,color:'var(--text)',background:'var(--bg)',border:'1px solid var(--border)',
@@ -33711,7 +33714,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
                             {copied===('v'+k) ? '✓ 복사됨' : '복사'}</button>
                         </div>
                         {sel.kind==='alimtalk'
-                          ? <MsgTplKakao text={f} link={sel.link && /^https?:\/\//.test(sel.link) ? sel.link : ''}
+                          ? <MsgTplKakao text={f} link={sel.link && /^https?:\/\//.test(sel.link) ? sel.link : ''} button={sel.button_name||''}
                               image={sel.image_path ? imgUrls[sel.image_path] : ''}/>
                           : <div style={{fontSize:13,lineHeight:1.7,color:'var(--text)',whiteSpace:'pre-wrap',wordBreak:'break-word',
                               background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,padding:'12px 14px',flex:1}}>
@@ -33727,6 +33730,7 @@ function MsgTemplatesPage({currentUserEmail, can}){
                 <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7}}>
                   <div>※ <span style={{fontFamily:'monospace'}}>#{'{NAME}'}</span> · <span style={{fontFamily:'monospace'}}>[NAME]</span> 같은 자리는 발송할 때 시스템이 채웁니다.</div>
                   {/* ★ 앱링크(extra.applink)는 콘솔에서 뺐다(제니 2026-10-07: 「버튼의 실제 링크만」) — 데이터도 지웠다. */}
+                  {sel.button_name && <div>버튼 이름: <span style={{color:'var(--text)'}}>{sel.button_name}</span></div>}
                   {sel.link && <div>버튼 링크: <span style={{color:'var(--text)',wordBreak:'break-all'}}>{sel.link}</span></div>}
                   {sel.extra && sel.extra.old_body && <details style={{marginTop:4}}>
                     <summary style={{cursor:'pointer'}}>이전 문구 보기</summary>
@@ -33882,6 +33886,7 @@ function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved,
       sender:d.kind==='alimtalk' ? (String(d.sender||'').trim()||null) : null,
       status:d.kind==='alimtalk' ? (String(d.status||'').trim()||null) : null,
       link:d.kind==='alimtalk' ? (String(d.link||'').trim()||null) : null,
+      button_name:d.kind==='alimtalk' ? (String(d.button_name||'').trim().slice(0,MSG_TPL_BTN_MAX)||null) : null,
       updated_at:new Date().toISOString(), updated_by:currentUserEmail};
     const r = isNew
       ? await sb.from('msg_templates').insert({...row, created_by:currentUserEmail}).select('id')
@@ -34032,6 +34037,11 @@ function MsgTplEditor({draft, cats, currentUserEmail, imgUrls, onClose, onSaved,
                   {d[k] && list.indexOf(d[k])<0 && <option value={d[k]}>{d[k]} (목록 밖)</option>}
                 </select></div>
             ))}
+            {/* ★ 버튼 이름(제니 2026-10-08) — 링크와 짝이라 바로 앞에 · 카카오 버튼 14자(DB 도 같은 수로 막는다) */}
+            <div style={{flex:'1 1 170px'}}><span style={lbl}>버튼 이름 <span style={{fontWeight:400}}>
+                ({[...String(d.button_name||'')].length}/{MSG_TPL_BTN_MAX})</span></span>
+              <input value={d.button_name||''} maxLength={MSG_TPL_BTN_MAX} placeholder="비우면 «바로가기»"
+                onChange={e=>set('button_name',[...e.target.value].slice(0,MSG_TPL_BTN_MAX).join(''))} style={inp}/></div>
             <div style={{flex:'2 1 260px'}}><span style={lbl}>버튼 링크</span>
               <input value={d.link} onChange={e=>set('link',e.target.value)} style={inp}/></div>
           </div>
