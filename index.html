@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261008a_tpl_count_crisp -->
+<!-- (2026-10-08) 💬 **안내 템플릿 — 칩 건수 숫자를 선명하게**(제니: 「화면 비율 줄이니까 뭉그러져 보인다」). 원인 둘: 고정폭 글꼴(`monospace` → 윈도우의 가는 Courier 계열) + `opacity:.75`(글자를 따로 합성해 흐리게 만든다). → 칩 글꼴 그대로 · 굵게(700) · 숫자 폭만 맞춤(`tabular-nums`) · 투명도 없음(색은 칩 색을 그대로 물려받는다 — 두 모드 다 칩 글자색과 같다). 종류·분류 1단계·2단계 칩 모두 같은 `n()` 하나라 한 줄 고침. ★ dev 전용. -->
 <!-- v20261007h_tags_quad_bytes -->
 <!-- (2026-10-07) 💬 **안내 템플릿 — 제니 요청 넷.** ① **태그(줄임말)** — 추가·수정 창에 태그 칸(Enter·쉼표로 칩 · 빈 칸에서 ⌫ 는 마지막 칩 빼기 · 앞 # 떼기 · 띄어쓰기·대소문자 무시 중복 제거 · 30개·20자) · 저장할 때 «치다 만» 글자도 태그로 넣는다(놓치면 넣은 줄 안 태그가 사라진다) · 한글 조합 중 Enter 는 keyup 에서 마저. 찾기 대상에 태그가 들어가고, 상세 제목 아래 `#태그` 칩을 누르면 그 태그로 찾는다. SQL `sql/msg_templates_tags.sql`(tags text[] · CHECK 안 하위질의 금지라 판정 함수로). ② **템플릿 최대 10 → 4.** ③ **상세는 칩이 아니라 «사분할»** — 하나면 한 칸 가득, 둘 이상이면 2열(최대 2×2) · 칸마다 [복사]·byte. 빈칸 채우기는 «한 번» 이고 같은 이름의 빈칸은 네 칸에 함께 들어간다. ④ **템플릿마다 2,000byte**(문자 LMS) — 아스키 1 · 그 밖 2. 편집기 본문 아래 «n / 2,000 byte»(90% 노랑 · 한도 빨강) · 넘치는 입력은 들어가지 않는다(붙여넣기·특수문자·빈칸 넣기 모두 한 길 · 한글 한 글자를 반으로 쪼개지 않는다). 상세에서 채운 뒤 넘으면 byte 가 빨갛고 복사할 때 알린다. ★ DB 도 같은 규칙으로 막는다(`sql/msg_templates_limits.sql` · `msg_tpl_bytes` · 개수 4) — 화면과 DB 가 다르게 세면 화면이 통과시킨 것을 DB 가 막는다. 검산: «불량교환안내» 화면 1,539 = DB 1,539. 지금 가장 긴 템플릿 1,539byte. ★ dev 전용. `npm run check` 통과. -->
 <!-- v20261007g_sender_label -->
@@ -33530,7 +33532,9 @@ function MsgTemplatesPage({currentUserEmail, can}){
   const chip = (on)=>({padding:'4px 11px',borderRadius:14,fontSize:11.5,cursor:'pointer',userSelect:'none',
     border:'1px solid '+(on?'var(--primary)':'var(--border)'),
     background: on?'rgba(120,170,255,.12)':'transparent', color: on?'var(--accent)':'var(--sub)'});
-  const n = (arr)=> <span style={{marginLeft:5,fontFamily:'monospace',opacity:.75}}>{arr.length}</span>;
+  // ★ 건수 숫자: 고정폭 글꼴(윈도우는 가는 Courier 계열) + 투명도 .75 라 화면을 줄이면 뭉그러졌다(제니 2026-10-08).
+  //   투명도는 글자를 따로 합성해 흐리게 만든다 → 칩 글꼴 그대로 · 굵게 · 숫자 폭만 맞춘다(tabular-nums).
+  const n = (arr)=> <span style={{marginLeft:5,fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{arr.length}</span>;
   const box = {background:'var(--card)',border:'1px solid var(--border)',borderRadius:10};
   const btn = (primary)=>({padding:'6px 14px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',fontFamily:'inherit',
     background: primary?'var(--primary)':'transparent', color: primary?'#fff':'var(--text)',
