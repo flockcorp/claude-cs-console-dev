@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261012b_pick_tab_skip_x -->
+<!-- (2026-10-12) 🎫 **고르는 칸(CsPick) — Tab 이 오른쪽 «×» 에 서지 않고 다음 칸으로 간다**(제니: 「입력 후 tab 을 누르면 x 가 아니라 다음 칸으로」). × 단추에 `tabIndex={-1}` — 마우스 클릭으로 지우기는 그대로. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261012a_pick_scroll_follow -->
 <!-- (2026-10-12) 🎫 **고르는 칸(CsPick) — 화살표로 내려가면 목록도 따라 내려간다**(제니: 「티켓 등록 1번 분류값 · 접수 경로·유형·방향에서 화살표로 내려갈 때 스크롤이 안 따라온다」). 목록이 maxHeight 210 이라 고른 줄이 아래로 사라졌다. 키보드로 움직일 때만 목록 스크롤을 맞춘다(마우스 hover 는 안 건드림). CsPick 을 쓰는 다른 자리(CS 통계 등)도 같이 고쳐진다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261008c_tpl_hide_source -->
@@ -25915,7 +25917,7 @@ function CsPick({value, options, onChange, placeholder, width, labelOf, searchOf
         }}
         placeholder={placeholder} style={inp}/>
       {value && (
-        <button type="button" onMouseDown={e=>e.preventDefault()}
+        <button type="button" tabIndex={-1} onMouseDown={e=>e.preventDefault()}
           onClick={()=>{ onChange(''); setQ(''); setOpen(true); }}
           title="지우기"
           style={{position:'absolute',right:6,top:6,background:'transparent',border:'none',
