@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261012e_ticket_event_attachments -->
+<!-- (2026-10-12) 🐞 **티켓 상세에서 «글(또는 사진)을 적고 + 값도 바꿔» 저장하면 이력이 둘 다 안 남던 것**(운영 제니 제보: `null value in column "attachments" of relation "cs_ticket_events" violates not-null constraint`). 원인: 이력 두 줄(«기록»·«수정»)을 한 번에 넣는데 «수정» 줄에만 `attachments` 가 없었다 — supabase 는 여러 줄을 넣을 때 칸을 합쳐 보내 빠진 칸이 DB 기본값이 아니라 null 이 된다. «수정» 줄에 `attachments: []` 를 적었다. 다른 이력 insert 넷은 줄마다 칸이 같아 해당 없음. 티켓 값 저장은 원래도 됐다(이력만 빠짐). 2026-09-03 사진 붙이기 때부터. SQL 없음. ★ dev 전용. -->
 <!-- v20261012d_ticket_type_dir_order -->
 <!-- (2026-10-12) 🎫 **티켓 «유형»·«방향» 고르는 차례를 바꿨다**(제니). 유형: 변심·품절·불만족·지연·불량·파손·오염·누락·오배송·배송불가지역·기타 · 방향: 취소·반품·교환·환불·재출고·부분보상·정산 반영·A/S. `CS_TYPES`·`CS_DIRECTIONS` 의 차례만 — 값(글자)은 하나도 안 바뀌었다(DB check 제약 무관 · 저장된 티켓 무관). 같은 목록을 쓰는 티켓 목록 필터·CS 통계의 차례도 함께 따라간다. 환불 사유 차례(`CS_REASON_DIR_ORDER`)는 따로라 그대로. SQL 없음. ★ dev 전용. -->
 <!-- v20261012c_ticket_return_fee -->
@@ -28758,7 +28760,12 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
       const grpHint = (group.length>1 && grpNames.length)
         ? '\n('+grpNames.join('·')+'는 묶음 '+group.length+'건에 함께 적용)' : '';
       evs.push({ticket_id:ticketId, side:'원룸만들기', action:'수정', actor:currentUserEmail,
-        note: chg.join('\n')+grpHint, stage_after: st, direction_after: edit.direction||null});
+        note: chg.join('\n')+grpHint, stage_after: st, direction_after: edit.direction||null,
+        // ★★★ 빈 배열을 «꼭» 적는다(2026-10-12 운영 오류). 여러 줄을 한 번에 넣으면
+        //   supabase 가 모든 줄의 칸을 합쳐 보내서, 이 줄에 없는 칸은 DB 기본값이 아니라
+        //   null 이 된다 → 위의 «기록» 줄(attachments 있음)과 함께 들어가면
+        //   attachments not-null 위반으로 «둘 다» 안 남았다(글을 적고 값도 바꾼 경우).
+        attachments: []});
     } else {
       // 값이 안 바뀌었어도 «마지막 갱신» 은 움직여야 목록 정렬이 맞는다.
       await sb.from('cs_tickets').update({updated_by:currentUserEmail}).eq('id',ticketId);
