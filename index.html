@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261013a_entry_date_tab -->
+<!-- (2026-10-13) ✍️ **데이터 입력 «날짜» — 월을 쳐도 일로 저절로 넘어가지 않고 Tab 으로 넘어간다**(제니: 「연도는 tab 으로 월에 가는데 월은 tab 없이 일로 넘어간다 · 둘 다 tab 으로」). 브라우저 기본 date 칸은 그 자동 이동을 끌 수 없어 연·월·일 세 칸(`CsDateTabInput`)으로 바꿨다 — 숫자만 · 연 4자리·월/일 2자리 · 칸을 떠나면 한 자리 월/일 앞에 0 · 없는 날짜(2/30 등)면 값은 비어 «날짜를 선택해주세요» 그대로. 달력은 📅 단추(Tab 은 거기 안 섬). 저장되는 값(YYYY-MM-DD)은 그대로. 이 칸 하나만 — 다른 메뉴의 날짜 칸은 안 건드렸다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261012e_ticket_event_attachments -->
 <!-- (2026-10-12) 🐞 **티켓 상세에서 «글(또는 사진)을 적고 + 값도 바꿔» 저장하면 이력이 둘 다 안 남던 것**(운영 제니 제보: `null value in column "attachments" of relation "cs_ticket_events" violates not-null constraint`). 원인: 이력 두 줄(«기록»·«수정»)을 한 번에 넣는데 «수정» 줄에만 `attachments` 가 없었다 — supabase 는 여러 줄을 넣을 때 칸을 합쳐 보내 빠진 칸이 DB 기본값이 아니라 null 이 된다. «수정» 줄에 `attachments: []` 를 적었다. 다른 이력 insert 넷은 줄마다 칸이 같아 해당 없음. 티켓 값 저장은 원래도 됐다(이력만 빠짐). 2026-09-03 사진 붙이기 때부터. SQL 없음. ★ dev 전용. -->
 <!-- v20261012d_ticket_type_dir_order -->
@@ -2930,6 +2932,51 @@ function AgentListTab() {
 // ── DATA ENTRY ─────────────────────────────────
 const EMPTY_OPS = {date:'',inbound_calls:'',request_calls:'',answered_calls:'',ob_contacts:'',in_call_time:'',out_call_time:''};
 
+// 날짜 칸 — 연·월·일을 따로 받고 «Tab 으로만» 다음 칸으로 간다(2026-10-13 제니).
+//   브라우저 기본 date 칸은 월을 치면 저절로 일로 넘어가는데 그걸 끌 방법이 없어 칸을 나눴다.
+//   value·onChange 는 기본 칸과 같다('YYYY-MM-DD' · 덜 채웠으면 '').
+//   달력은 📅 단추로 연다(숨긴 기본 칸의 showPicker).
+function CsDateTabInput({value, onChange, style}){
+  const split = v => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v||''); return m ? [m[1],m[2],m[3]] : ['','','']; };
+  const [parts, setParts] = React.useState(()=>split(value));
+  const [focus, setFocus] = React.useState(null);
+  const sent = React.useRef(value||'');
+  const pickRef = React.useRef(null);
+  // 바깥에서 값이 바뀌면(수정할 날 불러오기·저장 뒤 비우기·엑셀) 칸을 맞춘다 — 내가 보낸 값이면 그대로 둔다.
+  React.useEffect(()=>{ if((value||'')!==sent.current){ sent.current=value||''; setParts(split(value)); } },[value]);
+  const emit = p => {
+    const [y,m,d] = p, mi = Number(m), di = Number(d);
+    const ok = y.length===4 && mi>=1 && mi<=12 && di>=1 && di<=new Date(Number(y), mi, 0).getDate();
+    const v = ok ? `${y}-${String(mi).padStart(2,'0')}-${String(di).padStart(2,'0')}` : '';
+    if(v!==sent.current){ sent.current=v; onChange(v); }
+  };
+  const put = (i, raw) => {
+    const p = [...parts]; p[i] = raw.replace(/[^0-9]/g,'').slice(0, i===0?4:2);
+    setParts(p); emit(p);
+  };
+  const pad = i => { if(i>0 && parts[i].length===1 && parts[i]!=='0'){ const p=[...parts]; p[i]='0'+p[i]; setParts(p); } setFocus(null); };
+  const seg = (i, ph, w) => (
+    <input type="text" inputMode="numeric" value={parts[i]} placeholder={ph} aria-label={['연도','월','일'][i]}
+      onChange={e=>put(i, e.target.value)} onFocus={e=>{setFocus(i); e.target.select();}} onBlur={()=>pad(i)}
+      style={{width:w,padding:'0 2px',border:'none',outline:'none',borderRadius:4,textAlign:'center',
+        background:focus===i?'var(--surface)':'transparent',color:'inherit',font:'inherit',fontVariantNumeric:'tabular-nums'}}/>
+  );
+  return (
+    <div style={{...style, display:'flex', alignItems:'center', gap:2, position:'relative',
+      border: `1px solid ${focus!==null ? 'var(--accent)' : 'var(--border)'}`}}>
+      {seg(0,'YYYY','4.6ch')}<span style={{color:'var(--sub)'}}>-</span>
+      {seg(1,'MM','2.8ch')}<span style={{color:'var(--sub)'}}>-</span>
+      {seg(2,'DD','2.8ch')}
+      <button type="button" tabIndex={-1} title="달력에서 고르기"
+        onClick={()=>{ try{ pickRef.current?.showPicker(); }catch(_){ pickRef.current?.focus(); } }}
+        style={{marginLeft:'auto',background:'none',border:'none',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>📅</button>
+      <input ref={pickRef} type="date" tabIndex={-1} aria-hidden="true" value={value||''}
+        onChange={e=>{ const v=e.target.value; sent.current=v; setParts(split(v)); onChange(v); }}
+        style={{position:'absolute',right:0,bottom:0,width:0,height:0,opacity:0,border:'none',padding:0,pointerEvents:'none'}}/>
+    </div>
+  );
+}
+
 function EntryPage({ editDate: propEditDate, onSaved, can }) {
   const [entryTab, setEntryTab] = useState('form');
   const [localEditDate, setLocalEditDate] = useState(null);
@@ -3249,7 +3296,7 @@ function EntryPage({ editDate: propEditDate, onSaved, can }) {
           <div style={{width:'420px',flexShrink:0,display:'flex',flexDirection:'column',gap:14}}>
             <div className="entry-card" style={{padding:16}}>
               <div className="entry-section-title">날짜 정보</div>
-              <div className="entry-field"><label>날짜</label><input type="date" value={ops.date||''} onChange={e=>setOps(p=>({...p,date:e.target.value}))} style={inputStyle}/></div>
+              <div className="entry-field"><label>날짜</label><CsDateTabInput value={ops.date||''} onChange={v=>setOps(p=>({...p,date:v}))} style={inputStyle}/></div>
             </div>
             <div className="entry-card" style={{padding:16}}>
               <div className="entry-section-title">유선 현황</div>
