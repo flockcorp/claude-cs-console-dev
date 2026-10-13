@@ -1,6 +1,8 @@
 <!DOCTYPE html>
+<!-- v20261013c_entry_date_digit_width -->
+<!-- (2026-10-13) ✍️ 위 날짜 칸 — **MM·YYYY 끝이 잘렸고, 고친 판은 간격이 너무 넓었다**(제니: 「숫자 너비에 맞춰」). 칸마다 안 보이는 «0000»·«00» 자를 깔고 입력칸은 그 위를 덮기만(absolute) 해 **숫자만큼 넓어진다** — 입력칸을 흐름에 두면 기본 폭(약 106px)이 칸 폭이 되어 벌어진다. 비었을 때 안내도 숫자 꼴(0000-00-00). dev 계정으로 실제 화면을 찍어 확인: 연 38px·월/일 22px · 잘림 없음 · 2026→Tab→10 친 뒤 «월» 에 머묾 → Tab → «일». 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261013b_entry_date_width -->
-<!-- (2026-10-13) ✍️ 위 날짜 칸 — **MM·YYYY 끝이 잘렸다**(제니). 폭을 `ch` 로 박아서였다(M·Y 는 숫자보다 넓다). 이제 칸마다 안 보이는 안내 글자와 같은 격자 칸에 겹쳐 놓아 **글자만큼 넓어진다**(글꼴이 바뀌어도 안 잘림) + 좌우 2px 여유. 화면만 · SQL 없음. ★ dev 전용. -->
+<!-- (2026-10-13) ✍️ 위 날짜 칸 — MM·YYYY 끝 잘림을 안내 글자 폭에 맞춰 고친 판(c 에서 숫자 폭으로 다시 고침). ★ dev 전용. -->
 <!-- v20261013a_entry_date_tab -->
 <!-- (2026-10-13) ✍️ **데이터 입력 «날짜» — 월을 쳐도 일로 저절로 넘어가지 않고 Tab 으로 넘어간다**(제니: 「연도는 tab 으로 월에 가는데 월은 tab 없이 일로 넘어간다 · 둘 다 tab 으로」). 브라우저 기본 date 칸은 그 자동 이동을 끌 수 없어 연·월·일 세 칸(`CsDateTabInput`)으로 바꿨다 — 숫자만 · 연 4자리·월/일 2자리 · 칸을 떠나면 한 자리 월/일 앞에 0 · 없는 날짜(2/30 등)면 값은 비어 «날짜를 선택해주세요» 그대로. 달력은 📅 단추(Tab 은 거기 안 섬). 저장되는 값(YYYY-MM-DD)은 그대로. 이 칸 하나만 — 다른 메뉴의 날짜 칸은 안 건드렸다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261012e_ticket_event_attachments -->
@@ -2957,23 +2959,26 @@ function CsDateTabInput({value, onChange, style}){
     setParts(p); emit(p);
   };
   const pad = i => { if(i>0 && parts[i].length===1 && parts[i]!=='0'){ const p=[...parts]; p[i]='0'+p[i]; setParts(p); } setFocus(null); };
-  // 폭은 숫자로 박지 않는다 — 안 보이는 안내 글자(YYYY·MM·DD)와 같은 칸에 겹쳐 놓아 글꼴이 무엇이든 그 글자만큼 넓어진다
-  //   (2026-10-13 `2.8ch` 로 박았더니 MM 이 잘렸다 — M 은 숫자보다 넓다).
+  // 폭은 숫자로 박지 않는다 — 안 보이는 «0000»·«00» 을 같은 격자 칸에 겹쳐 놓아 글꼴이 무엇이든 숫자만큼 넓어진다
+  //   (2026-10-13 `ch` 로 박았더니 잘렸고, YYYY·MM 에 맞췄더니 숫자에 비해 너무 넓었다 — 제니).
+  //   그래서 비었을 때 보이는 안내도 숫자 꼴(0000-00-00)이다 — 글자(YYYY)는 숫자보다 넓어 잘린다.
+  //   ★ 입력칸은 자를 «덮기만» 한다(position:absolute) — 격자에 같이 넣었더니 입력칸의 기본 폭(약 106px)이
+  //     칸 폭을 정해 세 칸이 다 벌어졌다(화면으로 재서 찾았다).
   const seg = (i, ph) => (
-    <span style={{display:'inline-grid',fontVariantNumeric:'tabular-nums'}}>
-      <span aria-hidden="true" style={{gridArea:'1/1',visibility:'hidden',padding:'0 5px',whiteSpace:'pre'}}>{ph}</span>
+    <span style={{position:'relative',display:'inline-block',fontVariantNumeric:'tabular-nums'}}>
+      <span aria-hidden="true" style={{visibility:'hidden',padding:'0 3px',whiteSpace:'pre'}}>{ph}</span>
       <input type="text" inputMode="numeric" value={parts[i]} placeholder={ph} aria-label={['연도','월','일'][i]}
         onChange={e=>put(i, e.target.value)} onFocus={e=>{setFocus(i); e.target.select();}} onBlur={()=>pad(i)}
-        style={{gridArea:'1/1',width:'100%',minWidth:0,boxSizing:'border-box',padding:'0 3px',border:'none',outline:'none',borderRadius:4,textAlign:'center',
+        style={{position:'absolute',inset:0,width:'100%',minWidth:0,boxSizing:'border-box',padding:'0 3px',border:'none',outline:'none',borderRadius:4,textAlign:'center',
           background:focus===i?'var(--surface)':'transparent',color:'inherit',font:'inherit',fontVariantNumeric:'inherit'}}/>
     </span>
   );
   return (
     <div style={{...style, display:'flex', alignItems:'center', gap:2, position:'relative',
       border: `1px solid ${focus!==null ? 'var(--accent)' : 'var(--border)'}`}}>
-      {seg(0,'YYYY')}<span style={{color:'var(--sub)'}}>-</span>
-      {seg(1,'MM')}<span style={{color:'var(--sub)'}}>-</span>
-      {seg(2,'DD')}
+      {seg(0,'0000')}<span style={{color:'var(--sub)'}}>-</span>
+      {seg(1,'00')}<span style={{color:'var(--sub)'}}>-</span>
+      {seg(2,'00')}
       <button type="button" tabIndex={-1} title="달력에서 고르기"
         onClick={()=>{ try{ pickRef.current?.showPicker(); }catch(_){ pickRef.current?.focus(); } }}
         style={{marginLeft:'auto',background:'none',border:'none',cursor:'pointer',padding:0,fontSize:14,lineHeight:1}}>📅</button>
