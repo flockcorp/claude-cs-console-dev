@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261014e_after_save_no_change -->
+<!-- (2026-10-14) 🐞 **«저장 후 다음 티켓» 이 안 넘어가던 것**(제니 제보: 이력에 새로 남기는 것 없이 상태만 골라 저장하면). 바꿀 것이 없을 때(같은 상태를 고름) saveAll 이 바로 돌아가 runAfterSave 를 안 탔다 → 저장은 안 하되 «바뀐 것이 없어 저장하지 않았습니다» 를 알리고 다음/목록으로 간다(«화면 유지» 는 예전 그대로 조용히). ★ 덤: 목록에서 연 티켓이 아닐 때도 «목록의 맨 위» 라고 말하던 안내를 둘로 갈랐다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261014d_ticket_default_cols -->
 <!-- (2026-10-14) 🎫 **티켓 목록 기본 열 덜어내기**(제니: 후보 넷 중 «품목별 주문번호» 만 남긴다 · 모든 칩). 칩별 저장값은 SQL(`sql/cs_list_columns_hide_touched_photos_memo.sql` · 백업 저장소)로 수정·사진·메모를 뺐고, 코드 기본(CS_COLS_FALLBACK)과 옛 설정에 붙이던 앞머리(CS_COLS_HEAD)에서도 «수정» 을 뺐다(dev DB `_default` 칩이 번호·등록·수정 없이 저장돼 있어 앞머리로 되살아났다). ★ 화면과 CSV 는 같은 열 목록이라 CSV 에서도 빠진다 — [보기 설정] 에서 칩마다 다시 켤 수 있다. ★ dev 전용. -->
 <!-- v20261014c_ticket_list_readable -->
@@ -28722,7 +28724,15 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
 
   const saveAll = async (stageOverride)=>{
     const st = stageOverride || edit.stage;
-    if(!dirty && st === (t.stage||'')) return true;   // 바꿀 것이 없으면 «이미 저장된 것» 이다
+    // 바꿀 것이 없으면 «이미 저장된 것» 이다.
+    // 🐞 2026-10-14 제니 제보 — 「이력에 새로 남기는 것 없이 상태만 골라 저장하면 다음 티켓으로
+    //   안 넘어간다」. 지금과 «같은» 상태를 고르면 여기서 그냥 돌아가 runAfterSave 를 안 탔다.
+    //   훑어보고 바꿀 것이 없는 티켓을 넘기는 것도 «저장 후 다음» 의 쓰임이다 → 저장은 안 해도 넘긴다.
+    if(!dirty && st === (t.stage||'')){
+      if(afterSave!=='stay') toast('바뀐 것이 없어 저장하지 않았습니다.','info');
+      runAfterSave();
+      return true;
+    }
     // ★★ 「환불 대기」로 넘기려면 환불 금액이 있어야 한다(제니 2026-09-01).
     //   이 단계의 뜻이 「이 건은 얼마를 돌려주면 된다, 확인만 해 달라」인데
     //   금액이 비어 있으면 받는 쪽이 다시 물어봐야 한다 — 그 왕복이 하루씩 먹는다.
@@ -28904,7 +28914,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
     const i = arr.indexOf(ticketId);
     const prev = (i>0) ? arr[i-1] : null;
     if(prev==null){
-      toast('목록의 맨 위 티켓입니다 — 화면을 그대로 둡니다.','info');
+      // ★ 2026-10-14 — 두 경우를 가른다. 목록에서 연 것이 아닌데도 «맨 위» 라고 말하고 있었다.
+      toast(i<0 ? '목록에서 연 티켓이 아니라 다음 티켓을 알 수 없습니다 — 화면을 그대로 둡니다.'
+                : '목록의 맨 위 티켓입니다 — 화면을 그대로 둡니다.','info');
       return;
     }
     goTicket(prev);
