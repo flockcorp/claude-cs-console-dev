@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261014b_nav_order_final -->
+<!-- (2026-10-14) 🧭 **좌측 메뉴 순서 확정**(제니 dev 확인 뒤): CS 관리 → 상품 관리 → 안내 템플릿 → 환불 관리 → 메뉴얼 관리 → 비용 비교 도구 → 대시보드. 블록 차례만 옮겼다 — 모양(a 판의 14px·700·구역 줄)·권한·동작은 그대로. 메뉴 권한 표(CS_MENU_DEFS)도 같은 차례. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261014a_nav_order_bold -->
 <!-- (2026-10-14) 🧭 **좌측 메뉴 — 순서와 대분류 모양**(운영 피드백 1번). ①순서: CS 관리 → 상품 관리 → 환불 관리 → 대시보드 (그 아래 메뉴얼·안내 템플릿·비용 비교·하단은 그대로). 메뉴 권한 설정 표(CS_MENU_DEFS)도 사이드바 순서를 따른다. ②대분류(1뎁스) 글자 13px·500 → 14px·700. ③대분류 사이에 가는 구역 줄 — 자식 없는 1뎁스(환불·메뉴얼·안내 템플릿)도 .nav-group 으로 감싸 줄을 같은 규칙으로 긋는다. 접은 레일은 예전 그대로. 권한·동작은 안 바뀐다(블록 순서만 옮김). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261013c_entry_date_digit_width -->
@@ -34380,8 +34382,8 @@ function RoleCheckFailedPage({email,error,onRetry}){
 //   확인하라고 말한다. 화면과 DB 를 «둘 다» 열어야 실제로 열린 것이다.
 // ★★ **차례는 «사이드바에 선 순서» 다**(제니 2026-09-04). 설정 화면에서 메뉴를 찾을 때
 //   사람은 사이드바를 떠올리며 눈으로 훑는다 — 순서가 다르면 있는 것도 못 찾는다.
-//   CS 관리 → 상품 관리 → 환불 → 대시보드 → 메뉴얼 → 안내 템플릿 → 비용 비교 → (하단) 변경 이력 · 인력 관리.
-//   (2026-10-14 운영 피드백으로 CS 관리를 맨 위로 · 대시보드를 환불 아래로 옮겼다.)
+//   CS 관리 → 상품 관리 → 안내 템플릿 → 환불 → 메뉴얼 → 비용 비교 → 대시보드 → (하단) 변경 이력 · 인력 관리.
+//   (2026-10-14 운영 피드백 + 제니 확정으로 바꿨다.)
 //
 // ★★★ 2026-09-08 제니 — **목록이 실제 메뉴 트리와 달랐다.**
 //   「상품 관리 메뉴는 상품 정보 메뉴는 없고 하위 메뉴명으로 기재되어 있고,
@@ -34415,15 +34417,15 @@ const CS_MENU_DEFS = [
   {id:'delays',        g:'상품 관리', label:'배송지연 관리',    base:['master','manager']},
   {id:'suppliers',     g:'상품 관리', label:'공급사 관리',      base:['master','manager','crew']},
   {id:'autoDelivery',  g:'상품 관리', label:'디지털 상품 발송', base:['master','manager']},
+  // ★ 안내 템플릿(2026-10-07) — 실무자가 찾아 복사하는 곳이라 기본 전원. 고치기는 동작 권한(msgTemplates.edit).
+  {id:'msgTemplates',  label:'안내 템플릿',      base:['master','manager','crew'], rls:true},
   {id:'refunds',       label:'환불 관리',        base:['master'], rls:true},
+  // ★ 메뉴얼 관리(2026-09-14) — 실무자가 찾아보는 곳이라 기본 전원. 메뉴얼마다 보기 권한은 따로(view_roles).
+  {id:'manuals',       label:'메뉴얼 관리',      base:['master','manager','crew'], rls:true},
+  {id:'costs',        label:'비용 비교 도구',   base:['master']},
   {id:'dashboard',     g:'대시보드',  self:true, label:'대시보드',        base:['master','manager','crew']},
   {id:'entry',         g:'대시보드',  label:'데이터 입력',      base:['master','manager']},
   {id:'agentAnalysis', g:'대시보드',  label:'상담원 분석',      base:['master']},
-  // ★ 메뉴얼 관리(2026-09-14) — 실무자가 찾아보는 곳이라 기본 전원. 메뉴얼마다 보기 권한은 따로(view_roles).
-  {id:'manuals',       label:'메뉴얼 관리',      base:['master','manager','crew'], rls:true},
-  // ★ 안내 템플릿(2026-10-07) — 실무자가 찾아 복사하는 곳이라 기본 전원. 고치기는 동작 권한(msgTemplates.edit).
-  {id:'msgTemplates',  label:'안내 템플릿',      base:['master','manager','crew'], rls:true},
-  {id:'costs',        label:'비용 비교 도구',   base:['master']},
   {id:'auditLog',      label:'변경 이력',        base:['master'], rls:true},
   {id:'agents',        label:'인력 관리',        base:['master']},
 ];
@@ -36358,6 +36360,17 @@ function App() {
           </div>
           )}
 
+          {/* (2026-10-14 제니: 상품 관리 바로 아래로) 안내 템플릿 (2026-10-07) — 상담 안내 문구·알림톡 문구를 찾아 복사한다. */}
+          {canMenu('msgTemplates') && (
+            <div className="nav-group">
+            <div className="nav-parent" onClick={()=>navigateTo('msgTemplates')}
+              title={navCollapsed?'안내 템플릿':undefined}
+              style={page==='msgTemplates' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}>
+              <span style={{width:16,display:'inline-block',textAlign:'center',fontSize:14,lineHeight:1}}>💬</span><span className="nav-label">안내 템플릿</span><RoleTag on={masterOnly('msgTemplates')}/>
+            </div>
+            </div>
+          )}
+
           {/* 1뎁스: 환불 관리 (자식 없음 → 단순 이동) — 누가 보나는 이제 설정이 정한다 */}
           {canMenu('refunds') && (
             <div className="nav-group">
@@ -36372,65 +36385,6 @@ function App() {
             </div>
           )}
 
-          {/* 부모: 대시보드 (자체 화면 있음 → 클릭 시 이동 + 그 부모로 펼침)
-              ★ 2026-10-14 — 맨 위에서 «환불 관리» 아래로 내렸다(운영 피드백).
-              ★★ 2026-09-08 — 부모와 자식을 `.nav-group` 으로 «묶었다». 접힌 상태에서
-                자식 패널이 부모 옆에 뜨려면 둘이 한 상자 안에 있어야 하고(위치 기준),
-                패널 위에 마우스가 있는 동안 :hover 가 유지되는 것도 이 묶음 덕이다.
-                펼친 상태의 모양은 한 픽셀도 안 바뀐다 — .nav-group 은 그냥 블록이다.
-              ★★ 자식을 `openGroups && (…)` 로 «안 그리던» 것에서 **늘 그리고 클래스로
-                가리는** 방식으로 바꿨다. 접었을 때는 펼침 여부와 상관없이 패널에
-                보여야 하는데, 안 그려 두면 hover 순간 만들 것이 아무것도 없다. */}
-          {(()=>{
-            // 자식이 있는지 체크 — 없으면 토글 화살표 숨기고 일반 메뉴처럼 동작
-            // ★ 2026-09-08 — 권한을 «설정에서» 본다. 예전엔 isMaster||isManager 로 박혀
-            //   있어, 설정에서 데이터 입력을 crew 에게 열어 줘도 화살표가 안 나왔다.
-            const hasChildren = canMenu('entry') || canMenu('agentAnalysis');
-            // ★ 대시보드는 «부모이면서 제 화면» 이라, 부모가 닫히면 묶음째 사라진다.
-            if(!canMenu('dashboard')) return null;
-            return (
-              <div className="nav-group">
-                <div className="nav-parent"
-                  /* ★ 접었을 때만 이름을 툴팁으로 준다 — 펼친 상태에는 이름이 화면에
-                     이미 있고, 거기에까지 달면 «없던 툴팁이 생긴» 것이 된다
-                     (2026-09-03 에 그 말을 들었다). */
-                  title={navCollapsed?'대시보드':undefined}
-                  onClick={()=>{
-                  if(!hasChildren){
-                    // 자식 없으면 단순 이동
-                    navigateTo('dashboard');
-                  } else if(page==='dashboard'){
-                    toggleGroup('dashboard');
-                  } else {
-                    navigateTo('dashboard');
-                  }
-                }}>
-                  {Icon.dashboard}<span>대시보드</span>
-                  {hasChildren && (
-                    <span className={`chevron ${openGroups.dashboard?'expanded':''}`}>{openGroups.dashboard?'▼':'▶'}</span>
-                  )}
-                </div>
-                {hasChildren && (
-                  <div className={"nav-kids"+(openGroups.dashboard?" open":"")}>
-                    <div className="nav-kids-inner">
-                      <div className="nav-kids-head">대시보드</div>
-                      {canMenu('entry') && (
-                        <div className={`nav-child ${page==='entry'?'active':''}`} onClick={()=>navigateTo('entry')}>
-                          데이터 입력
-                        </div>
-                      )}
-                      {canMenu('agentAnalysis') && (
-                        <div className={`nav-child ${page==='agentAnalysis'?'active':''}`} onClick={()=>navigateTo('agentAnalysis')}>
-                          <span className="nav-label">상담원 분석</span><RoleTag on={masterOnly('agentAnalysis')}/>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
           {/* 메뉴얼 관리 (2026-09-14) — 자체 화면이 있는 1뎁스. 2단계(지식 창고)는 화면 안의 탭으로 더한다. */}
           {canMenu('manuals') && (
             <div className="nav-group">
@@ -36438,17 +36392,6 @@ function App() {
               title={navCollapsed?'메뉴얼 관리':undefined}
               style={page==='manuals' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}>
               <span style={{width:16,display:'inline-block',textAlign:'center',fontSize:14,lineHeight:1}}>📚</span><span className="nav-label">메뉴얼 관리</span><RoleTag on={masterOnly('manuals')}/>
-            </div>
-            </div>
-          )}
-
-          {/* 안내 템플릿 (2026-10-07) — 상담 안내 문구·알림톡 문구를 찾아 복사한다. */}
-          {canMenu('msgTemplates') && (
-            <div className="nav-group">
-            <div className="nav-parent" onClick={()=>navigateTo('msgTemplates')}
-              title={navCollapsed?'안내 템플릿':undefined}
-              style={page==='msgTemplates' ? {background:'rgba(246,173,9,.08)',color:'#F6AD09'} : {}}>
-              <span style={{width:16,display:'inline-block',textAlign:'center',fontSize:14,lineHeight:1}}>💬</span><span className="nav-label">안내 템플릿</span><RoleTag on={masterOnly('msgTemplates')}/>
             </div>
             </div>
           )}
@@ -36519,6 +36462,65 @@ function App() {
               </div>
             </div>
           )}
+          {/* 부모: 대시보드 (자체 화면 있음 → 클릭 시 이동 + 그 부모로 펼침)
+              ★ 2026-10-14 — 맨 위에서 맨 아래(비용 비교 도구 다음)로 내렸다(운영 피드백 → 제니 확정).
+              ★★ 2026-09-08 — 부모와 자식을 `.nav-group` 으로 «묶었다». 접힌 상태에서
+                자식 패널이 부모 옆에 뜨려면 둘이 한 상자 안에 있어야 하고(위치 기준),
+                패널 위에 마우스가 있는 동안 :hover 가 유지되는 것도 이 묶음 덕이다.
+                펼친 상태의 모양은 한 픽셀도 안 바뀐다 — .nav-group 은 그냥 블록이다.
+              ★★ 자식을 `openGroups && (…)` 로 «안 그리던» 것에서 **늘 그리고 클래스로
+                가리는** 방식으로 바꿨다. 접었을 때는 펼침 여부와 상관없이 패널에
+                보여야 하는데, 안 그려 두면 hover 순간 만들 것이 아무것도 없다. */}
+          {(()=>{
+            // 자식이 있는지 체크 — 없으면 토글 화살표 숨기고 일반 메뉴처럼 동작
+            // ★ 2026-09-08 — 권한을 «설정에서» 본다. 예전엔 isMaster||isManager 로 박혀
+            //   있어, 설정에서 데이터 입력을 crew 에게 열어 줘도 화살표가 안 나왔다.
+            const hasChildren = canMenu('entry') || canMenu('agentAnalysis');
+            // ★ 대시보드는 «부모이면서 제 화면» 이라, 부모가 닫히면 묶음째 사라진다.
+            if(!canMenu('dashboard')) return null;
+            return (
+              <div className="nav-group">
+                <div className="nav-parent"
+                  /* ★ 접었을 때만 이름을 툴팁으로 준다 — 펼친 상태에는 이름이 화면에
+                     이미 있고, 거기에까지 달면 «없던 툴팁이 생긴» 것이 된다
+                     (2026-09-03 에 그 말을 들었다). */
+                  title={navCollapsed?'대시보드':undefined}
+                  onClick={()=>{
+                  if(!hasChildren){
+                    // 자식 없으면 단순 이동
+                    navigateTo('dashboard');
+                  } else if(page==='dashboard'){
+                    toggleGroup('dashboard');
+                  } else {
+                    navigateTo('dashboard');
+                  }
+                }}>
+                  {Icon.dashboard}<span>대시보드</span>
+                  {hasChildren && (
+                    <span className={`chevron ${openGroups.dashboard?'expanded':''}`}>{openGroups.dashboard?'▼':'▶'}</span>
+                  )}
+                </div>
+                {hasChildren && (
+                  <div className={"nav-kids"+(openGroups.dashboard?" open":"")}>
+                    <div className="nav-kids-inner">
+                      <div className="nav-kids-head">대시보드</div>
+                      {canMenu('entry') && (
+                        <div className={`nav-child ${page==='entry'?'active':''}`} onClick={()=>navigateTo('entry')}>
+                          데이터 입력
+                        </div>
+                      )}
+                      {canMenu('agentAnalysis') && (
+                        <div className={`nav-child ${page==='agentAnalysis'?'active':''}`} onClick={()=>navigateTo('agentAnalysis')}>
+                          <span className="nav-label">상담원 분석</span><RoleTag on={masterOnly('agentAnalysis')}/>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
         </nav>
         <div className="sidebar-bottom">
           {/* ★ 둘을 «따로» 건다 — 한 조건으로 묶어 두면 한쪽만 열고 싶을 때
