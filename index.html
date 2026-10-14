@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261014f_next_main_button -->
+<!-- (2026-10-14) 🎫 **«저장 후 다음 티켓» 일 때 주 저장 단추도 켠다**(제니). 바꾼 것이 없으면 꺼져 있어 ∧ 목록으로만 넘길 수 있었다 → 이제 주 단추를 누르면 e 판의 길(저장 없이 알리고 다음으로)을 탄다. «화면 유지»·«목록으로» 는 그대로. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261014e_after_save_no_change -->
 <!-- (2026-10-14) 🐞 **«저장 후 다음 티켓» 이 안 넘어가던 것**(제니 제보: 이력에 새로 남기는 것 없이 상태만 골라 저장하면). 바꿀 것이 없을 때(같은 상태를 고름) saveAll 이 바로 돌아가 runAfterSave 를 안 탔다 → 저장은 안 하되 «바뀐 것이 없어 저장하지 않았습니다» 를 알리고 다음/목록으로 간다(«화면 유지» 는 예전 그대로 조용히). ★ 덤: 목록에서 연 티켓이 아닐 때도 «목록의 맨 위» 라고 말하던 안내를 둘로 갈랐다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261014d_ticket_default_cols -->
@@ -29828,7 +29830,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                 ★ 이 값은 이 브라우저에만 남는다(사람마다 일하는 방식이 다르다). */}
             <CsAfterSavePick value={afterSave} options={CS_AFTER_SAVE}
               onChange={v=>{ setAfterSave(v); csAfterSaveSet(v); }}/>
-            <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty}
+            {/* ★ 2026-10-14 제니 — «다음 티켓» 일 때는 바꾼 것이 없어도 주 단추가 켜진다(누르면 저장 없이 넘어간다).
+                «화면 유지»·«목록으로» 는 예전대로 바꾼 것이 있어야 켜진다. */}
+            <CsStageSubmit stage={edit.stage} busy={busy} dirty={dirty || afterSave==='next'}
               onSave={()=>saveAll()}
               onPick={id=>{ setE('stage', id); saveAll(id); }}
               options={CS_STAGES.filter(x=>csStageAllows(stageRoles, x.id, role))}/>
