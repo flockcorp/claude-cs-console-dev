@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261014c_ticket_list_readable -->
+<!-- (2026-10-14) 🎫 **티켓 목록 가독성**(운영 피드백 2번 · 제니 지시). ①**주문자를 «이름»·«연락처» 두 열로**(CSV 에서도 각 열) — 옛 설정의 'orderer' 는 CS_COL_ALIAS 가 두 열로 갈아 준다 · 머리글 «주문자»·«연락처» · 수령인은 그대로. ②본문 12px·400 → **13px·500** · 주문번호 둘 11→12px · 머리글 그대로. ③**다크에서만** 목록 몸통의 회색 글자 #8fa8d0 → #bccde9(콘솔 전체 --sub 는 안 건드림). ④행 위아래 여백 10 → 16px(한 화면 행 수를 줄임). 옵션은 상품명 아래로 합치지 않는다(제니: CSV 각 열 유지). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261014b_nav_order_final -->
 <!-- (2026-10-14) 🧭 **좌측 메뉴 순서 확정**(제니 dev 확인 뒤): CS 관리 → 상품 관리 → 안내 템플릿 → 환불 관리 → 메뉴얼 관리 → 비용 비교 도구 → 대시보드. 블록 차례만 옮겼다 — 모양(a 판의 14px·700·구역 줄)·권한·동작은 그대로. 메뉴 권한 표(CS_MENU_DEFS)도 같은 차례. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261014a_nav_order_bold -->
@@ -1488,6 +1490,10 @@
     .toast-close:hover{background:rgba(22,35,63,.10);color:#16233F}
     /* 목록 줄 — 어디를 눌러도 열린다. 손이 올라간 줄을 밝혀 «이 줄이 열린다» 를 보여 준다. */
     .cs-row:hover{background:var(--hover)}
+    /* ★ 2026-10-14 운영 피드백 — 티켓 목록 «몸통» 의 회색 글자(--sub)를 다크에서만 밝힌다.
+       #8fa8d0(바탕 대비 약 7:1) → #bccde9(약 11:1). 흰 글자(15:1)와는 여전히 층이 갈린다.
+       콘솔 전체의 --sub 는 안 건드린다 — 범위는 이 표 하나. 라이트는 이미 #545454 라 그대로. */
+    :root[data-theme="dark"] .cs-tk-table tbody{--sub:#bccde9}
     /* 열 너비 손잡이 — 평소엔 안 보이고 마우스를 올리면 선이 선다.
        ★ 늘 그어 두면 표에 세로줄이 스물몇 개 생겨 값보다 선이 먼저 읽힌다. */
     .cs-colgrip::after{content:'';position:absolute;top:6px;bottom:6px;right:3px;width:1px;
@@ -19296,10 +19302,10 @@ const CS_COLS = {
   //     (제니: 날짜에서 바꾼 글씨체가 더 깔끔하다). 주문번호는 숫자와 하이픈뿐이라
   //     0/O·1/l 을 가릴 일이 없어, 고정폭이 주던 이점이 여기서는 없다.
   order_no:  {label:'주문번호', g:'주문', w:126,
-              cell:(t)=><span style={{fontSize:11,fontVariantNumeric:'tabular-nums'}}>{t.order_id||'—'}</span>,
+              cell:(t)=><span style={{fontSize:12,fontVariantNumeric:'tabular-nums'}}>{t.order_id||'—'}</span>,
               sv:(t)=>t.order_id||''},
   order_item:{label:'품목별 주문번호', g:'주문', w:150,
-              cell:(t)=><span style={{fontSize:11,fontVariantNumeric:'tabular-nums'}}>{t.order_item_code||'—'}</span>,
+              cell:(t)=><span style={{fontSize:12,fontVariantNumeric:'tabular-nums'}}>{t.order_item_code||'—'}</span>,
               sv:(t)=>t.order_item_code||''},
   // ★ 「상품 · 옵션」과 겹친다 — 둘을 다 켜면 옵션이 두 번 보인다. 그래도 따로 둔다:
   //   상품명이 긴 칩에서는 상품 열을 끄고 옵션만 보는 편이 훨씬 좁게 읽힌다.
@@ -19328,7 +19334,7 @@ const CS_COLS = {
   //   그전에는 「주문자」와 「연락처」가 따로 켜지는 두 열이었는데, 실제로 목록에서
   //   쓰는 방식은 «누구에게 전화를 거나» 라 늘 함께 봤다. 두 열이면 폭도 두 벌이고,
   //   한쪽만 켠 화면에서는 반쪽 정보가 된다.
-  //   ★ 「주문자 연락처」 열(orderer_ph)은 없앴다 — CS_COL_ALIAS 가 갈음한다.
+  //   ★ 「주문자 연락처」 열(orderer_ph)은 없앴다 — CS_COL_ALIAS 가 갈음한다. (→ 2026-10-14 다시 두 열로 나눴다 · 아래)
   //   ★ 연락처를 가리지 않는 것은 그대로다(전화를 걸려고 보는 값이다 · 2026-08-24 판단).
   //   ★ 글자색은 이름과 «같다»(제니 2026-09-04) — 한 사람의 두 조각인데 한쪽만 흐리면
   //     연락처가 «곁다리 값» 으로 읽힌다. 전화를 거는 쪽이 오히려 이쪽이다.
@@ -19339,10 +19345,22 @@ const CS_COLS = {
   //   ★ 한 칸에 담되 **줄바꿈이 아니라 공백**이다: 화면은 두 줄이지만 파일에서 셀 안
   //     줄바꿈은 거르고 정렬할 때 걸리적거린다. **같은 값이어도 «어디에 놓이는가» 가
   //     다르면 같은 모양이 아니다**(09-09 복사한 표에서 세운 것과 같은 판단이다).
-  orderer:   {label:'주문자', plabel:'주문자 이름+연락처', g:'고객', w:112,
-              cell:(t)=><CsNamePhone name={t.orderer_name} phone={t.orderer_phone}/>,
-              sv:(t)=>t.orderer_name||'',
-              csv:(t)=>csNamePhoneText(t.orderer_name, t.orderer_phone)},
+  // ★★★ 2026-10-14 — **주문자는 다시 «이름»·«연락처» 두 열이다**(제니: 「CSV 로 받았을 때
+  //   각 항목이 각 열로 있었으면」). 09-07 에 한 열 두 줄로 묶었던 것을 푼다.
+  //   ★ 화면과 파일은 같은 열 목록(colKeys)을 쓴다 — 화면에서 나누면 파일도 나뉜다.
+  //   ★ 옛 설정의 'orderer' 는 CS_COL_ALIAS 가 두 열로 갈아 준다(조용히 사라지지 않게).
+  //   ★ 수령인(receiver)은 그대로 한 열 두 줄이다 — 이번 지시는 주문자만.
+  orderer_nm:{label:'주문자', plabel:'주문자 이름', g:'고객', w:84,
+              cell:(t)=><span>{String(t.orderer_name||'').trim()||'—'}</span>,
+              sv:(t)=>t.orderer_name||''},
+  // ★ 한 줄로 묶지(nowrap) 않는다 — 열 폭은 «비율» 이라 화면이 좁으면 이 칸도 좁아지고,
+  //   그때 묶어 두면 번호가 옆 칸(담당) 위로 넘쳐 겹친다(2026-10-14 찍어 보고 뺐다).
+  //   좁으면 하이픈에서 꺾인다. 머리글은 짧게(연락처), 온전한 이름은 plabel.
+  orderer_ph:{label:'연락처', plabel:'주문자 연락처', g:'고객', w:124,
+              cell:(t)=>{ const ph=String(t.orderer_phone||'').trim();
+                return ph ? <span style={{fontVariantNumeric:'tabular-nums'}}>{ph}</span>
+                          : <span style={{color:'var(--sub)'}}>—</span>; },
+              sv:(t)=>t.orderer_phone||''},
   // ★ 상세와 같은 규칙 — 카페24가 수령인을 안 주는 주문이면 주문자 값을 그대로 쓴다.
   //   「주문자와 같음」 이라고 적으면 읽는 사람이 한 번 더 옮겨 생각해야 한다.
   receiver:  {label:'수령인', plabel:'수령인 이름+연락처', g:'고객', w:112,
@@ -19453,8 +19471,10 @@ const CS_COL_GROUPS = ['티켓','주문','고객','주소','분류','환불','�
 //   · updated(갱신)        → touched(수정)와 같은 값을 다르게 그리던 것이라 없앴다
 //   · orderer_ph(주문자 연락처) → orderer(주문자 이름+연락처) 안으로 들어갔다(2026-09-07).
 //     ★ csExpandCols 가 중복을 걸러 주므로, 둘 다 켜 두었던 칩에서도 열이 한 번만 선다.
+//   · orderer(주문자 이름+연락처) → orderer_nm · orderer_ph 두 열로 다시 나눴다(2026-10-14 제니 · CSV 각 열).
+//     ★ 09-07 에 orderer_ph → orderer 로 갈던 줄은 지웠다 — orderer_ph 는 이제 진짜 열이다.
 const CS_COL_ALIAS = {typedir:['cs_type','direction'], updated:['touched'],
-                      orderer_ph:['orderer']};
+                      orderer:['orderer_nm','orderer_ph']};
 // 09-04 이전 설정에는 이 셋이 «고정 열» 이라 아예 담겨 있지 않다.
 const CS_COLS_HEAD = ['id','created','touched'];
 // 열 너비 — «내 화면에만» 남는 값이라 localStorage 다(console_settings 는 운영 기준).
@@ -19504,7 +19524,7 @@ function csColMinW(k){
   return Math.max(c.minw||0, CS_COLW_MIN);
 }
 const CS_COLS_FALLBACK = ['id','created','touched','stage','cs_type','direction',
-  'product','option','supplier','orderer','assignee','recheck'];
+  'product','option','supplier','orderer_nm','orderer_ph','assignee','recheck'];
 
 // 설정에 적힌 열 목록을 «지금 화면이 아는 열» 로 편다.
 // ★ 세 가지를 한 자리에서 한다: ①없앤 열을 갈음한다 ②모르는 열은 건너뛴다
@@ -22326,7 +22346,8 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
               ★ minWidth 는 열 폭의 «합» 이다 — 합이 화면보다 넓으면 바깥 div 가
                 가로로 구른다(이미 overflowX:'auto'). */}
           {/* ★ 고르는 칸(CS_SEL_W)도 폭의 합에 넣는다 — 빠뜨리면 그만큼 오른쪽 끝이 밀린다. */}
-          <table style={{borderCollapse:'collapse',fontSize:12,tableLayout:'fixed',
+          {/* ★ 2026-10-14 운영 피드백 — 본문 12px·400 → 13px·500(얇아서 흐려 보였다). 머리글(csTh)은 그대로. */}
+          <table className="cs-tk-table" style={{borderCollapse:'collapse',fontSize:13,fontWeight:500,tableLayout:'fixed',
             width:'100%', minWidth: CS_SEL_W + viewKeys.reduce((s,k)=>s+shownWidth(k),0)}}>
             <colgroup>
               {/* 고르는 칸 — 값을 보여 주는 열이 아니라 «장치» 라 [보기 설정] 에 없다. */}
@@ -22384,7 +22405,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                   <td onClick={e=>{ e.stopPropagation();
                       setPicked(p=>{ const n={...p};
                         if(n[t.id]) delete n[t.id]; else n[t.id]=true; return n; }); }}
-                    style={{...csTd,padding:'10px 0',textAlign:'center'}}>
+                    style={{...csTd,padding:CS_ROW_PAD_Y+'px 0',textAlign:'center'}}>
                     <input type="checkbox" checked={!!picked[t.id]} readOnly
                       style={{width:13,height:13,
                         accentColor: picked[t.id] ? 'var(--red-ink)' : '#5B8DEF',
@@ -29996,7 +30017,9 @@ const csTh = (w)=>({textAlign:'left',fontSize:11,fontWeight:700,color:'var(--hea
   overflow:'hidden',textOverflow:'ellipsis',position:'relative'});
 // ★ 폭을 좁히면 긴 값이 열을 넘지 않고 «접혀야» 한다. 주소·상품명처럼 띄어쓰기가 없는
 //   긴 토막(주문번호 등)도 접히도록 anywhere 를 쓴다.
-const csTd = {padding:'10px '+CS_CELL_PAD+'px',color:'var(--text)',verticalAlign:'middle',
+// ★ 2026-10-14 — 위아래 여백 10 → 16(제니: 「행 세로를 늘려 한 화면에 보이는 행 수를 줄인다」).
+const CS_ROW_PAD_Y = 16;
+const csTd = {padding:CS_ROW_PAD_Y+'px '+CS_CELL_PAD+'px',color:'var(--text)',verticalAlign:'middle',
   overflowWrap:'anywhere'};
 
 // 누르면 정렬되는 머리글.
