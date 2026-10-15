@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261015d_kpi_label_bigger -->
+<!-- (2026-10-15) 🎫 **티켓 목록 KPI 카드명도 키움**(제니: 하단 글씨 키울거면 카드명도). .kpi-label 11 → 13px · 다크에서만 #bccde9 — 티켓 목록 카드(.cs-kpi)에만. 다른 화면 KPI 는 그대로. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015c_kpi_note_crisp -->
 <!-- (2026-10-15) 🎫 **티켓 목록 KPI 카드 아래 한 줄을 선명하게**(제니: 흐릿하다). 10px·--sub → 12px·500(.cs-kpi-note) · 다크에서만 #8fa8d0 → #bccde9(목록 몸통과 같은 값) · 라이트는 #545454 그대로 크기만. 다른 화면의 KPI 카드는 안 건드림. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015b_csv_by_pagesize -->
@@ -1510,6 +1512,10 @@
        12px·500 · 다크에서만 목록 몸통과 같은 #bccde9. 라이트는 --sub(#545454) 그대로 — 크기만 커진다. */
     .cs-kpi-note{font-size:12px;font-weight:500;color:var(--sub);margin-top:6px;line-height:1.4}
     :root[data-theme="dark"] .cs-kpi-note{color:#bccde9}
+    /* ★ 같은 날 — 카드명도 함께 키운다(제니: 「하단 글씨 키울거면 상단의 카드명도」). 11 → 13px.
+       .kpi-label 은 콘솔 공용이라 이 목록 카드(.cs-kpi)에만 건다. 아래 한 줄(12)보다 한 단계 크게 둔다. */
+    .cs-kpi .kpi-label{font-size:13px}
+    :root[data-theme="dark"] .cs-kpi .kpi-label{color:#bccde9}
     /* 열 너비 손잡이 — 평소엔 안 보이고 마우스를 올리면 선이 선다.
        ★ 늘 그어 두면 표에 세로줄이 스물몇 개 생겨 값보다 선이 먼저 읽힌다. */
     .cs-colgrip::after{content:'';position:absolute;top:6px;bottom:6px;right:3px;width:1px;
@@ -22006,7 +22012,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
         <span style={{fontSize:12,color:'var(--sub)'}}>고객 접수부터 정산 반영까지 과정을 관리</span>
       </div>
 
-      <div className="kpi-grid" style={{marginBottom:14}}>
+      <div className="kpi-grid cs-kpi" style={{marginBottom:14}}>
         <div className="kpi-card">
           <div className="kpi-label">오늘 리체크</div>
           <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'var(--warn-ink)'}}>{kpi.recheck}</div>
