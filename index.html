@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261015c_kpi_note_crisp -->
+<!-- (2026-10-15) 🎫 **티켓 목록 KPI 카드 아래 한 줄을 선명하게**(제니: 흐릿하다). 10px·--sub → 12px·500(.cs-kpi-note) · 다크에서만 #8fa8d0 → #bccde9(목록 몸통과 같은 값) · 라이트는 #545454 그대로 크기만. 다른 화면의 KPI 카드는 안 건드림. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015b_csv_by_pagesize -->
 <!-- (2026-10-15) 🎫 **[⬇ CSV] 를 «페이지 보기» 왼쪽으로**(제니: KPI 카드와 상태 칩 사이를 더 좁히자). 제 줄에 서 있던 단추를 필터 줄 오른쪽 묶음으로 옮겨 KPI 아래가 바로 칩 줄이다(간격 14 = 칩 줄 아래와 같은 박자 · 1920 폭 실측 44→15px). 동작·색은 그대로. ⚠ 창 폭 1500 미만에서는 필터 줄 «30일» 단추가 아랫줄로 내려간다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015a_nav_order_list_font -->
@@ -1504,6 +1506,10 @@
        #8fa8d0(바탕 대비 약 7:1) → #bccde9(약 11:1). 흰 글자(15:1)와는 여전히 층이 갈린다.
        콘솔 전체의 --sub 는 안 건드린다 — 범위는 이 표 하나. 라이트는 이미 #545454 라 그대로. */
     :root[data-theme="dark"] .cs-tk-table tbody{--sub:#bccde9}
+    /* ★ 2026-10-15 — 티켓 목록 KPI 카드 아래 한 줄(「기한 지남 36건」 등)이 흐렸다(제니). 10px·--sub →
+       12px·500 · 다크에서만 목록 몸통과 같은 #bccde9. 라이트는 --sub(#545454) 그대로 — 크기만 커진다. */
+    .cs-kpi-note{font-size:12px;font-weight:500;color:var(--sub);margin-top:6px;line-height:1.4}
+    :root[data-theme="dark"] .cs-kpi-note{color:#bccde9}
     /* 열 너비 손잡이 — 평소엔 안 보이고 마우스를 올리면 선이 선다.
        ★ 늘 그어 두면 표에 세로줄이 스물몇 개 생겨 값보다 선이 먼저 읽힌다. */
     .cs-colgrip::after{content:'';position:absolute;top:6px;bottom:6px;right:3px;width:1px;
@@ -22004,24 +22010,24 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
         <div className="kpi-card">
           <div className="kpi-label">오늘 리체크</div>
           <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'var(--warn-ink)'}}>{kpi.recheck}</div>
-          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>
+          <div className="cs-kpi-note">
             {kpi.over? '기한 지남 '+kpi.over+'건' : '기한 지난 건 없음'}</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label">공급사 미접수</div>
           <div className="kpi-value blue">{kpi.tosup}</div>
-          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>아직 공급사에 안 보낸 건</div>
+          <div className="cs-kpi-note">아직 공급사에 안 보낸 건</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label">회신 대기</div>
           <div className="kpi-value red">{kpi.awaiting}</div>
-          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>
+          <div className="cs-kpi-note">
             {kpi.await4? '4일째 이상 '+kpi.await4+'건' : '오래 기다린 건 없음'}</div>
         </div>
         <div className="kpi-card">
           <div className="kpi-label">정산 대기</div>
           <div className="kpi-value green">{kpi.settle}</div>
-          <div style={{fontSize:10,color:'var(--sub)',marginTop:6}}>
+          <div className="cs-kpi-note">
             {kpi.nocost? '비용 미입력 '+kpi.nocost+'건' : '비용 입력 완료'}</div>
         </div>
       </div>
