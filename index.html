@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261015e_tplcat_reopen -->
+<!-- (2026-10-15) 🐞 **안내 템플릿 분류 고르는 칸 — 고른 뒤 다시 누르면 안 열리던 것**(제니 제보). 줄을 마우스로 고를 때 mousedown 을 막아 칸이 포커스를 쥔 채 남고, 목록은 onFocus 로만 열려 다시 눌러도 그대로였다 → 닫혀 있으면 누르는 것(onMouseDown)으로도 연다(MsgTplCatPicker 한 곳 · 검색 아래 필터와 편집 창이 함께 쓴다). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015d_kpi_label_bigger -->
 <!-- (2026-10-15) 🎫 **티켓 목록 KPI 카드명도 키움**(제니: 하단 글씨 키울거면 카드명도). .kpi-label 11 → 13px · 다크에서만 #bccde9 — 티켓 목록 카드(.cs-kpi)에만. 다른 화면 KPI 는 그대로. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015c_kpi_note_crisp -->
@@ -33571,6 +33573,7 @@ function MsgTplCatPicker({cats, value, onChange, allowAll, placeholder, width}){
   const shown = nq ? opts.filter(o=> msgTplNorm(o.label).indexOf(nq) >= 0) : opts;
   const cur = value==='all' ? '전체 분류' : (value!=null && byId[value] ? pathOf(byId[value]) : '미분류');
   const pickOpt = (o)=>{ onChange(o.id); setOpen(false); setQ(''); };
+  const openList = ()=>{ setOpen(true); setQ(''); const k = opts.findIndex(o=>o.id===value); setHi(k<0?0:k); };
   // ★ 키보드로 고르기(제니 2026-10-07: 「화살표로 목록으로 내려서 고른 다음 엔터」).
   //   hi = 지금 짚은 줄. 글자를 치면 맨 위로, 열 때는 «지금 고른 것» 에 둔다.
   const [hi,setHi] = useState(0);
@@ -33594,7 +33597,11 @@ function MsgTplCatPicker({cats, value, onChange, allowAll, placeholder, width}){
   return (
     <div style={{position:'relative',width:width||'100%'}}>
       <input value={open ? q : cur} placeholder={placeholder||'분류 찾기'}
-        onFocus={()=>{ setOpen(true); setQ(''); const k = opts.findIndex(o=>o.id===value); setHi(k<0?0:k); }}
+        onFocus={openList}
+        // ★★ 2026-10-15 제니 제보 — 마우스로 고른 뒤 ▼ 를 다시 누르면 안 열렸다. 줄을 고를 때
+        //   mousedown 을 막아(preventDefault) 칸이 포커스를 «그대로» 쥐고 있어서, 다시 눌러도
+        //   onFocus 가 안 일어난다. 닫혀 있으면 누르는 것만으로도 연다.
+        onMouseDown={()=>{ if(!open) openList(); }}
         onBlur={()=>setTimeout(()=>setOpen(false), 120)}
         onChange={e=>{ setQ(e.target.value); setHi(0); setOpen(true); }}
         onKeyDown={e=>{
