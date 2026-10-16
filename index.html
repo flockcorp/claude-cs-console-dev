@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261016a_costs_theme -->
+<!-- (2026-10-16) 🎨 **비용 비교 도구 — 배경·색을 다른 메뉴와 같게**(제니). 프로토타입의 흰 종이+초록 테마를 통째로 가져와 콘솔이 다크여도 이 화면만 하얬다. .tcc-root 의 색 변수(--paper·--panel·--ink·--ink2·--line·--danger·--c1~5)는 «이름은 그대로, 값만» 콘솔 토큰(--bg·--card·--text·--sub·--border·--red-ink …)으로 이었다 — 아래 수백 줄은 안 바뀌고 다크/라이트도 저절로 따라간다. ★ 비용 비교의 --accent 는 «글자·테두리» 와 «흰 글자를 얹는 채움» 두 갈래였다 → 글자는 콘솔 --accent 를 물려받고, 채움(주 버튼·뱃지·번호·선택 칩·홈 단추)은 새 --tcc-fill(브랜드 남색). 빨강 채움도 --tcc-danger-fill(#D64545). 박혀 있던 색(옅은 회색 칸·노랑 경고 계열·옅은 빨강)도 토큰으로. 머리말 아래 2px 검정 선 → 1px --border. ★ 버튼·입력칸이 글자색을 안 물려받아(브라우저 기본 검정) 다크에서 금액 막대 숫자가 묻혔다 → :where(.tcc-root) 로 우선순위 0 의 color:inherit. ★ 차트 계열색: --accent(하늘)와 --info-ink(파랑)가 겹쳐 두 선이 한 색으로 보여 1번을 --ok-ink(초록)로. 확인: 메뉴 권한(jenny 전용)은 안 건드리고 «로컬 사본에서만» 메뉴를 열어 dev 데이터로 찍음 — 대시보드·프로젝트 6개 탭 × 다크/라이트, 탭마다 글자 78~148개 중 명암비 3 미만 0. 계산·저장·권한은 안 바뀐다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015e_tplcat_reopen -->
 <!-- (2026-10-15) 🐞 **안내 템플릿 분류 고르는 칸 — 고른 뒤 다시 누르면 안 열리던 것**(제니 제보). 줄을 마우스로 고를 때 mousedown 을 막아 칸이 포커스를 쥔 채 남고, 목록은 onFocus 로만 열려 다시 눌러도 그대로였다 → 닫혀 있으면 누르는 것(onMouseDown)으로도 연다(MsgTplCatPicker 한 곳 · 검색 아래 필터와 편집 창이 함께 쓴다). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015d_kpi_label_bigger -->
@@ -18261,21 +18263,42 @@ function ConfirmButton({ className, label, confirmLabel, onConfirm, title }) {
    스타일
    ========================================================= */
 const CSS = `
+/* ★ 2026-10-16 제니: 「비용 비교 도구만 배경·레이아웃 색이 다르다 — 다른 메뉴랑 맞춰」.
+     프로토타입에서 옮겨 올 때 흰 종이 + 초록 테마를 통째로 가져와, 콘솔이 다크여도
+     이 화면만 하얬다. 이름(--paper·--ink …)은 그대로 두고 «값» 만 콘솔 토큰으로 잇는다 —
+     그러면 아래 수백 줄은 한 줄도 안 바뀌고, 다크/라이트 전환도 저절로 따라간다.
+     ★ --accent 가 두 갈래로 쓰였다: 글자·테두리(→ 콘솔 --accent: 다크 하늘/라이트 남색)와
+       흰 글자를 얹는 «채움»(→ --tcc-fill = 브랜드 남색). 채움에 --accent 를 쓰면 다크에서
+       하늘색 바탕에 흰 글자가 되어 안 읽힌다. */
 .tcc-root {
-  --paper: #F1F3F0;
-  --panel: #FFFFFF;
-  --ink: #16211D;
-  --ink2: #5D6B65;
-  --line: #D6DBD4;
-  --line2: #E8EBE6;
-  --accent: #0F6B57;
-  --accent-soft: #E2EFE9;
-  --danger: #8E3B4E;
-  --c1: #0F6B57;
-  --c2: #2F5D8C;
-  --c3: #A8752A;
-  --c4: #8E3B4E;
-  --c5: #57657E;
+  --paper: var(--bg);
+  --panel: var(--card);
+  --ink: var(--text);
+  --ink2: var(--sub);
+  --line: var(--border);
+  --line2: var(--border);
+  /* --accent 는 여기서 다시 적지 않는다 — 콘솔의 --accent 를 그대로 물려받는다.
+     («--accent: var(--accent)» 는 자기 자신을 가리켜 CSS 가 «무효» 로 버린다.) */
+  --accent-soft: var(--brand-soft);
+  --danger: var(--red-ink);
+  --tcc-fill: var(--primary);
+  --tcc-fill-hover: var(--primary2);
+  /* 판 안의 «한 단 들어간» 칸(표 머리·합계 줄·안내 상자) — 두 모드 다 바탕색이 카드보다 한 단 깊다 */
+  --tcc-soft: var(--bg);
+  --tcc-hover: var(--hover);
+  --tcc-warn-ink: var(--warn-ink);
+  --tcc-warn-bg: rgba(246,173,9,.12);
+  --tcc-warn-line: rgba(246,173,9,.40);
+  --tcc-danger-bg: rgba(248,113,113,.12);
+  /* 흰 글자를 얹는 빨강 채움 — 다크의 --red-ink(#f87171)는 흰 글자가 안 읽혀 한 단 깊은 값으로 */
+  --tcc-danger-fill: #D64545;
+  /* 계열색 다섯은 차트 선·태그를 «서로» 가르는 자리라 색상이 겹치면 안 된다 —
+     --accent(하늘)와 --info-ink(파랑)를 같이 쓰면 다크에서 두 선이 한 색으로 보였다. */
+  --c1: var(--ok-ink);
+  --c2: var(--info-ink);
+  --c3: var(--warn-ink);
+  --c4: var(--red-ink);
+  --c5: var(--sub);
   background: var(--paper);
   color: var(--ink);
   font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
@@ -18286,6 +18309,10 @@ const CSS = `
   -webkit-font-smoothing: antialiased;
 }
 .tcc-root * { box-sizing: border-box; }
+/* ★ 2026-10-16 — 버튼·입력칸은 글자색을 «물려받지 않는다»(브라우저 기본 = 검정).
+     흰 종이 테마에선 안 드러났는데 다크로 잇자 금액 막대(.tcc-spendrow 버튼) 숫자가 검게 묻혔다.
+     :where() 로 감싸 우선순위를 0 으로 둔다 — 색을 정한 클래스 규칙(.tcc-btn 등)은 그대로 이긴다. */
+:where(.tcc-root) :is(button, input, select, textarea) { color: inherit; }
 /* 오른쪽 목록을 사이드바로 옮기면서 본문이 화면 끝까지 늘어났다.
    표가 가로로 과하게 벌어지면 눈이 행을 따라가기 어려워 폭을 묶어 둔다. */
 /* 기본은 1360px 로 묶어 표가 과하게 벌어지지 않게 한다.
@@ -18294,7 +18321,7 @@ const CSS = `
 .tcc-root > * { max-width: var(--tcc-max, 1360px); }
 .tcc-loading { padding: 60px; text-align: center; color: var(--ink2); }
 
-.tcc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+.tcc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 .tcc-eyebrow { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--ink2); }
 .tcc-title { margin: 2px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
 .tcc-head-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -18327,7 +18354,7 @@ const CSS = `
 .tcc-side { position: sticky; top: 14px; display: flex; flex-direction: column; gap: 8px; }
 .tcc-navhome { font-family: inherit; font-size: 13px; font-weight: 700; text-align: left; padding: 10px 12px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; cursor: pointer; color: var(--ink2); }
 .tcc-navhome:hover { border-color: var(--ink2); color: var(--ink); }
-.tcc-navhome.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.tcc-navhome.is-on { background: var(--tcc-fill); border-color: var(--tcc-fill); color: #fff; }
 .tcc-navsearch { font-family: inherit; font-size: 12.5px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); }
 .tcc-navsearch:focus { outline: none; border-color: var(--accent); }
 .tcc-navlist { display: flex; flex-direction: column; gap: 3px; max-height: 62vh; overflow-y: auto; }
@@ -18339,11 +18366,11 @@ const CSS = `
 .tcc-navgroup.is-open .tcc-navproj { font-weight: 700; color: var(--ink); }
 .tcc-navproj-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tcc-navd { font-family: ui-monospace, monospace; font-size: 10px; color: var(--ink2); border: 1px solid var(--line); padding: 1px 5px; border-radius: 999px; white-space: nowrap; }
-.tcc-navd.is-near { color: #8A6100; background: #FFF3D6; border-color: #F0DDAC; }
+.tcc-navd.is-near { color: var(--tcc-warn-ink); background: var(--tcc-warn-bg); border-color: var(--tcc-warn-line); }
 .tcc-navd.is-past { color: var(--ink2); background: var(--line2); }
 .tcc-navsub { display: flex; flex-direction: column; padding: 2px 8px 8px 10px; }
 .tcc-navtab { font-family: inherit; font-size: 12.5px; text-align: left; padding: 6px 10px; border: none; background: none; cursor: pointer; color: var(--ink2); border-left: 2px solid var(--line2); border-radius: 0 4px 4px 0; }
-.tcc-navtab:hover { color: var(--ink); background: #F7F8F6; }
+.tcc-navtab:hover { color: var(--ink); background: var(--tcc-soft); }
 .tcc-navtab.is-on { color: var(--accent); font-weight: 700; border-left-color: var(--accent); background: var(--accent-soft); }
 .tcc-navadd { font-family: inherit; font-size: 12.5px; padding: 9px 12px; border: 1px dashed var(--line); background: none; border-radius: 6px; cursor: pointer; color: var(--ink2); text-align: left; }
 .tcc-navadd:hover { border-color: var(--accent); color: var(--accent); }
@@ -18377,8 +18404,8 @@ const CSS = `
 }
 .tcc-btn { font-size: 12.5px; padding: 0 13px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
 .tcc-btn:hover { border-color: var(--ink2); }
-.tcc-btn-solid { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-.tcc-btn-solid:hover { background: #0b5545; }
+.tcc-btn-solid { background: var(--tcc-fill); border-color: var(--tcc-fill); color: #fff; font-weight: 600; }
+.tcc-btn-solid:hover { background: var(--tcc-fill-hover); }
 .tcc-btn-solid:disabled { opacity: 0.55; cursor: default; }
 .tcc-btn-line { border-style: dashed; color: var(--ink2); }
 .tcc-btn-ghost { background: none; }
@@ -18481,7 +18508,7 @@ const CSS = `
 
 .tcc-tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
 .tcc-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tcc-table th { background: #F7F8F6; text-align: left; padding: 10px 12px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; color: var(--ink2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tcc-table th { background: var(--tcc-soft); text-align: left; padding: 10px 12px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; color: var(--ink2); border-bottom: 1px solid var(--line); white-space: nowrap; }
 .tcc-th-item { min-width: 210px; }
 .tcc-th-cycle { width: 92px; }
 /* 서비스가 늘면 열이 좁아지는데, 표 헤더가 '줄바꿈 안 함'이라 이름이 칸 밖으로 흘러
@@ -18492,7 +18519,7 @@ const CSS = `
 .tcc-table th.tcc-th-svc { white-space: normal; overflow-wrap: anywhere; line-height: 1.4; vertical-align: bottom; }
 .tcc-th-tool { width: 92px; }
 .tcc-table td { padding: 9px 12px; border-bottom: 1px solid var(--line2); vertical-align: top; }
-.tcc-table tbody tr:hover { background: #FAFBFA; }
+.tcc-table tbody tr:hover { background: var(--tcc-hover); }
 .tcc-cellin { width: 100%; border: 1px solid transparent; background: none; font-family: inherit; font-size: 13px; padding: 5px 7px; border-radius: 4px; color: var(--ink); }
 .tcc-cellin:hover { border-color: var(--line); }
 .tcc-cellin:focus { outline: none; border-color: var(--accent); background: var(--panel); }
@@ -18519,20 +18546,20 @@ const CSS = `
 
 .tcc-table tfoot td { padding: 10px 12px; border-top: 1px solid var(--line); font-size: 13px; }
 .tcc-sum td:first-child { font-weight: 600; color: var(--ink2); }
-.tcc-sum-strong td { background: #F7F8F6; font-weight: 700; border-top: 2px solid var(--ink); }
+.tcc-sum-strong td { background: var(--tcc-soft); font-weight: 700; border-top: 2px solid var(--ink); }
 .tcc-sum-strong td:first-child { color: var(--ink); }
 .tcc-num { text-align: right; font-family: ui-monospace, monospace; white-space: nowrap; }
 .tcc-num-soft { color: var(--ink2); }
 .tcc-num.is-best { color: var(--accent); }
-.tcc-badge { display: inline-block; margin-left: 6px; font-family: inherit; font-size: 10px; font-weight: 700; background: var(--accent); color: #fff; padding: 1px 6px; border-radius: 999px; vertical-align: middle; }
+.tcc-badge { display: inline-block; margin-left: 6px; font-family: inherit; font-size: 10px; font-weight: 700; background: var(--tcc-fill); color: #fff; padding: 1px 6px; border-radius: 999px; vertical-align: middle; }
 
 .tcc-dots { display: flex; gap: 3px; justify-content: flex-end; }
 .tcc-dot { width: 24px; height: 24px; border: 1px solid var(--line); background: none; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); cursor: pointer; }
 .tcc-dot:hover { border-color: var(--accent); }
-.tcc-dot.is-on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.tcc-dot.is-on { background: var(--tcc-fill); border-color: var(--tcc-fill); color: #fff; font-weight: 700; }
 
 .tcc-rowactions { display: flex; gap: 8px; flex-wrap: wrap; }
-.tcc-guide { background: #F7F8F6; border-left: 3px solid var(--accent); padding: 13px 16px; border-radius: 0 5px 5px 0; }
+.tcc-guide { background: var(--tcc-soft); border-left: 3px solid var(--accent); padding: 13px 16px; border-radius: 0 5px 5px 0; }
 .tcc-guide-title { font-size: 12.5px; font-weight: 700; margin-bottom: 5px; }
 .tcc-guide ul { margin: 0; padding-left: 17px; font-size: 12.5px; color: var(--ink2); }
 .tcc-guide li { margin: 3px 0; }
@@ -18555,12 +18582,12 @@ const CSS = `
 .tcc-card-dl dd { margin: 0; font-family: ui-monospace, monospace; text-align: right; overflow-wrap: anywhere; }
 .tcc-card-flags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
 .tcc-flag { font-size: 10.5px; padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink2); }
-.tcc-flag-pick { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.tcc-flag-pick { background: var(--tcc-fill); border-color: var(--tcc-fill); color: #fff; font-weight: 700; }
 
 .tcc-chartwrap { display: flex; flex-direction: column; gap: 9px; }
 /* SVG 라 폭에 맞춰 통째로 확대된다 — 720px 로 그린 그림이 1300px 로 늘어나면
    글자(10px)와 선 굵기까지 1.8배가 되어 확대경으로 보는 것처럼 된다. 배율을 묶어 둔다. */
-.tcc-chart { width: 100%; max-width: 880px; height: auto; background: #FBFCFB; border: 1px solid var(--line2); border-radius: 6px; }
+.tcc-chart { width: 100%; max-width: 880px; height: auto; background: var(--tcc-soft); border: 1px solid var(--line2); border-radius: 6px; }
 .tcc-grid { stroke: var(--line2); stroke-width: 1; }
 .tcc-axis { font-family: ui-monospace, monospace; font-size: 10px; fill: var(--ink2); }
 .tcc-axis-now { fill: var(--ink); font-weight: 700; }
@@ -18572,10 +18599,10 @@ const CSS = `
 .tcc-slider { flex: 1 1 240px; accent-color: var(--accent); }
 .tcc-slider-val { font-family: ui-monospace, monospace; font-size: 12.5px; min-width: 110px; text-align: right; }
 
-.tcc-comment { margin-top: 14px; border: 1px solid var(--line); border-radius: 7px; padding: 18px 20px; background: #FBFCFB; display: flex; flex-direction: column; gap: 15px; }
+.tcc-comment { margin-top: 14px; border: 1px solid var(--line); border-radius: 7px; padding: 18px 20px; background: var(--tcc-soft); display: flex; flex-direction: column; gap: 15px; }
 .tcc-ctitle { display: flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.02em; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
 .tcc-ctitletext { display: inline-block; }
-.tcc-cnum { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; flex: none; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 0; }
+.tcc-cnum { display: inline-flex; align-items: center; justify-content: center; width: 19px; height: 19px; flex: none; border-radius: 50%; background: var(--tcc-fill); color: #fff; font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 0; }
 .tcc-clines { list-style: none; margin: 0; padding: 0; font-size: 13px; line-height: 1.65; }
 .tcc-clines li { display: flex; gap: 10px; margin: 6px 0; align-items: baseline; }
 .tcc-cno { font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); flex: none; min-width: 26px; }
@@ -18584,30 +18611,30 @@ const CSS = `
 .tcc-cblock li { margin: 4px 0; }
 
 /* 저장 모드 · 팀 공유 */
-.tcc-save-conflict { color: #8A6100; border-color: #F0DDAC; }
-.tcc-save-conflict .tcc-save-dot { background: #C79217; }
+.tcc-save-conflict { color: var(--tcc-warn-ink); border-color: var(--tcc-warn-line); }
+.tcc-save-conflict .tcc-save-dot { background: var(--yellow); }
 .tcc-panel { margin-top: 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); padding: 16px 18px; display: flex; flex-direction: column; gap: 11px; }
 .tcc-panel-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tcc-panel-label { font-size: 12px; font-weight: 700; color: var(--ink2); width: 54px; }
 .tcc-panel-desc { margin: 0; font-size: 12.5px; color: var(--ink2); line-height: 1.6; }
 .tcc-panel-actions { display: flex; gap: 7px; flex-wrap: wrap; }
-.tcc-conflict { margin-top: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 15px; border: 1px solid #F0DDAC; background: #FFF8E8; border-radius: 7px; font-size: 12.5px; color: #7A5600; line-height: 1.55; }
+.tcc-conflict { margin-top: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 15px; border: 1px solid var(--tcc-warn-line); background: var(--tcc-warn-bg); border-radius: 7px; font-size: 12.5px; color: var(--tcc-warn-ink); line-height: 1.55; }
 .tcc-conflict > span { flex: 1 1 280px; }
 .tcc-lastedit { margin-top: 10px; display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--ink2); }
 .tcc-linkbtn { background: none; border: none; padding: 0; font-family: inherit; font-size: 11.5px; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
 /* 확인 버튼 · 알림 */
-.is-armed { background: var(--danger) !important; border-color: var(--danger) !important; color: #fff !important; font-weight: 700; }
-.tcc-notice { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 14px; background: #FFF8E8; border: 1px solid #F0DDAC; border-radius: 6px; font-size: 12.5px; color: #8A6100; }
+.is-armed { background: var(--tcc-danger-fill) !important; border-color: var(--tcc-danger-fill) !important; color: #fff !important; font-weight: 700; }
+.tcc-notice { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 14px; background: var(--tcc-warn-bg); border: 1px solid var(--tcc-warn-line); border-radius: 6px; font-size: 12.5px; color: var(--tcc-warn-ink); }
 .tcc-notice .tcc-x { margin-left: auto; }
 .tcc-warnline { margin: 0; font-size: 12.5px; color: var(--danger); }
 .tcc-snapform { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
 .tcc-snapin { flex: 1 1 240px; }
 .tcc-err { margin-top: 10px; font-size: 12.5px; color: var(--danger); }
-.tcc-cut { margin-top: 10px; font-size: 12.5px; color: #8A6100; background: #FFF8E8; border: 1px solid #F0DDAC; padding: 8px 11px; border-radius: 5px; }
+.tcc-cut { margin-top: 10px; font-size: 12.5px; color: var(--tcc-warn-ink); background: var(--tcc-warn-bg); border: 1px solid var(--tcc-warn-line); padding: 8px 11px; border-radius: 5px; }
 
 /* AI 검토 의견 — 클립보드 경유 안내·입력 */
-.tcc-aisteps { margin-bottom: 10px; font-size: 12.5px; line-height: 1.7; color: var(--ink2); background: #F7F8F6; border: 1px solid var(--line); padding: 9px 12px; border-radius: 5px; }
+.tcc-aisteps { margin-bottom: 10px; font-size: 12.5px; line-height: 1.7; color: var(--ink2); background: var(--tcc-soft); border: 1px solid var(--line); padding: 9px 12px; border-radius: 5px; }
 .tcc-airow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
 .tcc-aiok { font-size: 12.5px; color: var(--accent); font-weight: 600; }
 .tcc-aita { width: 100%; min-height: 90px; }
@@ -18616,7 +18643,7 @@ const CSS = `
 /* 평가 항목 설명 */
 /* 설명은 여러 줄 칸에 적는데 보여줄 때는 <p> 라 줄바꿈이 사라졌다. 적은 그대로 보이게 한다. */
 .tcc-desctext { margin: 3px 0 0; padding: 5px 7px; font-size: 12px; line-height: 1.55; color: var(--ink2); border-left: 2px solid var(--line); cursor: text; border-radius: 0 4px 4px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.tcc-desctext:hover { border-left-color: var(--accent); background: #FAFBFA; }
+.tcc-desctext:hover { border-left-color: var(--accent); background: var(--tcc-hover); }
 .tcc-descta { width: 100%; margin-top: 4px; font-family: inherit; font-size: 12px; line-height: 1.55; padding: 8px 9px; border: 1px solid var(--accent); border-radius: 4px; resize: vertical; color: var(--ink); background: var(--panel); }
 .tcc-descta:focus { outline: none; }
 
@@ -18666,10 +18693,10 @@ const CSS = `
 .tcc-tl-label { width: 108px; flex: none; color: var(--ink2); font-weight: 600; }
 .tcc-tl-date { flex: none; white-space: nowrap; font-family: ui-monospace, monospace; }
 .tcc-tl-d { flex: none; white-space: nowrap; font-family: ui-monospace, monospace; color: var(--ink2); }
-.tcc-tl.is-near { background: #FFF8E8; }
-.tcc-tl.is-near .tcc-tl-d { color: #8A6100; font-weight: 700; }
-.tcc-tl.is-past { background: #FAFBFA; color: var(--ink2); }
-.tcc-tl-warn { font-size: 10.5px; font-weight: 700; color: #fff; background: var(--danger); padding: 2px 8px; border-radius: 999px; }
+.tcc-tl.is-near { background: var(--tcc-warn-bg); }
+.tcc-tl.is-near .tcc-tl-d { color: var(--tcc-warn-ink); font-weight: 700; }
+.tcc-tl.is-past { background: var(--tcc-hover); color: var(--ink2); }
+.tcc-tl-warn { font-size: 10.5px; font-weight: 700; color: #fff; background: var(--tcc-danger-fill); padding: 2px 8px; border-radius: 999px; }
 
 /* 검토 회차 */
 .tcc-snaplist { display: flex; flex-direction: column; gap: 10px; }
@@ -18687,7 +18714,7 @@ const CSS = `
 .tcc-snap-svc { flex: 1; color: var(--ink2); }
 .tcc-snap-num { font-family: ui-monospace, monospace; }
 .tcc-diff { font-family: ui-monospace, monospace; font-size: 11px; padding: 1px 6px; border-radius: 999px; }
-.tcc-diff.is-up { color: var(--danger); background: #F8EDEF; }
+.tcc-diff.is-up { color: var(--danger); background: var(--tcc-danger-bg); }
 .tcc-diff.is-down { color: var(--accent); background: var(--accent-soft); }
 
 /* 운영 기록 */
@@ -18714,7 +18741,7 @@ const CSS = `
 .tcc-todo:hover { border-color: var(--ink2); }
 .tcc-todo-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--ink2); }
 .tcc-todo-hot .tcc-todo-dot { background: var(--danger); }
-.tcc-todo-warn .tcc-todo-dot { background: #C79217; }
+.tcc-todo-warn .tcc-todo-dot { background: var(--yellow); }
 .tcc-todo-soft .tcc-todo-dot { background: var(--line); }
 .tcc-todo-main { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .tcc-todo-title { font-size: 13px; font-weight: 600; color: var(--ink); }
@@ -18729,8 +18756,8 @@ const CSS = `
 .tcc-gline { display: flex; align-items: center; gap: 10px; }
 .tcc-gname { width: 122px; flex: none; font-family: inherit; font-size: 12.5px; text-align: right; background: none; border: none; padding: 0; cursor: pointer; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tcc-gname:hover { color: var(--accent); }
-.tcc-gtrack { position: relative; flex: 1; height: 26px; background: #FAFBFA; border: 1px solid var(--line2); border-radius: 4px; background-image: repeating-linear-gradient(to right, var(--line2) 0 1px, transparent 1px 25%); }
-.tcc-gband { position: absolute; top: 6px; bottom: 6px; background: #FFF3D6; border: 1px solid #F0DDAC; border-radius: 3px; }
+.tcc-gtrack { position: relative; flex: 1; height: 26px; background: var(--tcc-hover); border: 1px solid var(--line2); border-radius: 4px; background-image: repeating-linear-gradient(to right, var(--line2) 0 1px, transparent 1px 25%); }
+.tcc-gband { position: absolute; top: 6px; bottom: 6px; background: var(--tcc-warn-bg); border: 1px solid var(--tcc-warn-line); border-radius: 3px; }
 .tcc-gmark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--danger); }
 .tcc-gmark span { position: absolute; left: 5px; top: 5px; font-family: ui-monospace, monospace; font-size: 10px; color: var(--danger); white-space: nowrap; }
 .tcc-gfar { position: absolute; left: 8px; top: 5px; font-size: 11px; color: var(--ink2); }
@@ -18765,8 +18792,8 @@ const CSS = `
 .tcc-dd { color: var(--ink2); }
 .tcc-alerts { display: flex; gap: 5px; flex-wrap: wrap; }
 .tcc-alert { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
-.tcc-alert-hot { background: var(--danger); color: #fff; }
-.tcc-alert-warn { background: #FFF3D6; color: #8A6100; }
+.tcc-alert-hot { background: var(--tcc-danger-fill); color: #fff; }
+.tcc-alert-warn { background: var(--tcc-warn-bg); color: var(--tcc-warn-ink); }
 .tcc-alert-soft { background: var(--line2); color: var(--ink2); }
 .tcc-dashcard-actions { display: flex; gap: 6px; margin-top: 2px; }
 
