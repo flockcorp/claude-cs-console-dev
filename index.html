@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20261019a_supplier_closed -->
+<!-- v20261019b_supmodal_hide_closed -->
 <!-- (2026-10-16) 🎨 **비용 비교 도구 — 배경·색을 다른 메뉴와 같게**(제니). 프로토타입의 흰 종이+초록 테마를 통째로 가져와 콘솔이 다크여도 이 화면만 하얬다. .tcc-root 의 색 변수(--paper·--panel·--ink·--ink2·--line·--danger·--c1~5)는 «이름은 그대로, 값만» 콘솔 토큰(--bg·--card·--text·--sub·--border·--red-ink …)으로 이었다 — 아래 수백 줄은 안 바뀌고 다크/라이트도 저절로 따라간다. ★ 비용 비교의 --accent 는 «글자·테두리» 와 «흰 글자를 얹는 채움» 두 갈래였다 → 글자는 콘솔 --accent 를 물려받고, 채움(주 버튼·뱃지·번호·선택 칩·홈 단추)은 새 --tcc-fill(브랜드 남색). 빨강 채움도 --tcc-danger-fill(#D64545). 박혀 있던 색(옅은 회색 칸·노랑 경고 계열·옅은 빨강)도 토큰으로. 머리말 아래 2px 검정 선 → 1px --border. ★ 버튼·입력칸이 글자색을 안 물려받아(브라우저 기본 검정) 다크에서 금액 막대 숫자가 묻혔다 → :where(.tcc-root) 로 우선순위 0 의 color:inherit. ★ 차트 계열색: --accent(하늘)와 --info-ink(파랑)가 겹쳐 두 선이 한 색으로 보여 1번을 --ok-ink(초록)로. 확인: 메뉴 권한(jenny 전용)은 안 건드리고 «로컬 사본에서만» 메뉴를 열어 dev 데이터로 찍음 — 대시보드·프로젝트 6개 탭 × 다크/라이트, 탭마다 글자 78~148개 중 명암비 3 미만 0. 계산·저장·권한은 안 바뀐다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015e_tplcat_reopen -->
 <!-- (2026-10-15) 🐞 **안내 템플릿 분류 고르는 칸 — 고른 뒤 다시 누르면 안 열리던 것**(제니 제보). 줄을 마우스로 고를 때 mousedown 을 막아 칸이 포커스를 쥔 채 남고, 목록은 onFocus 로만 열려 다시 눌러도 그대로였다 → 닫혀 있으면 누르는 것(onMouseDown)으로도 연다(MsgTplCatPicker 한 곳 · 검색 아래 필터와 편집 창이 함께 쓴다). 화면만 · SQL 없음. ★ dev 전용. -->
@@ -5972,7 +5972,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
         const allNames=new Set([...Object.keys(supplierMap)]);
         // 현재 로드된 products 페이지에서 보이는 공급사명도 보강 (자동 등록 안 된 케이스 대비)
         products.forEach(p=>{ if(p.supplier_name) allNames.add(p.supplier_name); });
-        const list=[...allNames].sort((a,b)=>a.localeCompare(b,'ko'));
+        // ★ 퇴점(거래중지·거래해지) 공급사는 이 모달에서 뺀다(제니 2026-10-19) — 카드가 «거래중» 을 세므로
+        //   열었을 때도 거래 중인 곳만 보여야 한다. 판정은 supIsClosed 한 곳. 상태를 아직 모르는 곳은 남긴다.
+        const list=[...allNames].filter(n=>!supIsClosed((supStatusMap[n]||{}).status)).sort((a,b)=>a.localeCompare(b,'ko'));
         const filtered=list.filter(n=>{
           if(supModalSearch&&!n.toLowerCase().includes(supModalSearch.toLowerCase())) return false;
           if(supModalTab==='channels'){
@@ -6063,7 +6065,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                   창 크기를 고정해 놓고도 이것이 남으면 여전히 «흔들린다» 로 읽힌다. */}
               <div style={{padding:'14px 22px',overflowY:'scroll',overflowX:'auto',flex:1}}>
                 {supModalTab==='contacts'?(
-                  <SupplierContactsTab compact isMaster={isMaster}
+                  <SupplierContactsTab compact hideClosed isMaster={isMaster}
                     currentUserEmail={currentUserEmail} supplierNames={[]}/>
                 ):filtered.length===0?<div style={{textAlign:'center',color:'var(--sub)',fontSize:12,padding:30}}>해당하는 공급사가 없습니다</div>:(
                   <div style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',minWidth:supModalTab==='shipping'?1080:560,width:'100%'}}>
@@ -6827,7 +6829,7 @@ function csParseSupplierContacts(text){
 //   되돌리기가 어렵다 — 몇 곳이 들어오고 콘솔 공급사와 몇 곳이 이어지는지 먼저 보인다.
 // ★★★ **이번 목록에 없는 공급사를 지우지 않는다.** 정산 시스템에서 한 줄이 잠깐
 //   빠지는 일과 «거래가 끝난 것» 은 다르다. 화면이 «이번 목록에 없음» 으로 말해 준다.
-function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact}){
+function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact, hideClosed}){
   const [rows,setRows]     = useState(null);   // 저장돼 있는 연락망
   const [q,setQ]           = useState('');
   const [open,setOpen]     = useState(null);   // 펼쳐 보는 code
@@ -6835,11 +6837,27 @@ function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact
   const [prev,setPrev]     = useState(null);   // 미리보기
   const [busy,setBusy]     = useState(false);
   const [showPaste,setShowPaste] = useState(false);
+  const [closedN,setClosedN] = useState(0);    // hideClosed 로 뺀 퇴점 공급사 수
 
   const load = async ()=>{
     const {data,error} = await sb.from('supplier_contacts')
       .select('code,name,data,synced_at,updated_at,updated_by').order('name');
     if(sbFail('공급사 연락망 조회', error)){ setRows([]); return; }
+    // ★ hideClosed = 상품 정보 «거래중 총 공급사» 모달(제니 2026-10-19): 퇴점 공급사는 뺀다.
+    //   연락망의 열쇠는 공급사코드라 suppliers.cafe24_supplier_code 의 거래상태로 가른다.
+    //   ★ 상태를 못 읽으면 빼지 않는다 — 조용히 줄어든 목록보다 다 보이는 편이 낫다.
+    if(hideClosed){
+      const {data:sup,error:supErr} = await sb.from('suppliers')
+        .select('cafe24_supplier_code,cafe24_status').in('cafe24_status',['P','N']);
+      if(!supErr){
+        const closed = new Set((sup||[]).filter(s=>supIsClosed(s.cafe24_status)).map(s=>s.cafe24_supplier_code));
+        const kept = (data||[]).filter(r=>!closed.has(r.code));
+        setClosedN((data||[]).length-kept.length);
+        setRows(kept);
+        return;
+      }
+      console.error('퇴점 공급사 조회 실패:',supErr);
+    }
     setRows(data||[]);
   };
   useEffect(()=>{ load(); },[]);
@@ -6974,7 +6992,7 @@ function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact
           placeholder="공급사명 · 담당자 · 연락처 · 메일 어느 것으로든 검색"
           style={{...inp,maxWidth:420}}/>
         <div style={{fontSize:11.5,color:'var(--sub)'}}>
-          {rows.length}곳 저장됨{kw && <> · <b style={{color:'var(--text)'}}>{list.length}곳</b> 찾음</>}
+          {rows.length}곳 저장됨{closedN>0 && <> (퇴점 {closedN}곳 제외)</>}{kw &&<> · <b style={{color:'var(--text)'}}>{list.length}곳</b> 찾음</>}
         </div>
         <div style={{flex:1}}></div>
         {/* ★★ «어느 시점 기준 값인가» 를 늘 보이게 둔다(제니 2026-09-08).
