@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v20261016a_costs_theme -->
+<!-- v20261019a_supplier_closed -->
 <!-- (2026-10-16) 🎨 **비용 비교 도구 — 배경·색을 다른 메뉴와 같게**(제니). 프로토타입의 흰 종이+초록 테마를 통째로 가져와 콘솔이 다크여도 이 화면만 하얬다. .tcc-root 의 색 변수(--paper·--panel·--ink·--ink2·--line·--danger·--c1~5)는 «이름은 그대로, 값만» 콘솔 토큰(--bg·--card·--text·--sub·--border·--red-ink …)으로 이었다 — 아래 수백 줄은 안 바뀌고 다크/라이트도 저절로 따라간다. ★ 비용 비교의 --accent 는 «글자·테두리» 와 «흰 글자를 얹는 채움» 두 갈래였다 → 글자는 콘솔 --accent 를 물려받고, 채움(주 버튼·뱃지·번호·선택 칩·홈 단추)은 새 --tcc-fill(브랜드 남색). 빨강 채움도 --tcc-danger-fill(#D64545). 박혀 있던 색(옅은 회색 칸·노랑 경고 계열·옅은 빨강)도 토큰으로. 머리말 아래 2px 검정 선 → 1px --border. ★ 버튼·입력칸이 글자색을 안 물려받아(브라우저 기본 검정) 다크에서 금액 막대 숫자가 묻혔다 → :where(.tcc-root) 로 우선순위 0 의 color:inherit. ★ 차트 계열색: --accent(하늘)와 --info-ink(파랑)가 겹쳐 두 선이 한 색으로 보여 1번을 --ok-ink(초록)로. 확인: 메뉴 권한(jenny 전용)은 안 건드리고 «로컬 사본에서만» 메뉴를 열어 dev 데이터로 찍음 — 대시보드·프로젝트 6개 탭 × 다크/라이트, 탭마다 글자 78~148개 중 명암비 3 미만 0. 계산·저장·권한은 안 바뀐다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261015e_tplcat_reopen -->
 <!-- (2026-10-15) 🐞 **안내 템플릿 분류 고르는 칸 — 고른 뒤 다시 누르면 안 열리던 것**(제니 제보). 줄을 마우스로 고를 때 mousedown 을 막아 칸이 포커스를 쥔 채 남고, 목록은 onFocus 로만 열려 다시 눌러도 그대로였다 → 닫혀 있으면 누르는 것(onMouseDown)으로도 연다(MsgTplCatPicker 한 곳 · 검색 아래 필터와 편집 창이 함께 쓴다). 화면만 · SQL 없음. ★ dev 전용. -->
@@ -3637,6 +3637,14 @@ const tipIfClipped = (text)=>({
   },
 });
 
+// ── 공급사 «퇴점» 판정 ──────────────────────────────────────────────────────
+// ★ 2026-10-19 제니 결정: 카페24 «공급사 판매분류 관리» 의 «거래 상태» 하나만 본다.
+//   거래중지(P) 또는 거래해지(N) → 콘솔에서는 «퇴점» 하나로 부른다(«휴면» 은 안 쓴다).
+//   ★ 사용여부(use_supplier)는 판정에서 뺐다 — 기준이 둘이면 «퇴점인데 거래중» 같은 말이 생긴다.
+// ★ 판정은 여기 한 곳이다. 상품 목록 뱃지·상세 띠·공급사 관리(뱃지·필터·개수)가 같이 본다.
+const SUP_TRADE_LABEL={A:'거래중',P:'거래중지',N:'거래해지'};
+const supIsClosed=status=>status==='P'||status==='N';
+
 // ── 공급사 «소통 채널» 색표 ────────────────────────────────────────────────
 // ★★ 2026-09-03 에 모듈 자리로 올렸다. 그전에는 똑같은 표가 두 컴포넌트 안에
 //   각각 있었고(상품 관리·공급사 관리), CS 티켓 화면이 세 번째로 필요해졌다.
@@ -3978,8 +3986,9 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
       //   주 1회 조사(orphan-products-audit)가 이 칸을 채우고, 다시 나타나면 지운다.
       missing:      !!p.cafe24_missing_since,
       missingSince: p.cafe24_missing_since||null,
-      // 사용여부 F 이거나 거래상태 P(거래중지) 면 그 공급사 상품은 팔 수 없다.
-      supOff:  !!sup&&(sup.use===false||sup.status==='P'),
+      // 공급사 거래상태가 거래중지·거래해지면 «퇴점» — 그 공급사 상품은 팔 수 없다(supIsClosed).
+      supOff:  !!sup&&supIsClosed(sup.status),
+      supTrade:sup?(SUP_TRADE_LABEL[sup.status]||sup.status||''):'',
       supName: p.supplier_name||'',
       syncedAt:p.cafe24_synced_at||null,
     };
@@ -4012,7 +4021,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
           +' · 콘솔에서는 지우지 않고 보관합니다')}
         {s.stopped&&tag('판매중지','#B42318','#FEE4E2','#FDA29B','카페24에서 이 상품을 «판매함» 으로 두지 않았습니다')}
         {s.hidden&&tag('미진열','#3A5580','#E4ECF9','#B4CCF0','카페24에서 이 상품을 «진열함» 으로 두지 않았습니다')}
-        {s.supOff&&tag('공급사 미사용','#93500A','#FDEBD0','#F0BE72','공급사 '+s.supName+' 가 카페24에서 미사용·거래중지 상태입니다')}
+        {s.supOff&&tag('공급사 퇴점','#93500A','#FDEBD0','#F0BE72','공급사 '+s.supName+' 퇴점 · 카페24 거래상태 «'+s.supTrade+'»')}
       </div>
     );
   };
@@ -4049,7 +4058,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
               공급사가 미사용이면 그래도 못 판다 — 이유가 다르면 문구도 달라야 한다. */}
           {s.supOff&&(
             <div style={{fontSize:14,fontWeight:700,color:c,marginTop:(s.stopped||s.hidden)?4:0}}>
-              공급사 「{s.supName}」 가 카페24에서 미사용·거래중지 상태입니다
+              공급사 「{s.supName}」 는 퇴점했습니다 (카페24 거래상태 «{s.supTrade}»)
             </div>
           )}
           <div style={{fontSize:12,color:'var(--sub)',marginTop:4}}>
@@ -7085,12 +7094,12 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
   const [sortBy,setSortBy]=useState('name');       // name | products_desc | products_asc | unset_first
   const [filterChannel,setFilterChannel]=useState('all'); // all|kakao|nateon|email|none
   const [filterCond,setFilterCond]=useState('all');       // all|unset|<cond>
-  // 카페24 거래 상태로 좁혀 보기. all|off(미사용·거래중지)|on(정상)|unknown(아직 안 가져옴)
+  // 카페24 거래 상태로 좁혀 보기. all|off(퇴점=거래중지·거래해지)|on(거래중)|unknown(아직 안 가져옴)
   const [filterCafe,setFilterCafe]=useState('all');
   // ★ «미사용» 의 정의를 한 곳에 둔다 — 뱃지와 필터와 개수가 같은 함수를 본다.
   //   세 곳에 따로 적으면 «뱃지는 붙었는데 필터에 안 걸리는» 공급사가 반드시 생긴다.
-  const supIsOff=s=>s.cafe24Use===false||s.cafe24State==='P';
-  const supIsUnknown=s=>s.cafe24Use==null&&!s.cafe24State;
+  const supIsOff=s=>supIsClosed(s.cafe24State);
+  const supIsUnknown=s=>!s.cafe24State;
   const [edit,setEdit]=useState({});               // 인라인 편집 임시 상태 {name: {fee,cond,threshold,memo}}
   const [saving,setSaving]=useState(null);
   // CSV 업로드 모달
@@ -7668,8 +7677,8 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
               fontWeight:filterCafe==='all'?400:700,
               boxShadow:filterCafe==='all'?'none':'0 0 0 2px rgba(246,173,9,.35)'}}>
             <option value="all">카페24 상태: 전체 ({cafeCounts.all})</option>
-            <option value="off">미사용·거래중지 ({cafeCounts.off})</option>
-            <option value="on">정상 ({cafeCounts.on})</option>
+            <option value="off">퇴점 · 거래중지·거래해지 ({cafeCounts.off})</option>
+            <option value="on">거래중 ({cafeCounts.on})</option>
             <option value="unknown">아직 안 가져옴 ({cafeCounts.unknown})</option>
           </select>
         </div>
@@ -7775,18 +7784,16 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
                 <span style={{display:'flex',alignItems:'center',minWidth:0}} title={s.name}>
                   <span style={{color:'#1A2240',fontWeight:500,flex:'0 1 auto',minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{s.name}</span>
                   {(()=>{
-                    // 사용여부 F 또는 거래상태 P 면 그 공급사 상품은 팔 수 없다.
+                    // 거래상태가 거래중지·거래해지면 «퇴점» — 그 공급사 상품은 팔 수 없다.
                     // 판정은 supIsOff 한 곳에서만 한다 — 필터·개수도 같은 함수를 본다.
                     if(!supIsOff(s)) return null;
-                    const why=s.cafe24Use===false
-                      ?'카페24에서 «사용함» 이 꺼져 있습니다'
-                      :'카페24 거래상태가 «거래중지» 입니다';
+                    const why='카페24 거래상태가 «'+(SUP_TRADE_LABEL[s.cafe24State]||s.cafe24State)+'» 입니다';
                     // ★ 흰 배경 표라 «진한 글자 + 연한 바탕 + 같은 계열 테두리» 로 둔다.
                     //   상품 목록 뱃지와 같은 색을 쓴다 — 같은 뜻이 화면마다 다른 색이면 안 된다.
                     return <span title={why}
                       style={{flex:'none',marginLeft:6,display:'inline-flex',alignItems:'center',position:'relative',top:1,
                         fontSize:10,fontWeight:700,lineHeight:1,padding:'3px 6px',borderRadius:4,whiteSpace:'nowrap',
-                        color:'#93500A',background:'#FDEBD0',border:'1px solid #F0BE72'}}>미사용</span>;
+                        color:'#93500A',background:'#FDEBD0',border:'1px solid #F0BE72'}}>퇴점</span>;
                   })()}
                 </span>
                 {/* 그룹 내 구분선 (공급사명 ↔ 상품수) */}
