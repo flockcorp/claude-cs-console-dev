@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261021b_costs_save_guard -->
+<!-- (2026-10-21) 💰 **비용 비교 도구 — 저장 안전장치**(10-16 검토 1번 · 제니 「비용 비교 개선 하자」). ①처음 불러오기에 실패하면 «샘플 프로젝트» 대신 오류 + [다시 시도](예전엔 읽기 실패를 «저장된 것 없음» 으로 삼켜 샘플을 띄웠고, 거기서 고치면 샘플이 실자료 자리에 저장될 수 있었다) · ②저장 직전 확인 읽기가 실패하면 저장하지 않는다(예전엔 충돌 검사를 건너뛰고 썼다) · ③[최신 내용 불러오기]·[새로고침] 실패 시 화면 유지 · ④백업 불러오기는 «무엇이 무엇으로 바뀌는지» 띠 + 두 번 누르기(지금 내용 내려받기 단추 함께) · ⑤가정값·비교 대상·비용 항목·기능 항목·운영 기록 삭제를 두 번 누르기(회차 삭제와 같은 ConfirmButton). 계산·저장 형식은 안 바뀐다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261021a_tk_list_my_view -->
 <!-- (2026-10-21) 🎫 **티켓 목록 글자 크기·행 간격을 계정마다 조절**(제니: 「로그인한 계정마다 각자 원하는 형태로」). [⚙ 보기 설정] 패널 맨 위에 «내 화면» — 글자 크기 13·14·15(기본)·16·17 · 행 간격 촘촘(10)·좁게(14)·기본(18)·넓게(24) · 누르면 바로 바뀐다. 저장은 **계정별 DB**(새 표 `console_user_prefs` · RLS 로 제 줄만 · sql/console_user_prefs.sql 백업 저장소) · localStorage 는 첫 그림용 사본(키에 이메일). ★ [⚙ 보기 설정] 버튼을 이제 **누구나** 본다 — 그 아래 열 구성 부분은 여전히 master 만. ★ 칸 안 작은 글자(주문번호·날짜·연락처·알약·리체크)는 «본문보다 n px 작게»(csTkFs · --tk-fs)로 바꿔 함께 커진다 — 기본 15 에선 전과 같은 크기. 머리글은 그대로. ★ dev 전용. -->
 <!-- v20261020a_tk_list_weight400 -->
@@ -15778,6 +15780,8 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
   const me = currentUserEmail || "";   // 편집자는 로그인 계정이다. 따로 이름을 받지 않는다.
   const [meta, setMeta] = useState(null);
   const [remoteChanged, setRemoteChanged] = useState(false);
+  const [loadError, setLoadError] = useState(null);       // 처음 불러오기 실패(샘플 대신 이것을 보인다)
+  const [pendingImport, setPendingImport] = useState(null); // 백업 불러오기 — 바꾸기 전 확인 대기
   const firstLoad = useRef(true);
   const fileRef = useRef(null);
   const baseRev = useRef(0);
@@ -15792,7 +15796,13 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
     let alive = true;
     (async () => {
       meRef.current = currentUserEmail || "";
-      let box = await readStore();
+      const rd = await readStore();
+      if (!alive) return;
+      // ★★ 2026-10-21 — 못 읽었으면 «샘플» 을 띄우지 않는다. 예전엔 읽기 실패를 «저장된 것 없음» 으로
+      //   삼켜 샘플 프로젝트를 보여 줬고, 거기서 무엇이든 고치면 그 샘플이 실데이터 자리에 저장될 수 있었다.
+      //   → 오류 화면 + 다시 시도. 화면에 자료가 없으니 자동 저장도 돌지 않는다.
+      if (!rd.ok) { setLoadError(rd.error); return; }
+      let box = rd.box;
       let moved = null;
       if (!box) {
         // 예전에 '나만 보기'로 저장해 둔 것이 있으면 잃지 않도록 한 번 옮겨 온다.
@@ -15851,14 +15861,17 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
   }, [projects]);
 
   /* ---------- 저장소 입출력 ---------- */
+  // ★★ 2026-10-21 — «저장된 것이 없다» 와 «읽지 못했다» 를 가른다. 예전엔 둘 다 null 이라
+  //   네트워크·권한 오류에서도 샘플을 띄웠다. 없는 것은 {ok:true, box:null}, 실패는 {ok:false}.
+  //   ★ 깨진 JSON 도 «실패» 다 — 빈 자료로 보고 덮어쓰면 남은 것까지 잃는다.
   async function readStore() {
     try {
       const r = await TCC_STORE.get(SHARED_KEY, true);
-      if (r && r.value) return JSON.parse(r.value);
+      if (!r || !r.value) return { ok: true, box: null };
+      return { ok: true, box: JSON.parse(r.value) };
     } catch (e) {
-      /* 아직 저장된 것이 없음 */
+      return { ok: false, error: (e && e.message) || String(e) };
     }
-    return null;
   }
 
   /* 개인/공유를 나누던 시절의 저장본. 처음 한 번만 읽어 옮겨 온다. */
@@ -15875,13 +15888,11 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
   async function writeStore(projs, force) {
     try {
       // 남의 수정을 덮어쓰지 않도록 먼저 확인한다
-      let cur = null;
-      try {
-        const r = await TCC_STORE.get(SHARED_KEY, true);
-        if (r && r.value) cur = JSON.parse(r.value);
-      } catch (e) {
-        cur = null;
-      }
+      // ★★ 2026-10-21 — 확인 읽기가 실패하면 «저장하지 않는다». 예전엔 cur=null 로 두고 충돌 검사를
+      //   건너뛴 채 썼다 — 그사이 남이 고친 것을 모른 채 덮을 수 있었다. 덮어쓰기(force)여도 같다.
+      const rd = await readStore();
+      if (!rd.ok) return { ok: false };
+      const cur = rd.box;
       if (!force && cur && typeof cur.rev === "number" && cur.rev !== baseRev.current) {
         return { ok: false, conflict: true };
       }
@@ -15920,11 +15931,25 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
   }
 
   /* 최신 내용 다시 불러오기 */
+  // ★ 2026-10-21 — 못 읽었으면 지금 화면을 그대로 둔다(예전엔 샘플로 바뀌었다).
   const pullLatest = async () => {
-    const box = await readStore();
+    const rd = await readStore();
+    if (!rd.ok) {
+      setNotice("최신 내용을 불러오지 못했습니다. 지금 화면은 그대로입니다. 잠시 뒤 다시 눌러주세요. (" + rd.error + ")");
+      return;
+    }
     firstLoad.current = true;
-    applyBox(box, true);
+    applyBox(rd.box, true);
     setSaveState("idle");
+  };
+
+  /* 처음 불러오기에 실패했을 때 — 다시 시도 */
+  const retryLoad = async () => {
+    setLoadError(null);
+    const rd = await readStore();
+    if (!rd.ok) { setLoadError(rd.error); return; }
+    firstLoad.current = true;
+    applyBox(rd.box, true);
   };
 
   /* 내 화면 내용으로 공유 저장소 덮어쓰기 */
@@ -16049,9 +16074,10 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
       try {
         const data = JSON.parse(String(reader.result));
         if (!Array.isArray(data)) throw new Error("형식이 맞지 않습니다");
-        const fixed = data.map(migrate);
-        setProjects(fixed);
-        setActiveId(fixed[0] ? fixed[0].id : null);
+        // ★ 2026-10-21 — 바로 바꾸지 않는다. 불러오면 «모든 프로젝트» 가 파일 내용으로 바뀌고 곧 자동 저장된다
+        //   → 무엇이 무엇으로 바뀌는지 보여 주고 한 번 더 묻는다(아래 확인 띠).
+        if (!data.length) throw new Error("빈 백업");
+        setPendingImport({ name: f.name, list: data.map(migrate) });
       } catch (err) {
         setNotice("백업을 불러오지 못했습니다. 이 도구에서 내려받은 파일인지 확인해주세요.");
       }
@@ -16099,6 +16125,23 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
     a.click();
     URL.revokeObjectURL(a.href);
   };
+
+  if (loadError) {
+    return (
+      <div className="tcc-root">
+        <style>{CSS}</style>
+        <div className="tcc-conflict">
+          <span>
+            저장된 비교 자료를 불러오지 못했습니다. 자료가 사라진 것이 아니라 «읽지 못한» 것이라,
+            덮어쓰지 않도록 화면을 열지 않았습니다. ({loadError})
+          </span>
+          <div className="tcc-inline">
+            <button className="tcc-btn tcc-btn-solid" onClick={retryLoad}>다시 시도</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (projects === null || !project) {
     return (
@@ -16180,6 +16223,31 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
           <button className="tcc-linkbtn" onClick={pullLatest}>
             새로고침
           </button>
+        </div>
+      )}
+
+      {pendingImport && (
+        <div className="tcc-conflict">
+          <span>
+            백업 «{pendingImport.name}»(프로젝트 {pendingImport.list.length}개)으로 지금 내용
+            (프로젝트 {projects.length}개)을 <b>통째로 바꿉니다</b>. 바꾸면 곧 자동 저장되어 모든 사람의 화면이 바뀝니다.
+            먼저 지금 내용을 내려받아 두는 것을 권합니다.
+          </span>
+          <div className="tcc-inline">
+            <button className="tcc-btn tcc-btn-ghost" onClick={exportJson}>지금 내용 내려받기</button>
+            <button className="tcc-btn" onClick={() => setPendingImport(null)}>취소</button>
+            <ConfirmButton
+              className="tcc-btn tcc-btn-solid"
+              label="백업으로 바꾸기"
+              confirmLabel="정말 바꿀까요?"
+              onConfirm={() => {
+                const fixed = pendingImport.list;
+                setPendingImport(null);
+                setProjects(fixed);
+                setActiveId(fixed[0] ? fixed[0].id : null);
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -16428,9 +16496,9 @@ function SetupTab({ project, patch }) {
               <button className="tcc-mini" onClick={() => moveVar(v.id, 1)} title="아래로">
                 ↓
               </button>
-              <button className="tcc-x" onClick={() => delVar(v.id)} title="삭제">
-                ×
-              </button>
+              {/* ★ 2026-10-21 — 지우기는 두 번 누른다(회차 삭제와 같은 ConfirmButton). 한 번에 지워지면 되돌릴 길이 없다. */}
+              <ConfirmButton className="tcc-x" label="×" confirmLabel="삭제" title="삭제"
+                onConfirm={() => delVar(v.id)} />
             </div>
           ))}
         </div>
@@ -16474,9 +16542,8 @@ function SetupTab({ project, patch }) {
                       </option>
                     ))}
                   </select>
-                  <button className="tcc-x" onClick={() => delService(s.id)} title="삭제">
-                    ×
-                  </button>
+                  <ConfirmButton className="tcc-x" label="×" confirmLabel="삭제" title="삭제"
+                    onConfirm={() => delService(s.id)} />
                 </div>
                 <div className="tcc-svcgrid">
                   <label>
@@ -16759,9 +16826,8 @@ function CostTab({ project, patch, exportCsv }) {
                   <button className="tcc-mini" onClick={() => moveItem(it.id, 1)}>
                     ↓
                   </button>
-                  <button className="tcc-mini tcc-mini-del" onClick={() => delItem(it.id)}>
-                    ×
-                  </button>
+                  <ConfirmButton className="tcc-mini tcc-mini-del" label="×" confirmLabel="삭제"
+                    title="삭제" onConfirm={() => delItem(it.id)} />
                 </td>
               </tr>
             ))}
@@ -16979,9 +17045,8 @@ function FeatureTab({ project, patch }) {
                   <button className="tcc-mini" onClick={() => moveFeature(f.id, 1)} title="아래로">
                     ↓
                   </button>
-                  <button className="tcc-mini tcc-mini-del" onClick={() => delFeature(f.id)}>
-                    ×
-                  </button>
+                  <ConfirmButton className="tcc-mini tcc-mini-del" label="×" confirmLabel="삭제"
+                    title="삭제" onConfirm={() => delFeature(f.id)} />
                 </td>
               </tr>
             ))}
@@ -17881,9 +17946,8 @@ function HistoryTab({ project, patch, me }) {
                   <span className="tcc-logdate">{l.date}</span>
                   <span className={"tcc-logtag tcc-logtag-" + l.type}>{t ? t.label : l.type}</span>
                   <span className="tcc-logbody">{l.text}</span>
-                  <button className="tcc-x" onClick={() => delLog(l.id)}>
-                    ×
-                  </button>
+                  <ConfirmButton className="tcc-x" label="×" confirmLabel="삭제" title="삭제"
+                    onConfirm={() => delLog(l.id)} />
                 </li>
               );
             })}
