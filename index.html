@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261022e_costs_store_v2 -->
+<!-- (2026-10-22) 💰 **비용 비교 도구 — 저장 구조를 프로젝트마다 한 줄로**(10-16 검토 5번 앞부분 · 제니 «지금 바로 해도 돼»). 예전엔 모든 프로젝트가 cost_store 한 줄(`toolcost:team:v1`)이라 다른 프로젝트를 고쳐도 «저장 보류» 가 떴고 저장마다 전부를 읽고 썼다. 이제 `toolcost:p:<id>` 줄마다 {rev, sort, updatedAt, updatedBy, project} + 표시 줄 `toolcost:meta:v2`. ①처음 열 때 옛 줄을 그대로 옮긴다(옛 줄은 지우지 않는다 — 백업) ②바뀐 프로젝트만 쓰고 충돌은 «내가 고친 프로젝트» 만 본다(남이 다른 프로젝트를 고쳐도 내 저장은 안 막힌다 → 알림만 «다른 사람이 프로젝트 N개를 수정») ③30초 확인은 updated_at 만 읽는다 ④쓰기 먼저·지우기 다음(끊겨도 «남는» 쪽) ⑤옮긴 «뒤» 새로고침 안 한 옛 화면이 옛 줄에 저장하면 «옛 화면 저장분» 띠 — 가져오기(백업 바꾸기 확인 거침)·내려받기·버리기 ⑥사이드바 미리 읽기도 v2. ★ dev 는 10-22 에 옮겼다(2 프로젝트 · 칸별 동일 확인 · 옮기기 전 줄은 scratchpad 백업). 두 화면 동시 편집 시험 6단계 통과(시험 프로젝트 만들고 지움). 새 표·칸 없음 → SQL·마스킹 변화 없음. ★ 운영 승격 날: 승격 직후 열린 옛 탭이 있으면 ⑤가 잡는다. ★ dev 전용. -->
 <!-- v20261022d_costs_toolcol -->
 <!-- (2026-10-22) 💰 비용표 항목 오른쪽 ↑ ↓ × 가 두 줄로 나뉘던 것 → 한 줄(제니). 칸 폭 96→136(잰 값: 단추 29+29+38«삭제»+간격 9+여백 24=129) · nowrap. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261022c_costs_quotes -->
@@ -15276,7 +15278,59 @@ const TCC_STORE = {
    ========================================================= */
 
 const STORAGE_KEY = "toolcost:projects:v1";
-const SHARED_KEY = "toolcost:team:v1";
+const SHARED_KEY = "toolcost:team:v1";   // 옛 «한 줄에 전부» — 2026-10-22 부터 읽기만 한다(옮겨 온 뒤 백업으로 남는다)
+
+/* ── 저장 구조 v2 (2026-10-22 · 10-16 검토 5번) ─────────────────────────────
+   예전엔 모든 프로젝트를 cost_store 한 줄(SHARED_KEY)에 담아, 다른 프로젝트를 고쳐도 «충돌» 로 잡혔고
+   저장마다 전부를 읽고 썼다. 이제 프로젝트마다 한 줄이다.
+     · `toolcost:p:<프로젝트id>` = {rev, sort, updatedAt, updatedBy, project}
+     · `toolcost:meta:v2`       = {migratedAt, by} — «v2 로 옮겼다» 는 표시. 이것이 있으면 옛 줄을 다시 옮기지 않는다
+       (없으면 모든 프로젝트를 지운 뒤 다시 열 때 옛 줄이 되살아난다).
+   ★ 옛 SHARED_KEY 줄은 지우지 않는다 — 옮기기 직전 상태 그대로 남는 백업이다(쓰지 않는다).
+   ★ 충돌은 «내가 고친 프로젝트» 만 본다 — 남이 다른 프로젝트를 고쳐도 내 저장은 막히지 않는다.
+   ★ 새 표·새 칸 없음(같은 cost_store · 같은 RLS) → SQL·마스킹 규칙 변화 없음. */
+const TCC_P_PREFIX = "toolcost:p:";
+const TCC_META_KEY = "toolcost:meta:v2";
+const TCC_SHARED_OWNER = "00000000-0000-0000-0000-000000000000";
+
+/* 공유 줄을 전부 읽어 «무엇이 있는가» 로 정리한다. 실패·깨진 JSON 은 던진다(빈 자료로 보고 덮으면 남은 것까지 잃는다). */
+async function tccReadAll(quiet) {
+  const { data, error } = await sb
+    .from("cost_store")
+    .select("store_key,value,updated_at")
+    .eq("scope", "shared")
+    .like("store_key", "toolcost:%");
+  if (error) { if (!quiet) sbFail("비용 비교 자료 조회", error); throw error; }
+  const rows = data || [];
+  const meta = rows.find((r) => r.store_key === TCC_META_KEY) || null;
+  const v1row = rows.find((r) => r.store_key === SHARED_KEY) || null;
+  const prows = rows
+    .filter((r) => r.store_key.indexOf(TCC_P_PREFIX) === 0)
+    .map((r) => {
+      const b = JSON.parse(r.value);
+      return { id: r.store_key.slice(TCC_P_PREFIX.length), at: r.updated_at, ...b };
+    })
+    .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+  return {
+    meta: meta ? { ...JSON.parse(meta.value || "{}"), at: meta.updated_at } : null,
+    v1: v1row && v1row.value ? JSON.parse(v1row.value) : null,
+    prows,
+  };
+}
+
+/* ★ 옮긴 «뒤» 에 옛 한 줄이 다시 저장됐는가 — 새로고침 안 한 옛 화면(탭)이 계속 저장한 경우다.
+   v2 는 옛 줄을 안 읽으므로 그 수정이 조용히 사라진다. 그래서 찾아서 알린다(가져올지는 사람이 고른다). */
+function tccStaleV1(all) {
+  if (!all.meta || !all.v1 || !all.v1.updatedAt) return null;
+  const moved = Date.parse(all.meta.migratedAt || all.meta.at || "");
+  const v1At = Date.parse(all.v1.updatedAt);
+  if (!isFinite(moved) || !isFinite(v1At) || v1At <= moved) return null;
+  return {
+    updatedAt: all.v1.updatedAt,
+    updatedBy: all.v1.updatedBy || "",
+    projects: Array.isArray(all.v1.projects) ? all.v1.projects : [],
+  };
+}
 
 /* 몇 분 전인지 사람이 읽기 좋게 */
 function agoText(iso) {
@@ -15885,12 +15939,18 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
   const [saveState, setSaveState] = useState("idle");
   const me = currentUserEmail || "";   // 편집자는 로그인 계정이다. 따로 이름을 받지 않는다.
   const [meta, setMeta] = useState(null);
-  const [remoteChanged, setRemoteChanged] = useState(false);
+  const [remoteChanged, setRemoteChanged] = useState(false);   // 내가 고친 프로젝트를 남도 고쳤다 — 저장 보류
+  const [remoteSeen, setRemoteSeen] = useState(null);          // 남이 (다른) 프로젝트를 고쳤다 — 알림만
+  const [staleV1, setStaleV1] = useState(null);                // 옮긴 뒤 옛 화면이 옛 한 줄에 저장한 내용
   const [loadError, setLoadError] = useState(null);       // 처음 불러오기 실패(샘플 대신 이것을 보인다)
   const [pendingImport, setPendingImport] = useState(null); // 백업 불러오기 — 바꾸기 전 확인 대기
   const firstLoad = useRef(true);
   const fileRef = useRef(null);
-  const baseRev = useRef(0);
+  // v2 — 프로젝트마다: 내가 마지막으로 본 rev · 마지막으로 저장(또는 불러온) 모양 · 줄의 updated_at
+  const baseRevs = useRef(new Map());
+  const savedBody = useRef(new Map());
+  const seenAt = useRef(new Map());
+  const metaDone = useRef(false);   // `toolcost:meta:v2` 줄이 있는가
   const meRef = useRef("");
 
   useEffect(() => {
@@ -15917,7 +15977,12 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
       }
       if (!alive) return;
       applyBox(box, true);
-      if (moved && moved.length) await writeStore(moved, true);
+      // ★ 2026-10-22 — 아직 v2 가 아니면(옛 한 줄 · 옛 개인 저장본) 지금 화면 그대로 프로젝트마다 한 줄로 옮긴다.
+      //   옛 줄은 그대로 남는다. 옮기다 실패하면 화면은 그대로 두고 알린다(다음에 열 때 다시 옮긴다).
+      if (box && !box.v2 && Array.isArray(box.projects) && box.projects.length) {
+        const r = await writeStore(box.projects.map(migrate), true);
+        if (alive && !r.ok) setNotice("저장 구조를 새 방식으로 옮기지 못했습니다. 화면은 그대로이며 다음에 열 때 다시 옮깁니다.");
+      }
     })();
     return () => {
       alive = false;
@@ -15926,16 +15991,31 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
 
   /* 다른 사람이 같은 자료를 고쳤는지 30초마다 확인한다 (master 는 여럿일 수 있다) */
   useEffect(() => {
+    // v2 — 값은 안 읽고 줄마다 updated_at 만 본다(예전엔 30초마다 전체 JSON 을 읽었다).
     const id = setInterval(async () => {
+      if (!metaDone.current) return;   // 아직 옮기기 전이면 볼 것이 없다
       try {
-        const r = await TCC_STORE.get(SHARED_KEY, true);
-        if (r && r.value) {
-          const box = JSON.parse(r.value);
-          if (typeof box.rev === "number" && box.rev !== baseRev.current) {
-            setRemoteChanged(true);
-            setMeta({ updatedAt: box.updatedAt, updatedBy: box.updatedBy });
-          }
-        }
+        const { data, error } = await sb
+          .from("cost_store")
+          .select("store_key,updated_at,updated_by")
+          .eq("scope", "shared")
+          .like("store_key", TCC_P_PREFIX + "%");
+        if (error || !data) return;
+        const t = (x) => (x ? Date.parse(x) : 0);
+        const keys = new Set(data.map((r) => r.store_key));
+        const changed =
+          data.filter((r) => t(r.updated_at) !== t(seenAt.current.get(r.store_key))) ;
+        const gone = [...seenAt.current.keys()].some((k) => !keys.has(k));
+        // ★ v2 에서는 남이 고쳤다고 내 저장이 막히지 않는다(같은 프로젝트를 고쳤을 때만 막힌다 — writeStore).
+        //   그래서 «저장 보류» 띠(remoteChanged)가 아니라 «바뀐 것이 있다» 알림만 띄운다.
+        if (changed.length || gone) {
+          const last = [...changed].sort((a, b) => t(b.updated_at) - t(a.updated_at))[0];
+          setRemoteSeen({
+            count: changed.length + (gone ? 1 : 0),
+            by: last ? last.updated_by || "" : "",
+            at: last ? last.updated_at : "",
+          });
+        } else setRemoteSeen(null);
       } catch (e) {
         /* 조회 실패는 무시하고 다음 주기에 다시 시도 */
       }
@@ -15970,15 +16050,36 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
   // ★★ 2026-10-21 — «저장된 것이 없다» 와 «읽지 못했다» 를 가른다. 예전엔 둘 다 null 이라
   //   네트워크·권한 오류에서도 샘플을 띄웠다. 없는 것은 {ok:true, box:null}, 실패는 {ok:false}.
   //   ★ 깨진 JSON 도 «실패» 다 — 빈 자료로 보고 덮어쓰면 남은 것까지 잃는다.
+  // v2(2026-10-22) — 프로젝트 줄들을 모아 예전과 같은 «box» 모양으로 돌려준다(box.v2 = true).
+  //   아직 옮기기 전이면 옛 한 줄을 그대로(box.v2 없음) 돌려주고, 불러오기 쪽이 옮긴다.
   async function readStore() {
     try {
-      const r = await TCC_STORE.get(SHARED_KEY, true);
-      if (!r || !r.value) return { ok: true, box: null };
-      return { ok: true, box: JSON.parse(r.value) };
+      const all = await tccReadAll();
+      if (all.meta || all.prows.length) {
+        let last = null;
+        all.prows.forEach((r) => { if (!last || String(r.updatedAt) > String(last.updatedAt)) last = r; });
+        return {
+          ok: true,
+          box: {
+            v2: true,
+            meta: !!all.meta,
+            staleV1: tccStaleV1(all),
+            projects: all.prows.map((r) => r.project),
+            revs: all.prows.map((r) => r.rev || 0),
+            ats: all.prows.map((r) => r.at),
+            updatedAt: last ? last.updatedAt : "",
+            updatedBy: last ? last.updatedBy : "",
+          },
+        };
+      }
+      return { ok: true, box: all.v1 };
     } catch (e) {
       return { ok: false, error: (e && e.message) || String(e) };
     }
   }
+
+  // 저장 «모양» — 내용 + 차례. 이것이 같으면 그 프로젝트는 안 바뀐 것이라 쓰지 않는다.
+  const bodyOf = (p, i) => i + "|" + JSON.stringify(p);
 
   /* 개인/공유를 나누던 시절의 저장본. 처음 한 번만 읽어 옮겨 온다. */
   async function readLegacyPersonal() {
@@ -15991,26 +16092,87 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
     return null;
   }
 
+  /* v2 저장(2026-10-22) — 바뀐 프로젝트 줄만 쓰고, 화면에서 없어진 프로젝트 줄은 지운다.
+     충돌 판정은 «내가 쓰려는 줄» 만: 내가 본 rev 와 지금 rev 가 다르면(남이 그 프로젝트를 고쳤거나 지웠으면) 보류.
+     force(덮어쓰기·옮기기)면 판정 없이 내 화면 그대로 — 화면에 없는 줄은 지운다(예전 덮어쓰기와 같은 뜻).
+     ★★ 2026-10-21 원칙 그대로 — 확인 읽기가 실패하면 «저장하지 않는다». */
   async function writeStore(projs, force) {
     try {
-      // 남의 수정을 덮어쓰지 않도록 먼저 확인한다
-      // ★★ 2026-10-21 — 확인 읽기가 실패하면 «저장하지 않는다». 예전엔 cur=null 로 두고 충돌 검사를
-      //   건너뛴 채 썼다 — 그사이 남이 고친 것을 모른 채 덮을 수 있었다. 덮어쓰기(force)여도 같다.
-      const rd = await readStore();
-      if (!rd.ok) return { ok: false };
-      const cur = rd.box;
-      if (!force && cur && typeof cur.rev === "number" && cur.rev !== baseRev.current) {
-        return { ok: false, conflict: true };
+      const all = await tccReadAll();
+      const cur = new Map(all.prows.map((r) => [r.id, r]));
+      const now = new Date().toISOString();
+      const by = meRef.current || "계정 미확인";
+      const ups = [];
+      const nextRevs = new Map();
+      let conflict = false;
+
+      projs.forEach((p, i) => {
+        const body = bodyOf(p, i);
+        const c = cur.get(p.id);
+        const b = baseRevs.current.get(p.id);
+        // 내가 안 고친 프로젝트는 쓰지도, 판정하지도 않는다 — 남이 그사이 고쳤어도 내 저장과는 상관없다.
+        // (처음엔 «rev 도 같을 때만» 건너뛰게 짰다가, 남이 고친 프로젝트 때문에 내 다른 프로젝트 저장이 막혔다 · 10-22 시험에서 잡음)
+        if (!force && savedBody.current.get(p.id) === body) return;   // 안 바뀜
+        if (!force) {
+          if (c && b === undefined) conflict = true;                 // 남이 같은 id 로 만들었다
+          else if (c && (c.rev || 0) !== b) conflict = true;         // 남이 그 프로젝트를 고쳤다
+          else if (!c && b !== undefined) conflict = true;           // 남이 그 프로젝트를 지웠다
+        }
+        const rev = (c ? c.rev || 0 : b || 0) + 1;
+        nextRevs.set(p.id, rev);
+        ups.push({
+          store_key: TCC_P_PREFIX + p.id,
+          scope: "shared",
+          owner: TCC_SHARED_OWNER,
+          value: JSON.stringify({ rev, sort: i, updatedAt: now, updatedBy: by, project: p }),
+          updated_at: now,
+          updated_by: by,
+        });
+      });
+
+      const ids = new Set(projs.map((p) => p.id));
+      const dels = [];
+      cur.forEach((c, id) => {
+        if (ids.has(id)) return;
+        if (force) { dels.push(id); return; }
+        const b = baseRevs.current.get(id);
+        if (b === undefined) return;                                   // 남이 새로 만든 것 — 건드리지 않는다
+        if ((c.rev || 0) !== b) conflict = true;                       // 내가 지웠는데 남이 그사이 고쳤다
+        else dels.push(id);
+      });
+
+      if (conflict && !force) return { ok: false, conflict: true };
+
+      if (!metaDone.current || !all.meta) {
+        ups.push({
+          store_key: TCC_META_KEY,
+          scope: "shared",
+          owner: TCC_SHARED_OWNER,
+          value: JSON.stringify({ migratedAt: now, by, from: all.v1 ? SHARED_KEY : "" }),
+          updated_at: now,
+          updated_by: by,
+        });
       }
-      const next = {
-        rev: (cur && typeof cur.rev === "number" ? cur.rev : baseRev.current) + 1,
-        updatedAt: new Date().toISOString(),
-        updatedBy: meRef.current || "계정 미확인",
-        projects: projs,
-      };
-      await TCC_STORE.set(SHARED_KEY, JSON.stringify(next), true);
-      baseRev.current = next.rev;
-      setMeta({ updatedAt: next.updatedAt, updatedBy: next.updatedBy });
+      // ★ 차례: 쓰기 먼저, 지우기 다음 — 중간에 끊겨도 «사라지는» 쪽이 아니라 «남는» 쪽으로 끊긴다.
+      if (ups.length) {
+        const { error } = await sb.from("cost_store").upsert(ups, { onConflict: "store_key,scope,owner" });
+        if (error) { sbFail("비용 비교 자료 저장", error, { write: true }); return { ok: false }; }
+      }
+      if (dels.length) {
+        const { error } = await sb
+          .from("cost_store")
+          .delete()
+          .eq("scope", "shared")
+          .in("store_key", dels.map((id) => TCC_P_PREFIX + id));
+        if (error) { sbFail("비용 비교 자료 삭제", error, { write: true }); return { ok: false }; }
+      }
+
+      metaDone.current = true;
+      nextRevs.forEach((rev, id) => { baseRevs.current.set(id, rev); seenAt.current.set(TCC_P_PREFIX + id, now); });
+      projs.forEach((p, i) => savedBody.current.set(p.id, bodyOf(p, i)));
+      dels.forEach((id) => { baseRevs.current.delete(id); savedBody.current.delete(id); seenAt.current.delete(TCC_P_PREFIX + id); });
+      // 남이 새로 만든(내가 모르는) 줄은 «본 것» 으로 치지 않는다 — 알림이 계속 뜨게 둔다.
+      if (ups.length || dels.length) setMeta({ updatedAt: now, updatedBy: by });
       setRemoteChanged(false);
       return { ok: true };
     } catch (e) {
@@ -16020,9 +16182,22 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
 
   function applyBox(box, isFirst) {
     const list = box && Array.isArray(box.projects) ? box.projects : null;
-    baseRev.current = box && typeof box.rev === "number" ? box.rev : 0;
+    // v2 면 프로젝트마다 본 rev·모양·시각을 새로 적는다. 옛 한 줄이면 비워 둔다(곧 옮기며 채운다).
+    baseRevs.current = new Map();
+    savedBody.current = new Map();
+    seenAt.current = new Map();
+    metaDone.current = !!(box && box.v2 && box.meta);
+    if (box && box.v2) {
+      box.projects.forEach((p, i) => {
+        baseRevs.current.set(p.id, box.revs[i]);
+        savedBody.current.set(p.id, bodyOf(migrate(p), i));
+        seenAt.current.set(TCC_P_PREFIX + p.id, box.ats[i]);
+      });
+    }
     if (box) setMeta({ updatedAt: box.updatedAt, updatedBy: box.updatedBy });
     setRemoteChanged(false);
+    setRemoteSeen(null);
+    setStaleV1(box && box.v2 ? box.staleV1 || null : null);
     if (!list || list.length === 0) {
       const sample = [sampleProject(), reviewProject()];
       if (isFirst) firstLoad.current = true;
@@ -16056,6 +16231,36 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
     if (!rd.ok) { setLoadError(rd.error); return; }
     firstLoad.current = true;
     applyBox(rd.box, true);
+  };
+
+  /* 옛 화면 저장분을 «봤다» 고 적는다 — 표시 줄(meta)의 시각을 지금으로. 옛 줄 자체는 그대로 둔다(백업).
+     가져오든 버리든 이걸 해야 다음에 열 때 같은 알림이 또 안 뜬다. */
+  const ackStaleV1 = async () => {
+    const now = new Date().toISOString();
+    const by = meRef.current || "계정 미확인";
+    const { error } = await sb.from("cost_store").upsert(
+      {
+        store_key: TCC_META_KEY,
+        scope: "shared",
+        owner: TCC_SHARED_OWNER,
+        value: JSON.stringify({ migratedAt: now, by, from: SHARED_KEY, ackStale: true }),
+        updated_at: now,
+        updated_by: by,
+      },
+      { onConflict: "store_key,scope,owner" }
+    );
+    if (error) { sbFail("비용 비교 표시 저장", error, { write: true }); return; }
+    setStaleV1(null);
+  };
+
+  const exportStaleV1 = () => {
+    if (!staleV1) return;
+    const blob = new Blob([JSON.stringify(staleV1.projects, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "비용비교_옛화면저장분_" + todayStr() + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   /* 내 화면 내용으로 공유 저장소 덮어쓰기 */
@@ -16333,6 +16538,36 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
         </div>
       )}
 
+      {staleV1 && !pendingImport && (
+        <div className="tcc-conflict">
+          <span>
+            새로고침 전 옛 화면에서 저장된 내용이 있습니다 · {staleV1.updatedBy} {agoText(staleV1.updatedAt)}
+            (프로젝트 {staleV1.projects.length}개). 지금 화면에는 들어 있지 않습니다.
+          </span>
+          <div className="tcc-inline">
+            <button
+              className="tcc-btn tcc-btn-solid"
+              onClick={() => setPendingImport({ name: "옛 화면 저장분", list: staleV1.projects.map(migrate), fromStale: true })}
+            >
+              그 내용 가져오기
+            </button>
+            <button className="tcc-btn tcc-btn-ghost" onClick={exportStaleV1}>그 내용 내려받기</button>
+            <ConfirmButton className="tcc-btn" label="버리기" confirmLabel="정말 버릴까요?" onConfirm={ackStaleV1} />
+          </div>
+        </div>
+      )}
+
+      {!remoteChanged && remoteSeen && (
+        <div className="tcc-notice">
+          다른 사람이 프로젝트 {remoteSeen.count}개를 수정했습니다
+          {remoteSeen.by ? " · " + remoteSeen.by + " " + agoText(remoteSeen.at) : ""}. 내 저장은 막히지 않습니다
+          (같은 프로젝트를 고쳤을 때만 보류).
+          <button className="tcc-linkbtn" onClick={pullLatest} style={{ marginLeft: 8 }}>
+            최신 내용 불러오기
+          </button>
+        </div>
+      )}
+
       {!remoteChanged && meta && meta.updatedBy && (
         <div className="tcc-lastedit">
           마지막 수정 · {meta.updatedBy} · {agoText(meta.updatedAt)}
@@ -16358,6 +16593,7 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
               confirmLabel="정말 바꿀까요?"
               onConfirm={() => {
                 const fixed = pendingImport.list;
+                if (pendingImport.fromStale) ackStaleV1();
                 setPendingImport(null);
                 setProjects(fixed);
                 setActiveId(fixed[0] ? fixed[0].id : null);
@@ -37044,13 +37280,14 @@ function App() {
     if(!isMaster) return;
     let alive=true;
     (async()=>{
-      const {data,error}=await sb.from('cost_store').select('value')
-        .eq('store_key',SHARED_KEY).eq('scope','shared').maybeSingle();
-      if(!alive||error||!data||!data.value) return;
-      let box=null;
-      try{ box=JSON.parse(data.value); }catch(e){ return; }
-      const list=box&&Array.isArray(box.projects)?box.projects:[];
-      if(!list.length) return;
+      // 2026-10-22 — 저장 구조 v2(프로젝트마다 한 줄)를 먼저 보고, 아직 옮기기 전이면 옛 한 줄을 본다.
+      let list=[];
+      try{
+        const all=await tccReadAll(true);   // 조용히 — 사이드바가 늦게 차는 것뿐이다
+        list=(all.meta||all.prows.length) ? all.prows.map(r=>r.project)
+          : (all.v1&&Array.isArray(all.v1.projects) ? all.v1.projects : []);
+      }catch(e){ return; }
+      if(!alive||!list.length) return;
       setCostState(prev=>prev.list.length?prev:({...prev,
         list:list.map(p=>({id:p.id,name:p.name,endsAt:p.contract?p.contract.endsAt:''}))}));
     })();
