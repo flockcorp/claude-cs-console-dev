@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261022c_costs_quotes -->
+<!-- (2026-10-22) 💰 **비용 비교 도구 — 견적 근거·운영 기록 작성자**(10-16 검토 4번). 비용표 칸마다 [+ 조건·근거] 판에 «견적 근거»: 견적서 링크(http(s) 만 «링크 열기») · 견적일 · **견적서 파일 첨부**(새 비공개 버킷 `cost-quotes` · 경로는 «프로젝트id/무작위id.확장자» · 원래 이름은 프로젝트 JSON 의 `costItems[].quotes[serviceId]` · 열 때 2분 서명 주소 · 20MB · 칸 [×] 두 번 누르면 저장소에서 지우고 목록에서 뺌). 항목·프로젝트를 지워도 파일은 남긴다(회차·복제본이 가리킬 수 있어서). 운영 기록에 작성자(로그인 계정 `by`) — 옛 기록은 작성자 없음. AI 프롬프트에 견적일. ★ SQL 있음: `sql/cost_quote_files.sql`(백업 `99a1e35` · dev 적용·검사 통과 run 39710250550) — **운영 승격 때 SQL 먼저**(없으면 올리기가 실패). 새 표 없음 → 마스킹 규칙 변화 없음. ★ dev 전용. -->
 <!-- v20261022b_costs_terms -->
 <!-- (2026-10-22) 💰 **비용 비교 도구 — 견적 조건·월별 흐름**(10-16 검토 3번 · 제니가 고른 넷). 비용표 칸마다 [+ 조건]: 부가세 별도(+10% · 모든 안을 부가세 포함으로 맞춤) · 할인 %·처음 N개월 · 과금 시작 N개월차(단계 도입) · 연 인상률(과금 시작부터 12개월마다). 비교 대상마다 «약정(최소 이용 기간)» — 비교 기간보다 길면 약정 끝까지 낸 돈을 총비용에 넣고 «약정 N개월까지 포함» 표시. 비용표 아래 «월별 누적 비용» 차트(SweepChart 재사용 · currentX=null 이면 «지금» 선 없음). ★ 계산 변화 하나: 연 요금을 «실제로 내는 달»(시작 달+12개월마다)에 통째로 센다 — 예전엔 개월/12 로 나눠 18개월이면 1.5회. 비교 기간이 12의 배수면 예전과 같다. 조건이 없으면 예전과 같은 값(dev 프로젝트 12개월 총비용 그대로 확인). «월 환산» 은 정가(할인·인상 전, 부가세 별도분 포함). AI 프롬프트·CSV 에 조건·약정 글로 들어감. 겸해 결론 탭 차트 «지금» 글자가 끝에서 잘리던 것. 화면만 · SQL 없음(조건은 프로젝트 JSON 안 `costItems[].terms`·`services[].commitMonths`). ★ dev 전용. -->
 <!-- v20261022a_costs_judgement -->
@@ -16423,7 +16425,7 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
               </div>
               <div className="tcc-main">
                 {tab === "cost" && (
-                  <CostTab project={project} patch={patch} exportCsv={exportCsv} />
+                  <CostTab project={project} patch={patch} exportCsv={exportCsv} me={me} />
                 )}
                 {tab === "feature" && <FeatureTab project={project} patch={patch} />}
                 {tab === "result" && <ResultTab project={project} patch={patch} />}
@@ -16761,8 +16763,91 @@ function SetupTab({ project, patch }) {
 /* =========================================================
    비용표 탭
    ========================================================= */
-function CostTab({ project, patch, exportCsv }) {
+/* 견적 근거(2026-10-22 · 10-16 검토 4번) — 칸(비용 항목 × 비교 대상)마다.
+   item.quotes[serviceId] = { link, date, files: [{ path, name, size, at, by }] }
+   ★ 파일은 비공개 버킷 cost-quotes(sql/cost_quote_files.sql)에 «프로젝트id/무작위id.확장자» 로 두고,
+     원래 이름은 여기 JSON 에만 적는다(경로에 업체명 등을 안 남긴다). 열 때는 2분짜리 서명 주소. */
+const COST_QUOTE_BUCKET = "cost-quotes";
+
+function quoteOf(item, serviceId) {
+  const q = ((item && item.quotes) || {})[serviceId] || {};
+  return { link: q.link || "", date: q.date || "", files: Array.isArray(q.files) ? q.files : [] };
+}
+
+function quoteActive(q) {
+  return !!(q.link || q.date || q.files.length);
+}
+
+/* 링크는 http(s) 만 연다 — javascript: 같은 주소가 섞여 들어와도 누르면 안 되게. */
+function safeHttpUrl(s) {
+  const v = String(s || "").trim();
+  return /^https?:\/\//i.test(v) ? v : "";
+}
+
+function CostTab({ project, patch, exportCsv, me }) {
   const [openNote, setOpenNote] = useState(null);
+  const [quoteBusy, setQuoteBusy] = useState("");   // 올리는 중인 칸 key
+  const [quoteErr, setQuoteErr] = useState("");
+
+  const updQuote = (id, sid, fn) =>
+    patch((p) => ({
+      costItems: p.costItems.map((it) => {
+        if (it.id !== id) return it;
+        const quotes = { ...(it.quotes || {}) };
+        quotes[sid] = fn(quoteOf(it, sid));
+        return { ...it, quotes };
+      }),
+    }));
+
+  const uploadQuote = async (id, sid, file) => {
+    if (!file) return;
+    const key = id + ":" + sid;
+    setQuoteErr("");
+    if (file.size > 20 * 1024 * 1024) {
+      setQuoteErr("20MB 넘는 파일은 올릴 수 없습니다.");
+      return;
+    }
+    setQuoteBusy(key);
+    const m = /\.([A-Za-z0-9]{1,8})$/.exec(file.name || "");
+    const path = project.id + "/" + uid() + (m ? "." + m[1].toLowerCase() : "");
+    try {
+      const up = await sb.storage.from(COST_QUOTE_BUCKET).upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+        upsert: false,
+      });
+      if (up.error) throw up.error;
+      updQuote(id, sid, (q) => ({
+        ...q,
+        files: [...q.files, { path, name: file.name || "견적서", size: file.size, at: new Date().toISOString(), by: me || "" }],
+      }));
+    } catch (e) {
+      setQuoteErr("파일을 올리지 못했습니다: " + ((e && e.message) || e));
+    } finally {
+      setQuoteBusy("");
+    }
+  };
+
+  const openQuoteFile = async (f) => {
+    setQuoteErr("");
+    const { data, error } = await sb.storage.from(COST_QUOTE_BUCKET).createSignedUrl(f.path, 120, { download: f.name || true });
+    if (error || !data) {
+      setQuoteErr("파일을 열지 못했습니다: " + ((error && error.message) || "주소 없음"));
+      return;
+    }
+    window.open(data.signedUrl, "_blank", "noopener");
+  };
+
+  // 저장소에서 먼저 지우고, 지워졌을 때만 목록에서 뺀다(목록만 빠지면 파일이 고아로 남는다).
+  // ⚠ 복제한 프로젝트·검토 회차가 같은 파일을 가리키면 거기서도 열리지 않게 된다(열 때 오류로 알린다).
+  const delQuoteFile = async (id, sid, f) => {
+    setQuoteErr("");
+    const { error } = await sb.storage.from(COST_QUOTE_BUCKET).remove([f.path]);
+    if (error) {
+      setQuoteErr("파일을 지우지 못했습니다: " + error.message);
+      return;
+    }
+    updQuote(id, sid, (q) => ({ ...q, files: q.files.filter((x) => x.path !== f.path) }));
+  };
 
   const addItem = () =>
     patch((p) => {
@@ -16815,6 +16900,8 @@ function CostTab({ project, patch, exportCsv }) {
       services: p.services.map((s) => (s.id === sid ? { ...s, commitMonths: val } : s)),
     }));
 
+  // ★ 항목을 지워도 견적서 파일은 저장소에 남긴다 — 검토 회차·복제한 프로젝트가 같은 파일을 가리킬 수 있다.
+  //   파일을 지우는 것은 칸 안의 [×](사람이 그 파일을 지우겠다고 고른 때)뿐이다.
   const delItem = (id) => patch((p) => ({ costItems: p.costItems.filter((it) => it.id !== id) }));
 
   const moveItem = (id, dir) =>
@@ -16949,6 +17036,7 @@ function CostTab({ project, patch, exportCsv }) {
                 {project.services.map((s) => {
                   const r = evalCell(it.values[s.id], rvars);
                   const t = itemTerms(it, s.id);
+                  const q = quoteOf(it, s.id);
                   const key = it.id + ":" + s.id;
                   const raw = ((it.terms || {})[s.id]) || {};
                   return (
@@ -16962,18 +17050,27 @@ function CostTab({ project, patch, exportCsv }) {
                       <div className={"tcc-cellpre" + (r.error ? " is-err" : "")}>
                         {r.error ? r.error : r.empty ? "" : won(r.value) + "원"}
                       </div>
-                      {/* 견적 조건 — 회수 예정에는 붙이지 않는다(돌려받는 돈이라 총비용에 안 들어간다). */}
-                      {it.cycle !== "deposit" && (
-                        <button
-                          className={"tcc-termsbtn" + (termsActive(t) ? " is-on" : "")}
-                          onClick={() => setOpenTerms(openTerms === key ? null : key)}
-                          title="부가세·할인·시작 달·인상률"
-                        >
-                          {termsActive(t) ? termsText(t, it.cycle) : "+ 조건"}
-                        </button>
-                      )}
-                      {it.cycle !== "deposit" && openTerms === key && (
+                      {/* 견적 조건 + 견적 근거 — 조건은 회수 예정에는 붙이지 않는다(돌려받는 돈이라 총비용에 안 들어간다). */}
+                      {(() => {
+                        const parts = [];
+                        if (it.cycle !== "deposit" && termsActive(t)) parts.push(termsText(t, it.cycle));
+                        if (quoteActive(q)) {
+                          parts.push("근거" + (q.date ? " " + q.date : "") + (q.files.length ? " · 파일 " + q.files.length : ""));
+                        }
+                        return (
+                          <button
+                            className={"tcc-termsbtn" + (parts.length ? " is-on" : "")}
+                            onClick={() => setOpenTerms(openTerms === key ? null : key)}
+                            title="견적 조건(부가세·할인·시작 달·인상률)과 견적 근거(링크·견적일·파일)"
+                          >
+                            {parts.length ? parts.join(" · ") : it.cycle === "deposit" ? "+ 근거" : "+ 조건·근거"}
+                          </button>
+                        );
+                      })()}
+                      {openTerms === key && (
                         <div className="tcc-terms">
+                          {it.cycle !== "deposit" && (<>
+                          <div className="tcc-terms-h">견적 조건</div>
                           <label className="tcc-terms-row">
                             <input
                               type="checkbox"
@@ -17013,10 +17110,51 @@ function CostTab({ project, patch, exportCsv }) {
                                 onChange={(e) => updTerms(it.id, s.id, "rise", e.target.value)} />%
                             </div>
                           )}
-                          <div className="tcc-terms-acts">
-                            {termsActive(t) && (
+                          {termsActive(t) && (
+                            <div className="tcc-terms-acts">
                               <button className="tcc-linkbtn" onClick={() => clearTerms(it.id, s.id)}>조건 지우기</button>
-                            )}
+                            </div>
+                          )}
+                          </>)}
+                          <div className="tcc-terms-h">견적 근거</div>
+                          <input
+                            className="tcc-in tcc-quote-in"
+                            value={q.link}
+                            placeholder="견적서·요금표 링크(https://…)"
+                            onChange={(e) => updQuote(it.id, s.id, (o) => ({ ...o, link: e.target.value }))}
+                          />
+                          {safeHttpUrl(q.link) && (
+                            <a className="tcc-linkbtn" href={safeHttpUrl(q.link)} target="_blank" rel="noopener noreferrer">링크 열기 ↗</a>
+                          )}
+                          <div className="tcc-terms-row">
+                            견적일
+                            <input
+                              className="tcc-in tcc-quote-date"
+                              type="date"
+                              value={q.date}
+                              onChange={(e) => updQuote(it.id, s.id, (o) => ({ ...o, date: e.target.value }))}
+                            />
+                          </div>
+                          {q.files.map((f) => (
+                            <div key={f.path} className="tcc-quote-file">
+                              <button className="tcc-linkbtn" onClick={() => openQuoteFile(f)} title={(f.by ? f.by + " · " : "") + (f.at || "").slice(0, 10)}>
+                                {f.name}
+                              </button>
+                              <ConfirmButton className="tcc-mini tcc-mini-del" label="×" confirmLabel="삭제"
+                                title="파일 삭제" onConfirm={() => delQuoteFile(it.id, s.id, f)} />
+                            </div>
+                          ))}
+                          <label className={"tcc-btn tcc-quote-up" + (quoteBusy === key ? " is-busy" : "")}>
+                            {quoteBusy === key ? "올리는 중…" : "+ 견적서 파일"}
+                            <input
+                              type="file"
+                              hidden
+                              disabled={!!quoteBusy}
+                              onChange={(e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; uploadQuote(it.id, s.id, f); }}
+                            />
+                          </label>
+                          {quoteErr && <div className="tcc-err">{quoteErr}</div>}
+                          <div className="tcc-terms-acts">
                             <button className="tcc-btn" onClick={() => setOpenTerms(null)}>닫기</button>
                           </div>
                         </div>
@@ -17465,7 +17603,10 @@ function ResultTab({ project, patch }) {
       const cy = CYCLES.find((c) => c.key === it.cycle);
       const per = project.services
         .map((s) => {
-          const tt = it.cycle === "deposit" ? "" : termsText(itemTerms(it, s.id), it.cycle);
+          const tt = [
+            it.cycle === "deposit" ? "" : termsText(itemTerms(it, s.id), it.cycle),
+            quoteOf(it, s.id).date ? "견적일 " + quoteOf(it, s.id).date : "",
+          ].filter(Boolean).join(" · ");
           return s.name + " " + won(evalCell(it.values[s.id], rvars).value) + "원" + (tt ? "(" + tt + ")" : "");
         })
         .join(" / ");
@@ -17969,7 +18110,8 @@ function HistoryTab({ project, patch, me }) {
 
   const addLog = () => {
     if (!logDraft.text.trim()) return;
-    patch((p) => ({ logs: [{ id: uid(), ...logDraft }, ...p.logs] }));
+    // 작성자는 로그인 계정 — 편집자 표시(patch)와 같은 값을 쓴다. 옛 기록은 작성자 없이 남는다.
+    patch((p) => ({ logs: [{ id: uid(), ...logDraft, by: me || "" }, ...p.logs] }));
     setLogDraft({ date: todayStr(), type: "update", text: "" });
   };
 
@@ -18297,7 +18439,10 @@ function HistoryTab({ project, patch, me }) {
                 <li key={l.id} className="tcc-logitem">
                   <span className="tcc-logdate">{l.date}</span>
                   <span className={"tcc-logtag tcc-logtag-" + l.type}>{t ? t.label : l.type}</span>
-                  <span className="tcc-logbody">{l.text}</span>
+                  <span className="tcc-logbody">
+                    {l.text}
+                    {l.by && <span className="tcc-logby">{l.by}</span>}
+                  </span>
                   <ConfirmButton className="tcc-x" label="×" confirmLabel="삭제" title="삭제"
                     onConfirm={() => delLog(l.id)} />
                 </li>
@@ -18626,6 +18771,7 @@ function Dashboard({ projects, onOpen }) {
                     </button>
                     {" · "}
                     {l.text}
+                    {l.by && <span className="tcc-logby">{l.by}</span>}
                   </span>
                 </li>
               );
@@ -19018,6 +19164,15 @@ const CSS = `
 .tcc-terms-note { font-size: 10.5px; color: var(--ink2); }
 .tcc-terms-acts { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 .tcc-root .tcc-terms-in { width: 56px; height: 24px; padding: 0 4px; font-size: 11.5px; text-align: center; }
+.tcc-terms-h { font-size: 10.5px; font-weight: 700; color: var(--ink); letter-spacing: .02em; }
+.tcc-terms-h ~ .tcc-terms-h { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+.tcc-root .tcc-quote-in { width: 100%; height: 26px; font-size: 11.5px; padding: 0 6px; text-align: left; }
+.tcc-root .tcc-quote-date { width: 128px; height: 24px; font-size: 11.5px; padding: 0 4px; }
+.tcc-quote-file { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.tcc-quote-file .tcc-linkbtn { text-align: left; overflow-wrap: anywhere; }
+.tcc-quote-up { align-self: flex-start; height: 26px; font-size: 11.5px; cursor: pointer; }
+.tcc-quote-up.is-busy { opacity: .6; cursor: default; }
+.tcc-logby { margin-left: 8px; font-size: 11px; color: var(--ink2); }
 .tcc-commit { display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
 .tcc-sum-sub { display: block; font-size: 10.5px; font-weight: 400; color: var(--ink2); }
 .tcc-simbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 7px; background: var(--tcc-soft); font-size: 12.5px; }
