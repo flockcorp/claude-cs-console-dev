@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261022a_costs_judgement -->
+<!-- (2026-10-22) 💰 **비용 비교 도구 — 판단 손질**(10-16 검토 2번 · 제니 결정). ①결론 탭 슬라이더는 «저장 안 되는 임시값»(예전엔 실제 가정값을 고쳐 저장했다) — 움직이면 카드가 임시값으로 다시 계산되고 «임시값으로 보는 중 · 저장되지 않습니다 [원래 값으로]» 띠 · ②기능 점수 빈칸 = 미채점 → 총점에서 빠진다(매긴 항목만으로 100점 환산 · 카드·표에 «미채점 N개») · 새 항목·새 후보는 빈칸으로 시작(예전엔 3점) · 켜진 점수를 한 번 더 누르면 빈칸 · 기존에 저장된 점수는 그대로 · ③«탈락 · 종료» 안은 비용 최저·기능 최고·가성비 판정에서 뺀다(카드는 흐리게 남김) · ④가성비 최고 = «기능 X점 이상인 안 중 총비용 최저»(X 는 프로젝트마다 · 기본 60 · 결론 탭 맨 위 칸). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261021b_costs_save_guard -->
 <!-- (2026-10-21) 💰 **비용 비교 도구 — 저장 안전장치**(10-16 검토 1번 · 제니 「비용 비교 개선 하자」). ①처음 불러오기에 실패하면 «샘플 프로젝트» 대신 오류 + [다시 시도](예전엔 읽기 실패를 «저장된 것 없음» 으로 삼켜 샘플을 띄웠고, 거기서 고치면 샘플이 실자료 자리에 저장될 수 있었다) · ②저장 직전 확인 읽기가 실패하면 저장하지 않는다(예전엔 충돌 검사를 건너뛰고 썼다) · ③[최신 내용 불러오기]·[새로고침] 실패 시 화면 유지 · ④백업 불러오기는 «무엇이 무엇으로 바뀌는지» 띠 + 두 번 누르기(지금 내용 내려받기 단추 함께) · ⑤가정값·비교 대상·비용 항목·기능 항목·운영 기록 삭제를 두 번 누르기(회차 삭제와 같은 ConfirmButton). 계산·저장 형식은 안 바뀐다. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261021a_tk_list_my_view -->
@@ -15548,17 +15550,42 @@ function computeService(project, serviceId) {
   return { monthly, yearly, once, deposit, perMonth, total, months, errors };
 }
 
+/* 점수를 안 매긴 칸(빈칸)은 «미채점» 이다 — 0점이 아니다(2026-10-22 제니 결정).
+   ★ Number(null)·Number("") 는 0 이 되므로 숫자로 바꾸기 «전에» 빈칸을 가른다. */
+function isScoreUnset(v) {
+  return v === undefined || v === null || v === "" || !isFinite(Number(v));
+}
+
+/* 매긴 항목만으로 100점 환산한다. 미채점 항목은 그 중요도째 분모에서 빠진다.
+   rated 0 이면 아직 비교할 점수가 없다는 뜻 — 화면은 «미채점» 으로 보여 준다. */
 function computeScore(project, serviceId) {
   let weightSum = 0;
   let got = 0;
+  let rated = 0;
+  let unrated = 0;
   for (const f of project.featureItems) {
     const w = Number(f.weight) || 0;
-    const s = Number(f.scores[serviceId]);
+    const raw = (f.scores || {})[serviceId];
+    if (isScoreUnset(raw)) { unrated++; continue; }
+    rated++;
     weightSum += w;
-    got += w * (isFinite(s) ? s : 0);
+    got += w * Number(raw);
   }
-  if (weightSum === 0) return { score: 0, weightSum: 0 };
-  return { score: (got / (weightSum * 5)) * 100, weightSum };
+  if (weightSum === 0) return { score: 0, weightSum: 0, rated, unrated };
+  return { score: (got / (weightSum * 5)) * 100, weightSum, rated, unrated };
+}
+
+/* «탈락 · 종료» 안은 비교 판정(최저·최고·가성비)에서 뺀다. 표와 카드에는 그대로 둔다. */
+function isServiceActive(s) {
+  return !s || s.state !== "dropped";
+}
+
+/* 판정에 쓰는 최솟값·최댓값 — 비교할 안이 하나도 없으면 null(어떤 칸에도 표시를 안 붙인다). */
+function tccMin(list) {
+  return list.length ? Math.min(...list) : null;
+}
+function tccMax(list) {
+  return list.length ? Math.max(...list) : null;
 }
 
 /* ---------- 샘플 프로젝트 ------------------------------- */
@@ -16390,7 +16417,8 @@ function SetupTab({ project, patch }) {
     patch((p) => ({
       services: [...p.services, { id: sid, name: "후보 " + (p.services.length + 1) }],
       costItems: p.costItems.map((it) => ({ ...it, values: { ...it.values, [sid]: "" } })),
-      featureItems: p.featureItems.map((f) => ({ ...f, scores: { ...f.scores, [sid]: 3 } })),
+      // 새 후보의 기능 점수는 빈칸(미채점)으로 둔다 — 3점을 넣으면 안 매겨도 60점에서 시작한다.
+      featureItems: p.featureItems.map((f) => ({ ...f, scores: { ...f.scores } })),
     }));
   };
 
@@ -16691,7 +16719,10 @@ function CostTab({ project, patch, exportCsv }) {
 
   const rvars = resolveVars(project.vars);   // 화면과 셀 계산이 같은 값을 보게 한 번만 푼다
   const totals = project.services.map((s) => computeService(project, s.id));
-  const minTotal = Math.min(...totals.map((t) => t.total));
+  // «최저» 는 탈락 안을 빼고 고른다(탈락 안의 칸에는 표시를 안 붙인다).
+  const minTotal = tccMin(
+    totals.filter((t, i) => isServiceActive(project.services[i])).map((t) => t.total)
+  );
 
   return (
     <div className="tcc-pane">
@@ -16865,12 +16896,15 @@ function CostTab({ project, patch, exportCsv }) {
             )}
             <tr className="tcc-sum tcc-sum-strong">
               <td colSpan={2}>{project.horizonMonths}개월 총비용</td>
-              {totals.map((t, i) => (
-                <td key={i} className={"tcc-num" + (t.total === minTotal ? " is-best" : "")}>
-                  {won(t.total)}원
-                  {t.total === minTotal && <span className="tcc-badge">최저</span>}
-                </td>
-              ))}
+              {totals.map((t, i) => {
+                const best = minTotal !== null && isServiceActive(project.services[i]) && t.total === minTotal;
+                return (
+                  <td key={i} className={"tcc-num" + (best ? " is-best" : "")}>
+                    {won(t.total)}원
+                    {best && <span className="tcc-badge">최저</span>}
+                  </td>
+                );
+              })}
               <td></td>
             </tr>
           </tfoot>
@@ -16912,27 +16946,29 @@ function FeatureTab({ project, patch }) {
   const [openDesc, setOpenDesc] = useState(null);
 
   const addFeature = () =>
-    patch((p) => {
-      const scores = {};
-      p.services.forEach((s) => (scores[s.id] = 3));
-      return {
-        featureItems: [
-          ...p.featureItems,
-          { id: uid(), label: "새 평가 항목", desc: "", weight: 3, scores },
-        ],
-      };
-    });
+    patch((p) => ({
+      // 점수는 빈칸(미채점)으로 시작한다 — 매긴 칸만 총점에 들어간다.
+      featureItems: [
+        ...p.featureItems,
+        { id: uid(), label: "새 평가 항목", desc: "", weight: 3, scores: {} },
+      ],
+    }));
 
   const updFeature = (id, key, val) =>
     patch((p) => ({
       featureItems: p.featureItems.map((f) => (f.id === id ? { ...f, [key]: val } : f)),
     }));
 
+  // 지금 켜진 점수를 한 번 더 누르면 빈칸(미채점)으로 돌린다.
   const updScore = (id, sid, val) =>
     patch((p) => ({
-      featureItems: p.featureItems.map((f) =>
-        f.id === id ? { ...f, scores: { ...f.scores, [sid]: Number(val) } } : f
-      ),
+      featureItems: p.featureItems.map((f) => {
+        if (f.id !== id) return f;
+        const next = { ...f.scores };
+        if (!isScoreUnset(next[sid]) && Number(next[sid]) === Number(val)) delete next[sid];
+        else next[sid] = Number(val);
+        return { ...f, scores: next };
+      }),
     }));
 
   const delFeature = (id) =>
@@ -16951,13 +16987,17 @@ function FeatureTab({ project, patch }) {
     });
 
   const scores = project.services.map((s) => computeScore(project, s.id));
-  const maxScore = Math.max(...scores.map((s) => s.score));
+  // «최고» 는 탈락 안과 점수를 하나도 안 매긴 안을 빼고 고른다.
+  const maxScore = tccMax(
+    scores.filter((sc, i) => isServiceActive(project.services[i]) && sc.rated > 0).map((sc) => sc.score)
+  );
 
   return (
     <div className="tcc-pane">
       <p className="tcc-lead">
         중요도는 1에서 5까지, 각 후보의 점수도 0에서 5까지 매깁니다. 중요도가 높은 항목의 점수가
-        총점에 더 크게 반영됩니다.
+        총점에 더 크게 반영됩니다. 켜진 점수를 한 번 더 누르면 빈칸(미채점)으로 돌아가고,
+        빈칸은 총점에서 빠집니다(매긴 항목만으로 100점 환산).
       </p>
 
       <div className="tcc-tablewrap">
@@ -17027,10 +17067,15 @@ function FeatureTab({ project, patch }) {
                         <button
                           key={n}
                           className={
-                            "tcc-dot" + (Number(f.scores[s.id]) === n ? " is-on" : "")
+                            "tcc-dot" +
+                            (!isScoreUnset(f.scores[s.id]) && Number(f.scores[s.id]) === n ? " is-on" : "")
                           }
                           onClick={() => updScore(f.id, s.id, n)}
-                          title={n + "점"}
+                          title={
+                            !isScoreUnset(f.scores[s.id]) && Number(f.scores[s.id]) === n
+                              ? n + "점 · 한 번 더 누르면 빈칸(미채점)"
+                              : n + "점"
+                          }
                         >
                           {n}
                         </button>
@@ -17054,12 +17099,19 @@ function FeatureTab({ project, patch }) {
           <tfoot>
             <tr className="tcc-sum tcc-sum-strong">
               <td colSpan={2}>가중 총점 (100점 만점)</td>
-              {scores.map((sc, i) => (
-                <td key={i} className={"tcc-num" + (sc.score === maxScore ? " is-best" : "")}>
-                  {sc.score.toFixed(1)}
-                  {sc.score === maxScore && <span className="tcc-badge">최고</span>}
-                </td>
-              ))}
+              {scores.map((sc, i) => {
+                const best = maxScore !== null && sc.rated > 0 &&
+                  isServiceActive(project.services[i]) && sc.score === maxScore;
+                return (
+                  <td key={i} className={"tcc-num" + (best ? " is-best" : "")}>
+                    {sc.rated > 0 ? sc.score.toFixed(1) : "미채점"}
+                    {best && <span className="tcc-badge">최고</span>}
+                    {sc.rated > 0 && sc.unrated > 0 && (
+                      <span className="tcc-unrated">미채점 {sc.unrated}개 제외</span>
+                    )}
+                  </td>
+                );
+              })}
               <td></td>
             </tr>
           </tfoot>
@@ -17095,12 +17147,29 @@ function ResultTab({ project, patch }) {
   const [promptText, setPromptText] = useState("");
   const [err, setErr] = useState("");
 
-  const rows = project.services.map((s) => {
-    const c = computeService(project, s.id);   // c.deposit 은 총비용에 안 들어간다(회수되는 돈)
-    const sc = computeScore(project, s.id);
+  /* 슬라이더는 «저장 안 되는 임시값» 이다(2026-10-22 · 예전엔 실제 가정값을 고쳐 저장했다).
+     { id, x } — 기준 값을 바꾸면 id 가 안 맞아 저절로 풀린다. */
+  const [sim, setSim] = useState(null);
+
+  /* 시뮬레이션 데이터 */
+  const sweepVar = sweepable.find((v) => v.id === sweepVarId) || sweepable[0] || null;
+  const simOn = !!(sim && sweepVar && sim.id === sweepVar.id);
+  const viewProject = simOn
+    ? { ...project, vars: project.vars.map((v) => (v.id === sim.id ? { ...v, value: sim.x } : v)) }
+    : project;
+
+  /* 가성비 기준 — «기능 X점 이상인 안 중 총비용이 가장 낮은 안»(2026-10-22 제니 결정 · 프로젝트마다 · 기본 60).
+     예전엔 총비용÷기능점수가 가장 낮은 안이라 싸고 평범한 안이 늘 이겼다. */
+  const pickMin = isFinite(Number(project.pickMinScore)) && project.pickMinScore !== ""
+    ? Number(project.pickMinScore) : 60;
+
+  const makeRows = (p) => p.services.map((s) => {
+    const c = computeService(p, s.id);   // c.deposit 은 총비용에 안 들어간다(회수되는 돈)
+    const sc = computeScore(p, s.id);
     return {
       id: s.id,
       name: s.name,
+      active: isServiceActive(s),
       total: c.total,
       perMonth: c.perMonth,
       once: c.once,
@@ -17109,16 +17178,23 @@ function ResultTab({ project, patch }) {
       //    정상이었고 결론 탭 카드만 안 떴다).
       deposit: c.deposit,
       score: sc.score,
+      rated: sc.rated,
+      unrated: sc.unrated,
       efficiency: sc.score > 0 ? c.total / sc.score : Infinity,
     };
   });
 
-  const minTotal = Math.min(...rows.map((r) => r.total));
-  const maxScore = Math.max(...rows.map((r) => r.score));
-  const minEff = Math.min(...rows.map((r) => r.efficiency));
+  // 카드는 임시값을 반영한 값 · AI 프롬프트는 저장된 값(baseRows)을 쓴다.
+  const rows = makeRows(viewProject);
+  const baseRows = simOn ? makeRows(project) : rows;
 
-  /* 시뮬레이션 데이터 */
-  const sweepVar = sweepable.find((v) => v.id === sweepVarId) || sweepable[0] || null;
+  // 판정(비용 최저·기능 최고·가성비)은 탈락 안을 뺀다. 기능은 하나라도 매긴 안만.
+  const judged = rows.filter((r) => r.active);
+  const minTotal = tccMin(judged.map((r) => r.total));
+  const maxScore = tccMax(judged.filter((r) => r.rated > 0).map((r) => r.score));
+  const pickCands = judged.filter((r) => r.rated > 0 && r.score >= pickMin);
+  const pickTotal = tccMin(pickCands.map((r) => r.total));
+  const isPick = (r) => pickTotal !== null && r.active && r.rated > 0 && r.score >= pickMin && r.total === pickTotal;
   const sweep = useMemo(() => {
     if (!sweepVar) return null;
     const min = Number(sweepVar.min) || 0;
@@ -17167,15 +17243,17 @@ function ResultTab({ project, patch }) {
     });
     lines.push("");
     lines.push("[총계]");
-    rows.forEach((r) =>
+    baseRows.forEach((r) =>
       lines.push(
-        "- " + r.name + ": 월 환산 " + won(r.perMonth) + "원, 1회성 " + won(r.once) +
+        "- " + r.name + (r.active ? "" : " (탈락·종료 — 비교 판정에서 제외)") +
+        ": 월 환산 " + won(r.perMonth) + "원, 1회성 " + won(r.once) +
         "원, " + project.horizonMonths + "개월 총 " + won(r.total) + "원, 기능 총점 " +
-        r.score.toFixed(1) + "점" +
+        (r.rated > 0 ? r.score.toFixed(1) + "점" : "미채점") +
+        (r.rated > 0 && r.unrated > 0 ? "(미채점 " + r.unrated + "개 항목 제외하고 환산)" : "") +
         (r.deposit > 0 ? ", 회수 예정 " + won(r.deposit) + "원(나중에 돌려받는 돈이라 총비용에 넣지 않음)" : "")
       )
     );
-    if (rows.some((r) => r.deposit > 0)) {
+    if (baseRows.some((r) => r.deposit > 0)) {
       lines.push("");
       lines.push("※ '회수 예정' 은 보증금·예치금처럼 나중에 돌려받는 돈이라 총비용에서 뺐습니다. "
         + "다만 그만큼 초기 자금이 묶이므로, 이 금액이 큰 안은 그 부담을 함께 언급하세요.");
@@ -17183,7 +17261,9 @@ function ResultTab({ project, patch }) {
     lines.push("");
     lines.push("[기능 평가 상세] (중요도 1-5, 점수 0-5)");
     project.featureItems.forEach((f) => {
-      const per = project.services.map((s) => s.name + " " + f.scores[s.id]).join(" / ");
+      const per = project.services
+        .map((s) => s.name + " " + (isScoreUnset(f.scores[s.id]) ? "미채점" : f.scores[s.id]))
+        .join(" / ");
       lines.push("- " + f.label + " (중요도 " + f.weight + "): " + per);
       if (f.desc) lines.push("    평가 기준: " + f.desc);
     });
@@ -17300,13 +17380,42 @@ function ResultTab({ project, patch }) {
 
   return (
     <div className="tcc-pane">
+      <div className="tcc-inline tcc-pickrule">
+        <span className="tcc-unit">가성비 기준</span>
+        <span>기능</span>
+        <input
+          className="tcc-in tcc-in-num tcc-pickmin"
+          type="number"
+          min={0}
+          max={100}
+          step={5}
+          value={project.pickMinScore === undefined ? 60 : project.pickMinScore}
+          onChange={(e) => patch(() => ({ pickMinScore: e.target.value }))}
+        />
+        <span>점 이상인 안 중 총비용이 가장 낮은 안</span>
+        {pickTotal === null && judged.length > 0 && (
+          <span className="tcc-warnline">· 기능 {pickMin}점 이상인 안이 없습니다</span>
+        )}
+      </div>
+      {simOn && (
+        <div className="tcc-simbar">
+          <span>
+            임시값으로 보는 중 — <b>{sweepVar.label} {Number(sim.x).toLocaleString("ko-KR")} {sweepVar.unit}</b>
+            {" "}(저장된 값 {Number(sweepVar.value).toLocaleString("ko-KR")} {sweepVar.unit}) · 저장되지 않습니다
+          </span>
+          <button className="tcc-btn" onClick={() => setSim(null)}>원래 값으로</button>
+        </div>
+      )}
       <div className="tcc-cards">
         {rows.map((r) => (
           <div
             key={r.id}
-            className={"tcc-card" + (r.efficiency === minEff ? " is-pick" : "")}
+            className={"tcc-card" + (isPick(r) ? " is-pick" : "") + (r.active ? "" : " is-dropped")}
           >
-            <div className="tcc-card-name">{r.name}</div>
+            <div className="tcc-card-name">
+              {r.name}
+              {!r.active && <span className="tcc-card-state">탈락 · 종료 — 판정 제외</span>}
+            </div>
             <div
               className="tcc-card-total"
               style={{ fontSize: tccTotalFont(wonKo(r.total)) }}
@@ -17330,17 +17439,20 @@ function ResultTab({ project, patch }) {
               </div>
               <div>
                 <dt>기능 총점</dt>
-                <dd>{r.score.toFixed(1)}점</dd>
+                <dd>{r.rated > 0 ? r.score.toFixed(1) + "점" : "미채점"}</dd>
               </div>
               <div>
                 <dt>1점당 비용</dt>
-                <dd>{isFinite(r.efficiency) ? won(r.efficiency) + "원" : "-"}</dd>
+                <dd>{r.rated > 0 && isFinite(r.efficiency) ? won(r.efficiency) + "원" : "-"}</dd>
               </div>
             </dl>
+            {r.rated > 0 && r.unrated > 0 && (
+              <div className="tcc-unrated">미채점 {r.unrated}개 — 매긴 항목만으로 환산한 점수입니다</div>
+            )}
             <div className="tcc-card-flags">
-              {r.total === minTotal && <span className="tcc-flag">비용 최저</span>}
-              {r.score === maxScore && <span className="tcc-flag">기능 최고</span>}
-              {r.efficiency === minEff && <span className="tcc-flag tcc-flag-pick">가성비 최고</span>}
+              {r.active && minTotal !== null && r.total === minTotal && <span className="tcc-flag">비용 최저</span>}
+              {r.active && r.rated > 0 && maxScore !== null && r.score === maxScore && <span className="tcc-flag">기능 최고</span>}
+              {isPick(r) && <span className="tcc-flag tcc-flag-pick">가성비 최고</span>}
             </div>
           </div>
         ))}
@@ -17368,10 +17480,12 @@ function ResultTab({ project, patch }) {
           <SweepChart
             sweep={sweep}
             services={project.services}
-            currentX={Number(sweepVar.value)}
+            currentX={simOn ? Number(sim.x) : Number(sweepVar.value)}
             unit={sweepVar.unit}
             label={sweepVar.label}
           />
+          {/* 움직여도 저장하지 않는다 — 위 카드만 임시값으로 다시 계산한다.
+              실제 값을 바꾸려면 비용표·설정 탭의 가정값을 고친다. */}
           <div className="tcc-inline tcc-slider-wrap">
             <input
               className="tcc-slider"
@@ -17379,19 +17493,14 @@ function ResultTab({ project, patch }) {
               min={sweep.min}
               max={sweep.max}
               step={sweepVar.step || 1}
-              value={Number(sweepVar.value)}
-              onChange={(e) =>
-                patch((p) => ({
-                  vars: p.vars.map((v) =>
-                    v.id === sweepVar.id ? { ...v, value: e.target.value } : v
-                  ),
-                }))
-              }
+              value={simOn ? Number(sim.x) : Number(sweepVar.value)}
+              onChange={(e) => setSim({ id: sweepVar.id, x: Number(e.target.value) })}
             />
             <span className="tcc-slider-val">
-              {Number(sweepVar.value).toLocaleString("ko-KR")} {sweepVar.unit}
+              {(simOn ? Number(sim.x) : Number(sweepVar.value)).toLocaleString("ko-KR")} {sweepVar.unit}
             </span>
           </div>
+          <p className="tcc-hint">슬라이더는 보기만 바꿉니다 — 저장되지 않고, 탭을 옮기면 원래 값으로 돌아갑니다.</p>
         </Section>
       )}
 
@@ -18649,6 +18758,14 @@ const CSS = `
 .tcc-dot { width: 24px; height: 24px; border: 1px solid var(--line); background: none; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 11px; color: var(--ink2); cursor: pointer; }
 .tcc-dot:hover { border-color: var(--accent); }
 .tcc-dot.is-on { background: var(--tcc-fill); border-color: var(--tcc-fill); color: #fff; font-weight: 700; }
+/* 미채점 · 탈락 · 임시값 · 가성비 기준 (2026-10-22) */
+.tcc-unrated { display: block; margin-top: 3px; font-family: inherit; font-size: 10.5px; font-weight: 500; color: var(--ink2); white-space: normal; }
+.tcc-card .tcc-unrated { margin-top: 8px; font-size: 11px; }
+.tcc-card.is-dropped { opacity: .55; }
+.tcc-card-state { display: block; margin-top: 3px; font-size: 10.5px; font-weight: 500; color: var(--ink2); }
+.tcc-pickrule { flex-wrap: wrap; gap: 6px; margin-bottom: 10px; font-size: 12.5px; color: var(--ink2); }
+.tcc-pickrule .tcc-pickmin { width: 64px; text-align: center; }
+.tcc-simbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 7px; background: var(--tcc-soft); font-size: 12.5px; }
 
 .tcc-rowactions { display: flex; gap: 8px; flex-wrap: wrap; }
 .tcc-guide { background: var(--tcc-soft); border-left: 3px solid var(--accent); padding: 13px 16px; border-radius: 0 5px 5px 0; }
