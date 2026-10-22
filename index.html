@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261022f_costs_report -->
+<!-- (2026-10-22) 💰 **비용 비교 도구 — «요약 · 인쇄» 탭**(10-16 검토 5번 뒷부분 · 제니: 프로토타입 없음 · 화면과 인쇄 둘 다). 결론 다음 탭. 한 장에: 선택한 안(계약·이력의 결정)·가성비 최고 · 비교 한눈에(총비용·월 환산·1회성·기능 총점·판정 · 탈락/약정/회수 예정/미채점 표시) · 월별 누적 비용 차트 · 비용 항목(조건·견적 근거 표시) · 기능 평가 · 계약 일정 · AI 의견(날짜) · 최근 운영 기록 5. [인쇄 · PDF 저장] = 새 창에 이 판만 옮겨 data-theme="light" 로 인쇄(사이드바·다크 바탕 안 나옴). ★ 판정 규칙을 `tccJudge`·`tccRows` 한 곳으로 뺐다 — 결론 탭과 요약이 같은 것을 읽는다. 헤드리스 PDF 로 확인(A4 2쪽). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261022e_costs_store_v2 -->
 <!-- (2026-10-22) 💰 **비용 비교 도구 — 저장 구조를 프로젝트마다 한 줄로**(10-16 검토 5번 앞부분 · 제니 «지금 바로 해도 돼»). 예전엔 모든 프로젝트가 cost_store 한 줄(`toolcost:team:v1`)이라 다른 프로젝트를 고쳐도 «저장 보류» 가 떴고 저장마다 전부를 읽고 썼다. 이제 `toolcost:p:<id>` 줄마다 {rev, sort, updatedAt, updatedBy, project} + 표시 줄 `toolcost:meta:v2`. ①처음 열 때 옛 줄을 그대로 옮긴다(옛 줄은 지우지 않는다 — 백업) ②바뀐 프로젝트만 쓰고 충돌은 «내가 고친 프로젝트» 만 본다(남이 다른 프로젝트를 고쳐도 내 저장은 안 막힌다 → 알림만 «다른 사람이 프로젝트 N개를 수정») ③30초 확인은 updated_at 만 읽는다 ④쓰기 먼저·지우기 다음(끊겨도 «남는» 쪽) ⑤옮긴 «뒤» 새로고침 안 한 옛 화면이 옛 줄에 저장하면 «옛 화면 저장분» 띠 — 가져오기(백업 바꾸기 확인 거침)·내려받기·버리기 ⑥사이드바 미리 읽기도 v2. ★ dev 는 10-22 에 옮겼다(2 프로젝트 · 칸별 동일 확인 · 옮기기 전 줄은 scratchpad 백업). 두 화면 동시 편집 시험 6단계 통과(시험 프로젝트 만들고 지움). 새 표·칸 없음 → SQL·마스킹 변화 없음. ★ 운영 승격 날: 승격 직후 열린 옛 탭이 있으면 ⑤가 잡는다. ★ dev 전용. -->
 <!-- v20261022d_costs_toolcol -->
@@ -15417,6 +15419,7 @@ const VIEWS = [
   ["cost", "비용표"],
   ["feature", "기능 평가"],
   ["result", "결론"],
+  ["report", "요약 · 인쇄"],
   ["history", "계약 · 이력"],
   ["setup", "설정"],
 ];
@@ -16667,6 +16670,7 @@ function ToolCostCompare({ nav, onProjects, currentUserEmail } = {}) {
                 )}
                 {tab === "feature" && <FeatureTab project={project} patch={patch} />}
                 {tab === "result" && <ResultTab project={project} patch={patch} />}
+                {tab === "report" && <ReportTab project={project} me={me} />}
                 {tab === "history" && <HistoryTab project={project} patch={patch} me={me} />}
                 {tab === "setup" && <SetupTab project={project} patch={patch} />}
               </div>
@@ -17540,6 +17544,285 @@ function CostTab({ project, patch, exportCsv, me }) {
   );
 }
 
+/* 비교 대상마다 한 줄 — 결론 카드·요약·AI 프롬프트가 같은 값을 읽는다. */
+function tccRows(p) {
+  return p.services.map((s) => {
+    const c = computeService(p, s.id);   // c.deposit 은 총비용에 안 들어간다(회수되는 돈)
+    const sc = computeScore(p, s.id);
+    return {
+      id: s.id,
+      name: s.name,
+      state: s.state,
+      active: isServiceActive(s),
+      total: c.total,
+      perMonth: c.perMonth,
+      once: c.once,
+      // ★ 카드와 AI 프롬프트가 이 값을 읽는다. 여기 빠뜨리면 화면에서 조용히 사라진다
+      //   (2026-08-24 실제로 빠뜨렸다 — 비용표 탭은 computeService 결과를 직접 써서
+      //    정상이었고 결론 탭 카드만 안 떴다).
+      deposit: c.deposit,
+      commit: c.commit,
+      commitOver: c.commitOver,
+      flow: c.flow,
+      score: sc.score,
+      rated: sc.rated,
+      unrated: sc.unrated,
+      efficiency: sc.score > 0 ? c.total / sc.score : Infinity,
+    };
+  });
+}
+
+/* 판정(비용 최저·기능 최고·가성비)은 탈락 안을 뺀다. 기능은 하나라도 매긴 안만.
+   가성비 기준 — «기능 X점 이상인 안 중 총비용이 가장 낮은 안»(2026-10-22 제니 결정 · 프로젝트마다 · 기본 60).
+   예전엔 총비용÷기능점수가 가장 낮은 안이라 싸고 평범한 안이 늘 이겼다. */
+function tccJudge(p) {
+  const pickMin = isFinite(Number(p.pickMinScore)) && p.pickMinScore !== "" && p.pickMinScore !== null
+    ? Number(p.pickMinScore) : 60;
+  const rows = tccRows(p);
+  const judged = rows.filter((r) => r.active);
+  const minTotal = tccMin(judged.map((r) => r.total));
+  const maxScore = tccMax(judged.filter((r) => r.rated > 0).map((r) => r.score));
+  const pickTotal = tccMin(judged.filter((r) => r.rated > 0 && r.score >= pickMin).map((r) => r.total));
+  const isPick = (r) => pickTotal !== null && r.active && r.rated > 0 && r.score >= pickMin && r.total === pickTotal;
+  return { rows, judged, minTotal, maxScore, pickMin, pickTotal, isPick };
+}
+
+/* =========================================================
+   요약 탭 — 보고용 한 장 (2026-10-22 · 10-16 검토 5번 · 제니: 프로토타입 없음 · 화면과 인쇄 둘 다)
+   ★ 새로 계산하지 않는다 — 판정은 tccJudge, 금액은 computeService, 조건 글은 termsText 를 그대로 읽는다.
+   ★ 인쇄는 새 창에 이 판만 옮겨 «라이트» 로 찍는다 — 콘솔 안에서 바로 찍으면 사이드바·다크 바탕이 함께 나온다.
+   ========================================================= */
+function ReportTab({ project, me }) {
+  const ref = useRef(null);
+  const { rows, minTotal, maxScore, pickMin, pickTotal, isPick } = tccJudge(project);
+  const months = Number(project.horizonMonths) || 36;
+  const decided = project.services.find((s) => s.id === (project.decision || {}).serviceId) || null;
+  const pick = rows.find(isPick) || null;
+  const c = project.contract || {};
+  const notice = c.endsAt ? addDays(c.endsAt, -Number(c.noticeDays || 0)) : "";
+  const logs = [...(project.logs || [])].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 5);
+  const rvars = resolveVars(project.vars);
+  const stateLabel = (k) => (SERVICE_STATES.find((x) => x.key === k) || {}).label || "";
+
+  const print = () => {
+    const node = ref.current;
+    if (!node) return;
+    const w = window.open("", "_blank");
+    if (!w) { alert("새 창이 막혔습니다. 브라우저에서 팝업을 허용한 뒤 다시 눌러주세요."); return; }
+    // 콘솔의 스타일을 그대로 싣고 라이트로 켠다 — 색은 CSS 변수가 알아서 바뀐다.
+    const styles = [...document.querySelectorAll("style, link[rel=stylesheet]")].map((n) => n.outerHTML).join("\n");
+    w.document.write(
+      '<!doctype html><html lang="ko" data-theme="light"><head><meta charset="utf-8"><title>' +
+        String(project.name).replace(/[<>&]/g, "") + " — 비용 비교 요약</title>" + styles +
+        "<style>body{background:#fff;margin:0;padding:18px}.tcc-noprint{display:none!important}" +
+        "@page{size:A4;margin:12mm}@media print{body{padding:0}}</style></head><body>" +
+        '<div class="tcc-root">' + node.outerHTML + "</div></body></html>"
+    );
+    w.document.close();
+    // 글꼴·그림을 다 그린 뒤 인쇄 창을 띄운다.
+    setTimeout(() => { w.focus(); w.print(); }, 600);
+  };
+
+  return (
+    <div className="tcc-pane">
+      <div className="tcc-rowactions tcc-noprint">
+        <button className="tcc-btn tcc-btn-solid" onClick={print}>인쇄 · PDF 저장</button>
+        <span className="tcc-hint">새 창에서 인쇄 창이 뜹니다 — «PDF로 저장» 을 고르면 파일이 됩니다.</span>
+      </div>
+
+      <article className="tcc-report" ref={ref}>
+        <header className="tcc-rep-head">
+          <div className="tcc-rep-kicker">비용 비교 요약</div>
+          <h1 className="tcc-rep-title">{project.name}</h1>
+          <div className="tcc-rep-meta">
+            {todayStr()} 작성{me ? " · " + me : ""} · 비교 기간 {months}개월
+            {project.updatedAt ? " · 최근 편집 " + String(project.updatedAt).slice(0, 10) + (project.updatedBy ? " " + project.updatedBy : "") : ""}
+          </div>
+        </header>
+
+        <section className="tcc-rep-sec tcc-rep-verdict">
+          {decided ? (
+            <p>
+              <b>선택: {decided.name}</b>
+              {project.decision.decidedAt ? " (" + project.decision.decidedAt + " 결정)" : ""}
+              {project.decision.reason ? " — " + project.decision.reason : ""}
+            </p>
+          ) : null}
+          {pick ? (
+            <p>
+              <b>가성비 최고: {pick.name}</b> — 기능 {pickMin}점 이상인 안 중 {months}개월 총비용이 가장 낮습니다
+              ({wonKo(pick.total)}원 · 기능 {pick.score.toFixed(1)}점).
+            </p>
+          ) : (
+            <p>기능 {pickMin}점 이상인 안이 없습니다.</p>
+          )}
+        </section>
+
+        <section className="tcc-rep-sec">
+          <h2>비교 한눈에</h2>
+          <table className="tcc-table tcc-rep-table">
+            <thead>
+              <tr>
+                <th>안</th>
+                <th className="tcc-num">{months}개월 총비용</th>
+                <th className="tcc-num">월 환산</th>
+                <th className="tcc-num">1회성</th>
+                <th className="tcc-num">기능 총점</th>
+                <th>판정</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className={r.active ? "" : "is-dropped"}>
+                  <td>
+                    {r.name}
+                    {!r.active && <span className="tcc-unrated">{stateLabel(r.state)} — 판정 제외</span>}
+                    {r.commit > 0 && <span className="tcc-unrated">약정 {r.commit}개월{r.commitOver ? " (총비용에 약정 끝까지 포함)" : ""}</span>}
+                    {r.deposit > 0 && <span className="tcc-unrated">회수 예정 {wonKo(r.deposit)}원 별도</span>}
+                  </td>
+                  <td className="tcc-num">{won(r.total)}원</td>
+                  <td className="tcc-num">{won(r.perMonth)}원</td>
+                  <td className="tcc-num">{won(r.once)}원</td>
+                  <td className="tcc-num">
+                    {r.rated > 0 ? r.score.toFixed(1) + "점" : "미채점"}
+                    {r.rated > 0 && r.unrated > 0 && <span className="tcc-unrated">미채점 {r.unrated}개 제외</span>}
+                  </td>
+                  <td>
+                    {[
+                      r.active && minTotal !== null && r.total === minTotal ? "비용 최저" : "",
+                      r.active && r.rated > 0 && maxScore !== null && r.score === maxScore ? "기능 최고" : "",
+                      isPick(r) ? "가성비 최고" : "",
+                    ].filter(Boolean).join(" · ") || "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        {rows.length > 0 && (
+          <section className="tcc-rep-sec tcc-rep-chart">
+            <h2>월별 누적 비용</h2>
+            <SweepChart
+              sweep={{
+                min: 0,
+                max: months,
+                points: [0, ...rows[0].flow.map((_, m) => m + 1)].map((x) => ({
+                  x,
+                  ys: rows.map((r) => r.flow.slice(0, x).reduce((a, b) => a + b, 0)),
+                })),
+              }}
+              services={project.services}
+              currentX={null}
+              unit="개월"
+              hint="할인·과금 시작 달·연 인상률·연 결제 달을 반영한 누적 지출입니다(회수 예정 제외)."
+            />
+          </section>
+        )}
+
+        <section className="tcc-rep-sec">
+          <h2>비용 항목</h2>
+          <table className="tcc-table tcc-rep-table">
+            <thead>
+              <tr>
+                <th>항목</th>
+                <th>주기</th>
+                {project.services.map((s) => <th key={s.id} className="tcc-num">{s.name}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {project.costItems.map((it) => (
+                <tr key={it.id}>
+                  <td>
+                    {it.label}
+                    {it.note && <span className="tcc-unrated">{it.note}</span>}
+                  </td>
+                  <td>{(CYCLES.find((x) => x.key === it.cycle) || {}).label || it.cycle}</td>
+                  {project.services.map((s) => {
+                    const r = evalCell(it.values[s.id], rvars);
+                    const tt = it.cycle === "deposit" ? "" : termsText(itemTerms(it, s.id), it.cycle);
+                    const q = quoteOf(it, s.id);
+                    return (
+                      <td key={s.id} className="tcc-num">
+                        {r.error ? "계산 불가" : won(r.value) + "원"}
+                        {tt && <span className="tcc-unrated">{tt}</span>}
+                        {(q.date || q.files.length > 0 || q.link) && (
+                          <span className="tcc-unrated">
+                            근거{q.date ? " " + q.date : ""}{q.files.length ? " · 파일 " + q.files.length : ""}{q.link ? " · 링크" : ""}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        {project.featureItems.length > 0 && (
+          <section className="tcc-rep-sec">
+            <h2>기능 평가 <span className="tcc-rep-sub">중요도 1–5 · 점수 0–5</span></h2>
+            <table className="tcc-table tcc-rep-table">
+              <thead>
+                <tr>
+                  <th>항목</th>
+                  <th className="tcc-num">중요도</th>
+                  {project.services.map((s) => <th key={s.id} className="tcc-num">{s.name}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {project.featureItems.map((f) => (
+                  <tr key={f.id}>
+                    <td>{f.label}</td>
+                    <td className="tcc-num">{f.weight}</td>
+                    {project.services.map((s) => (
+                      <td key={s.id} className="tcc-num">{isScoreUnset(f.scores[s.id]) ? "—" : f.scores[s.id]}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {(c.startedAt || c.endsAt) && (
+          <section className="tcc-rep-sec">
+            <h2>계약 일정</h2>
+            <p className="tcc-rep-line">
+              계약 {c.startedAt || "미입력"} ~ {c.endsAt || "미입력"}
+              {c.endsAt ? " · 종료까지 " + daysUntil(c.endsAt) + "일" : ""}
+              {notice ? " · 해지 통보 기한 " + notice : ""}
+            </p>
+          </section>
+        )}
+
+        {project.aiComment && (
+          <section className="tcc-rep-sec">
+            <h2>AI 검토 의견 <span className="tcc-rep-sub">참고용{project.aiCommentAt ? " · " + String(project.aiCommentAt).slice(0, 10) : ""}</span></h2>
+            <CommentView data={project.aiComment} />
+          </section>
+        )}
+
+        {logs.length > 0 && (
+          <section className="tcc-rep-sec">
+            <h2>최근 운영 기록</h2>
+            <ul className="tcc-rep-logs">
+              {logs.map((l) => (
+                <li key={l.id}>
+                  <span className="tcc-logdate">{l.date}</span>{" "}
+                  [{(LOG_TYPES.find((x) => x.key === l.type) || {}).label || l.type}] {l.text}
+                  {l.by && <span className="tcc-logby">{l.by}</span>}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </article>
+    </div>
+  );
+}
+
 /* =========================================================
    기능 평가 탭
    ========================================================= */
@@ -17759,45 +18042,11 @@ function ResultTab({ project, patch }) {
     ? { ...project, vars: project.vars.map((v) => (v.id === sim.id ? { ...v, value: sim.x } : v)) }
     : project;
 
-  /* 가성비 기준 — «기능 X점 이상인 안 중 총비용이 가장 낮은 안»(2026-10-22 제니 결정 · 프로젝트마다 · 기본 60).
-     예전엔 총비용÷기능점수가 가장 낮은 안이라 싸고 평범한 안이 늘 이겼다. */
-  const pickMin = isFinite(Number(project.pickMinScore)) && project.pickMinScore !== ""
-    ? Number(project.pickMinScore) : 60;
-
-  const makeRows = (p) => p.services.map((s) => {
-    const c = computeService(p, s.id);   // c.deposit 은 총비용에 안 들어간다(회수되는 돈)
-    const sc = computeScore(p, s.id);
-    return {
-      id: s.id,
-      name: s.name,
-      active: isServiceActive(s),
-      total: c.total,
-      perMonth: c.perMonth,
-      once: c.once,
-      // ★ 카드와 AI 프롬프트가 이 값을 읽는다. 여기 빠뜨리면 화면에서 조용히 사라진다
-      //   (2026-08-24 실제로 빠뜨렸다 — 비용표 탭은 computeService 결과를 직접 써서
-      //    정상이었고 결론 탭 카드만 안 떴다).
-      deposit: c.deposit,
-      commit: c.commit,
-      commitOver: c.commitOver,
-      score: sc.score,
-      rated: sc.rated,
-      unrated: sc.unrated,
-      efficiency: sc.score > 0 ? c.total / sc.score : Infinity,
-    };
-  });
-
   // 카드는 임시값을 반영한 값 · AI 프롬프트는 저장된 값(baseRows)을 쓴다.
-  const rows = makeRows(viewProject);
-  const baseRows = simOn ? makeRows(project) : rows;
-
-  // 판정(비용 최저·기능 최고·가성비)은 탈락 안을 뺀다. 기능은 하나라도 매긴 안만.
-  const judged = rows.filter((r) => r.active);
-  const minTotal = tccMin(judged.map((r) => r.total));
-  const maxScore = tccMax(judged.filter((r) => r.rated > 0).map((r) => r.score));
-  const pickCands = judged.filter((r) => r.rated > 0 && r.score >= pickMin);
-  const pickTotal = tccMin(pickCands.map((r) => r.total));
-  const isPick = (r) => pickTotal !== null && r.active && r.rated > 0 && r.score >= pickMin && r.total === pickTotal;
+  // 판정 규칙은 tccJudge 한 곳 — 요약 탭도 같은 것을 쓴다.
+  const J = tccJudge(viewProject);
+  const { rows, judged, minTotal, maxScore, pickMin, pickTotal, isPick } = J;
+  const baseRows = simOn ? tccRows(project) : rows;
   const sweep = useMemo(() => {
     if (!sweepVar) return null;
     const min = Number(sweepVar.min) || 0;
@@ -19413,6 +19662,34 @@ const CSS = `
 .tcc-quote-up { align-self: flex-start; height: 26px; font-size: 11.5px; cursor: pointer; }
 .tcc-quote-up.is-busy { opacity: .6; cursor: default; }
 .tcc-logby { margin-left: 8px; font-size: 11px; color: var(--ink2); }
+/* 요약 탭 (2026-10-22) — 화면에서도 인쇄에서도 같은 판. 인쇄 창은 data-theme="light" */
+.tcc-report { display: flex; flex-direction: column; gap: 18px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); max-width: 980px; }
+.tcc-rep-head { border-bottom: 2px solid var(--ink); padding-bottom: 10px; }
+.tcc-rep-kicker { font-size: 11px; letter-spacing: .08em; color: var(--ink2); font-weight: 700; }
+.tcc-rep-title { margin: 2px 0 4px; font-size: 22px; font-weight: 800; color: var(--ink); }
+.tcc-rep-meta { font-size: 12px; color: var(--ink2); }
+.tcc-rep-sec h2 { margin: 0 0 8px; font-size: 14px; font-weight: 700; color: var(--ink); }
+.tcc-rep-sub { margin-left: 6px; font-size: 11px; font-weight: 400; color: var(--ink2); }
+.tcc-rep-verdict { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--tcc-soft); border-radius: 4px; }
+.tcc-rep-verdict p { margin: 2px 0; font-size: 13px; color: var(--ink); }
+.tcc-report { -webkit-print-color-adjust: exact; print-color-adjust: exact; }   /* 범례 색 칸이 인쇄에서 빠지지 않게 */
+.tcc-rep-table { width: 100%; font-size: 12px; table-layout: auto; }
+.tcc-rep-table th, .tcc-rep-table td { padding: 6px 8px; vertical-align: top; }
+/* 첫 칸(안·항목 이름)이 눌려 한두 글자씩 꺾이던 것 — 바닥 폭을 준다(10-22 PDF 로 확인) */
+.tcc-rep-table th:first-child, .tcc-rep-table td:first-child { min-width: 170px; width: 30%; }
+.tcc-rep-table th { font-family: inherit; letter-spacing: normal; white-space: normal; }
+.tcc-rep-table th:nth-child(2), .tcc-rep-table td:nth-child(2) { white-space: nowrap; }   /* 주기 «1회성»·중요도 */
+.tcc-rep-table tr.is-dropped td { opacity: .6; }
+.tcc-rep-line { margin: 0; font-size: 12.5px; color: var(--ink); }
+.tcc-rep-logs { margin: 0; padding-left: 16px; font-size: 12px; color: var(--ink); display: flex; flex-direction: column; gap: 3px; }
+.tcc-rep-chart .tcc-chart { max-width: 720px; }
+@media print {
+  .tcc-report { border: none; padding: 0; max-width: none; }
+  /* 표는 쪽을 넘어가도 되고(통째로 넘기면 빈 쪽이 생긴다), 결론 띠·차트·줄만 안 자른다 */
+  .tcc-rep-verdict, .tcc-rep-chart, .tcc-rep-table tr { break-inside: avoid; }
+  .tcc-rep-sec h2 { break-after: avoid; }
+  .tcc-rep-table { font-size: 10.5px; }
+}
 .tcc-commit { display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
 .tcc-sum-sub { display: block; font-size: 10.5px; font-weight: 400; color: var(--ink2); }
 .tcc-simbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 7px; background: var(--tcc-soft); font-size: 12.5px; }
