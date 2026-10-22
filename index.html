@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261022g_costs_toolcol_all -->
+<!-- (2026-10-22) 💰 **비용 비교 도구 — ↑ ↓ × 한 줄을 전부에**(제니: 「이게 들어가는 다른 부분도 다 동일하게 · 기능평가 탭에도」). 22d 의 비용표 전용 폭(136px · nowrap)을 공통 `.tcc-th-tool`·`.tcc-td-tool` 로 올려 기능 평가 표도 같게. 가정값 목록의 ↑ ↓ × 도 같은 묶음·같은 모양(× = tcc-mini-del)으로. 비용표 ↑↓ 에 title(위로·아래로). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261022f_costs_report -->
 <!-- (2026-10-22) 💰 **비용 비교 도구 — «요약 · 인쇄» 탭**(10-16 검토 5번 뒷부분 · 제니: 프로토타입 없음 · 화면과 인쇄 둘 다). 결론 다음 탭. 한 장에: 선택한 안(계약·이력의 결정)·가성비 최고 · 비교 한눈에(총비용·월 환산·1회성·기능 총점·판정 · 탈락/약정/회수 예정/미채점 표시) · 월별 누적 비용 차트 · 비용 항목(조건·견적 근거 표시) · 기능 평가 · 계약 일정 · AI 의견(날짜) · 최근 운영 기록 5. [인쇄 · PDF 저장] = 새 창에 이 판만 옮겨 data-theme="light" 로 인쇄(사이드바·다크 바탕 안 나옴). ★ 판정 규칙을 `tccJudge`·`tccRows` 한 곳으로 뺐다 — 결론 탭과 요약이 같은 것을 읽는다. 헤드리스 PDF 로 확인(A4 2쪽). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261022e_costs_store_v2 -->
@@ -16847,15 +16849,18 @@ function SetupTab({ project, patch }) {
                   onChange={(e) => updVar(v.id, "max", e.target.value)}
                 />
               </div>
-              <button className="tcc-mini" onClick={() => moveVar(v.id, -1)} title="위로">
-                ↑
-              </button>
-              <button className="tcc-mini" onClick={() => moveVar(v.id, 1)} title="아래로">
-                ↓
-              </button>
-              {/* ★ 2026-10-21 — 지우기는 두 번 누른다(회차 삭제와 같은 ConfirmButton). 한 번에 지워지면 되돌릴 길이 없다. */}
-              <ConfirmButton className="tcc-x" label="×" confirmLabel="삭제" title="삭제"
-                onConfirm={() => delVar(v.id)} />
+              {/* ★ 2026-10-22 — ↑ ↓ × 는 비용표·기능 평가와 같은 한 묶음(tcc-td-tool)으로. */}
+              <span className="tcc-td-tool">
+                <button className="tcc-mini" onClick={() => moveVar(v.id, -1)} title="위로">
+                  ↑
+                </button>
+                <button className="tcc-mini" onClick={() => moveVar(v.id, 1)} title="아래로">
+                  ↓
+                </button>
+                {/* ★ 2026-10-21 — 지우기는 두 번 누른다(회차 삭제와 같은 ConfirmButton). 한 번에 지워지면 되돌릴 길이 없다. */}
+                <ConfirmButton className="tcc-mini tcc-mini-del" label="×" confirmLabel="삭제" title="삭제"
+                  onConfirm={() => delVar(v.id)} />
+              </span>
             </div>
           ))}
         </div>
@@ -17405,10 +17410,10 @@ function CostTab({ project, patch, exportCsv, me }) {
                   );
                 })}
                 <td className="tcc-td-tool">
-                  <button className="tcc-mini" onClick={() => moveItem(it.id, -1)}>
+                  <button className="tcc-mini" onClick={() => moveItem(it.id, -1)} title="위로">
                     ↑
                   </button>
-                  <button className="tcc-mini" onClick={() => moveItem(it.id, 1)}>
+                  <button className="tcc-mini" onClick={() => moveItem(it.id, 1)} title="아래로">
                     ↓
                   </button>
                   <ConfirmButton className="tcc-mini tcc-mini-del" label="×" confirmLabel="삭제"
@@ -19544,7 +19549,7 @@ const CSS = `
     minmax(0, var(--tcc-vval, 110px))  /* 숫자 또는 = 식 — 가장 긴 값에 맞춘 공유 폭 */
     minmax(0, 70px)                    /* 단위 */
     minmax(0, auto)                    /* → 계산 결과 (식이 없는 줄은 빈 칸) */
-    auto auto auto auto;               /* 범위 · ↑ · ↓ · × */
+    auto auto;                         /* 범위 · ↑↓× 묶음 */
   align-items: center;
   justify-content: start;
   gap: 8px;
@@ -19594,7 +19599,9 @@ const CSS = `
      '.tcc-th-svc' 하나만으로는 nowrap 이 안 풀린다(뒤에 써도 소용없다). */
 .tcc-th-svc { min-width: 150px; }
 .tcc-table th.tcc-th-svc { white-space: normal; overflow-wrap: anywhere; line-height: 1.4; vertical-align: bottom; }
-.tcc-th-tool { width: 92px; }
+/* ↑ ↓ × 한 줄 — 29+29+38(삭제 확인 글자)+여백 = 129px 실측 → 136px. 비용표·기능 평가·가정값 공통. */
+.tcc-th-tool { width: 136px; }
+.tcc-td-tool { white-space: nowrap; }
 .tcc-table td { padding: 9px 12px; border-bottom: 1px solid var(--line2); vertical-align: top; }
 .tcc-table tbody tr:hover { background: var(--tcc-hover); }
 .tcc-cellin { width: 100%; border: 1px solid transparent; background: none; font-family: inherit; font-size: 13px; padding: 5px 7px; border-radius: 4px; color: var(--ink); }
@@ -19616,8 +19623,6 @@ const CSS = `
 .tcc-table-cost .tcc-th-item { width: 268px; }
 .tcc-table-cost .tcc-th-cycle { width: 96px; }
 /* ↑ ↓ × 를 한 줄로 — 잰 값: 단추 29+29+38(«삭제» 로 바뀐 때)+간격 3×3 + 칸 여백 24 = 129 → 136 (2026-10-22 제니) */
-.tcc-table-cost .tcc-th-tool { width: 136px; }
-.tcc-table-cost .tcc-td-tool { white-space: nowrap; }
 .tcc-table-cost td, .tcc-table-cost th { overflow-wrap: anywhere; }
 .tcc-mini { font-size: 11.5px; min-width: 28px; padding: 0 8px; border: 1px solid var(--line); background: none; color: var(--ink2); margin-right: 3px; }
 .tcc-mini:hover { border-color: var(--ink2); color: var(--ink); }
