@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261022d_costs_toolcol -->
+<!-- (2026-10-22) 💰 비용표 항목 오른쪽 ↑ ↓ × 가 두 줄로 나뉘던 것 → 한 줄(제니). 칸 폭 96→136(잰 값: 단추 29+29+38«삭제»+간격 9+여백 24=129) · nowrap. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261022c_costs_quotes -->
 <!-- (2026-10-22) 💰 **비용 비교 도구 — 견적 근거·운영 기록 작성자**(10-16 검토 4번). 비용표 칸마다 [+ 조건·근거] 판에 «견적 근거»: 견적서 링크(http(s) 만 «링크 열기») · 견적일 · **견적서 파일 첨부**(새 비공개 버킷 `cost-quotes` · 경로는 «프로젝트id/무작위id.확장자» · 원래 이름은 프로젝트 JSON 의 `costItems[].quotes[serviceId]` · 열 때 2분 서명 주소 · 20MB · 칸 [×] 두 번 누르면 저장소에서 지우고 목록에서 뺌). 항목·프로젝트를 지워도 파일은 남긴다(회차·복제본이 가리킬 수 있어서). 운영 기록에 작성자(로그인 계정 `by`) — 옛 기록은 작성자 없음. AI 프롬프트에 견적일. ★ SQL 있음: `sql/cost_quote_files.sql`(백업 `99a1e35` · dev 적용·검사 통과 run 39710250550) — **운영 승격 때 SQL 먼저**(없으면 올리기가 실패). 새 표 없음 → 마스킹 규칙 변화 없음. ★ dev 전용. -->
 <!-- v20261022b_costs_terms -->
@@ -19128,7 +19130,9 @@ const CSS = `
 .tcc-table-cost { table-layout: fixed; }
 .tcc-table-cost .tcc-th-item { width: 268px; }
 .tcc-table-cost .tcc-th-cycle { width: 96px; }
-.tcc-table-cost .tcc-th-tool { width: 96px; }
+/* ↑ ↓ × 를 한 줄로 — 잰 값: 단추 29+29+38(«삭제» 로 바뀐 때)+간격 3×3 + 칸 여백 24 = 129 → 136 (2026-10-22 제니) */
+.tcc-table-cost .tcc-th-tool { width: 136px; }
+.tcc-table-cost .tcc-td-tool { white-space: nowrap; }
 .tcc-table-cost td, .tcc-table-cost th { overflow-wrap: anywhere; }
 .tcc-mini { font-size: 11.5px; min-width: 28px; padding: 0 8px; border: 1px solid var(--line); background: none; color: var(--ink2); margin-right: 3px; }
 .tcc-mini:hover { border-color: var(--ink2); color: var(--ink); }
