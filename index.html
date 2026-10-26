@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261026b_logistics_sort_merge -->
+<!-- (2026-10-26) 📦 발주 분류 둘(제니). ①**주문 표 머리글을 누르면 정렬** — 오름 → 내림 → 기본 차례(티켓 목록과 같은 순환 · 정렬 중인 열은 노랑 · 마우스를 올리면 ▲). 출고구분은 즉시 → 순차 날짜순, 표시는 도서산간 > 선물박스 > 박스 무게. 박스포장·배송주의 탭도 같은 표라 함께. ②**여러 파일을 한 번에 올려 합친다** — 제니: 송장 안 뽑은 주문은 다음 날 발주서에 «안» 실리고, 택배사 사이트엔 발주서 양식을 그대로 올린다. → 순차출고 보류분은 받아 둔 파일을 출고일에 그날 발주서와 «함께» 올리면 즉시출고 파일 하나로 나온다(택배사 업로드 한 번). 헤더가 다르면 안 합치고, 모든 칸이 같은 줄은 한 번만 센다(보류분을 두 번 올려도 두 번 출고 안 됨). 보류분 파일 이름에 «출고일» 을 넣었고, 받기 줄 아래에 «다음 날 발주서에 다시 안 나온다 · 보관했다가 함께 올리라» 를 적었다. 대조: 즉시 153줄 + 보류 110줄을 11/2 기준으로 함께 올리면 144건 전부 즉시출고 · 263줄이 원본 줄 그대로 · 보류분 두 번 = 110줄. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261026a_logistics_classify -->
 <!-- (2026-10-26) 📦 **새 대분류 «물류» › «발주 분류»**(제니 · 프로토타입 = SPEC.md + logistics_classifier.py). Cafe24 공급사 발주서(xlsx)를 올리면 주문번호 단위로 출고구분(즉시/순차 M/D) · 피킹 리스트(출고구분 × SKU) · 박스포장(총수량 ≥ 기준) · 배송주의(도서산간·선물박스)를 나눈다. ★ 파일은 브라우저 안에서만 읽는다(SheetJS) — 서버·DB 에 안 올라간다. DB 쓰기는 설정 한 줄(`console_settings.logistics_classify` · 기존 정책상 master 만 저장)뿐 · SQL 없음. ★ 제니 결정으로 프로토타입과 다른 것: ①배송메시지 분류 뺐다 ②수량 빈칸·0·글자 = 오류 → 받기·인쇄를 막는다 ③«순차출고(미정)» 없음 — 날짜 없는 순차출고는 같은 오류로 알린다 ④출고 기준일(기본 오늘)에 순차출고일이 되었거나 지났으면 즉시출고로 묶는다(«순차 M/D 도래» 표시). ★ 받기: «즉시출고 주문만» · «순차출고 보류분» = 올린 발주서의 칸을 그대로 복사한 같은 양식(택배사 사이트에 그대로 올리려고 · 제니 요청) · «분류 엑셀»(요약·주문별·피킹·박스·배송주의·원본+분류) · 피킹 리스트 인쇄(A4 · 출고구분마다 · 개인정보 없음). ★ 메뉴 기본 권한은 master 만 — 물류 담당자 역할을 메뉴 권한에서 체크하면 열린다. 계산 구간(LOGI_CORE)을 떼어 샘플 발주서(144건/263줄)로 대조: 요약·박스 7건(머리끈 빼면 3)·피킹 22줄 순서까지 SPEC 기대값과 같음 · 즉시출고 파일 153줄·보류 110줄 · 원본 행 그대로. dev 계정으로 로컬 화면 확인(다크·라이트 · 1500 폭 넘침 없음). ★ dev 전용. -->
 <!-- v20261022g_costs_toolcol_all -->
@@ -35945,6 +35947,43 @@ function logiSubsetSheet(ws, r0, sheetRows){
   if(ws['!cols']) out['!cols'] = ws['!cols'];
   return out;
 }
+// ★★ 여러 파일을 «한 시트» 로 합친다(2026-10-26 제니: 송장 안 뽑은 주문은 다음 날 발주서에 «안» 실린다).
+//   그래서 순차출고 보류분은 받아 둔 파일을 출고일에 그날 발주서와 «함께» 올린다 → 즉시출고 파일이 하나로 나와
+//   택배사 사이트에 한 번만 올리면 된다. 헤더가 다르면 합치지 않는다(다른 양식을 섞으면 열이 어긋난다).
+//   같은 줄(모든 칸이 같은 줄)은 한 번만 — 보류분 파일을 두 번 올려도 두 번 출고되지 않게.
+function logiMergeSheets(list){
+  const out = {}; let n = 0, dups = 0, rg0 = null, head0 = null;
+  const seen = new Set(), sources = [];
+  for(const {name, ws} of list){
+    if(!ws || !ws['!ref']) return {error:'«' + name + '» 시트가 비어 있습니다.'};
+    const rg = XLSX.utils.decode_range(ws['!ref']);
+    const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:'', blankrows:true});
+    const head = (aoa[0]||[]).map(h=>String(h==null?'':h).trim());
+    while(head.length && !head[head.length-1]) head.pop();
+    if(!head0){
+      head0 = head; rg0 = rg;
+      for(let c=rg.s.c; c<=rg.e.c; c++){ const src = ws[XLSX.utils.encode_cell({r:rg.s.r, c})]; if(src) out[XLSX.utils.encode_cell({r:0, c:c-rg.s.c})] = {...src}; }
+      if(ws['!cols']) out['!cols'] = ws['!cols'];
+    } else if(JSON.stringify(head) !== JSON.stringify(head0)){
+      return {error:'«' + name + '» 의 열 구성이 첫 파일과 다릅니다 — 같은 발주서 양식끼리만 함께 올릴 수 있습니다.'};
+    }
+    let rows = 0;
+    for(let i=1; i<aoa.length; i++){
+      const row = aoa[i] || [];
+      if(row.every(v=>String(v==null?'':v).trim()==='')) continue;
+      const key = JSON.stringify(row.map(v=>String(v==null?'':v).trim()));
+      if(seen.has(key)){ dups++; continue; }
+      seen.add(key); n++; rows++;
+      for(let c=rg.s.c; c<=rg.e.c; c++){
+        const src = ws[XLSX.utils.encode_cell({r:rg.s.r + i, c})];
+        if(src) out[XLSX.utils.encode_cell({r:n, c:c-rg.s.c})] = {...src};
+      }
+    }
+    sources.push({name, rows});
+  }
+  out['!ref'] = XLSX.utils.encode_range({s:{r:0, c:0}, e:{r:n, c:rg0.e.c - rg0.s.c}});
+  return {ws: out, dups, sources};
+}
 // LOGI_CORE_END
 
 const logiYN = (b)=> b ? 'Y' : '';
@@ -36050,6 +36089,19 @@ function logiPrintPicklist(res, groups, asOf){
   setTimeout(()=>{ w.focus(); w.print(); }, 400);
 }
 
+// 주문 표의 열 — 머리글 이름 · 정렬에 쓰는 값. 출고구분은 «기본 차례» 와 같은 뜻으로(즉시 → 순차 날짜순).
+// 표시는 무거운 것부터: 도서산간(4) · 선물박스(2) · 박스(1) 의 합.
+const LOGI_ORDER_COLS = [
+  {k:'order_no',   label:'주문번호', v:o=>o.order_no},
+  {k:'paid_at',    label:'결제일시', v:o=>o.paid_at},
+  {k:'ship_group', label:'출고구분', v:o=>(o.ship_group===LOGI_IMMEDIATE ? '0' : '1' + (o.staged_date||'9999-12-31')) + (o.staged_due ? 'a' : 'b')},
+  {k:'total_qty',  label:'총수량',   v:o=>o.total_qty, right:true},
+  {k:'box_qty',    label:'박스판정', v:o=>o.box_qty, right:true},
+  {k:'flags',      label:'표시',     v:o=>(o.is_remote?4:0) + (o.has_gift_box?2:0) + (o.is_box?1:0)},
+  {k:'recipient',  label:'수령인',   v:o=>o.recipient||''},
+  {k:'items',      label:'구성',     v:o=>o.items||''},
+];
+
 function LogisticsClassifyPage({currentUserEmail, isMaster}){
   const [file,setFile]       = useState(null);    // {name, ws, r0, lines, issues}
   const [loadErr,setLoadErr] = useState('');
@@ -36059,6 +36111,12 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
   const [grp,setGrp]         = useState('all');
   const [pickGrp,setPickGrp] = useState(null);
   const [q,setQ]             = useState('');
+  const [sort,setSort]       = useState(null);    // {key, dir:'asc'|'desc'} · null = 기본 차례
+  const clickSort = (k)=> setSort(p=>{
+    if(!p || p.key!==k) return {key:k, dir:'asc'};
+    if(p.dir==='asc')   return {key:k, dir:'desc'};
+    return null;
+  });
   // 설정 — undefined = 못 읽음(저장 잠금 · 코드 기본으로 돈다) · null = 아직 없음 · 값
   const [cfgRow,setCfgRow]   = useState(null);
   const [cfg,setCfg]         = useState(logiConfig(null));
@@ -36076,26 +36134,32 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
     return ()=>{ alive = false; };
   },[]);
 
-  const readFile = (f)=>{
-    if(!f) return;
+  // ★ 여러 개를 한 번에 받는다 — 출고일에는 «그날 발주서 + 보관해 둔 순차출고 보류분» 을 함께 올린다.
+  const readFiles = async (fileList)=>{
+    const fs = [...(fileList||[])];
+    if(!fs.length) return;
     setLoadErr('');
-    if(!/\.xlsx?$/i.test(f.name)){ setLoadErr('엑셀 파일(.xlsx)만 올릴 수 있습니다.'); return; }
-    const fr = new FileReader();
-    fr.onload = (e)=>{
-      try{
-        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const r = logiReadSheet(ws);
-        if(r.error){ setFile(null); setLoadErr(r.error + (r.headers ? ' (이 파일의 헤더: ' + r.headers.filter(Boolean).join(', ') + ')' : '')); return; }
-        if(!r.lines.length){ setFile(null); setLoadErr('주문 줄이 하나도 없습니다.'); return; }
-        setFile({name:f.name, sheetName:wb.SheetNames[0], ws, r0:r.r0, lines:r.lines, issues:r.issues});
-        setTab('orders'); setGrp('all'); setPickGrp(null); setQ('');
-      }catch(err){
-        console.error('[발주 분류] 파일 읽기 실패', err);
-        setFile(null); setLoadErr('파일을 읽지 못했습니다: ' + (err && err.message || err));
+    const bad = fs.find(f=>!/\.xlsx?$/i.test(f.name));
+    if(bad){ setLoadErr('엑셀 파일(.xlsx)만 올릴 수 있습니다: ' + bad.name); return; }
+    try{
+      const list = [];
+      for(const f of fs){
+        const buf = await f.arrayBuffer();
+        const wb = XLSX.read(new Uint8Array(buf), {type:'array'});
+        list.push({name:f.name, sheetName:wb.SheetNames[0], ws:wb.Sheets[wb.SheetNames[0]]});
       }
-    };
-    fr.readAsArrayBuffer(f);
+      const mg = logiMergeSheets(list);
+      if(mg.error){ setFile(null); setLoadErr(mg.error); return; }
+      const r = logiReadSheet(mg.ws);
+      if(r.error){ setFile(null); setLoadErr(r.error + (r.headers ? ' (이 파일의 헤더: ' + r.headers.filter(Boolean).join(', ') + ')' : '')); return; }
+      if(!r.lines.length){ setFile(null); setLoadErr('주문 줄이 하나도 없습니다.'); return; }
+      setFile({name:fs[0].name, names:fs.map(f=>f.name), sources:mg.sources, dups:mg.dups,
+        sheetName:list[0].sheetName, ws:mg.ws, r0:r.r0, lines:r.lines, issues:r.issues});
+      setTab('orders'); setGrp('all'); setPickGrp(null); setQ(''); setSort(null);
+    }catch(err){
+      console.error('[발주 분류] 파일 읽기 실패', err);
+      setFile(null); setLoadErr('파일을 읽지 못했습니다: ' + (err && err.message || err));
+    }
   };
 
   const res = useMemo(()=> file ? logiClassify(file.lines, cfg, asOf) : null, [file, cfg, asOf]);
@@ -36110,7 +36174,10 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
     const rows = [].concat(...os.map(o=>o.sheetRows));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, logiSubsetSheet(file.ws, file.r0, rows), file.sheetName || 'Supply');
-    XLSX.writeFile(wb, base + '_' + (which==='immediate' ? '즉시출고' : '순차출고보류') + '_' + asOf.replace(/-/g,'') + '.xlsx');
+    // ★ 보류분 파일 이름에 «출고일» 을 넣는다 — 출고일에 그 파일을 찾아 다시 올려야 하기 때문이다(다음 날 발주서에 안 실린다).
+    const dates = [...new Set(os.map(o=>o.staged_label).filter(Boolean))].map(x=>x.replace('/', '-'));
+    XLSX.writeFile(wb, base + '_' + (which==='immediate' ? '즉시출고_' + asOf.replace(/-/g,'')
+      : '순차출고보류_출고일 ' + dates.join(' ') + '_받은날 ' + asOf.replace(/-/g,'')) + '.xlsx');
     toast((which==='immediate' ? '즉시출고' : '순차출고 보류') + ' 주문 ' + os.length + '건(' + rows.length + '줄)을 발주서 양식 그대로 내려받았습니다.', 'success');
   };
 
@@ -36148,13 +36215,25 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
   ]) : [];
 
   const qn = q.trim().toLowerCase();
-  const orderList = !res ? [] : res.orders.filter(o=>{
+  const filtered = !res ? [] : res.orders.filter(o=>{
     if(tab==='box' && !o.is_box) return false;
     if(tab==='attention' && !o.needs_attention) return false;
     if(tab==='orders' && grp!=='all' && o.ship_group!==grp) return false;
     if(qn && (o.order_no + ' ' + o.recipient + ' ' + o.items).toLowerCase().indexOf(qn) < 0) return false;
     return true;
   });
+  // 열 정렬(2026-10-26 제니) — 머리글을 누를 때마다 오름 → 내림 → 정렬 없음(티켓 목록과 같은 순환).
+  //   «정렬 없음» 은 기본 차례(즉시출고 먼저 · 순차출고 날짜순 · 결제일시순)다.
+  const orderList = (()=>{
+    const col = sort && LOGI_ORDER_COLS.find(c=>c.k===sort.key);
+    if(!col) return filtered;
+    const m = sort.dir==='desc' ? -1 : 1;
+    return filtered.slice().sort((a,b)=>{
+      const x = col.v(a), y = col.v(b);
+      const r = (typeof x==='number' && typeof y==='number') ? x - y : String(x).localeCompare(String(y), 'ko');
+      return r * m;
+    });
+  })();
   const curPick = res ? (pickGrp && res.groupOrder.indexOf(pickGrp)>=0 ? pickGrp : res.groupOrder[0]) : null;
   const picks = res ? res.picklist.filter(p=>p.ship_group===curPick) : [];
 
@@ -36176,18 +36255,22 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
       <div style={{display:'flex',gap:12,alignItems:'stretch',flexWrap:'wrap',marginBottom:16}}>
         <div onClick={()=>inputRef.current && inputRef.current.click()}
           onDragOver={e=>{ e.preventDefault(); setDrag(true); }} onDragLeave={()=>setDrag(false)}
-          onDrop={e=>{ e.preventDefault(); setDrag(false); readFile(e.dataTransfer.files && e.dataTransfer.files[0]); }}
+          onDrop={e=>{ e.preventDefault(); setDrag(false); readFiles(e.dataTransfer.files); }}
           style={{...card,flex:'1 1 420px',minWidth:0,padding:'14px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:14,
             borderStyle:'dashed',borderColor:drag?'var(--accent)':'var(--border-strong)',background:drag?'var(--brand-soft)':'var(--card)'}}>
           <span style={{fontSize:24,lineHeight:1}}>📄</span>
           <div style={{minWidth:0}}>
             <div style={{fontSize:13.5,fontWeight:700,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-              {file ? file.name : '발주서 엑셀(.xlsx)을 끌어 놓거나 눌러서 고르세요'}</div>
+              {file ? (file.names.length > 1 ? file.names.join(' + ') : file.name) : '발주서 엑셀(.xlsx)을 끌어 놓거나 눌러서 고르세요 · 여러 개 함께 가능'}</div>
             <div style={{fontSize:12,color:'var(--sub)',marginTop:3}}>
-              {file ? ('품목 '+file.lines.length+'줄 읽음 · 다른 파일을 올리려면 다시 누르세요') : 'Cafe24 › 공급사 발주서 다운로드 파일 그대로'}</div>
+              {file ? ('품목 '+file.lines.length+'줄 읽음'
+                  + (file.sources.length > 1 ? ' (' + file.sources.map(x=>x.rows+'줄').join(' + ') + ')' : '')
+                  + (file.dups ? ' · 같은 줄 ' + file.dups + '개는 한 번만 셌습니다' : '')
+                  + ' · 다른 파일을 올리려면 다시 누르세요')
+                : 'Cafe24 › 공급사 발주서 다운로드 파일 그대로 · 출고일에는 보관해 둔 «순차출고 보류분» 파일도 함께'}</div>
           </div>
-          <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{display:'none'}}
-            onChange={e=>{ readFile(e.target.files && e.target.files[0]); e.target.value=''; }}/>
+          <input ref={inputRef} type="file" accept=".xlsx,.xls" multiple style={{display:'none'}}
+            onChange={e=>{ readFiles(e.target.files); e.target.value=''; }}/>
         </div>
         <div style={{...card,padding:'12px 16px',display:'flex',flexDirection:'column',justifyContent:'center',gap:6}}>
           <div style={{fontSize:12,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>출고 기준일
@@ -36279,7 +36362,8 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
             <button style={btn(false, blocked)} disabled={blocked} onClick={()=>logiPrintPicklist(res, res.groupOrder, asOf)}>🖨 피킹 리스트 인쇄</button>
           </div>
           <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:18}}>
-            «즉시출고 주문만» · «순차출고 보류분» 은 올린 발주서와 같은 열 · 같은 양식이라 택배사 사이트에 그대로 올릴 수 있습니다.
+            «즉시출고 주문만» 은 올린 발주서와 같은 양식이라 택배사 사이트에 그대로 올릴 수 있습니다.
+            {stagedGroups.length > 0 && <b style={{color:'var(--warn-ink)',fontWeight:600}}> 순차출고 보류분은 다음 날 발주서에 다시 나오지 않습니다 — 받아 보관했다가 출고일에 그날 발주서와 함께 올리세요.</b>}
             {s.paid_at_range ? ' · 결제 ' + s.paid_at_range[0].slice(0,16) + ' ~ ' + s.paid_at_range[1].slice(0,16) : ''}
           </div>
 
@@ -36300,8 +36384,18 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
             <div className="table-wrap">
               <table className="hist">
                 <thead><tr>
-                  <th>주문번호</th><th>결제일시</th><th>출고구분</th><th style={{textAlign:'right'}}>총수량</th>
-                  <th style={{textAlign:'right'}}>박스판정</th><th>표시</th><th>수령인</th><th>구성</th>
+                  {LOGI_ORDER_COLS.map(c=>{
+                    const on = sort && sort.key===c.k;
+                    return (
+                      <th key={c.k} className="cs-th" onClick={()=>clickSort(c.k)} title={c.label + ' — 눌러서 정렬'}
+                        style={{cursor:'pointer',userSelect:'none',textAlign:c.right?'right':'left',
+                          color: on ? 'var(--yellow)' : 'var(--head-ink)'}}>
+                        {c.label}
+                        <span className={on?undefined:'cs-sortmark'} style={{marginLeft:4}}>
+                          {on ? (sort.dir==='desc' ? '▼' : '▲') : '▲'}</span>
+                      </th>
+                    );
+                  })}
                 </tr></thead>
                 <tbody>
                   {orderList.map(o=>(
