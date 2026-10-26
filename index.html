@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261026a_logistics_classify -->
+<!-- (2026-10-26) 📦 **새 대분류 «물류» › «발주 분류»**(제니 · 프로토타입 = SPEC.md + logistics_classifier.py). Cafe24 공급사 발주서(xlsx)를 올리면 주문번호 단위로 출고구분(즉시/순차 M/D) · 피킹 리스트(출고구분 × SKU) · 박스포장(총수량 ≥ 기준) · 배송주의(도서산간·선물박스)를 나눈다. ★ 파일은 브라우저 안에서만 읽는다(SheetJS) — 서버·DB 에 안 올라간다. DB 쓰기는 설정 한 줄(`console_settings.logistics_classify` · 기존 정책상 master 만 저장)뿐 · SQL 없음. ★ 제니 결정으로 프로토타입과 다른 것: ①배송메시지 분류 뺐다 ②수량 빈칸·0·글자 = 오류 → 받기·인쇄를 막는다 ③«순차출고(미정)» 없음 — 날짜 없는 순차출고는 같은 오류로 알린다 ④출고 기준일(기본 오늘)에 순차출고일이 되었거나 지났으면 즉시출고로 묶는다(«순차 M/D 도래» 표시). ★ 받기: «즉시출고 주문만» · «순차출고 보류분» = 올린 발주서의 칸을 그대로 복사한 같은 양식(택배사 사이트에 그대로 올리려고 · 제니 요청) · «분류 엑셀»(요약·주문별·피킹·박스·배송주의·원본+분류) · 피킹 리스트 인쇄(A4 · 출고구분마다 · 개인정보 없음). ★ 메뉴 기본 권한은 master 만 — 물류 담당자 역할을 메뉴 권한에서 체크하면 열린다. 계산 구간(LOGI_CORE)을 떼어 샘플 발주서(144건/263줄)로 대조: 요약·박스 7건(머리끈 빼면 3)·피킹 22줄 순서까지 SPEC 기대값과 같음 · 즉시출고 파일 153줄·보류 110줄 · 원본 행 그대로. dev 계정으로 로컬 화면 확인(다크·라이트 · 1500 폭 넘침 없음). ★ dev 전용. -->
 <!-- v20261022g_costs_toolcol_all -->
 <!-- (2026-10-22) 💰 **비용 비교 도구 — ↑ ↓ × 한 줄을 전부에**(제니: 「이게 들어가는 다른 부분도 다 동일하게 · 기능평가 탭에도」). 22d 의 비용표 전용 폭(136px · nowrap)을 공통 `.tcc-th-tool`·`.tcc-td-tool` 로 올려 기능 평가 표도 같게. 가정값 목록의 ↑ ↓ × 도 같은 묶음·같은 모양(× = tcc-mini-del)으로. 비용표 ↑↓ 에 title(위로·아래로). 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261022f_costs_report -->
@@ -1828,6 +1830,8 @@ const Icon = {
   autoDelivery: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>,
   refunds: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
   costs: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><rect x="8" y="10" width="8" height="8"/></svg>,
+  // 물류 — «상자» 모양(2026-10-26).
+  logistics: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5"/><line x1="12" y1="13" x2="12" y2="21"/></svg>,
   // CS 관리 — «표(티켓)» 모양. ★ 환불 아이콘을 돌려쓰지 않는다. 두 메뉴가 나란히
   //   서 있어서 같은 그림이면 어느 쪽인지 그림으로는 구분이 안 된다.
   csTickets: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4z"/><line x1="13" y1="5" x2="13" y2="19" strokeDasharray="2 3"/></svg>,
@@ -35691,6 +35695,669 @@ function MsgTplCatManager({cats, rows, onClose, onChanged}){
   );
 }
 
+// ── 발주 분류 (2026-10-26 · 물류) ─────────────────────────────────────────────
+// Cafe24 공급사 발주서(xlsx)를 올리면 «주문번호 단위로» 출고 구분·피킹 리스트·박스 포장·배송주의를 나눈다.
+// 기준 문서는 제니가 건넨 SPEC.md(프로토타입) + logistics_classifier.py(레퍼런스). 그 규칙을 그대로 옮겼고
+// 제니 결정으로 바꾼 것은 넷이다:
+//   ①배송메시지 분류는 뺐다 → 배송주의 = 도서산간 · 선물박스 둘뿐.
+//   ②수량 칸이 비었거나 0·글자면 «오류» 로 막는다(레퍼런스는 조용히 0 으로 셌다).
+//   ③«순차출고(미정)» 그룹은 없다 — 순차출고 상품은 늘 날짜를 단다(제니). 날짜가 없으면 같은 오류로 알린다.
+//   ④순차출고일이 «기준일» 이 되었거나 지났으면 그 주문은 즉시출고로 묶는다(«오늘 출고»).
+// ★★ 파일은 이 브라우저 안에서만 읽는다 — 서버·DB 어디에도 안 올라간다(수령인·주소·연락처가 들어 있다).
+//   DB 에 쓰는 것은 설정값(console_settings.logistics_classify) 하나뿐이다.
+// ★ 계산 함수(LOGI_CORE 사이)는 JSX 를 안 쓴다 — 샘플 발주서로 숫자를 대조하는 검사가 이 구간만 떼어 돌린다.
+// LOGI_CORE_START
+const LOGI_DEFAULTS = {
+  stagedKeyword: '순차출고',
+  boxThreshold: 3,
+  smallKeywords: ['머리끈'],
+  excludeSmallFromBox: false,
+  giftKeywords: ['선물박스'],
+};
+// 헤더 «이름» 으로 찾는다 — Cafe24 가 열 순서를 바꿔도 돈다. 위에서부터 첫 일치 · 한 열은 한 번만.
+// ★ «주문번호(원룸만들기)» 는 쇼핑몰 주문번호(분류 기준), 괄호 없는 «주문번호» 는 발주처 주문번호다.
+const LOGI_COLS = [
+  ['paid_at',           /^결제일시/],
+  ['order_no',          /^주문번호\(.+\)$/],
+  ['supplier_order_no', /^주문번호$/],
+  ['product_option',    /^상품옵션/],
+  ['sku',               /^자체품목코드$/],
+  ['product_code',      /^상품코드$/],
+  ['qty',               /^주문수량$/],
+  ['orderer',           /^주문자명$/],
+  ['recipient',         /^수령인$/],
+  ['supplier',          /^발주처$/],
+  ['courier',           /^택배사/],
+  ['remote',            /^도서산간/],
+];
+const LOGI_REQUIRED = {order_no:'주문번호(쇼핑몰명)', product_option:'상품옵션(기본)', qty:'주문수량'};
+const LOGI_IMMEDIATE = '즉시출고';
+
+function logiConfig(v){
+  const d = LOGI_DEFAULTS, o = (v && typeof v==='object') ? v : {};
+  const list = (x, def)=> Array.isArray(x) ? x.map(s=>String(s).trim()).filter(Boolean) : def.slice();
+  const n = parseInt(o.boxThreshold, 10);
+  return {
+    stagedKeyword: String(o.stagedKeyword||'').trim() || d.stagedKeyword,
+    boxThreshold: n>=1 ? n : d.boxThreshold,
+    smallKeywords: list(o.smallKeywords, d.smallKeywords),
+    excludeSmallFromBox: typeof o.excludeSmallFromBox==='boolean' ? o.excludeSmallFromBox : d.excludeSmallFromBox,
+    giftKeywords: list(o.giftKeywords, d.giftKeywords),
+  };
+}
+
+function logiMapHeaders(headers){
+  const map = {}, used = {};
+  LOGI_COLS.forEach(([key, re])=>{
+    for(let c=0; c<headers.length; c++){
+      const h = String(headers[c]==null ? '' : headers[c]).trim();
+      if(!h || used[c]) continue;
+      if(re.test(h)){ map[key] = c; used[c] = true; break; }
+    }
+  });
+  const missing = Object.keys(LOGI_REQUIRED).filter(k=>map[k]==null).map(k=>LOGI_REQUIRED[k]);
+  return {map, missing};
+}
+
+// 시트 → 품목 줄. 행 번호는 «엑셀에 보이는 번호» 그대로 둔다(빈 줄이 끼어도 안 밀린다).
+function logiReadSheet(ws){
+  const ref = ws && ws['!ref'];
+  if(!ref) return {error:'시트가 비어 있습니다.'};
+  const r0 = XLSX.utils.decode_range(ref).s.r;
+  const aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:'', blankrows:true});
+  const headers = (aoa[0]||[]).map(h=>String(h==null?'':h).trim());
+  const {map, missing} = logiMapHeaders(headers);
+  if(missing.length) return {error:'필수 열을 찾지 못했습니다: ' + missing.join(' · '), headers};
+  const cell = (row, key)=> map[key]==null ? '' : String(row[map[key]]==null ? '' : row[map[key]]).trim();
+  const lines = [], issues = [];
+  for(let i=1; i<aoa.length; i++){
+    const row = aoa[i] || [];
+    if(row.every(v=>String(v==null?'':v).trim()==='')) continue;
+    const orderNo = cell(row, 'order_no');
+    if(!orderNo) continue;
+    const excelRow = r0 + i + 1;
+    const qtyRaw = cell(row, 'qty');
+    const qtyNum = qtyRaw.replace(/,/g, '');
+    const qty = /^\d+$/.test(qtyNum) ? parseInt(qtyNum, 10) : NaN;
+    if(!(qty >= 1)) issues.push({row:excelRow, order_no:orderNo, kind:'qty', value:qtyRaw||'(빈칸)'});
+    lines.push({
+      sheetRow: r0 + i, excelRow, order_no: orderNo,
+      supplier_order_no: cell(row,'supplier_order_no'), paid_at: cell(row,'paid_at'),
+      product_option: cell(row,'product_option'), sku: cell(row,'sku'), product_code: cell(row,'product_code'),
+      qty: qty >= 1 ? qty : 0, orderer: cell(row,'orderer'), recipient: cell(row,'recipient'),
+      supplier: cell(row,'supplier'), courier: cell(row,'courier'), remote: cell(row,'remote'),
+    });
+  }
+  return {lines, issues, headers, r0};
+}
+
+// "[공동구매]원룸만들기 사과 파자마, 옵션=파자마 세트★, 사이즈=M" → 이름 + {옵션, 사이즈}
+function logiParseOption(text){
+  const names = [], opts = [];
+  String(text||'').split(',').map(s=>s.trim()).forEach(p=>{
+    const k = p.indexOf('=');
+    if(k >= 0) opts.push([p.slice(0,k).trim(), p.slice(k+1).trim()]);
+    else names.push(p);
+  });
+  return {name: names.join(', '), opts};
+}
+const logiHasKw = (text, kws)=> kws.some(k=>k && String(text||'').indexOf(k) >= 0);
+// 순차출고 품목이면 '11/2', 날짜를 못 찾으면 ''(→ 오류), 순차출고가 아니면 null.
+function logiStagedLabel(text, cfg){
+  const kw = cfg.stagedKeyword, s = String(text||'');
+  if(!kw || s.indexOf(kw) < 0) return null;
+  const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const m = s.match(new RegExp('(\\d{1,2})\\s*/\\s*(\\d{1,2})\\s*(?:\\([월화수목금토일]\\))?\\s*(?=[^/]*' + esc + ')'));
+  return m ? (parseInt(m[1],10) + '/' + parseInt(m[2],10)) : '';
+}
+const logiYmd = (dt)=> dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+// 날짜의 연도는 결제일 연도. 결제일보다 180일 넘게 과거가 되면(연말 주문 → 1월 출고) 다음 해.
+function logiStagedDate(label, paidAt){
+  if(!label) return null;
+  const [mo, d] = label.split('/').map(x=>parseInt(x,10));
+  const pm = String(paidAt||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const paid = pm ? new Date(+pm[1], +pm[2]-1, +pm[3]) : null;
+  let y = paid ? paid.getFullYear() : new Date().getFullYear();
+  const make = (yy)=>{ const t = new Date(yy, mo-1, d); return (t.getMonth()===mo-1 && t.getDate()===d) ? t : null; };
+  let dt = make(y);
+  if(!dt) return null;
+  if(paid && (dt - paid) / 86400000 < -180) dt = make(y + 1);
+  return dt ? logiYmd(dt) : null;
+}
+function logiShortName(name){
+  let n = String(name||'').replace(/\[[^\]]*\]/g, '').replace(/원룸만들기/g, '').replace(/^[ _]+|[ _]+$/g, '');
+  n = n.replace(/_?\d{1,2}\/\d{1,2}\s*(\([월화수목금토일]\))?\s*순차출고/g, '').replace(/^[ _]+|[ _]+$/g, '');
+  return n || name;
+}
+
+// asOf = 'YYYY-MM-DD' 출고 기준일. 순차출고일이 이 날 이전·당일이면 즉시출고로 묶는다.
+function logiClassify(lines, cfgIn, asOf){
+  const cfg = logiConfig(cfgIn);
+  const issues = [];
+  const L = lines.map(l=>{
+    const p = logiParseOption(l.product_option);
+    const label = logiStagedLabel(l.product_option, cfg);
+    return {...l, product_name: p.name, opts: p.opts,
+      option_str: p.opts.map(([k,v])=>k+'='+v).join(' / '),
+      staged_label: label, is_staged_item: label !== null,
+      is_small_item: logiHasKw(l.product_option, cfg.smallKeywords),
+      is_gift_item: logiHasKw(l.product_option, cfg.giftKeywords),
+      is_remote_line: l.remote === 'Y'};
+  });
+  L.forEach(l=>{
+    if(l.staged_label === '') issues.push({row:l.excelRow, order_no:l.order_no, kind:'nodate', value:l.product_option});
+    else if(l.staged_label && !logiStagedDate(l.staged_label, l.paid_at)) issues.push({row:l.excelRow, order_no:l.order_no, kind:'baddate', value:l.staged_label});
+  });
+
+  // 주문 단위 — 품목 한 줄이라도 걸리면 주문 전체가 해당(한 주문은 한 번에 나간다).
+  const byOrder = new Map();
+  L.forEach(l=>{ if(!byOrder.has(l.order_no)) byOrder.set(l.order_no, []); byOrder.get(l.order_no).push(l); });
+  let orders = [];
+  byOrder.forEach((ls, orderNo)=>{
+    const f = ls[0];
+    const total = ls.reduce((a,l)=>a+l.qty, 0);
+    const small = ls.filter(l=>l.is_small_item).reduce((a,l)=>a+l.qty, 0);
+    // 순차출고일: 날짜가 여럿이면 가장 늦은 날(주문 전체가 같이 나가므로).
+    let sLabel = '', sDate = null;
+    ls.forEach(l=>{
+      if(!l.staged_label) return;
+      const dt = logiStagedDate(l.staged_label, f.paid_at);
+      if(dt && (!sDate || dt > sDate)){ sDate = dt; sLabel = l.staged_label; }
+    });
+    const isStaged = ls.some(l=>l.is_staged_item);
+    const due = isStaged && !!sDate && !!asOf && sDate <= asOf;
+    const boxQty = total - (cfg.excludeSmallFromBox ? small : 0);
+    orders.push({
+      order_no: orderNo, supplier_order_no: f.supplier_order_no, paid_at: f.paid_at,
+      line_count: ls.length, total_qty: total, small_qty: small, box_qty: boxQty,
+      is_box: boxQty >= cfg.boxThreshold,
+      is_staged: isStaged, staged_label: sLabel, staged_date: sDate, staged_due: due,
+      ship_group: (!isStaged || due) ? LOGI_IMMEDIATE : ('순차출고(' + (sLabel || '날짜 오류') + ')'),
+      has_gift_box: ls.some(l=>l.is_gift_item), is_remote: ls.some(l=>l.is_remote_line),
+      orderer: f.orderer, recipient: f.recipient, orderer_differs: f.orderer !== f.recipient,
+      supplier: f.supplier, courier: f.courier,
+      items: ls.map(l=>{ const o = l.opts.map(x=>x[1]).join('/'); return logiShortName(l.product_name) + (o?'['+o+']':'') + ' ×' + l.qty; }).join('; '),
+      sheetRows: ls.map(l=>l.sheetRow),
+    });
+  });
+  orders.forEach(o=>{ o.needs_attention = o.is_remote || o.has_gift_box; });
+  // 즉시출고 먼저, 그다음 순차출고(날짜순). 같은 묶음 안에서는 결제일시순.
+  const gk = (o)=> o.ship_group===LOGI_IMMEDIATE ? '0' : ('1' + (o.staged_date || '9999-12-31'));
+  orders = orders.slice().sort((a,b)=> gk(a)<gk(b)?-1 : gk(a)>gk(b)?1 : (a.paid_at<b.paid_at?-1 : a.paid_at>b.paid_at?1 : 0));
+  const groupOrder = [];
+  orders.forEach(o=>{ if(groupOrder.indexOf(o.ship_group) < 0) groupOrder.push(o.ship_group); });
+  const oMap = new Map(orders.map(o=>[o.order_no, o]));
+  L.forEach(l=>{ const o = oMap.get(l.order_no); l.ship_group = o.ship_group; l.order = o; });
+
+  // 피킹 리스트 — 출고구분 × SKU. 즉시출고 리스트에 순차출고 주문의 품목이 섞이면 안 된다.
+  const pk = new Map();
+  L.forEach(l=>{
+    const key = [l.ship_group, l.sku, l.product_code, l.product_name, l.option_str].join('\u0001');
+    if(!pk.has(key)) pk.set(key, {ship_group:l.ship_group, sku:l.sku, product_code:l.product_code,
+      product_name:l.product_name, option_str:l.option_str, qty:0, orderSet:new Set(), line_count:0});
+    const p = pk.get(key); p.qty += l.qty; p.orderSet.add(l.order_no); p.line_count += 1;
+  });
+  const cmp = (a,b)=> a<b?-1 : a>b?1 : 0;
+  const picklist = [...pk.values()].map(p=>({...p, order_count:p.orderSet.size}))
+    .sort((a,b)=> (groupOrder.indexOf(a.ship_group)-groupOrder.indexOf(b.ship_group)) || cmp(a.product_name,b.product_name) || cmp(a.option_str,b.option_str));
+  picklist.forEach(p=>{ delete p.orderSet; });
+
+  const groups = {};
+  groupOrder.forEach(g=>{ groups[g] = {orders:0, lines:0, qty:0}; });
+  orders.forEach(o=>{ const g = groups[o.ship_group]; g.orders++; g.lines += o.line_count; g.qty += o.total_qty; });
+  const dist = {};
+  orders.forEach(o=>{ dist[o.total_qty] = (dist[o.total_qty]||0) + 1; });
+  const qtyDist = {};
+  Object.keys(dist).map(Number).sort((a,b)=>a-b).forEach(k=>{ qtyDist[String(k)] = dist[k]; });
+  const paid = L.map(l=>l.paid_at).filter(Boolean).sort();
+  const imm = orders.filter(o=>o.ship_group===LOGI_IMMEDIATE);
+  const summary = {
+    total_orders: orders.length, total_lines: L.length, total_qty: orders.reduce((a,o)=>a+o.total_qty, 0),
+    ship_groups: groups,
+    immediate_orders: imm.length, staged_orders: orders.length - imm.length,
+    due_orders: orders.filter(o=>o.staged_due).length,
+    box_orders: orders.filter(o=>o.is_box).length,
+    box_orders_immediate: imm.filter(o=>o.is_box).length,
+    remote_orders: orders.filter(o=>o.is_remote).length,
+    gift_box_orders: orders.filter(o=>o.has_gift_box).length,
+    attention_orders: orders.filter(o=>o.needs_attention).length,
+    qty_distribution: qtyDist,
+    paid_at_range: paid.length ? [paid[0], paid[paid.length-1]] : null,
+    suppliers: [...new Set(orders.map(o=>o.supplier))].sort(),
+    couriers: [...new Set(orders.map(o=>o.courier))].sort(),
+  };
+  return {cfg, lines:L, orders, picklist, groupOrder, summary, issues};
+}
+
+// ★★ «발주서 양식 그대로» 행만 골라 새 시트로 — 칸을 «복사» 한다(값을 다시 쓰지 않는다).
+//   그래야 숫자·날짜·글자 형식이 원본과 같아 택배사 사이트에 지금처럼 올릴 수 있다.
+function logiSubsetSheet(ws, r0, sheetRows){
+  const rg = XLSX.utils.decode_range(ws['!ref']);
+  const out = {};
+  const rows = [r0].concat(sheetRows.slice().sort((a,b)=>a-b));
+  rows.forEach((r, i)=>{
+    for(let c=rg.s.c; c<=rg.e.c; c++){
+      const src = ws[XLSX.utils.encode_cell({r, c})];
+      if(src) out[XLSX.utils.encode_cell({r: rg.s.r + i, c})] = {...src};
+    }
+  });
+  out['!ref'] = XLSX.utils.encode_range({s:{r:rg.s.r, c:rg.s.c}, e:{r:rg.s.r + rows.length - 1, c:rg.e.c}});
+  if(ws['!cols']) out['!cols'] = ws['!cols'];
+  return out;
+}
+// LOGI_CORE_END
+
+const logiYN = (b)=> b ? 'Y' : '';
+const logiIssueText = (x)=> x.kind==='qty' ? ('주문수량이 «' + x.value + '» — 1 이상의 숫자여야 합니다')
+  : x.kind==='nodate' ? '«순차출고» 인데 날짜(예: 11/2)가 없습니다'
+  : ('순차출고 날짜 «' + x.value + '» 가 달력에 없는 날입니다');
+const logiSheetName = (g)=> ('피킹_' + g.replace('(', '_').replace(')', '').replace(/\//g, '-')).slice(0, 31);
+const logiSafeFile = (s)=> String(s||'발주서').replace(/\.xlsx?$/i, '').replace(/[\\/:*?"<>|]/g, '_');
+
+function logiOrderRows(orders){
+  return orders.map(o=>({
+    '주문번호': o.order_no, '발주처주문번호': o.supplier_order_no, '결제일시': o.paid_at,
+    '출고구분': o.ship_group, '순차출고일': o.staged_label, '오늘 출고(순차 도래)': logiYN(o.staged_due),
+    '품목수': o.line_count, '총수량': o.total_qty, '소형품목수량': o.small_qty, '박스판정수량': o.box_qty,
+    '박스포장': logiYN(o.is_box), '선물박스': logiYN(o.has_gift_box), '도서산간': logiYN(o.is_remote),
+    '배송주의': logiYN(o.needs_attention), '주문자≠수령인': logiYN(o.orderer_differs), '수령인': o.recipient,
+    '택배사': o.courier, '발주처': o.supplier, '구성': o.items,
+  }));
+}
+function logiAutoCols(rows, headers){
+  return headers.map(h=>{
+    let w = String(h).length;
+    rows.slice(0, 200).forEach(r=>{ const v = r[h]; if(v!=null) w = Math.max(w, String(v).length); });
+    return {wch: Math.min(Math.max(Math.round(w*1.3)+2, 8), 60)};
+  });
+}
+function logiJsonSheet(rows, headers){
+  const ws = XLSX.utils.json_to_sheet(rows, {header: headers});
+  ws['!cols'] = logiAutoCols(rows, headers);
+  if(rows.length) ws['!autofilter'] = {ref: ws['!ref']};
+  return ws;
+}
+// 물류팀 전달용 분류 엑셀 — 요약 · 주문별 · 피킹(출고구분마다) · 박스포장 · 배송주의 · 원본+분류
+function logiExportClassified(res, srcWs, r0, fileBase, asOf){
+  const s = res.summary, wb = XLSX.utils.book_new();
+  const sum = [['항목','값'], ['출고 기준일', asOf], ['전체 주문', s.total_orders], ['전체 품목행', s.total_lines], ['전체 수량', s.total_qty], []];
+  res.groupOrder.forEach(g=>{ const v = s.ship_groups[g]; sum.push([g+' 주문', v.orders], [g+' 품목행', v.lines], [g+' 수량', v.qty]); });
+  sum.push([], ['즉시출고 중 순차출고일 도래', s.due_orders], ['박스 포장 대상(전체)', s.box_orders], ['박스 포장 대상(즉시출고)', s.box_orders_immediate],
+    ['도서산간', s.remote_orders], ['선물박스 포함', s.gift_box_orders], ['배송주의 합계(중복 제외)', s.attention_orders], []);
+  Object.keys(s.qty_distribution).forEach(k=>sum.push(['총수량 '+k+'개 주문', s.qty_distribution[k]]));
+  sum.push([], ['결제일시 범위', s.paid_at_range ? s.paid_at_range.join(' ~ ') : ''], ['박스 기준 수량', res.cfg.boxThreshold],
+    ['소형품목 제외', res.cfg.excludeSmallFromBox?'Y':'N'], ['소형품목 키워드', res.cfg.smallKeywords.join(', ')],
+    ['선물박스 키워드', res.cfg.giftKeywords.join(', ')], ['순차출고 키워드', res.cfg.stagedKeyword]);
+  const wsSum = XLSX.utils.aoa_to_sheet(sum); wsSum['!cols'] = [{wch:28},{wch:44}];
+  XLSX.utils.book_append_sheet(wb, wsSum, '요약');
+  const oh = Object.keys(logiOrderRows([{}])[0]);
+  XLSX.utils.book_append_sheet(wb, logiJsonSheet(logiOrderRows(res.orders), oh), '주문별');
+  const ph = ['출고구분','자체품목코드','상품코드','상품명','옵션','수량','주문건수'];
+  res.groupOrder.forEach(g=>{
+    const rows = res.picklist.filter(p=>p.ship_group===g).map(p=>({'출고구분':p.ship_group,'자체품목코드':p.sku,'상품코드':p.product_code,
+      '상품명':p.product_name,'옵션':p.option_str,'수량':p.qty,'주문건수':p.order_count}));
+    XLSX.utils.book_append_sheet(wb, logiJsonSheet(rows, ph), logiSheetName(g));
+  });
+  XLSX.utils.book_append_sheet(wb, logiJsonSheet(logiOrderRows(res.orders.filter(o=>o.is_box)), oh), '박스포장');
+  XLSX.utils.book_append_sheet(wb, logiJsonSheet(logiOrderRows(res.orders.filter(o=>o.needs_attention)), oh), '배송주의');
+  // 원본+분류 — 원본 칸을 그대로 복사하고 오른쪽에 분류 칸을 붙인다(담당자가 익숙한 방식으로 필터를 건다).
+  const lineBy = new Map(res.lines.map(l=>[l.sheetRow, l]));
+  const ws = logiSubsetSheet(srcWs, r0, res.lines.map(l=>l.sheetRow));
+  const rg = XLSX.utils.decode_range(ws['!ref']);
+  const extra = ['출고구분','순차출고일','오늘 출고(순차 도래)','총수량','박스판정수량','박스포장','선물박스','도서산간','배송주의','상품명','옵션','순차출고품목','소형품목','선물박스품목'];
+  const sorted = res.lines.map(l=>l.sheetRow).sort((a,b)=>a-b);
+  extra.forEach((h, j)=>{ ws[XLSX.utils.encode_cell({r:rg.s.r, c:rg.e.c+1+j})] = {t:'s', v:h}; });
+  sorted.forEach((sr, i)=>{
+    const l = lineBy.get(sr), o = l.order;
+    const vals = [o.ship_group, o.staged_label, logiYN(o.staged_due), o.total_qty, o.box_qty, logiYN(o.is_box), logiYN(o.has_gift_box),
+      logiYN(o.is_remote), logiYN(o.needs_attention), l.product_name, l.option_str, logiYN(l.is_staged_item), logiYN(l.is_small_item), logiYN(l.is_gift_item)];
+    vals.forEach((v, j)=>{ ws[XLSX.utils.encode_cell({r:rg.s.r+1+i, c:rg.e.c+1+j})] = typeof v==='number' ? {t:'n', v} : {t:'s', v:String(v)}; });
+  });
+  const ref2 = {s:rg.s, e:{r:rg.e.r, c:rg.e.c + extra.length}};
+  ws['!ref'] = XLSX.utils.encode_range(ref2);
+  ws['!autofilter'] = {ref: ws['!ref']};
+  delete ws['!cols'];
+  XLSX.utils.book_append_sheet(wb, ws, '원본+분류');
+  XLSX.writeFile(wb, fileBase + '_분류_' + asOf.replace(/-/g,'') + '.xlsx');
+}
+
+// 피킹 리스트 인쇄 — 출고구분마다 A4 한 묶음(체크칸 · 상품 · 옵션 · SKU · 수량 · 주문건수).
+// ★ 개인정보(수령인·주소)는 안 싣는다. 콘솔 스타일을 싣지 않고 종이용으로 따로 짠다 — 다크 바탕이 따라오지 않게.
+function logiPrintPicklist(res, groups, asOf){
+  const w = window.open('', '_blank');
+  if(!w){ toast('새 창이 막혔습니다. 브라우저에서 팝업을 허용한 뒤 다시 눌러주세요.', 'error'); return; }
+  const esc = (s)=> String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const parts = groups.map(g=>{
+    const v = res.summary.ship_groups[g] || {orders:0, qty:0};
+    const rows = res.picklist.filter(p=>p.ship_group===g);
+    const due = g===LOGI_IMMEDIATE && res.summary.due_orders ? ' · 순차출고일 도래 ' + res.summary.due_orders + '건 포함' : '';
+    return '<section><h2>' + esc(g) + '</h2><div class="meta">출고 기준일 ' + esc(asOf) + ' · 주문 ' + v.orders + '건 · 수량 ' + v.qty + due + '</div>' +
+      '<table><thead><tr><th class="ck">✓</th><th>상품명</th><th>옵션</th><th>자체품목코드</th><th class="n">수량</th><th class="n">주문건수</th></tr></thead><tbody>' +
+      rows.map(p=>'<tr><td class="ck">☐</td><td>' + esc(logiShortName(p.product_name)) + '</td><td>' + esc(p.option_str||'—') + '</td><td class="mono">' + esc(p.sku) +
+        '</td><td class="n b">' + p.qty + '</td><td class="n">' + p.order_count + '</td></tr>').join('') +
+      '<tr class="tot"><td></td><td colspan="3">합계</td><td class="n b">' + rows.reduce((a,p)=>a+p.qty,0) + '</td><td></td></tr>' +
+      '</tbody></table></section>';
+  }).join('');
+  w.document.write('<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>피킹 리스트 ' + esc(asOf) + '</title><style>' +
+    "body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:#111;margin:0;padding:18px}" +
+    'section{page-break-after:always}section:last-child{page-break-after:auto}' +
+    'h2{font-size:18px;margin:0 0 4px}.meta{font-size:12px;color:#444;margin-bottom:10px}' +
+    'table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #999;padding:6px 8px;text-align:left}' +
+    'th{background:#eee}.n{text-align:right}.b{font-weight:700;font-size:13px}.ck{width:22px;text-align:center}.mono{font-family:Consolas,monospace;font-size:11px}' +
+    'tr.tot td{background:#f6f6f6;font-weight:700}@page{size:A4;margin:12mm}@media print{body{padding:0}}' +
+    '</style></head><body>' + parts + '</body></html>');
+  w.document.close();
+  setTimeout(()=>{ w.focus(); w.print(); }, 400);
+}
+
+function LogisticsClassifyPage({currentUserEmail, isMaster}){
+  const [file,setFile]       = useState(null);    // {name, ws, r0, lines, issues}
+  const [loadErr,setLoadErr] = useState('');
+  const [drag,setDrag]       = useState(false);
+  const [asOf,setAsOf]       = useState(()=>logiYmd(new Date()));
+  const [tab,setTab]         = useState('orders');
+  const [grp,setGrp]         = useState('all');
+  const [pickGrp,setPickGrp] = useState(null);
+  const [q,setQ]             = useState('');
+  // 설정 — undefined = 못 읽음(저장 잠금 · 코드 기본으로 돈다) · null = 아직 없음 · 값
+  const [cfgRow,setCfgRow]   = useState(null);
+  const [cfg,setCfg]         = useState(logiConfig(null));
+  const [cfgOpen,setCfgOpen] = useState(false);
+  const [cfgBusy,setCfgBusy] = useState(false);
+  const inputRef = useRef(null);
+
+  useEffect(()=>{
+    let alive = true;
+    csLoadSetting('logistics_classify').then(r=>{
+      if(!alive) return;
+      setCfgRow(r);
+      setCfg(logiConfig(r && r.value));
+    });
+    return ()=>{ alive = false; };
+  },[]);
+
+  const readFile = (f)=>{
+    if(!f) return;
+    setLoadErr('');
+    if(!/\.xlsx?$/i.test(f.name)){ setLoadErr('엑셀 파일(.xlsx)만 올릴 수 있습니다.'); return; }
+    const fr = new FileReader();
+    fr.onload = (e)=>{
+      try{
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const r = logiReadSheet(ws);
+        if(r.error){ setFile(null); setLoadErr(r.error + (r.headers ? ' (이 파일의 헤더: ' + r.headers.filter(Boolean).join(', ') + ')' : '')); return; }
+        if(!r.lines.length){ setFile(null); setLoadErr('주문 줄이 하나도 없습니다.'); return; }
+        setFile({name:f.name, sheetName:wb.SheetNames[0], ws, r0:r.r0, lines:r.lines, issues:r.issues});
+        setTab('orders'); setGrp('all'); setPickGrp(null); setQ('');
+      }catch(err){
+        console.error('[발주 분류] 파일 읽기 실패', err);
+        setFile(null); setLoadErr('파일을 읽지 못했습니다: ' + (err && err.message || err));
+      }
+    };
+    fr.readAsArrayBuffer(f);
+  };
+
+  const res = useMemo(()=> file ? logiClassify(file.lines, cfg, asOf) : null, [file, cfg, asOf]);
+  const issues = useMemo(()=> file && res ? file.issues.concat(res.issues).sort((a,b)=>a.row-b.row) : [], [file, res]);
+  const blocked = issues.length > 0;
+  const base = file ? logiSafeFile(file.name) : '';
+
+  const downloadSubset = (which)=>{
+    if(!res || blocked) return;
+    const os = res.orders.filter(o=> which==='immediate' ? o.ship_group===LOGI_IMMEDIATE : o.ship_group!==LOGI_IMMEDIATE);
+    if(!os.length){ toast(which==='immediate' ? '즉시출고 주문이 없습니다.' : '순차출고 보류 주문이 없습니다.', 'warn'); return; }
+    const rows = [].concat(...os.map(o=>o.sheetRows));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, logiSubsetSheet(file.ws, file.r0, rows), file.sheetName || 'Supply');
+    XLSX.writeFile(wb, base + '_' + (which==='immediate' ? '즉시출고' : '순차출고보류') + '_' + asOf.replace(/-/g,'') + '.xlsx');
+    toast((which==='immediate' ? '즉시출고' : '순차출고 보류') + ' 주문 ' + os.length + '건(' + rows.length + '줄)을 발주서 양식 그대로 내려받았습니다.', 'success');
+  };
+
+  const saveCfg = async ()=>{
+    if(!isMaster || cfgRow===undefined) return;
+    setCfgBusy(true);
+    const ok = await csSaveSetting('logistics_classify', cfg, currentUserEmail);
+    setCfgBusy(false);
+    if(ok){ setCfgRow({value:cfg, updated_at:new Date().toISOString(), updated_by:currentUserEmail}); toast('발주 분류 설정을 저장했습니다.', 'success'); }
+  };
+  const savedCfg = logiConfig(cfgRow && cfgRow.value);
+  const cfgDirty = JSON.stringify(savedCfg) !== JSON.stringify(cfg);
+
+  const card = {background:'var(--card)',border:'1px solid var(--border)',borderRadius:12};
+  const btn = (primary, off)=>({padding:'8px 14px',borderRadius:8,fontSize:12.5,fontWeight:600,fontFamily:'inherit',
+    cursor:off?'not-allowed':'pointer',opacity:off?.45:1,whiteSpace:'nowrap',
+    border:primary?'none':'1px solid var(--border-strong)',background:primary?'var(--primary)':'transparent',color:primary?'#fff':'var(--text)'});
+  const inp = {padding:'7px 10px',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:7,color:'var(--text)',fontSize:13,fontFamily:'inherit'};
+  const chip = (on)=>({padding:'5px 11px',borderRadius:14,fontSize:12,cursor:'pointer',fontFamily:'inherit',fontWeight:on?700:500,
+    border:'1px solid '+(on?'var(--accent)':'var(--border)'),background:on?'var(--brand-soft)':'transparent',color:on?'var(--accent)':'var(--sub)'});
+  const tag = (txt, tone)=>(<span style={{fontSize:10.5,fontWeight:700,padding:'2px 6px',borderRadius:4,whiteSpace:'nowrap',
+    background: tone==='warn'?'rgba(246,173,9,.15)':tone==='red'?'rgba(248,113,113,.15)':'var(--brand-soft)',
+    color: tone==='warn'?'var(--warn-ink)':tone==='red'?'var(--red-ink)':'var(--accent)'}}>{txt}</span>);
+
+  const s = res && res.summary;
+  const stagedGroups = res ? res.groupOrder.filter(g=>g!==LOGI_IMMEDIATE) : [];
+  const kpis = res ? [
+    {k:'all', label:'전체 주문', v:s.total_orders, sub:'품목 '+s.total_lines+'줄 · 수량 '+s.total_qty, go:()=>{ setTab('orders'); setGrp('all'); }},
+    {k:LOGI_IMMEDIATE, label:'즉시출고', v:s.immediate_orders, sub:'수량 '+((s.ship_groups[LOGI_IMMEDIATE]||{}).qty||0) + (s.due_orders ? ' · 순차 도래 '+s.due_orders+'건 포함' : ''),
+      go:()=>{ setTab('orders'); setGrp(LOGI_IMMEDIATE); }},
+  ].concat(stagedGroups.map(g=>({k:g, label:g, v:s.ship_groups[g].orders, sub:'보류 · 수량 '+s.ship_groups[g].qty, go:()=>{ setTab('orders'); setGrp(g); }})))
+   .concat([
+    {k:'box', label:'박스포장 (즉시출고)', v:s.box_orders_immediate, sub:'전체 '+s.box_orders+'건 · 기준 '+res.cfg.boxThreshold+'개 이상', go:()=>{ setTab('box'); }},
+    {k:'att', label:'배송주의', v:s.attention_orders, sub:'도서산간 '+s.remote_orders+' · 선물박스 '+s.gift_box_orders, go:()=>{ setTab('attention'); }},
+  ]) : [];
+
+  const qn = q.trim().toLowerCase();
+  const orderList = !res ? [] : res.orders.filter(o=>{
+    if(tab==='box' && !o.is_box) return false;
+    if(tab==='attention' && !o.needs_attention) return false;
+    if(tab==='orders' && grp!=='all' && o.ship_group!==grp) return false;
+    if(qn && (o.order_no + ' ' + o.recipient + ' ' + o.items).toLowerCase().indexOf(qn) < 0) return false;
+    return true;
+  });
+  const curPick = res ? (pickGrp && res.groupOrder.indexOf(pickGrp)>=0 ? pickGrp : res.groupOrder[0]) : null;
+  const picks = res ? res.picklist.filter(p=>p.ship_group===curPick) : [];
+
+  const tabs = [
+    {id:'orders', label:'주문별', badge: res ? res.orders.length : null},
+    {id:'picking', label:'피킹 리스트'},
+    {id:'box', label:'박스포장', badge: res ? s.box_orders : null},
+    {id:'attention', label:'배송주의', badge: res ? s.attention_orders : null},
+  ];
+
+  return (
+    <div className="section" style={{contain:'inline-size'}}>
+      <div className="cs-page-head" style={{marginBottom:18,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+        <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>📦 발주 분류</h1>
+        <span style={{fontSize:12,color:'var(--sub)'}}>Cafe24 공급사 발주서를 올리면 출고 구분 · 피킹 리스트 · 박스 포장을 나눕니다 · 파일은 이 PC 안에서만 읽고 어디에도 저장하지 않습니다</span>
+      </div>
+
+      {/* 올리기 · 기준일 · 설정 */}
+      <div style={{display:'flex',gap:12,alignItems:'stretch',flexWrap:'wrap',marginBottom:16}}>
+        <div onClick={()=>inputRef.current && inputRef.current.click()}
+          onDragOver={e=>{ e.preventDefault(); setDrag(true); }} onDragLeave={()=>setDrag(false)}
+          onDrop={e=>{ e.preventDefault(); setDrag(false); readFile(e.dataTransfer.files && e.dataTransfer.files[0]); }}
+          style={{...card,flex:'1 1 420px',minWidth:0,padding:'14px 18px',cursor:'pointer',display:'flex',alignItems:'center',gap:14,
+            borderStyle:'dashed',borderColor:drag?'var(--accent)':'var(--border-strong)',background:drag?'var(--brand-soft)':'var(--card)'}}>
+          <span style={{fontSize:24,lineHeight:1}}>📄</span>
+          <div style={{minWidth:0}}>
+            <div style={{fontSize:13.5,fontWeight:700,color:'var(--text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+              {file ? file.name : '발주서 엑셀(.xlsx)을 끌어 놓거나 눌러서 고르세요'}</div>
+            <div style={{fontSize:12,color:'var(--sub)',marginTop:3}}>
+              {file ? ('품목 '+file.lines.length+'줄 읽음 · 다른 파일을 올리려면 다시 누르세요') : 'Cafe24 › 공급사 발주서 다운로드 파일 그대로'}</div>
+          </div>
+          <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{display:'none'}}
+            onChange={e=>{ readFile(e.target.files && e.target.files[0]); e.target.value=''; }}/>
+        </div>
+        <div style={{...card,padding:'12px 16px',display:'flex',flexDirection:'column',justifyContent:'center',gap:6}}>
+          <div style={{fontSize:12,color:'var(--sub)',display:'flex',alignItems:'center',gap:4}}>출고 기준일
+            <CsHint width={260}>순차출고일이 이 날짜이거나 이미 지났으면 그 주문은 «즉시출고» 로 묶입니다. 기본은 오늘입니다.</CsHint></div>
+          <input type="date" value={asOf} onChange={e=>setAsOf(e.target.value || logiYmd(new Date()))} style={inp}/>
+        </div>
+        <button onClick={()=>setCfgOpen(v=>!v)} style={{...card,padding:'0 18px',cursor:'pointer',fontFamily:'inherit',fontSize:13,
+          color:cfgOpen?'var(--accent)':'var(--text)',fontWeight:600,borderColor:cfgOpen?'var(--accent)':'var(--border)'}}>⚙ 설정</button>
+      </div>
+
+      {cfgOpen && (
+        <div style={{...card,padding:'16px 18px',marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'baseline',gap:10,marginBottom:12,flexWrap:'wrap'}}>
+            <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>분류 설정</div>
+            <span style={{fontSize:12,color:'var(--sub)'}}>
+              {cfgRow===undefined ? '설정을 읽지 못했습니다 — 기본값으로 계산하고, 저장은 잠깁니다.'
+                : !isMaster ? '설정은 master 만 바꿀 수 있습니다. 모든 계정이 같은 값으로 계산합니다.'
+                : '바꾸면 바로 다시 계산됩니다. [저장] 하면 모든 계정에 적용됩니다.'}
+              {cfgRow && cfgRow.updated_by ? ' · 마지막 저장 ' + csShortUser(cfgRow.updated_by) : ''}</span>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(230px,1fr))',gap:14}}>
+            {[
+              {label:'박스 포장 기준 (주문 총수량 이상)', el:<input type="number" min="1" value={cfg.boxThreshold} disabled={!isMaster}
+                onChange={e=>setCfg(c=>({...c, boxThreshold: Math.max(1, parseInt(e.target.value,10)||1)}))} style={{...inp,width:90}}/>},
+              {label:'소형품목 키워드 (쉼표로 구분)', el:<input value={cfg.smallKeywords.join(', ')} disabled={!isMaster}
+                onChange={e=>setCfg(c=>({...c, smallKeywords: e.target.value.split(',').map(x=>x.trim()).filter(Boolean)}))} style={inp}/>},
+              {label:'박스 판정에서 소형품목 빼기', el:<label style={{display:'flex',alignItems:'center',gap:6,fontSize:13,color:'var(--text)'}}>
+                <input type="checkbox" checked={cfg.excludeSmallFromBox} disabled={!isMaster}
+                  onChange={e=>setCfg(c=>({...c, excludeSmallFromBox: e.target.checked}))}/>{cfg.excludeSmallFromBox?'뺀다':'전부 센다'}</label>},
+              {label:'선물박스 키워드 (쉼표로 구분)', el:<input value={cfg.giftKeywords.join(', ')} disabled={!isMaster}
+                onChange={e=>setCfg(c=>({...c, giftKeywords: e.target.value.split(',').map(x=>x.trim()).filter(Boolean)}))} style={inp}/>},
+              {label:'순차출고 키워드', el:<input value={cfg.stagedKeyword} disabled={!isMaster}
+                onChange={e=>setCfg(c=>({...c, stagedKeyword: e.target.value}))} style={inp}/>},
+            ].map(f=>(
+              <div key={f.label}>
+                <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:5}}>{f.label}</div>{f.el}
+              </div>
+            ))}
+          </div>
+          {isMaster && (
+            <div style={{display:'flex',gap:8,marginTop:14,justifyContent:'flex-end'}}>
+              <button style={btn(false, !cfgDirty)} disabled={!cfgDirty} onClick={()=>setCfg(savedCfg)}>되돌리기</button>
+              <button style={btn(true, !cfgDirty || cfgBusy || cfgRow===undefined)} disabled={!cfgDirty || cfgBusy || cfgRow===undefined}
+                onClick={saveCfg}>{cfgBusy?'저장 중…':'저장'}</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {loadErr && (
+        <div style={{...card,padding:'12px 16px',marginBottom:16,borderColor:'var(--red-ink)',color:'var(--red-ink)',fontSize:13}}>⚠ {loadErr}</div>
+      )}
+
+      {!file && !loadErr && (
+        <div className="empty-state" style={{...card,borderStyle:'dashed'}}>발주서를 올리면 여기에 분류 결과가 나옵니다.</div>
+      )}
+
+      {res && (
+        <React.Fragment>
+          {blocked && (
+            <div style={{...card,padding:'12px 16px',marginBottom:16,borderColor:'var(--red-ink)',background:'rgba(248,113,113,.08)'}}>
+              <div style={{fontSize:13.5,fontWeight:700,color:'var(--red-ink)',marginBottom:6}}>
+                ⚠ 확인이 필요한 줄 {issues.length}개 — 고치기 전에는 파일 받기와 인쇄를 막아 둡니다</div>
+              <div style={{fontSize:12.5,color:'var(--text)',lineHeight:1.7}}>
+                {issues.slice(0, 10).map((x,i)=>(
+                  <div key={i}>엑셀 {x.row}행 · {x.order_no} — {logiIssueText(x)}</div>
+                ))}
+                {issues.length > 10 && <div style={{color:'var(--sub)'}}>외 {issues.length-10}개</div>}
+              </div>
+              <div style={{fontSize:12,color:'var(--sub)',marginTop:6}}>발주서 원본을 고친 뒤 다시 올려 주세요.</div>
+            </div>
+          )}
+
+          <div className="kpi-grid" style={{marginBottom:14,gridTemplateColumns:'repeat(auto-fill,minmax(170px,1fr))',gap:12}}>
+            {kpis.map(k=>(
+              <div key={k.k} className="kpi-card" onClick={k.go} style={{cursor:'pointer',padding:'14px 16px'}} title="눌러서 목록 보기">
+                <div className="kpi-label" style={{textTransform:'none',letterSpacing:0,fontSize:12,marginBottom:8}}>{k.label}</div>
+                <div className="kpi-value" style={{fontSize:24}}>{k.v}<span style={{fontSize:13,fontWeight:600,color:'var(--sub)',marginLeft:3}}>건</span></div>
+                <div style={{fontSize:11.5,color:'var(--sub)',marginTop:7}}>{k.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* 받기 · 인쇄 — 택배사 송장 출력용은 «발주서 양식 그대로» 다 */}
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:6}}>
+            <button style={btn(true, blocked)} disabled={blocked} onClick={()=>downloadSubset('immediate')}>⬇ 즉시출고 주문만 받기</button>
+            <button style={btn(false, blocked)} disabled={blocked} onClick={()=>downloadSubset('staged')}>⬇ 순차출고 보류분 받기</button>
+            <button style={btn(false, blocked)} disabled={blocked} onClick={()=>logiExportClassified(res, file.ws, file.r0, base, asOf)}>⬇ 분류 엑셀</button>
+            <button style={btn(false, blocked)} disabled={blocked} onClick={()=>logiPrintPicklist(res, res.groupOrder, asOf)}>🖨 피킹 리스트 인쇄</button>
+          </div>
+          <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:18}}>
+            «즉시출고 주문만» · «순차출고 보류분» 은 올린 발주서와 같은 열 · 같은 양식이라 택배사 사이트에 그대로 올릴 수 있습니다.
+            {s.paid_at_range ? ' · 결제 ' + s.paid_at_range[0].slice(0,16) + ' ~ ' + s.paid_at_range[1].slice(0,16) : ''}
+          </div>
+
+          <CsPageTabs value={tab} onChange={setTab} tabs={tabs}/>
+
+          {tab!=='picking' && (
+            <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:12}}>
+              {tab==='orders' && ['all'].concat(res.groupOrder).map(g=>(
+                <button key={g} style={chip(grp===g)} onClick={()=>setGrp(g)}>
+                  {g==='all' ? '전체 '+res.orders.length : g+' '+s.ship_groups[g].orders}</button>
+              ))}
+              <input value={q} onChange={e=>setQ(e.target.value)} placeholder="주문번호 · 수령인 · 상품 검색"
+                style={{...inp,marginLeft:'auto',width:240}}/>
+            </div>
+          )}
+
+          {tab!=='picking' && (
+            <div className="table-wrap">
+              <table className="hist">
+                <thead><tr>
+                  <th>주문번호</th><th>결제일시</th><th>출고구분</th><th style={{textAlign:'right'}}>총수량</th>
+                  <th style={{textAlign:'right'}}>박스판정</th><th>표시</th><th>수령인</th><th>구성</th>
+                </tr></thead>
+                <tbody>
+                  {orderList.map(o=>(
+                    <tr key={o.order_no}>
+                      <td style={{fontFamily:'monospace',fontSize:12}}>{o.order_no}</td>
+                      <td style={{color:'var(--sub)',fontSize:12}}>{String(o.paid_at).slice(0,16)}</td>
+                      <td>{o.ship_group}{o.staged_due && <span style={{marginLeft:6}}>{tag('순차 '+o.staged_label+' 도래','warn')}</span>}</td>
+                      <td style={{textAlign:'right',fontWeight:700}}>{o.total_qty}</td>
+                      <td style={{textAlign:'right',color:'var(--sub)'}} title={o.small_qty ? '소형품목 '+o.small_qty+'개' : undefined}>{o.box_qty}</td>
+                      <td><span style={{display:'inline-flex',gap:4}}>
+                        {o.is_box && tag('박스')}{o.has_gift_box && tag('선물박스','warn')}{o.is_remote && tag('도서산간','red')}</span></td>
+                      <td>{o.recipient}</td>
+                      <td style={{whiteSpace:'normal',minWidth:260,fontSize:12,color:'var(--sub)'}}>{o.items}</td>
+                    </tr>
+                  ))}
+                  {!orderList.length && <tr><td colSpan={8} style={{textAlign:'center',color:'var(--sub)',padding:30}}>해당하는 주문이 없습니다.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {tab==='picking' && (
+            <React.Fragment>
+              <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:12}}>
+                {res.groupOrder.map(g=>(
+                  <button key={g} style={chip(curPick===g)} onClick={()=>setPickGrp(g)}>{g} · 수량 {s.ship_groups[g].qty}</button>
+                ))}
+                <button style={{...btn(false, blocked),marginLeft:'auto'}} disabled={blocked}
+                  onClick={()=>logiPrintPicklist(res, [curPick], asOf)}>🖨 이 출고구분만 인쇄</button>
+              </div>
+              <div className="table-wrap">
+                <table className="hist">
+                  <thead><tr><th>상품명</th><th>옵션</th><th>자체품목코드</th><th style={{textAlign:'right'}}>수량</th><th style={{textAlign:'right'}}>주문건수</th></tr></thead>
+                  <tbody>
+                    {picks.map(p=>(
+                      <tr key={p.sku+'|'+p.product_code+'|'+p.product_name+'|'+p.option_str}>
+                        <td>{logiShortName(p.product_name)}</td>
+                        <td>{p.option_str || <span style={{color:'var(--sub)'}}>—</span>}</td>
+                        <td style={{fontFamily:'monospace',fontSize:12,color:'var(--sub)'}}>{p.sku}</td>
+                        <td style={{textAlign:'right',fontWeight:700}}>{p.qty}</td>
+                        <td style={{textAlign:'right',color:'var(--sub)'}}>{p.order_count}</td>
+                      </tr>
+                    ))}
+                    <tr><td colSpan={3} style={{fontWeight:700}}>합계</td>
+                      <td style={{textAlign:'right',fontWeight:700}}>{picks.reduce((a,p)=>a+p.qty,0)}</td><td></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </React.Fragment>
+          )}
+        </React.Fragment>
+      )}
+    </div>
+  );
+}
+
 function NoAccessPage(){
   return (
     <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',padding:'40px 20px',textAlign:'center'}}>
@@ -35791,6 +36458,9 @@ const CS_MENU_DEFS = [
   // ★ 메뉴얼 관리(2026-09-14) — 실무자가 찾아보는 곳이라 기본 전원. 메뉴얼마다 보기 권한은 따로(view_roles).
   {id:'manuals',       label:'메뉴얼 관리',      base:['master','manager','crew'], rls:true},
   {id:'costs',        label:'비용 비교 도구',   base:['master']},
+  // ★ 발주 분류(2026-10-26) — 물류 담당자가 쓸 메뉴. 코드 기본은 master 만(못 읽었다고 열리면 사고) ·
+  //   물류 담당자의 역할 칸을 메뉴 권한에서 체크하면 열린다. DB 에는 설정 한 줄만 쓴다.
+  {id:'logistics',     g:'물류',      label:'발주 분류',        base:['master']},
   {id:'dashboard',     g:'대시보드',  self:true, label:'대시보드',        base:['master','manager','crew']},
   {id:'entry',         g:'대시보드',  label:'데이터 입력',      base:['master','manager']},
   {id:'agentAnalysis', g:'대시보드',  label:'상담원 분석',      base:['master']},
@@ -35799,7 +36469,7 @@ const CS_MENU_DEFS = [
 ];
 // 자체 화면이 없는 부모 — 표에서 «머리 줄» 로만 선다(체크 없음).
 //   ★ 대시보드는 여기 없다. 제 화면이 있어 위 목록에 self 로 들어가 있다.
-const CS_MENU_PARENTS = {'상품 관리':true, 'CS 관리':true};
+const CS_MENU_PARENTS = {'상품 관리':true, 'CS 관리':true, '물류':true};
 const CS_MENU_BASE = (()=>{ const m={}; CS_MENU_DEFS.forEach(d=>{ m[d.id]=d.base; }); return m; })();
 // 설정을 못 읽었으면 «코드 기본» 으로 돈다 — 못 읽었다고 다 열리면 그게 사고다.
 // ★★★ 그 메뉴가 «지금» master 만인가 — M 뱃지는 이것을 보고 붙는다(제니 2026-09-08:
@@ -35934,6 +36604,7 @@ const PAGE_LABELS = {
   autoDelivery:'자동발송', refunds:'환불 관리', costs:'비용 비교 도구', agents:'인력 관리',
   csTickets:'CS 관리', csNew:'새 티켓', csTicket:'티켓 상세', csSettings:'CS 설정',
   csDraft:'공급사 접수 문안', csStats:'CS 통계', manuals:'메뉴얼 관리', msgTemplates:'안내 템플릿',
+  logistics:'발주 분류',
 };
 
 // ── 화면별 에러 경계 ──────────────────────────────────────────────────
@@ -36870,7 +37541,8 @@ const CS_NAV_BLOCKS = [
   {id:'refunds',      label:'환불 관리'},
   {id:'manuals',      label:'메뉴얼 관리'},
   {id:'costs',        label:'비용 비교 도구', kids:'프로젝트 목록'},
-  {id:'dashboard',    label:'대시보드',       kids:'데이터 입력 · 상담원 분석'},
+  {id:'logistics',    label:'물류',           kids:'발주 분류'},
+  {id:'dashboard',   label:'대시보드',       kids:'데이터 입력 · 상담원 분석'},
 ];
 // ★★ 저장된 차례를 «코드가 아는 것» 으로 편다 — 모르는 이름은 버리고, 빠진 것(새로 생긴
 //   메뉴)은 기본 차례의 자리 그대로 맨 뒤에 붙인다. 설정이 낡아도 메뉴가 사라지면 안 된다.
@@ -37536,6 +38208,7 @@ function App() {
     // ★ 자식 화면을 더할 때는 이 표도 함께 — 없으면 그 화면을 보고 있는데
     //   사이드바에서는 부모가 접혀 «지금 보는 메뉴가 안 보이는» 상태가 된다.
     csDraft:'csMgmt', csStats:'csMgmt',
+    logistics:'logisticsMgmt',
   };
   // 현재 펼친 부모들 (다중 펼침 가능: 사용자 수동 조작 존중)
   // 비용 비교 도구와 사이드바를 잇는 두 칸. 목록은 도구가 올려 주고, 클릭은 nav 로 내려보낸다.
@@ -37974,6 +38647,26 @@ function App() {
               </div>
             </div>
           ),
+
+          /* 부모: 물류 (2026-10-26 신설 · 자체 화면 없음 → 클릭 시 토글만) — 지금 자식은 «발주 분류» 하나.
+              ★ 대분류로 따로 세운 것은 제니 결정이다(송장 매핑·재고 같은 물류 메뉴가 붙을 자리). */
+          logistics: canMenu('logistics') && (
+          <div className="nav-group">
+            <div className="nav-parent" onClick={()=>toggleGroup('logisticsMgmt')}
+              title={navCollapsed?'물류':undefined}>
+              {Icon.logistics}<span>물류</span>
+              <span className={`chevron ${openGroups.logisticsMgmt?'expanded':''}`}>{openGroups.logisticsMgmt?'▼':'▶'}</span>
+            </div>
+            <div className={"nav-kids"+(openGroups.logisticsMgmt?" open":"")}>
+              <div className="nav-kids-inner">
+                <div className="nav-kids-head">물류</div>
+                <div className={`nav-child ${page==='logistics'?'active':''}`} onClick={()=>navigateTo('logistics')}>
+                  <span className="nav-label">발주 분류</span><RoleTag on={masterOnly('logistics')}/>
+                </div>
+              </div>
+            </div>
+          </div>
+          ),
           /* 부모: 대시보드 (자체 화면 있음 → 클릭 시 이동 + 그 부모로 펼침)
               ★ 2026-10-14 — 맨 위에서 맨 아래(비용 비교 도구 다음)로 내렸다(운영 피드백 → 제니 확정).
               ★★ 2026-09-08 — 부모와 자식을 `.nav-group` 으로 «묶었다». 접힌 상태에서
@@ -38210,6 +38903,7 @@ function App() {
         {page==='msgTemplates'&&(canMenu('msgTemplates')?<MsgTemplatesPage currentUserEmail={session.user.email} can={canAction}/>:<NoAccessPage/>)}
         {page==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket} can={canAction}/>:<NoAccessPage/>)}
         {page==='costs'&&(canMenu('costs')?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
+        {page==='logistics'&&(canMenu('logistics')?<LogisticsClassifyPage currentUserEmail={session.user.email} isMaster={isMaster}/>:<NoAccessPage/>)}
         {page==='agentAnalysis'&&canMenu('agentAnalysis')&&<AgentAnalysisPage/>}
         {page==='agents'&&(canMenu('agents')?<AgentMgmtPage/>:<NoAccessPage/>)}
         {page==='auditLog'&&(canMenu('auditLog')?<AuditLogPage/>:<NoAccessPage/>)}
