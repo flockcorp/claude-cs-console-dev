@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261027b_logistics_step_emphasis -->
+<!-- (2026-10-27) 📦 발주 분류 — 27a 를 제니가 dev 에서 보고 둘: ①「1·2 숫자가 원 안에서 쏠려 보인다 · 눈에 잘 띄게 색 강조」 → 테두리 원(11px·currentColor)을 **노랑으로 채운 20px 원 + 남색 숫자 12px · tabular-nums** 로. --yellow 는 두 모드 같은 값이라 숫자색 #12203c 고정. 2배 화면을 찍어 픽셀로 잼: 숫자 잉크 중심이 원 중심에서 가로 0~0.5 · 세로 -0.5(2배 px = CSS 0.25px 이내 · 다크·라이트·버튼 안팎 같음). ②「진행 순서 줄이 눈에 안 띈다」 → 카드 → **--brand-soft 바탕 + 왼쪽 4px 노랑 띠 + --border-strong 테두리 · 글자 14px 600(제목 800)**. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261027a_logistics_step_numbers -->
 <!-- (2026-10-27) 📦 발주 분류 — **누르는 차례에 번호**(제니: 써 보고 「업무 흐름에 따라 눌러야 하는 순서를 직관적으로」). 필수 차례 = ① 즉시출고 주문만 받기 → ② 순차출고 보류분 받기 → ③ 피킹 리스트 «탭» 의 [이 출고구분만 인쇄]. 위 줄의 [피킹 리스트 인쇄](전 출고구분 한꺼번에)는 **지웠다**(제니 지시 — 탭 버튼을 살린다). 버튼 위에 **«진행 순서 ① → ② → ③» 한 줄**을 따로 둔다(제니: ③ 은 탭에 들어가야 보이니까) — ③ 글자를 누르면 피킹 리스트 탭으로 간다. 번호는 «①②③» 글자가 아니라 동그라미를 그린 `LogiStepNum`(맑은 고딕에서 ①이 작게 뭉개져 «⊙» 로 보였다 · 찍어서 확인). dev 계정으로 로컬 찍어 확인(다크·라이트 · 1500·1100 폭 넘침 없음 · ③ 누르면 탭 이동). [분류 엑셀]은 필수가 아니라 번호 없이 줄 오른쪽 끝으로. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261026b_logistics_sort_merge -->
@@ -36105,10 +36107,12 @@ const LOGI_ORDER_COLS = [
 ];
 
 // 진행 순서 번호 — ①②③ 글자는 맑은 고딕에서 작게 뭉개져 «⊙» 로 보인다(2026-10-27 찍어 봄) → 동그라미를 직접 그린다.
-// 테두리·글자 = currentColor 라 채운 버튼·빈 버튼·두 모드 어디서나 그 자리 글자색을 따른다.
+// 제니 «눈에 잘 띄게» → 노랑으로 채운다. --yellow 는 두 모드에서 같은 값이라 숫자 색(#12203c)도 고정 —
+// 채운 남색 버튼·빈 버튼·흰 바탕 어디서나 같은 뱃지로 보인다.
 function LogiStepNum({n}){
-  return <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:18,height:18,borderRadius:'50%',
-    border:'1.5px solid currentColor',fontSize:11,fontWeight:800,lineHeight:1,flex:'none',boxSizing:'border-box'}}>{n}</span>;
+  return <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:20,height:20,borderRadius:'50%',
+    background:'var(--yellow)',color:'#12203c',fontSize:12,fontWeight:800,lineHeight:1,flex:'none',
+    fontVariantNumeric:'tabular-nums'}}>{n}</span>;
 }
 function LogiStepLabel({n, children}){
   return <span style={{display:'inline-flex',alignItems:'center',gap:6}}><LogiStepNum n={n}/>{children}</span>;
@@ -36367,10 +36371,12 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
           </div>
 
           {/* 진행 순서 — 담당자가 누르는 차례(제니 2026-10-27). ③ 은 피킹 리스트 탭 안의 버튼이라 눌러서 탭으로 보낸다 */}
-          <div style={{...card,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center',padding:'10px 16px',marginBottom:12,fontSize:13,color:'var(--text)'}}>
-            <b style={{fontWeight:700,marginRight:4}}>진행 순서</b>
-            <LogiStepLabel n={1}>즉시출고 주문만 받기</LogiStepLabel><span style={{color:'var(--sub)'}}>→</span>
-            <LogiStepLabel n={2}>순차출고 보류분 받기</LogiStepLabel><span style={{color:'var(--sub)'}}>→</span>
+          <div style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'center',padding:'12px 18px',marginBottom:12,
+            background:'var(--brand-soft)',border:'1px solid var(--border-strong)',borderLeft:'4px solid var(--yellow)',borderRadius:10,
+            fontSize:14,fontWeight:600,color:'var(--text)'}}>
+            <b style={{fontWeight:800,marginRight:6}}>진행 순서</b>
+            <LogiStepLabel n={1}>즉시출고 주문만 받기</LogiStepLabel><span style={{color:'var(--sub)',fontWeight:800}}>→</span>
+            <LogiStepLabel n={2}>순차출고 보류분 받기</LogiStepLabel><span style={{color:'var(--sub)',fontWeight:800}}>→</span>
             <span onClick={()=>setTab('picking')} title="피킹 리스트 탭으로" style={{cursor:'pointer'}}>
               <LogiStepLabel n={3}><span style={{textDecoration:'underline',textUnderlineOffset:3}}>«피킹 리스트» 탭에서 이 출고구분만 인쇄</span></LogiStepLabel></span>
           </div>
