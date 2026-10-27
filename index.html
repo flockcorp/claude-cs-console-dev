@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261027a_logistics_step_numbers -->
+<!-- (2026-10-27) 📦 발주 분류 — **누르는 차례에 번호**(제니: 써 보고 「업무 흐름에 따라 눌러야 하는 순서를 직관적으로」). 필수 차례 = ① 즉시출고 주문만 받기 → ② 순차출고 보류분 받기 → ③ 피킹 리스트 «탭» 의 [이 출고구분만 인쇄]. 위 줄의 [피킹 리스트 인쇄](전 출고구분 한꺼번에)는 **지웠다**(제니 지시 — 탭 버튼을 살린다). 버튼 위에 **«진행 순서 ① → ② → ③» 한 줄**을 따로 둔다(제니: ③ 은 탭에 들어가야 보이니까) — ③ 글자를 누르면 피킹 리스트 탭으로 간다. 번호는 «①②③» 글자가 아니라 동그라미를 그린 `LogiStepNum`(맑은 고딕에서 ①이 작게 뭉개져 «⊙» 로 보였다 · 찍어서 확인). dev 계정으로 로컬 찍어 확인(다크·라이트 · 1500·1100 폭 넘침 없음 · ③ 누르면 탭 이동). [분류 엑셀]은 필수가 아니라 번호 없이 줄 오른쪽 끝으로. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261026b_logistics_sort_merge -->
 <!-- (2026-10-26) 📦 발주 분류 둘(제니). ①**주문 표 머리글을 누르면 정렬** — 오름 → 내림 → 기본 차례(티켓 목록과 같은 순환 · 정렬 중인 열은 노랑 · 마우스를 올리면 ▲). 출고구분은 즉시 → 순차 날짜순, 표시는 도서산간 > 선물박스 > 박스 무게. 박스포장·배송주의 탭도 같은 표라 함께. ②**여러 파일을 한 번에 올려 합친다** — 제니: 송장 안 뽑은 주문은 다음 날 발주서에 «안» 실리고, 택배사 사이트엔 발주서 양식을 그대로 올린다. → 순차출고 보류분은 받아 둔 파일을 출고일에 그날 발주서와 «함께» 올리면 즉시출고 파일 하나로 나온다(택배사 업로드 한 번). 헤더가 다르면 안 합치고, 모든 칸이 같은 줄은 한 번만 센다(보류분을 두 번 올려도 두 번 출고 안 됨). 보류분 파일 이름에 «출고일» 을 넣었고, 받기 줄 아래에 «다음 날 발주서에 다시 안 나온다 · 보관했다가 함께 올리라» 를 적었다. 대조: 즉시 153줄 + 보류 110줄을 11/2 기준으로 함께 올리면 144건 전부 즉시출고 · 263줄이 원본 줄 그대로 · 보류분 두 번 = 110줄. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261026a_logistics_classify -->
@@ -36102,6 +36104,16 @@ const LOGI_ORDER_COLS = [
   {k:'items',      label:'구성',     v:o=>o.items||''},
 ];
 
+// 진행 순서 번호 — ①②③ 글자는 맑은 고딕에서 작게 뭉개져 «⊙» 로 보인다(2026-10-27 찍어 봄) → 동그라미를 직접 그린다.
+// 테두리·글자 = currentColor 라 채운 버튼·빈 버튼·두 모드 어디서나 그 자리 글자색을 따른다.
+function LogiStepNum({n}){
+  return <span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',width:18,height:18,borderRadius:'50%',
+    border:'1.5px solid currentColor',fontSize:11,fontWeight:800,lineHeight:1,flex:'none',boxSizing:'border-box'}}>{n}</span>;
+}
+function LogiStepLabel({n, children}){
+  return <span style={{display:'inline-flex',alignItems:'center',gap:6}}><LogiStepNum n={n}/>{children}</span>;
+}
+
 function LogisticsClassifyPage({currentUserEmail, isMaster}){
   const [file,setFile]       = useState(null);    // {name, ws, r0, lines, issues}
   const [loadErr,setLoadErr] = useState('');
@@ -36354,12 +36366,20 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
             ))}
           </div>
 
-          {/* 받기 · 인쇄 — 택배사 송장 출력용은 «발주서 양식 그대로» 다 */}
+          {/* 진행 순서 — 담당자가 누르는 차례(제니 2026-10-27). ③ 은 피킹 리스트 탭 안의 버튼이라 눌러서 탭으로 보낸다 */}
+          <div style={{...card,display:'flex',gap:10,flexWrap:'wrap',alignItems:'center',padding:'10px 16px',marginBottom:12,fontSize:13,color:'var(--text)'}}>
+            <b style={{fontWeight:700,marginRight:4}}>진행 순서</b>
+            <LogiStepLabel n={1}>즉시출고 주문만 받기</LogiStepLabel><span style={{color:'var(--sub)'}}>→</span>
+            <LogiStepLabel n={2}>순차출고 보류분 받기</LogiStepLabel><span style={{color:'var(--sub)'}}>→</span>
+            <span onClick={()=>setTab('picking')} title="피킹 리스트 탭으로" style={{cursor:'pointer'}}>
+              <LogiStepLabel n={3}><span style={{textDecoration:'underline',textUnderlineOffset:3}}>«피킹 리스트» 탭에서 이 출고구분만 인쇄</span></LogiStepLabel></span>
+          </div>
+
+          {/* 받기 — 택배사 송장 출력용은 «발주서 양식 그대로» 다 */}
           <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center',marginBottom:6}}>
-            <button style={btn(true, blocked)} disabled={blocked} onClick={()=>downloadSubset('immediate')}>⬇ 즉시출고 주문만 받기</button>
-            <button style={btn(false, blocked)} disabled={blocked} onClick={()=>downloadSubset('staged')}>⬇ 순차출고 보류분 받기</button>
-            <button style={btn(false, blocked)} disabled={blocked} onClick={()=>logiExportClassified(res, file.ws, file.r0, base, asOf)}>⬇ 분류 엑셀</button>
-            <button style={btn(false, blocked)} disabled={blocked} onClick={()=>logiPrintPicklist(res, res.groupOrder, asOf)}>🖨 피킹 리스트 인쇄</button>
+            <button style={btn(true, blocked)} disabled={blocked} onClick={()=>downloadSubset('immediate')}><LogiStepLabel n={1}>⬇ 즉시출고 주문만 받기</LogiStepLabel></button>
+            <button style={btn(false, blocked)} disabled={blocked} onClick={()=>downloadSubset('staged')}><LogiStepLabel n={2}>⬇ 순차출고 보류분 받기</LogiStepLabel></button>
+            <button style={{...btn(false, blocked),marginLeft:'auto'}} disabled={blocked} onClick={()=>logiExportClassified(res, file.ws, file.r0, base, asOf)}>⬇ 분류 엑셀</button>
           </div>
           <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:18}}>
             «즉시출고 주문만» 은 올린 발주서와 같은 양식이라 택배사 사이트에 그대로 올릴 수 있습니다.
@@ -36424,7 +36444,7 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
                   <button key={g} style={chip(curPick===g)} onClick={()=>setPickGrp(g)}>{g} · 수량 {s.ship_groups[g].qty}</button>
                 ))}
                 <button style={{...btn(false, blocked),marginLeft:'auto'}} disabled={blocked}
-                  onClick={()=>logiPrintPicklist(res, [curPick], asOf)}>🖨 이 출고구분만 인쇄</button>
+                  onClick={()=>logiPrintPicklist(res, [curPick], asOf)}><LogiStepLabel n={3}>🖨 이 출고구분만 인쇄</LogiStepLabel></button>
               </div>
               <div className="table-wrap">
                 <table className="hist">
