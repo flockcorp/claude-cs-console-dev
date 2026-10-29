@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261029c_ticket_new_intake_assignee -->
+<!-- (2026-10-29) 🎫 CS 티켓 넷(제니). ①상세 머리에 [+ 티켓 등록] — [목록으로] 왼쪽 · 테두리만(주 동작은 저장) · 안 저장한 값·적던 글이 있으면 먼저 묻는다. ②접수 경로에 «공급사» — `CS_INTAKE` 에 더하고 DB 제약도 넓힘(`sql/cs_intake_supplier.sql` · dev 먼저) · 상세에서도 접수 경로를 고친다(읽기 → CsPick · 저장·이력 «접수 경로 : A -> B»). ③담당자 고르기에서 권한 꼬리(« · crew») 를 뺐다 — 이름만(등록·상세 둘 다). ④티켓 목록에서 칩을 옮기면 체크를 푼다(열린 일괄 창도 닫음) · 검색·필터는 그대로. ★ dev 전용 · 운영은 SQL 먼저. -->
 <!-- v20261029b_role_labels_kr -->
 <!-- (2026-10-29) 🏷 권한 «표기» 를 한글로(제니): MASTER→운영팀 · MANAGER→센터장 · CREW→CS매니저. **값(master/manager/crew)은 그대로** — DB 정책·menu_roles·cs_stage_roles 가 그 값을 읽는다. 한 곳 `ROLE_LABEL` 에 두고 사이드바 뱃지·CS 설정 표 머리·메뉴/동작 권한 표 머리·계정 추가/권한 고르기·메뉴얼 «볼 수 있는 권한» 이 그걸 읽는다. 안내 문장 31곳은 조사까지 고쳐 적음(«master 는»→«운영팀은» 등). 한글이라 뱃지의 고정폭 글꼴·자간을 뺐다. 화면에 보이는 글자에서 옛 표기 0(babel 로 문자열·JSX 글만 훑어 셈 · 주석 제외). dev 계정으로 찍어 확인. 사이드바 «M» 표(운영팀 전용 메뉴)는 글자를 안 바꿈 — 제니에게 물음. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261029a_agents_write_by_menu -->
@@ -20103,7 +20105,8 @@ function csSortReasons(list){
 }
 
 // ★ «카페24» 는 고객이 카페24에서 직접 신청(취소·교환·반품)한 건이다 — 우리가 받은 것도, 우리가 찾아간 것도 아니라 경로가 따로다(제니 2026-09-01).
-const CS_INTAKE = ['전화','채팅','게시판','후기','카페24'];
+// ★ «공급사» — 공급사가 먼저 알려 와 비롯된 건(제니 2026-10-29). DB 제약도 함께 넓혔다(sql/cs_intake_supplier.sql).
+const CS_INTAKE = ['전화','채팅','게시판','후기','공급사','카페24'];
 // 이력에 «누가» — DB check 제약과 짝이다(cs_ticket_events.side).
 // ★ «우리» 를 «원룸만들기» 로 바꿨다(제니 2026-09-01). 공급사와 나란히 놓이는 자리라
 //   «우리» 는 읽는 사람에 따라 가리키는 것이 달라진다 — 상호를 그대로 쓰는 편이 분명하다.
@@ -23060,6 +23063,9 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
   // ★ 조건이 바뀌면 «첫 쪽» 으로 돌아간다 — 3쪽을 보다가 필터를 좁히면 결과가 한 쪽뿐일
   //   수 있고, 그때 3쪽에 머물면 «아무것도 없는 화면» 이 된다.
   useEffect(()=>{ setPage(1); },[chip,q,flt,sort,pageSize]);
+  // ★ 칩을 옮기면 고른 것을 푼다(제니 2026-10-29) — 다른 칩에서 고른 티켓이 안 보이는 채로
+  //   남아 있다가 일괄 변경에 함께 걸리면 사고다. 검색·필터는 같은 칩 안의 좁히기라 그대로 둔다.
+  useEffect(()=>{ setPicked({}); setBulkOpen(null); },[chip]);
   // ★ 쪽을 넘기면 표 «머리» 로 올려 준다 — 이동 버튼이 표 아래에 있어서, 누르고 나면
   //   새 목록의 맨 아래를 보고 있게 된다. 첫 줄부터 읽으려고 매번 손으로 올려야 한다.
   const goPage = (n)=>{
@@ -29075,7 +29081,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
 
           <div style={sec}>분류</div>
           {row(<>접수 경로{req}</>, <CsPick value={f.intake_path} options={CS_INTAKE}
-            onChange={v=>set('intake_path',v)} placeholder="전화 · 채팅 · 게시판 · 후기"/>)}
+            onChange={v=>set('intake_path',v)} placeholder="전화 · 채팅 · 게시판 · 후기 · 공급사"/>)}
           {row(<>유형{req}</>, <CsPick value={f.cs_type} options={CS_TYPES}
             onChange={v=>set('cs_type',v)} placeholder="검색하거나 골라 주세요"/>)}
           {row('방향', <CsPick value={f.direction} options={CS_DIRECTIONS}
@@ -29332,7 +29338,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   {CS_USERS.filter(u=>u.email.toLowerCase()!==String(currentUserEmail).toLowerCase())
                     .map(u=>(
                       <option key={u.email} value={u.email}>
-                        {u.label}{u.role ? ' · '+u.role : ''}
+                        {u.label}
                       </option>
                     ))}
                 </select>
@@ -29616,7 +29622,7 @@ function csCafe24OrderUrl(t){
 }
 
 // ★ canRefund — 환불 관리 메뉴 권한(목록 화면과 같은 값). 자세한 것은 CsTicketsPage 주석.
-function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack, goTicket}){
+function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack, goTicket, onNew}){
   // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
   // 어느 단계로 저장할 수 있나 — CS 설정 › 상태 권한(2026-09-16).
@@ -29690,6 +29696,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
   // 표의 값 → 화면에서 고칠 값. 금액은 문자열로 다룬다(빈 칸과 0 을 갈라야 한다).
   const toEdit = (r)=>({
     cs_type: r.cs_type||'', direction: r.direction||'', stage: r.stage||'',
+    // ★ 접수 경로도 상세에서 고친다(제니 2026-10-29) — 등록 때 잘못 고르면 고칠 길이 없었다.
+    intake_path: r.intake_path||'',
     recheck_at: r.recheck_at||'', cost_bearer: r.cost_bearer||'',
     refund_amount: r.refund_amount==null ? '' : String(r.refund_amount),
     refund_method: r.refund_method||'', refund_bank: r.refund_bank||'',
@@ -29783,6 +29791,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
   // 무엇이 무엇으로 바뀌는지 — 저장 버튼 위에 먼저 보여 주고, 이력에도 이 한 줄이 간다.
   const changes = [];
   if(edit && t){
+    if(edit.intake_path !== (t.intake_path||''))
+      changes.push('접수 경로 : '+(t.intake_path||'—')+' -> '+(edit.intake_path||'—'));
     if(edit.cs_type !== (t.cs_type||''))
       changes.push('유형 : '+(t.cs_type||'—')+' -> '+(edit.cs_type||'—'));
     if(edit.direction !== (t.direction||''))
@@ -30040,6 +30050,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
     }
     if(chg.length){
       const row = {
+        // ★ 비울 수는 없다(등록 때 필수였던 값) — 고르는 칸에 빈 선택지가 없지만 한 번 더 막는다.
+        intake_path: edit.intake_path || t.intake_path || null,
         cs_type: edit.cs_type || null, direction: edit.direction || null,
         stage: st, recheck_at: edit.recheck_at || null,
         refund_amount: money(edit.refund_amount),
@@ -30383,6 +30395,19 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
           {t.order_item_code} / {t.supplier_name||'—'} / 접수 : {csDate(t.created_at)} / 담당자 : {csShortUser(t.assignee)}
         </span>
         <div style={{flex:1}}></div>
+        {/* ★ 상세에서 바로 새 티켓 등록으로(제니 2026-10-29). [목록으로] 왼쪽.
+            ★ 채운 파랑은 쓰지 않는다 — 이 화면의 주 동작은 «저장» 이다(아래 주석). 테두리만.
+            ★ 안 저장한 값·적던 글이 있으면 먼저 묻는다 — 넘어가면 그대로 사라진다. */}
+        {onNew && (
+          <button onClick={()=>{
+              if((dirty || draft.trim() || photos.length) &&
+                 !confirm('저장하지 않은 내용이 있습니다.\n저장하지 않고 새 티켓 등록으로 갈까요?')) return;
+              onNew();
+            }}
+            style={{padding:'6px 15px',marginRight:8,background:'transparent',
+              border:'1px solid var(--primary)',borderRadius:7,color:'var(--accent)',fontSize:12,
+              fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>+ 티켓 등록</button>
+        )}
         {/* ★ 어두운 화면에서 «투명 배경 + 회색 글자» 는 눌러도 되는 것으로 안 읽힌다
             (제니 제보). 밝은 바탕에 어두운 글자로 바꿔 «여기서 나간다» 를 분명히 한다.
             ★ 그래도 파란 주 버튼(var(--primary))은 쓰지 않는다 — 이 화면의 주 동작은
@@ -30541,7 +30566,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
           {/* ★ 접수 경로는 «분류» 다 — 등록 화면이 이미 그 자리에 두고 있었는데 상세만
               맨 위 카페24 값들 사이에 있었다(제니 제보). 카페24가 준 값이 아니라
               사람이 고르는 값이라 자리가 틀렸던 것이다. 두 화면의 틀을 맞춘다. */}
-          {ro('접수 경로', t.intake_path)}
+          {row('접수 경로', <CsPick value={edit.intake_path} options={CS_INTAKE}
+            onChange={v=>setE('intake_path',v)} placeholder="접수 경로를 선택합니다"/>)}
           {row('유형', <CsPick value={edit.cs_type} options={CS_TYPES} onChange={v=>setE('cs_type',v)}/>)}
           {row('방향', <CsPick value={edit.direction} options={CS_DIRECTIONS}
             onChange={v=>setE('direction',v)} placeholder="처리 방향을 선택합니다"/>)}
@@ -30995,7 +31021,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                 {CS_USERS.map(u=>(
                   <option key={u.email} value={u.email}>
                     {u.label}{u.email.toLowerCase()===String(currentUserEmail).toLowerCase() ? ' (나)' : ''}
-                    {u.role ? ' · '+u.role : ''}
+                    {/* ★ 권한은 안 적는다(제니 2026-10-29) — 옛 표기(crew 등)로 찍혀 헷갈렸다. 이름만. */}
                   </option>
                 ))}
               </select>
@@ -39041,7 +39067,8 @@ function App() {
           goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
           role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={ticketSeq}
-          onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
+          onBack={()=>navigateTo('csTickets')} goTicket={openTicket}
+          onNew={()=>navigateTo('csNew')}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='csStats'&&(canMenu('csStats')?<CsStatsPage/>:<NoAccessPage/>)}
         {page==='manuals'&&(canMenu('manuals')?<ManualsPage currentUserEmail={session.user.email} role={role} can={canAction}/>:<NoAccessPage/>)}
