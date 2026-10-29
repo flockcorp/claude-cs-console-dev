@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20261029c_ticket_new_intake_assignee -->
+<!-- v20261029d_colw_account_default_cols -->
+<!-- (2026-10-29) 🎫 티켓 목록 둘(제니). ①열 너비를 «계정» 에 저장 — console_user_prefs.prefs.csColW(글자 크기·행 간격과 같은 줄 · 새 SQL 없음) · 브라우저 사본 키에 이메일 · DB 에 너비가 없는 계정은 이 브라우저에 있던 폭을 한 번 올리고 옛 공용 키는 지운다. ②[보기 설정] «기본값으로» = 운영 «내 티켓» 칩 열 구성(CS_COLS_FALLBACK · 수정·품목별 주문번호·경로 포함 15열). ★ dev 전용. -->
 <!-- (2026-10-29) 🎫 CS 티켓 넷(제니). ①상세 머리에 [+ 티켓 등록] — [목록으로] 왼쪽 · 테두리만(주 동작은 저장) · 안 저장한 값·적던 글이 있으면 먼저 묻는다. ②접수 경로에 «공급사» — `CS_INTAKE` 에 더하고 DB 제약도 넓힘(`sql/cs_intake_supplier.sql` · dev 먼저) · 상세에서도 접수 경로를 고친다(읽기 → CsPick · 저장·이력 «접수 경로 : A -> B»). ③담당자 고르기에서 권한 꼬리(« · crew») 를 뺐다 — 이름만(등록·상세 둘 다). ④티켓 목록에서 칩을 옮기면 체크를 푼다(열린 일괄 창도 닫음) · 검색·필터는 그대로. ★ dev 전용 · 운영은 SQL 먼저. -->
 <!-- v20261029b_role_labels_kr -->
 <!-- (2026-10-29) 🏷 권한 «표기» 를 한글로(제니): MASTER→운영팀 · MANAGER→센터장 · CREW→CS매니저. **값(master/manager/crew)은 그대로** — DB 정책·menu_roles·cs_stage_roles 가 그 값을 읽는다. 한 곳 `ROLE_LABEL` 에 두고 사이드바 뱃지·CS 설정 표 머리·메뉴/동작 권한 표 머리·계정 추가/권한 고르기·메뉴얼 «볼 수 있는 권한» 이 그걸 읽는다. 안내 문장 31곳은 조사까지 고쳐 적음(«master 는»→«운영팀은» 등). 한글이라 뱃지의 고정폭 글꼴·자간을 뺐다. 화면에 보이는 글자에서 옛 표기 0(babel 로 문자열·JSX 글만 훑어 셈 · 주석 제외). dev 계정으로 찍어 확인. 사이드바 «M» 표(운영팀 전용 메뉴)는 글자를 안 바꿈 — 제니에게 물음. 화면만 · SQL 없음. ★ dev 전용. -->
@@ -20756,8 +20757,11 @@ function csColMinW(k){
   return Math.max(c.minw||0, CS_COLW_MIN);
 }
 // ★ 2026-10-14 — «수정»(touched)을 기본에서 뺐다(제니: 기본 열 덜어내기 · 사진·메모는 원래 없음).
-const CS_COLS_FALLBACK = ['id','created','stage','cs_type','direction',
-  'product','option','supplier','orderer_nm','orderer_ph','assignee','recheck'];
+// ★★ 2026-10-29 — 기본값 = 그날 운영 «내 티켓» 칩에 저장된 열 구성 그대로(제니: 「지금 운영에서
+//   내 티켓 칩에 선택되어 있는 형태를 기본값으로」). 운영 console_settings.cs_list_columns.mine 을
+//   sql/read_cs_list_columns.sql 로 읽어 옮겼다. «수정» 도 제니가 그 칩에 켜 둔 것이라 다시 들어간다.
+const CS_COLS_FALLBACK = ['id','created','touched','stage','cs_type','direction',
+  'supplier','product','option','order_item','orderer_nm','orderer_ph','assignee','recheck','intake'];
 
 // 설정에 적힌 열 목록을 «지금 화면이 아는 열» 로 편다.
 // ★ 세 가지를 한 자리에서 한다: ①없앤 열을 갈음한다 ②모르는 열은 건너뛴다
@@ -22772,8 +22776,12 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
   //   수정된다」). 열 구성이 칩마다인 이상 너비도 칩마다여야 한다.
   //   ★ 옛 값(칩 구분 없던 것)은 버리지 않고 `_default` 로 옮긴다 — 아직 손대지 않은
   //     칩은 그 값을 그대로 쓰고, 한 번 손댄 칩은 그때부터 제 값만 본다.
+  // ★ 2026-10-29 — 사본 키에 이메일을 붙인다(한 PC 를 둘이 쓰면 섞인다). 옛 키(이메일 없음)는 처음 한 번만 읽는다.
+  const colWKey = CS_COLW_KEY + '_' + (currentUserEmail||'');
   const [colWAll,setColWAll] = useState(()=>{
     try{
+      const v3 = JSON.parse(localStorage.getItem(colWKey)||'null');
+      if(v3 && typeof v3==='object') return v3;
       const v2 = JSON.parse(localStorage.getItem(CS_COLW_KEY)||'null');
       if(v2 && typeof v2==='object') return v2;
       const v1 = JSON.parse(localStorage.getItem(CS_COLW_KEY_V1)||'null');
@@ -22813,10 +22821,31 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
     catch(_e){ window.addEventListener('resize', read); }
   },[]);
   // 이 칩의 폭 표를 통째로 갈아 끼운다.
+  // ★★ 2026-10-29 — 너비도 «계정별 DB» 에 남긴다(제니: 「열 너비를 계정에 저장해줘」). 글자 크기·행 간격과
+  //   같은 줄(console_user_prefs.prefs.csColW)이다. 화면은 위 localStorage 값으로 먼저 그리고, DB 를 읽으면 갈아 낀다.
+  //   ★ DB 에 아직 너비가 없는 계정은 «이 브라우저에 남아 있던 너비» 를 한 번 올려 둔다 — 그동안 맞춰 둔 폭을 잃지 않게.
+  const colWDb = useCsPrefKey(currentUserEmail, 'csColW');
+  useEffect(()=>{
+    if(!colWDb.loaded) return;
+    const v = colWDb.value;
+    if(v && typeof v==='object'){
+      setColWAll(v);
+      try{ localStorage.setItem(colWKey, JSON.stringify(v)); }catch(_e){}
+    } else if(Object.keys(colWAll).length){
+      colWDb.put(colWAll);
+      try{ localStorage.setItem(colWKey, JSON.stringify(colWAll)); }catch(_e){}
+    }
+    // ★ 옛 공용 키는 한 계정이 올려 가면 지운다 — 같은 PC 의 다음 계정이 남의 폭을 물려받지 않게.
+    try{ localStorage.removeItem(CS_COLW_KEY); localStorage.removeItem(CS_COLW_KEY_V1); }catch(_e){}
+  },[colWDb.loaded]);
+  const saveColW = (next)=>{
+    try{ localStorage.setItem(colWKey, JSON.stringify(next)); }catch(_e){}
+    colWDb.put(next);
+  };
   const putColW = (nextForChip)=>{
     const next = {...colWAll, [chip]: nextForChip};
     setColWAll(next);
-    try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(next)); }catch(_e){}
+    saveColW(next);
   };
   // ★ 두 번 누르면 그 열만 기본 폭으로 되돌린다(세 번째 인자).
   const startResize = (k, e, reset)=>{
@@ -22869,7 +22898,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
       if(last!=null){
         // ★ 저장은 화면 state 가 아니라 «방금 끈 값» 으로 만든다(경합을 안 탄다).
         const n = {...colWAll, [chip]: last};
-        try{ localStorage.setItem(CS_COLW_KEY, JSON.stringify(n)); }catch(_e){}
+        saveColW(n);
       }
     };
     // ★ 끄는 동안 글자가 선택되면 표가 파랗게 물든다.
@@ -31369,6 +31398,42 @@ function useCsListView(email){
   return [view, put];
 }
 
+// ── 계정별 «내 화면» 값 한 칸(console_user_prefs.prefs[key]) — 열 너비가 쓴다(제니 2026-10-29) ──
+// ★ 위 useCsListView 와 같은 방식이다: 한 번 읽고(loaded), 쓸 때는 «멈춘 뒤» 한 번 ·
+//   쓰기 직전에 prefs 를 다시 읽어 다른 키(csList 등)는 그대로 담는다 — 모르는 키는 지우지 않는다.
+// ★ 못 읽으면 loaded 는 true 로 두되 value 는 null — 화면은 브라우저 사본으로 그대로 돈다.
+//   단 그때는 올리지 않는다(failed) — 못 읽은 것을 «비었다» 로 알고 덮어쓰면 안 된다.
+function useCsPrefKey(email, key){
+  const [st,setSt] = useState({loaded:false, value:null, failed:false});
+  useEffect(()=>{
+    if(!email) return;
+    let dead = false;
+    sb.from('console_user_prefs').select('prefs').eq('user_email',email).maybeSingle()
+      .then(({data,error})=>{
+        if(dead) return;
+        if(error){ console.error('console_user_prefs 읽기 실패', error); setSt({loaded:true,value:null,failed:true}); return; }
+        setSt({loaded:true, value:(data && data.prefs && data.prefs[key]) || null, failed:false});
+      });
+    return ()=>{ dead = true; };
+  },[email,key]);
+  const timer = useRef(null);
+  const failedRef = useRef(false);
+  failedRef.current = st.failed;
+  const put = useCallback((v)=>{
+    if(!email || failedRef.current) return;
+    clearTimeout(timer.current);
+    timer.current = setTimeout(async ()=>{
+      const r = await sb.from('console_user_prefs').select('prefs').eq('user_email',email).maybeSingle();
+      if(r.error){ toast('내 화면 설정을 저장하지 못했습니다: '+r.error.message,'error'); return; }
+      const prefs = {...((r.data && r.data.prefs) || {}), [key]: v};
+      const {error} = await sb.from('console_user_prefs')
+        .upsert({user_email: email, prefs, updated_at: new Date().toISOString()}, {onConflict:'user_email'});
+      if(error) toast('내 화면 설정을 저장하지 못했습니다: '+error.message,'error');
+    }, 500);
+  },[email,key]);
+  return {loaded:st.loaded, value:st.value, put};
+}
+
 // 「보기 설정」 패널 맨 위 «내 화면» 줄 — master 든 아니든 누구나 본다.
 function CsListViewControls({view, onChange, P}){
   const btn = (on)=>({padding:'3px 0',minWidth:30,borderRadius:6,fontSize:10.5,fontFamily:'inherit',
@@ -31662,7 +31727,7 @@ function CsColumnSettings({chip, chipLabel, settings, setSettings, currentUserEm
           display:'flex',alignItems:'center',gap:8}}>
           <span style={{flex:1}}>열 너비는 <b>머리글 경계를 끌어</b> 바꿉니다
             (두 번 누르면 그 열만 기본값). 너비도 <b>이 칩에만</b> 적용되고,
-            열 구성과 달리 <b>내 화면에만</b> 남습니다.</span>
+            열 구성과 달리 <b>내 계정에만</b> 남습니다(다른 PC 에서도 같습니다).</span>
           {widthsChanged && (
             <button onClick={onResetWidths}
               style={{padding:'4px 8px',borderRadius:6,fontSize:10,fontFamily:'inherit',
