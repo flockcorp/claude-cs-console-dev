@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261029b_role_labels_kr -->
+<!-- (2026-10-29) 🏷 권한 «표기» 를 한글로(제니): MASTER→운영팀 · MANAGER→센터장 · CREW→CS매니저. **값(master/manager/crew)은 그대로** — DB 정책·menu_roles·cs_stage_roles 가 그 값을 읽는다. 한 곳 `ROLE_LABEL` 에 두고 사이드바 뱃지·CS 설정 표 머리·메뉴/동작 권한 표 머리·계정 추가/권한 고르기·메뉴얼 «볼 수 있는 권한» 이 그걸 읽는다. 안내 문장 31곳은 조사까지 고쳐 적음(«master 는»→«운영팀은» 등). 한글이라 뱃지의 고정폭 글꼴·자간을 뺐다. 화면에 보이는 글자에서 옛 표기 0(babel 로 문자열·JSX 글만 훑어 셈 · 주석 제외). dev 계정으로 찍어 확인. 사이드바 «M» 표(운영팀 전용 메뉴)는 글자를 안 바꿈 — 제니에게 물음. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261029a_agents_write_by_menu -->
 <!-- (2026-10-29) 👥 인력 관리 — 운영에서 manager 가 «인원 추가» 를 누르면 «이미 등록된 이름이거나 오류가 발생했습니다» 가 떴다(제니 제보). 원인 = DB 쓰기 정책 agents_write 가 master 고정이라 메뉴 권한으로 열어 줘도 저장이 막혔다 → **SQL `sql/agents_write_by_menu.sql`**(백업 저장소)로 쓰기를 `console_menu_allows('agents')` 에 묶었다(제니 «1번»). 화면: 오류 문구가 «진짜 까닭» 을 말한다 — 권한 없음(42501 · 또는 RLS 로 0행) / 이미 있는 이름(23505) / 그 밖은 DB 문구 그대로. 수정·퇴사·복직·삭제는 막혀도 에러 없이 0행이 와서 «저장된 척» 했다 → `.select('id')` 로 세어 본다. 근태 «끌어서 순서» 문구도 «master 만» → 메뉴 권한으로. ★ dev 전용 · 운영은 SQL 먼저. -->
 <!-- v20261027c_refund_group_row_light -->
@@ -4142,7 +4144,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
   // 공급사 채널 변경 (즉시 저장) — admin/manager만 가능
   const setSupplierChannel=async(name,channel)=>{
     if(!name) return;
-    if(!canManageSupplier){toast('공급사 채널 변경 권한이 없습니다. 관리자(admin) 또는 매니저(manager)만 변경할 수 있습니다.'); return;}
+    if(!canManageSupplier){toast('공급사 채널 변경 권한이 없습니다. 운영팀 또는 센터장만 변경할 수 있습니다.'); return;}
     setSupplierMap(prev=>({...prev,[name]:channel})); // 낙관적 갱신
     const{error}=await sb.from('suppliers').upsert({name,channel,updated_at:new Date().toISOString()},{onConflict:'name'});
     if(error){toast('채널 저장 실패: '+error.message); loadSuppliers();}
@@ -4151,7 +4153,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
   // shipping = {fee, cond, threshold, memo, method, payment}
   const setSupplierShipping=async(name,shipping)=>{
     if(!name) return;
-    if(!canManageSupplier){toast('공급사 배송비 변경 권한이 없습니다. 관리자(master) 또는 매니저(manager)만 변경할 수 있습니다.'); return;}
+    if(!canManageSupplier){toast('공급사 배송비 변경 권한이 없습니다. 운영팀 또는 센터장만 변경할 수 있습니다.'); return;}
     setSupShipSaving(name);
     // "메모 확인"인 경우 fee를 null로 강제
     const fee = shipping.cond==='메모 확인' ? null : (shipping.fee===''||shipping.fee==null?null:Number(shipping.fee));
@@ -4532,7 +4534,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
   //   낡았을 수 있어서, 확인 문구에 «언제 조사한 것인지» 를 함께 적는다.
   const [purgingMissing,setPurgingMissing]=useState(false);
   const deleteMissingProducts=async()=>{
-    if(!isMaster){toast('이 작업은 master 권한이 필요합니다.');return;}
+    if(!isMaster){toast('이 작업은 운영팀 권한이 필요합니다.');return;}
     const n=totalCount.missing||0;
     if(!n){toast('카페24에서 사라진 상품이 없습니다.','info');return;}
     // ★ 줄바꿈은 «템플릿 문자열» 로 준다. 이 파일은 패치 스크립트로 고치는 일이 잦은데
@@ -6977,7 +6979,7 @@ function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact
           공급사를 검색하면 그 공급사의 연락망이 나옵니다.
           <br/>★ 주 1회 전체를 다시 붙이면 됩니다. <b>같은 코드는 덮어쓰고, 이번 목록에 없는
           공급사는 지우지 않습니다</b>(「이번 목록에 없음」으로 표시됩니다).
-          {!isMaster && <><br/>★ <b>정산·계좌 정보는 master 만 볼 수 있습니다.</b></>}
+          {!isMaster && <><br/>★ <b>정산·계좌 정보는 운영팀만 볼 수 있습니다.</b></>}
         </div>
       )}
 
@@ -7123,7 +7125,7 @@ function SupplierContactsTab({isMaster, supplierNames, currentUserEmail, compact
                 <div style={grid}>{restKeys.map(row2)}</div>
                 {!isMaster && (
                   <div style={{fontSize:11,color:'var(--sub)',marginTop:8}}>
-                    정산 · 계좌 정보는 master 만 볼 수 있습니다.
+                    정산 · 계좌 정보는 운영팀만 볼 수 있습니다.
                   </div>
                 )}
               </div>
@@ -7235,14 +7237,14 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
 
   // 채널 변경 (즉시 저장)
   const updateChannel=async(name,channel)=>{
-    if(!canManage){toast('권한이 없습니다 (master/manager 전용)');return;}
+    if(!canManage){toast('권한이 없습니다 (운영팀·센터장 전용)');return;}
     setSuppliers(prev=>prev.map(s=>s.name===name?{...s,channel}:s));
     const{error}=await sb.from('suppliers').upsert({name,channel,updated_at:new Date().toISOString()},{onConflict:'name'});
     if(error){toast('채널 저장 실패: '+error.message); loadAll();}
   };
   // 배송비 저장
   const updateShipping=async(name,shipping)=>{
-    if(!canManage){toast('권한이 없습니다 (master/manager 전용)');return;}
+    if(!canManage){toast('권한이 없습니다 (운영팀·센터장 전용)');return;}
     setSaving(name);
     const fee = shipping.cond==='메모 확인' ? null : (shipping.fee===''||shipping.fee==null?null:Number(shipping.fee));
     const threshold = shipping.cond==='금액 조건부 무료' ? (shipping.threshold===''||shipping.threshold==null?null:Number(shipping.threshold)) : null;
@@ -7875,7 +7877,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
                     return (
                       <button key={ck} onClick={()=>canManage&&updateChannel(s.name,ck==='none'?null:ck)}
                         disabled={!canManage}
-                        title={canManage?undefined:`읽기 전용입니다. master/manager만 채널을 바꿀 수 있습니다`}
+                        title={canManage?undefined:`읽기 전용입니다. 운영팀·센터장만 채널을 바꿀 수 있습니다`}
                         style={{flex:1,display:'inline-flex',alignItems:'center',justifyContent:'center',gap:3,padding:'4px 4px',borderRadius:3,fontSize:10,fontWeight:600,cursor:canManage?'pointer':'default',fontFamily:'inherit',whiteSpace:'nowrap',
                           background:active?cs.bg:'transparent',
                           color:active?cs.color:'#1A2240',
@@ -7947,7 +7949,7 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
                 {/* 저장. 권한이 없어 회색인 경우가 있는데 표가 길어 헤더의 '읽기 전용' 안내가
                     화면 밖으로 나가 있을 수 있다 — 버튼 자리에서도 이유를 알 수 있게 한다. */}
                 <button disabled={!canManage||!isDirty||isSaving}
-                  title={!canManage?'읽기 전용입니다 — master/manager만 배송비를 편집할 수 있습니다':(isDirty?'변경한 내용을 저장합니다':'변경한 내용이 없습니다')}
+                  title={!canManage?'읽기 전용입니다 — 운영팀·센터장만 배송비를 편집할 수 있습니다':(isDirty?'변경한 내용을 저장합니다':'변경한 내용이 없습니다')}
                   onClick={()=>updateShipping(s.name,cur)}
                   style={{padding:'5px 8px',background:isDirty&&canManage?'#2A478D':'#F1F5FB',border:'1px solid '+(isDirty&&canManage?'#2A478D':'#DCE8FF'),borderRadius:4,color:isDirty&&canManage?'#fff':'#8895B0',fontSize:10,fontWeight:700,cursor:(canManage&&isDirty&&!isSaving)?'pointer':'default',fontFamily:'inherit',opacity:isSaving?0.5:1}}>
                   {isSaving?'저장중':isDirty?'저장':'완료'}
@@ -10465,7 +10467,7 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
       {/* 페이지 헤더 (공통) */}
       <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>💸 환불 관리</h1>
-        <span style={{fontSize:12,color:'var(--sub)'}}>요청 등록 · 처리 추적 · master 전용</span>
+        <span style={{fontSize:12,color:'var(--sub)'}}>요청 등록 · 처리 추적 · 운영팀 전용</span>
       </div>
 
       <CsPageTabs value={tab} onChange={setTab}
@@ -11033,7 +11035,7 @@ function AgentAnalysisPage(){
       {/* 헤더 */}
       <div className="cs-page-head" style={{marginBottom:20,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,color:'var(--text)',margin:0}}>📈 상담원 분석</h1>
-        <span style={{fontSize:12,color:'var(--sub)'}}>기간별 처리량 비교 · master 전용</span>
+        <span style={{fontSize:12,color:'var(--sub)'}}>기간별 처리량 비교 · 운영팀 전용</span>
       </div>
 
       {/* 기간 선택 */}
@@ -13558,7 +13560,7 @@ function AutoDeliveryPage({ isMaster=false, isManager=false, currentUserEmail, c
     return (
       <div style={{padding:'60px 28px',textAlign:'center',color:'var(--sub)'}}>
         <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:8}}>접근 권한이 없습니다</div>
-        <div style={{fontSize:12}}>이 페이지는 master/manager 권한 사용자만 사용할 수 있습니다.</div>
+        <div style={{fontSize:12}}>이 페이지는 운영팀·센터장 권한 사용자만 사용할 수 있습니다.</div>
       </div>
     );
   }
@@ -23777,10 +23779,12 @@ function editCount(e){
 
 // 권한 셋. 좌측 하단 뱃지와 «같은 말» 을 쓴다 — 거기서 MASTER 를 보고 온 사람이
 // 여기서 «관리자» 같은 다른 이름을 만나면 같은 것인지 한 번 더 생각해야 한다.
+// 권한 «표기» — 값(master/manager/crew)은 DB·정책이 읽으므로 그대로 두고 보이는 이름만 바꾼다(2026-10-29 제니)
+const ROLE_LABEL = {master:'운영팀', manager:'센터장', crew:'CS매니저'};
 const CS_ROLES = [
-  {id:'master',  label:'MASTER',  color:'#F6AD09'},
-  {id:'manager', label:'MANAGER', color:'#A8DEF6'},
-  {id:'crew',    label:'CREW',    color:'#dce8ff'},
+  {id:'master',  label:ROLE_LABEL.master,  color:'#F6AD09'},
+  {id:'manager', label:ROLE_LABEL.manager, color:'#A8DEF6'},
+  {id:'crew',    label:ROLE_LABEL.crew,    color:'#dce8ff'},
 ];
 const CS_ROLE_IDS = CS_ROLES.map(r=>r.id);
 
@@ -24479,8 +24483,7 @@ function CsChipRoleSettings({currentUserEmail}){
                       (제니 제보 2026-09-02). 글꼴을 집어 주고(Consolas) 크기·굵기를
                       올려 또렷하게 만든다. 크기만 키우면 획이 여전히 가늘다. */}
                   <span style={{color:r.color,fontSize:11,fontWeight:700,
-                    fontFamily:"Consolas,'Segoe UI Mono',monospace",
-                    letterSpacing:'.06em'}}>{r.label}</span>
+                    fontFamily:'inherit'}}>{r.label}</span>
                 </th>
               ))}
             </tr>
@@ -24740,7 +24743,7 @@ function CsStageRoleSettings({currentUserEmail}){
       <CsSetNote>
         <b>저장할 수 있는 상태</b> — 티켓을 <b>어느 단계로 넘길 수 있는지</b>를 권한마다 정합니다.
         켜지지 않은 단계는 저장 버튼의 목록과 목록 일괄 편집에서 <b>아예 보이지 않습니다</b>.
-        MASTER 는 늘 모든 단계로 넘길 수 있습니다.
+        운영팀은 늘 모든 단계로 넘길 수 있습니다.
         <br/>★ 이것은 <b>화면</b>의 잠금입니다 — 단계는 «이름표» 라 잘못 옮겨도 다시 옮기면 됩니다.
         되돌릴 수 없는 <b>환불 요청</b>과 <b>정산 반영</b>은 <b>필드 권한</b> 탭에서 막습니다.
       </CsSetNote>
@@ -24777,7 +24780,7 @@ function CsStageRoleSettings({currentUserEmail}){
                           cursor:r.id==='master'?'default':'pointer',
                           opacity:r.id==='master'?.5:1}}
                           checked={on(x.id,r.id)} disabled={r.id==='master'}
-                          title={r.id==='master'?'MASTER 는 늘 넘길 수 있습니다':undefined}
+                          title={r.id==='master'?'운영팀은 늘 넘길 수 있습니다':undefined}
                           onChange={()=>toggle(x.id,r.id)}/>
                       </td>
                     ))}
@@ -24884,7 +24887,7 @@ function CsFieldRuleSettings({currentUserEmail}){
             배경이라 늘 보일 자리가 아니다. 필요한 사람은 표의 「?」에서 본다. */}
       <CsSetNote>
         <b>고칠 수 있는 사람</b> — 설정한 권한만 해당 값을 수정할 수 있습니다.
-        여기서 넓히면 실제로 열립니다. MASTER 는 늘 고칠 수 있습니다.
+        여기서 넓히면 실제로 열립니다. 운영팀은 늘 고칠 수 있습니다.
         <br/>★ 여기 없는 칸은 규칙이 없습니다 — 필수가 아니고 전원이 고칩니다.
       </CsSetNote>
 
@@ -24912,8 +24915,7 @@ function CsFieldRuleSettings({currentUserEmail}){
                       (제니 제보 2026-09-02). 글꼴을 집어 주고(Consolas) 크기·굵기를
                       올려 또렷하게 만든다. 크기만 키우면 획이 여전히 가늘다. */}
                   <span style={{color:r.color,fontSize:11,fontWeight:700,
-                    fontFamily:"Consolas,'Segoe UI Mono',monospace",
-                    letterSpacing:'.06em'}}>{r.label}</span>
+                    fontFamily:'inherit'}}>{r.label}</span>
                 </th>
               ))}
             </tr>
@@ -24966,7 +24968,7 @@ function CsFieldRuleSettings({currentUserEmail}){
                             cursor:r.id==='master'?'not-allowed':'pointer',
                             opacity:r.id==='master'?.5:1}}
                           checked={canEdit(f.id,r.id)} disabled={r.id==='master'}
-                          title={r.id==='master'?'MASTER 는 늘 고칠 수 있습니다':undefined}
+                          title={r.id==='master'?'운영팀은 늘 고칠 수 있습니다':undefined}
                           onChange={()=>toggleEdit(f.id,r.id)}/>
                       </td>
                     ))}
@@ -26062,7 +26064,7 @@ function CsSettingsPage({currentUserEmail, role}){
       <div className="section">
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>⚙ CS 설정</h1>
         <div style={{fontSize:13,color:'var(--sub)',padding:'50px 0',textAlign:'center'}}>
-          이 화면은 master 만 볼 수 있습니다.
+          이 화면은 운영팀만 볼 수 있습니다.
         </div>
       </div>
     );
@@ -26073,7 +26075,7 @@ function CsSettingsPage({currentUserEmail, role}){
       <div className="cs-page-head" style={{marginBottom:18,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>⚙ CS 설정</h1>
         <span style={{fontSize:12,color:'var(--sub)'}}>
-          CS 관리 화면이 무엇을 보여 주고 무엇을 요구할지 정합니다 · master 전용</span>
+          CS 관리 화면이 무엇을 보여 주고 무엇을 요구할지 정합니다 · 운영팀 전용</span>
       </div>
 
       <CsPageTabs tabs={TABS} value={tab} onChange={setTab}/>
@@ -30627,7 +30629,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
           ) : null}
 
           </>}
-          {foldHead('정산','정산', !isMaster && <span style={{opacity:.7}}> · master 만</span>)}
+          {foldHead('정산','정산', !isMaster && <span style={{opacity:.7}}> · 운영팀만</span>)}
           {!fold.정산 && <>
           {isMaster ? (
             <>
@@ -31032,7 +31034,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                     실제 상태가 「진행중」인 티켓 위에 또 알약이 뜨면 어느 것이 지금인지
                     헷갈린다.
                   ★ 이름도 조사도 CS_STAGES 에서 나온다 — 손으로 적은 글자가 없다. */}
-              {!isMaster && <>환불·정산·종결은 master 가 확인해서 처리합니다.
+              {!isMaster && <>환불·정산·종결은 운영팀이 확인해서 처리합니다.
                 내 일이 끝나면 {CS_DONE_STAGES.map((s,i)=>(
                   <React.Fragment key={s.id}>
                     {i>0 && ' '}
@@ -32819,9 +32821,9 @@ function CsSortTh({k, w, label, full, sortable=true, sort, onClick, align, onRes
 // ★ 파일은 비공개 버킷 manuals — 볼 때마다 짧은 주소(signed URL)를 받는다.
 // =============================================================================
 const MANUAL_ROLES = [
-  {id:'master',  label:'master',  lock:true},
-  {id:'manager', label:'manager'},
-  {id:'crew',    label:'crew'},
+  {id:'master',  label:ROLE_LABEL.master,  lock:true},
+  {id:'manager', label:ROLE_LABEL.manager},
+  {id:'crew',    label:ROLE_LABEL.crew},
 ];
 // ★★★ 자기 역할은 끌 수 없다 (2026-09-21) — 끄고 저장하면 그 문서가 **제 목록에서 사라지고
 //   다시 열 수도 되돌릴 수도 없다**(master 만 손댈 수 있다). 되돌릴 수 없는 쪽을 사람이
@@ -32831,7 +32833,7 @@ const MANUAL_ROLES = [
 //   화면을 안 거치는 길이 그대로 남는다.
 const manualRoleLocked = (r, myRole)=> !!r.lock || (!!myRole && r.id === myRole);
 const manualRoleLockWhy = (r, myRole)=>
-  r.lock ? 'master 는 늘 볼 수 있습니다'
+  r.lock ? '운영팀은 늘 볼 수 있습니다'
          : (manualRoleLocked(r, myRole) ? '내 권한은 뺄 수 없습니다 — 빼면 이 문서를 다시 열 수 없습니다' : undefined);
 // ★ 저장하는 값에도 같은 뜻을 담는다 — 체크칸을 못 건드려도 payload 가 옛 값을 들고 있으면
 //   (남이 만든 문서를 고칠 때) DB 에서 튕긴다.
@@ -33275,7 +33277,7 @@ function ManualListTab({facets, canEdit, canDelete, currentUserEmail, role}){
                     <td style={td}>{(d.tags||[]).map(t=><span key={t} style={chip}>#<CsMark text={t} q={q}/></span>)}</td>
                     <td style={{...td,whiteSpace:'nowrap',fontSize:11,color:cl.c}}>{cl.t}</td>
                     <td style={{...td,whiteSpace:'nowrap',fontSize:11}}>
-                      {limited ? roles.filter(r=>r!=='master').join(' · ') || 'master 만' : <span style={{color:'var(--sub)'}}>전원</span>}
+                      {limited ? roles.filter(r=>r!=='master').map(r=>ROLE_LABEL[r]||r).join(' · ') || '운영팀만' : <span style={{color:'var(--sub)'}}>전원</span>}
                     </td>
                     <td style={{...td,whiteSpace:'nowrap'}}>
                       {d.checked_at || '—'}
@@ -36326,7 +36328,7 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
             <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>분류 설정</div>
             <span style={{fontSize:12,color:'var(--sub)'}}>
               {cfgRow===undefined ? '설정을 읽지 못했습니다 — 기본값으로 계산하고, 저장은 잠깁니다.'
-                : !isMaster ? '설정은 master 만 바꿀 수 있습니다. 모든 계정이 같은 값으로 계산합니다.'
+                : !isMaster ? '설정은 운영팀만 바꿀 수 있습니다. 모든 계정이 같은 값으로 계산합니다.'
                 : '바꾸면 바로 다시 계산됩니다. [저장] 하면 모든 계정에 적용됩니다.'}
               {cfgRow && cfgRow.updated_by ? ' · 마지막 저장 ' + csShortUser(cfgRow.updated_by) : ''}</span>
           </div>
@@ -36707,7 +36709,7 @@ const CS_ACTION_DEFS = [
   //     으로 두되, **화면이 더 좁게 잠근 두 자리를 여기 적는다.** 안 적으면 설정을
   //     켜 놓고 「왜 그 버튼이 없지」를 묻게 된다.
   {id:'products.delete', menu:'상품 정보', label:'상품 삭제', guard:'db',
-   hint:'고른 상품 · 선택 삭제 (※ «전체 삭제»·«카페24 정리» 는 되돌릴 수 없어 master 만)',
+   hint:'고른 상품 · 선택 삭제 (※ «전체 삭제»·«카페24 정리» 는 되돌릴 수 없어 운영팀만)',
    base:['master','manager']},
   {id:'delays.create', menu:'배송지연 관리', label:'지연 등록', guard:'db',
    hint:'[+ 지연 상품 추가] 버튼', base:['master','manager']},
@@ -36799,7 +36801,7 @@ function RoleTag({on=true}) {
        안 왔을 수 있고, 그때 조각마다 따로 읽으면 «어떤 메뉴는 붙고 어떤 메뉴는
        안 붙은» 절름발이 상태가 보인다. 한 곳(App)에서 한 번 읽어 내려 준다. */
   if(!on) return null;
-  return <span className="nav-tag" title="master 전용 메뉴입니다">M</span>;
+  return <span className="nav-tag" title="운영팀 전용 메뉴입니다">M</span>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -37183,7 +37185,7 @@ function CsAccountAdmin({session, card, head}){
               ★ 뜻은 그대로 살아 있다 — 「master 가 직접 추가」가 «가입이 없다» 이고,
                 「1계정당 1명(처리 이력 추적 용이)」이 «공용 계정이면 누가가 안 남는다» 다.
                 같은 말을 «해야 할 일» 쪽에서 적으면 설명이 짧아진다. */}
-          본 콘솔을 이용하는 계정은 <b style={{color:'var(--text)'}}>master</b> 가 직접 추가합니다.
+          본 콘솔을 이용하는 계정은 <b style={{color:'var(--text)'}}>운영팀</b>이 직접 추가합니다.
           <br/>아래 <b style={{color:'var(--text)'}}>+ 계정 추가</b> 를 통해 추가해주세요.
           <br/><b style={{color:'var(--text)'}}>[이름]</b>은 처리 이력에 표기됩니다.
           (이름이 공란인 경우, 이메일 앞부분이 표기 됩니다.)
@@ -37211,9 +37213,9 @@ function CsAccountAdmin({session, card, head}){
                 placeholder="비밀번호 (8자 이상)" autoComplete="new-password" style={inp}/>
               <select value={f.console_role}
                 onChange={e=>setF(p=>({...p,console_role:e.target.value}))} style={inp}>
-                <option value="crew">crew — 상담원</option>
-                <option value="manager">manager — 관리자</option>
-                <option value="master">master — 전체 권한</option>
+                <option value="crew">{ROLE_LABEL.crew}</option>
+                <option value="manager">{ROLE_LABEL.manager}</option>
+                <option value="master">{ROLE_LABEL.master} — 전체 권한</option>
               </select>
             </div>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -37275,9 +37277,9 @@ function CsAccountAdmin({session, card, head}){
                             onChange={e=>patch(u,'console_role',e.target.value)}
                             style={{...inp,padding:'4px 7px',fontSize:11,
                               opacity:u.user_id===session.user.id?.6:1}}>
-                            <option value="crew">crew</option>
-                            <option value="manager">manager</option>
-                            <option value="master">master</option>
+                            <option value="crew">{ROLE_LABEL.crew}</option>
+                            <option value="manager">{ROLE_LABEL.manager}</option>
+                            <option value="master">{ROLE_LABEL.master}</option>
                           </select>
                         ) : <span style={{color:'var(--sub)'}}>—</span>}
                       </td>
@@ -37414,7 +37416,7 @@ function CsMenuRoles({currentUserEmail, card, head, onSaved}){
               <table style={{borderCollapse:'collapse',fontSize:12}}>
                 <thead><tr>
                   <th style={{...th,textAlign:'left',minWidth:150}}>메뉴</th>
-                  {ROLES.map(r=><th key={r} style={{...th,minWidth:82}}>{r}</th>)}
+                  {ROLES.map(r=><th key={r} style={{...th,minWidth:82}}>{ROLE_LABEL[r]||r}</th>)}
                 </tr></thead>
                 <tbody>
                   {CS_MENU_DEFS.map((d,i)=>{
@@ -37455,7 +37457,7 @@ function CsMenuRoles({currentUserEmail, card, head, onSaved}){
                           <td key={r} style={{padding:'7px 8px',textAlign:'center'}}>
                             <input type="checkbox" checked={on} disabled={r==='master'}
                               onChange={()=>toggle(d.id,r)}
-                              title={r==='master'?'master 는 늘 볼 수 있습니다':undefined}
+                              title={r==='master'?'운영팀은 늘 볼 수 있습니다':undefined}
                               style={{width:14,height:14,accentColor:'#5B8DEF',
                                 cursor:r==='master'?'default':'pointer',
                                 opacity:r==='master'?.55:1}}/>
@@ -37588,7 +37590,7 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
                       둘이 한 덩어리로 읽혔다. */}
                   <th style={{...th,textAlign:'left',minWidth:104}}>메뉴</th>
                   <th style={{...th,textAlign:'left',minWidth:230}}>동작</th>
-                  {ROLES.map(r=><th key={r} style={{...th,minWidth:82}}>{r}</th>)}
+                  {ROLES.map(r=><th key={r} style={{...th,minWidth:82}}>{ROLE_LABEL[r]||r}</th>)}
                 </tr></thead>
                 <tbody>
                   {CS_ACTION_DEFS.map(d=>{
@@ -37628,7 +37630,7 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
                           <td key={r} style={{padding:'7px 8px',textAlign:'center'}}>
                             <input type="checkbox" checked={on} disabled={r==='master'}
                               onChange={()=>toggle(d.id,r)}
-                              title={r==='master'?'master 는 늘 할 수 있습니다':undefined}
+                              title={r==='master'?'운영팀은 늘 할 수 있습니다':undefined}
                               style={{width:14,height:14,accentColor:'#5B8DEF',
                                 cursor:r==='master'?'default':'pointer',
                                 opacity:r==='master'?.55:1}}/>
@@ -37748,7 +37750,7 @@ function CsNavOrderSettings({card, head, currentUserEmail, onSaved}){
     <div style={{...card, maxWidth:640}}>
       <div style={{...head,display:'flex',alignItems:'center',gap:8}}>
         <span>메뉴 순서</span>
-        <span style={{fontSize:10.5,fontWeight:600,color:'var(--sub)'}}>master</span>
+        <span style={{fontSize:10.5,fontWeight:600,color:'var(--sub)'}}>운영팀</span>
       </div>
       <div style={{padding:'14px 20px'}}>
         <div style={{fontSize:11.5,color:'var(--sub)',lineHeight:1.7,marginBottom:12}}>
@@ -38128,7 +38130,7 @@ function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved,onNavSa
               <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>받는 사람</div>
               {!isMaster?(
                 <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.7}}>
-                  운영 실패 알림은 현재 master 계정만 받습니다.
+                  운영 실패 알림은 현재 운영팀 계정만 받습니다.
                 </div>
               ):loading?(
                 <div style={{fontSize:12,color:'var(--sub)'}}>불러오는 중…</div>
@@ -38169,7 +38171,7 @@ function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved,onNavSa
                   {' '}<b>{cfg.balance.toLocaleString()}원</b> 미만<br/>
                   채널 미설정 공급사 <b>{cfg.channel}</b>곳 이상<br/>
                   배송비 미설정 공급사 <b>{cfg.shipping}</b>곳 이상
-                  <div style={{fontSize:11,color:'var(--sub)',marginTop:6}}>master 만 바꿀 수 있습니다.</div>
+                  <div style={{fontSize:11,color:'var(--sub)',marginTop:6}}>운영팀만 바꿀 수 있습니다.</div>
                 </div>
               ):(
                 <>
@@ -38924,16 +38926,16 @@ function App() {
                 //     밝기만 내린다.** MASTER 는 노랑, MANAGER 는 하늘 그대로 남는다.
                 //   ★ 바탕·테두리는 안 건드린다 — 사라진 것은 글자뿐이다.
                 const roleStyle={
-                  master:  {label:'MASTER',  bg:'rgba(246,173,9,.18)',  color:csInk('#F6AD09'), border:'rgba(246,173,9,.5)'},
-                  manager: {label:'MANAGER', bg:'rgba(168,222,246,.18)',color:csInk('#A8DEF6'), border:'rgba(168,222,246,.5)'},
-                  crew:    {label:'CREW',    bg:'rgba(220,232,255,.15)',color:csInk('#dce8ff'), border:'rgba(220,232,255,.4)'},
+                  master:  {label:ROLE_LABEL.master,  bg:'rgba(246,173,9,.18)',  color:csInk('#F6AD09'), border:'rgba(246,173,9,.5)'},
+                  manager: {label:ROLE_LABEL.manager, bg:'rgba(168,222,246,.18)',color:csInk('#A8DEF6'), border:'rgba(168,222,246,.5)'},
+                  crew:    {label:ROLE_LABEL.crew,    bg:'rgba(220,232,255,.15)',color:csInk('#dce8ff'), border:'rgba(220,232,255,.4)'},
                 };
                 // 알 수 없는 role(예: stale 토큰의 옛 권한값)은 'UNKNOWN' 회색 뱃지로 표시 (crew로 fallback X)
                 const rs=roleStyle[role]||{label:'UNKNOWN',bg:'rgba(150,150,150,.15)',color:'#888888',border:'rgba(150,150,150,.4)'};
                 /* ★ 접으면 뱃지가 «가운데» 다 — 아바타와 세로로 쌓이는데 왼쪽에
                    붙어 있으면 두 조각의 중심이 어긋나 보인다. 인라인 값이라
                    CSS 로는 못 이긴다 → 여기서 갈랐다. */
-                return <span title={role?('현재 권한값: '+role):'권한 정보 없음'} style={{display:'inline-block',alignSelf:navCollapsed?'center':'flex-start',padding:'1px 7px',background:rs.bg,color:rs.color,border:'1px solid '+rs.border,borderRadius:3,fontSize:9,fontWeight:700,letterSpacing:'.06em',fontFamily:'monospace'}}>{rs.label}</span>;
+                return <span title={role?('현재 권한: '+(ROLE_LABEL[role]||role)):'권한 정보 없음'} style={{display:'inline-block',alignSelf:navCollapsed?'center':'flex-start',padding:'1px 7px',background:rs.bg,color:rs.color,border:'1px solid '+rs.border,borderRadius:3,fontSize:10,fontWeight:700}}>{rs.label}</span>;
               })()}
             </div>
             {/* ── 알림 종 (2026-08-31 제니 요청) ────────────────────────────────
