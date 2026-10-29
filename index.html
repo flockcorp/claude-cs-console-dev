@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261029a_agents_write_by_menu -->
+<!-- (2026-10-29) 👥 인력 관리 — 운영에서 manager 가 «인원 추가» 를 누르면 «이미 등록된 이름이거나 오류가 발생했습니다» 가 떴다(제니 제보). 원인 = DB 쓰기 정책 agents_write 가 master 고정이라 메뉴 권한으로 열어 줘도 저장이 막혔다 → **SQL `sql/agents_write_by_menu.sql`**(백업 저장소)로 쓰기를 `console_menu_allows('agents')` 에 묶었다(제니 «1번»). 화면: 오류 문구가 «진짜 까닭» 을 말한다 — 권한 없음(42501 · 또는 RLS 로 0행) / 이미 있는 이름(23505) / 그 밖은 DB 문구 그대로. 수정·퇴사·복직·삭제는 막혀도 에러 없이 0행이 와서 «저장된 척» 했다 → `.select('id')` 로 세어 본다. 근태 «끌어서 순서» 문구도 «master 만» → 메뉴 권한으로. ★ dev 전용 · 운영은 SQL 먼저. -->
 <!-- v20261027c_refund_group_row_light -->
 <!-- (2026-10-27) 💸 환불 관리 — **같은 주문 묶음 행의 노란 바탕이 라이트에서 안 보인다**(제니). 바탕이 `rgba(246,173,9,.04)` 였다 — 흰 종이 위 4% 노랑은 «옅은» 게 아니라 «없는» 값이다(09-28 흰 필름과 같은 병 · 노랑 쪽). → **라이트에서만** 바탕 .04→.16 · 마우스 올림 .10→.26 · 묶음 안 구분선 .15→.45. 다크는 세 값 모두 원래 그대로(csIsLight 분기 · 모드 바꾸면 App 이 다시 그린다). dev 계정으로 찍어 확인: 라이트 묶음 6행 배경 .16 · 다크 .04. 화면만 · SQL 없음. ★ dev 전용. -->
 <!-- v20261027b_logistics_step_emphasis -->
@@ -2260,6 +2262,21 @@ function useRowDrag(items, keyOf, onMove){
   return {rowProps, line, handle, dragging:drag};
 }
 
+// 인원(agents) 쓰기 실패를 «진짜 까닭» 으로 바꾼다. 실패가 아니면 null.
+// ★ 쓰기 자격은 «인력 관리» 메뉴 권한이다(DB 정책 agents_write_by_menu 가 menu_roles.agents 를 읽는다).
+// ★★ RLS 로 막힌 update·delete 는 에러 없이 0행이 온다 — 부르는 쪽이 .select('id') 로 받은 data 를 넘겨 센다.
+//   막힌 insert 는 42501 이 온다.
+const AGENTS_NO_PERM = '권한이 없어 저장되지 않았습니다.\n인원을 추가·수정하려면 «인력 관리» 메뉴 권한이 필요합니다.\n관리자에게 «계정 정보 · 설정 › 메뉴 권한» 에서 켜 달라고 요청하세요.';
+function agentsWriteErr(error, data){
+  if(error){
+    if(error.code==='42501') return {message:AGENTS_NO_PERM};
+    if(error.code==='23505') return {message:'이미 등록된 이름입니다. 다른 이름을 입력해 주세요.'};
+    return error;
+  }
+  if(!data || data.length===0) return {message:AGENTS_NO_PERM};
+  return null;
+}
+
 // 근태 표·인원 목록 — 위 상호작용에 «놓으면 DB 에 쓴다» 를 얹은 것.
 // 순서는 agents.sort_order 하나뿐이다 — 두 화면이 그 칸으로 정렬하므로
 // 어느 쪽에서 바꿔도 같은 차례가 된다.
@@ -2271,10 +2288,8 @@ function useAgentRowDrag(agents, setAgents){
     const changed = next.filter(a=>{ const o=prev.find(x=>x.id===a.id); return !o || o.sort_order!==a.sort_order; });
     const res = await Promise.all(changed.map(a=>
       sb.from('agents').update({sort_order:a.sort_order}).eq('id',a.id).select('id')));
-    let err = (res.find(r=>r.error)||{}).error || null;
-    // ★★ RLS 로 막히면 에러 없이 0행이 온다 — 세어 봐야 안다.
-    if(!err && res.some(r=>!r.data || r.data.length===0))
-      err = {message:'권한이 없어 순서가 바뀌지 않았습니다(인원 순서는 master 만 바꿀 수 있습니다).'};
+    // ★★ RLS 로 막히면 에러 없이 0행이 온다 — 세어 봐야 안다(agentsWriteErr).
+    const err = res.map(r=>agentsWriteErr(r.error, r.data)).find(Boolean) || null;
     if(sbFail('인원 순서 저장', err, {write:true})){ setAgents(prev); return; }
     toast('순서를 바꿨습니다.','ok');
   });
@@ -2843,32 +2858,34 @@ function AgentListTab() {
     if(!newName.trim()){setMsg('이름을 입력해주세요.');return;}
     // ★ 맨 뒤로 — 끌어서 10·20·30… 으로 매긴 뒤에는 agents.length 가 맨 위 값이 된다.
     const lastOrder=agents.reduce((m,a)=>Math.max(m,Number(a.sort_order)||0),0);
-    const{error}=await sb.from('agents').insert({name:newName.trim(),sort_order:lastOrder+10,role:newRole,hire_date:newHireDate||null});
-    if(error){setMsg('이미 등록된 이름이거나 오류가 발생했습니다.');return;}
+    const{data,error}=await sb.from('agents').insert({name:newName.trim(),sort_order:lastOrder+10,role:newRole,hire_date:newHireDate||null}).select('id');
+    const err=agentsWriteErr(error,data);
+    if(err){ console.error('[인원 추가] 실패:',err); setMsg(err.message||'인원 추가에 실패했습니다.'); return; }
     setNewName(''); setNewRole('상담원'); setNewHireDate(''); setMsg(''); load();
   };
   const startEdit=(a)=>{setEditId(a.id);setEditName(a.name);setEditRole(a.role||'상담원');setEditHireDate(a.hire_date||'');};
   const saveEdit=async(id)=>{
     if(!editName.trim())return;
-    await sb.from('agents').update({name:editName.trim(),role:editRole,hire_date:editHireDate||null}).eq('id',id);
+    const{data,error}=await sb.from('agents').update({name:editName.trim(),role:editRole,hire_date:editHireDate||null}).eq('id',id).select('id');
+    if(sbFail('인원 수정',agentsWriteErr(error,data),{write:true})) return; // 실패 시 수정칸을 닫지 않는다
     setEditId(null); load();
   };
   const doResign=async()=>{
     if(!resignTarget||!resignDate)return;
-    const{error}=await sb.from('agents').update({resigned_at:resignDate}).eq('id',resignTarget.id);
-    if(sbFail('퇴사 처리',error,{write:true})) return; // 실패 시 모달을 닫지 않는다 — 그대로 다시 시도할 수 있게
+    const{data,error}=await sb.from('agents').update({resigned_at:resignDate}).eq('id',resignTarget.id).select('id');
+    if(sbFail('퇴사 처리',agentsWriteErr(error,data),{write:true})) return; // 실패 시 모달을 닫지 않는다 — 그대로 다시 시도할 수 있게
     setResignTarget(null); load();
   };
   const doRestore=async(a)=>{
     if(!confirm(`'${a.name}' 님을 복직 처리하시겠습니까?`))return;
-    const{error}=await sb.from('agents').update({resigned_at:null}).eq('id',a.id);
-    if(sbFail('복직 처리',error,{write:true})) return;
+    const{data,error}=await sb.from('agents').update({resigned_at:null}).eq('id',a.id).select('id');
+    if(sbFail('복직 처리',agentsWriteErr(error,data),{write:true})) return;
     load();
   };
   const del=async(a)=>{
     if(!confirm(`'${a.name}' 을 삭제하시겠습니까?\n기존 데이터는 유지됩니다.`))return;
-    const{error}=await sb.from('agents').delete().eq('id',a.id);
-    if(sbFail('상담원 삭제',error,{write:true})) return;
+    const{data,error}=await sb.from('agents').delete().eq('id',a.id).select('id');
+    if(sbFail('상담원 삭제',agentsWriteErr(error,data),{write:true})) return;
     load();
   };
 
@@ -3001,7 +3018,7 @@ function AgentListTab() {
               style={{height:34,padding:'0 18px',fontSize:12}}>추가</button>
           </div>
         </div>
-        {msg&&<div className="error-msg" style={{marginTop:8,textAlign:'left'}}>{msg}</div>}
+        {msg&&<div className="error-msg" style={{marginTop:8,textAlign:'left',whiteSpace:'pre-line'}}>{msg}</div>}
         </>}
       </div>
     </div>
