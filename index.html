@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261030a_dev_banner -->
+<!-- (2026-10-30) 🟥 DEV 배너(제니: 「DEV 화면 상단에 "DEV 환경입니다. 실제 운영에 반영하지 않습니다." 상시」). 판정 = 발송 차단과 같은 SEND_BLOCKED(접속 DB 가 운영이 아니면) → <html class="cs-dev"> + body 에 고정 띠 28px(로그인 전 화면에도). ★ 배너가 창 기준 sticky 머리(top:0)를 가리지 않게 cs-dev 일 때만 #root 를 «배너 아래» 고정 스크롤 상자로 · 사이드바·햄버거도 28px 내림. 스크롤 감지 둘은 이미 capture 라 그대로 돈다. ★ 운영은 class 가 안 붙어 CSS·화면이 한 줄도 안 바뀐다(승격해도 운영엔 배너 없음). 띠는 pointer-events:none · 모달 막보다 위. -->
 <!-- v20261029d_colw_account_default_cols -->
 <!-- (2026-10-29) 🎫 티켓 목록 둘(제니). ①열 너비를 «계정» 에 저장 — console_user_prefs.prefs.csColW(글자 크기·행 간격과 같은 줄 · 새 SQL 없음) · 브라우저 사본 키에 이메일 · DB 에 너비가 없는 계정은 이 브라우저에 있던 폭을 한 번 올리고 옛 공용 키는 지운다. ②[보기 설정] «기본값으로» = 운영 «내 티켓» 칩 열 구성(CS_COLS_FALLBACK · 수정·품목별 주문번호·경로 포함 15열). ★ dev 전용. -->
 <!-- (2026-10-29) 🎫 CS 티켓 넷(제니). ①상세 머리에 [+ 티켓 등록] — [목록으로] 왼쪽 · 테두리만(주 동작은 저장) · 안 저장한 값·적던 글이 있으면 먼저 묻는다. ②접수 경로에 «공급사» — `CS_INTAKE` 에 더하고 DB 제약도 넓힘(`sql/cs_intake_supplier.sql` · dev 먼저) · 상세에서도 접수 경로를 고친다(읽기 → CsPick · 저장·이력 «접수 경로 : A -> B»). ③담당자 고르기에서 권한 꼬리(« · crew») 를 뺐다 — 이름만(등록·상세 둘 다). ④티켓 목록에서 칩을 옮기면 체크를 푼다(열린 일괄 창도 닫음) · 검색·필터는 그대로. ★ dev 전용 · 운영은 SQL 먼저. -->
@@ -1568,6 +1570,14 @@
     @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
     @keyframes toastOut{to{opacity:0;transform:translateY(8px)}}
     @media (max-width:640px){ #toastHost{left:12px;right:12px;bottom:12px;max-width:none} }
+    /* DEV 배너 — 운영이 아닐 때만 <html> 에 cs-dev 가 붙는다(운영에선 아래 줄들이 아무 일도 안 한다).
+       화면이 배너 «아래» 에서 시작하도록 #root 를 스크롤 상자로 — 창 기준 sticky(top:0) 머리가 배너에 안 가린다. */
+    html.cs-dev{--dev-bar-h:28px}
+    .cs-dev-bar{position:fixed;top:0;left:0;right:0;height:var(--dev-bar-h);z-index:2147483000;display:flex;align-items:center;justify-content:center;background:#C62828;color:#fff;font-size:13px;font-weight:700;letter-spacing:.02em;line-height:1;pointer-events:none;user-select:none}
+    html.cs-dev #root{position:fixed;top:var(--dev-bar-h);left:0;right:0;bottom:0;overflow:auto}
+    html.cs-dev .app-wrap{min-height:100%}
+    html.cs-dev .sidebar{top:var(--dev-bar-h);height:calc(100vh - var(--dev-bar-h))}
+    html.cs-dev .mobile-hamburger{top:calc(12px + var(--dev-bar-h))}
   </style>
 </head>
 <body>
@@ -1597,6 +1607,14 @@ const PROD_PROJECT_REF   = 'iasnxjbqhzxpgguhynuo';
 const SEND_BLOCKED       = !SUPABASE_URL.includes(PROD_PROJECT_REF);
 const SEND_BLOCKED_MSG   = '테스트(dev) 환경에서는 실제 고객에게 발송될 수 있어 막아 두었습니다. 발송은 운영 콘솔에서 해주세요.';
 const SEND_BLOCKED_SHORT = '테스트 환경 — 발송 불가';
+// DEV 배너(2026-10-30 제니) — 판정은 발송 차단과 같은 SEND_BLOCKED(운영 DB 가 아니면 전부). 로그인 전 화면에도 뜨도록 React 밖에 붙인다.
+if (SEND_BLOCKED) {
+  document.documentElement.classList.add('cs-dev');
+  const bar = document.createElement('div');
+  bar.className = 'cs-dev-bar'; bar.setAttribute('role','note');
+  bar.textContent = 'DEV 환경입니다. 실제 운영에 반영하지 않습니다.';
+  document.body.appendChild(bar);
+}
 
 // ── 화면 모드 (다크 / 라이트) ──────────────────────────────────────────
 // 제니 2026-09-07: 「콘솔 화면 보기를 다크·라이트로 설정할 수 있으면 좋겠어.」
