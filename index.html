@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261103a_draft_head_vars -->
+<!-- (2026-11-03) 🐞 공급사 접수 문안 — 메일 «제목»·메신저 «머리말» 의 변수가 «—» 로 나오던 것(제니 제보: 제목에 {주문자명(수령인명)} 을 넣었는데 적용이 안 되고 - 로 나온다). 원인: 두 자리를 티켓 없이(null) 채워 {날짜} 말고는 전부 «빈 티켓» 값이었다. → 새 csFillHead(str, rows, ev) 가 담긴 건으로 채운다: 한 건이면 그 값 · 여러 건이 같은 값이면 그 값 · 갈리면 앞의 둘 + 「외 N」 · 값이 없으면 「—」 · 여러 줄 값은 한 줄로. {날짜} 는 그대로. 쓰는 곳 전수: csDraftMailPlain·csDraftMailHtml·csDraftMessenger·공급사 접수 미리보기·설정 미리보기(견본 건). ★ 같이 고친 것: 공급사 접수 메뉴(CsSupplierDraft)의 «복사» 와 «메신저 미리보기» 가 events 를 안 넘겨 «접수 사유» 가 복사한 글에서 빠졌다(화면 표에는 보였다) → events 를 넘긴다. 메일 «본문» 의 규칙({날짜} 만 바뀜)은 안 건드렸다. SQL 없음. -->
 <!-- v20261030b_ticket_leave_confirm -->
 <!-- (2026-10-30) 🎫 티켓 등록·상세에서 «작성 중» 이탈 확인(제니: 「내용이 조금이라도 입력·추가된 상태에서 다른 메뉴·화면으로 이동할 때 알림」). 화면이 useCsLeaveGuard(작성 중?) 로 걸고 App 의 이동(navigateTo·openTicket·goDraft·로그아웃)이 csConfirmLeave() 로 먼저 묻는다 — 「작성 중인 내용이 있습니다. 저장하지 않고 이동하면 입력한 내용이 사라집니다. 이동할까요?」 · 취소하면 그 화면·글 그대로. 새로고침·창 닫기는 브라우저 기본 확인창(beforeunload). ★ «작성 중» = 상세: 저장 버튼을 켜는 dirty 그대로(바꾼 값·적던 글·사진) · 등록: 주문번호 칸·조회 품목·글·사진·이력 줄·담당자·칸 값(처음과 다르면). ★ 저장 «뒤» 이동(저장 후 목록으로·다음 티켓·만든 티켓 열기)은 묻지 않는다(leaveDone). ★ 상세 [+ 티켓 등록] 의 따로 묻던 confirm 은 뺐다(두 번 묻지 않게). ★ 사이드바 «티켓 목록»·«공급사 접수» 는 이동이 «된 뒤» 에 칩·담은 번호를 비운다(취소하면 그대로). dev 계정으로 시험: 빈 등록→메뉴 안 물음 · 글 넣고 메뉴/로그아웃 → 물음·취소 시 글 남음·확인 시 이동 · 빈 상세→목록으로 안 물음 · 글 넣은 상세→목록으로·+티켓 등록·메뉴 셋 다 물음. -->
 <!-- v20261030a_dev_banner -->
@@ -25880,7 +25882,7 @@ function CsDraftTplSettings({currentUserEmail}){
     CS_DRAFT_TPL = d;
     try{ return fn(); } finally { CS_DRAFT_TPL = keep; }
   };
-  const prevSubject = withDraft(()=>csDraftSubject());
+  const prevSubject = withDraft(()=>csDraftSubject([SAMPLE], SAMPLE_EV));
   const prevCols    = withDraft(()=>csDraftCols());
   const prevRow     = withDraft(()=>csDraftRow(SAMPLE, SAMPLE_EV));
   const prevMsg     = withDraft(()=>csDraftMessenger([SAMPLE], SAMPLE_EV));
@@ -32050,6 +32052,27 @@ function csFillTpl(str, t, ev){
   });
   return {text:out, hasVar:had, filled:any};
 }
+// ★★ 2026-11-03 제니 제보 — 메일 «제목»·메신저 «머리말» 에 {주문자명(수령인명)} 을 넣었더니
+//   「—」로 나왔다. 두 자리가 티켓 없이(null) 채워져서 {날짜} 말고는 전부 «빈 티켓» 값이었다.
+//   → 담긴 건(rows)으로 채운다. 한 건이면 그 값 · 여러 건이 같은 값이면 그 값 ·
+//     값이 갈리면 앞의 둘 + 「외 N」(제목이 끝없이 길어지지 않게). 값이 하나도 없으면 「—」.
+//   ★ {날짜}(n:true) 는 예전 그대로 · 모르는 이름은 글자 그대로(csFillTpl 과 같은 규칙).
+function csFillHead(str, rows, ev){
+  const list = (rows||[]).filter(Boolean);
+  return String(str==null?'':str).replace(/\{([^}]+)\}/g, (m,name)=>{
+    const v = csDraftVar(name);
+    if(!v) return m;
+    if(v.n || !list.length) return String(v.g({}, ev) ?? '');
+    const vals = [];
+    list.forEach(t=>{
+      // 제목은 한 줄이다 — 여러 줄 값(접수사유)은 한 줄로 편다.
+      const s = String(v.g(t, ev) ?? '').replace(/\s*\n\s*/g,' ').trim();
+      if(s && s!=='—' && vals.indexOf(s)<0) vals.push(s);
+    });
+    if(!vals.length) return '—';
+    return vals.length<=2 ? vals.join(', ') : vals.slice(0,2).join(', ')+' 외 '+(vals.length-2);
+  });
+}
 function csPhonePair(t){
   const p = t.orderer_phone || '—';
   const r = (t.receiver_phone && t.receiver_phone!==t.orderer_phone) ? t.receiver_phone : '';
@@ -32140,8 +32163,8 @@ function csDraftRow(t, events){
     return r.text || '—';
   });
 }
-function csDraftSubject(){
-  return csFillTpl(csTpl().mail_subject, null, null).text;
+function csDraftSubject(rows, events){
+  return csFillHead(csTpl().mail_subject, rows, events);
 }
 // 메신저용 줄글 — 표 없이 번호를 매긴다.
 // ★ 한 건일 때는 번호를 안 붙인다(제니 2026-09-04, 건별 접수에 쓰기 시작하면서).
@@ -32195,7 +32218,7 @@ function csFillMacro(body, t, ev){
 function csDraftMessenger(rows, events){
   // ★ 머리말 다음은 «바로» 첫 건이다(제니 문안 그대로). 건과 건 사이만 빈 줄로 나눈다 —
   //   머리말 뒤에도 빈 줄을 넣으면 첫 건이 «둘째 덩어리» 처럼 떨어져 보인다.
-  return csFillTpl(csTpl().msg_head, null, events).text + '\n'
+  return csFillHead(csTpl().msg_head, rows, events) + '\n'
     + (rows||[]).map(t=>csDraftMessengerOne(t, events)).join('\n\n');
 }
 // ── 건별 접수 문안을 «이력 칸에 넣고 복사한다» (제니 2026-09-04) ─────────────
@@ -32277,7 +32300,7 @@ function csDraftMailPlain(rows, events){
   csDraftMailParts(events).forEach(p=>{
     if(p.t==='table') body.push(...tbl); else body.push(p.s);
   });
-  return [csDraftSubject(), ''].concat(body).join('\n');
+  return [csDraftSubject(rows, events), ''].concat(body).join('\n');
 }
 function csDraftMailHtml(rows, events){
   const esc = (s)=>String(s==null?'':s)
@@ -32304,7 +32327,7 @@ function csDraftMailHtml(rows, events){
   const body = csDraftMailParts(events).map(p=>
     p.t==='table' ? table
     : (p.s.trim()==='' ? '<br>' : '<div>'+esc(p.s)+'</div>')).join('');
-  return '<div>'+esc(csDraftSubject())+'</div><br>' + body;
+  return '<div>'+esc(csDraftSubject(rows, events))+'</div><br>' + body;
 }
 
 // 공급사 접수 문안 창 — 고른 건을 «공급사별로» 묶어 보여 준다.
@@ -32531,11 +32554,13 @@ function CsSupplierDraft({rows, events, photoMap, supMap, busy, onSent, onBack, 
       if(isMail && window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
         // ★ window. 를 붙여 쓴다 — 브라우저 전역이라 검사기가 «없는 이름» 으로 본다.
         await navigator.clipboard.write([new window.ClipboardItem({
-          'text/html' : new Blob([csDraftMailHtml(list)], {type:'text/html'}),
-          'text/plain': new Blob([csDraftMailPlain(list)],{type:'text/plain'}),
+          // ★ 2026-11-03 — events 를 함께 넘긴다. 빠져 있어 화면 표에는 보이는 «접수 사유» 가
+          //   복사한 글에서는 빠졌다(csIntakeReason 이 이력 없이는 빈 값).
+          'text/html' : new Blob([csDraftMailHtml(list, events)], {type:'text/html'}),
+          'text/plain': new Blob([csDraftMailPlain(list, events)],{type:'text/plain'}),
         })]);
       }else{
-        const text = isMail ? csDraftMailPlain(list) : csDraftMessenger(list);
+        const text = isMail ? csDraftMailPlain(list, events) : csDraftMessenger(list, events);
         if(navigator.clipboard && navigator.clipboard.writeText){
           await navigator.clipboard.writeText(text);
         }else{
@@ -32701,7 +32726,7 @@ function CsSupplierDraft({rows, events, photoMap, supMap, busy, onSent, onBack, 
               {isMail ? (
                 <>
                   <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8}}>
-                    {csDraftSubject()}</div>
+                    {csDraftSubject(cur?cur.list:[], events)}</div>
                   {csDraftMailParts(events).map((p,pi)=> p.t==='table' ? (
                   <div key={pi} style={{overflowX:'auto',margin:'8px 0'}}>
                     <table style={{borderCollapse:'collapse',fontSize:11.5,minWidth:520}}>
@@ -32725,7 +32750,7 @@ function CsSupplierDraft({rows, events, photoMap, supMap, busy, onSent, onBack, 
               ) : (
                 <pre style={{margin:0,fontFamily:MONO,fontSize:11.5,lineHeight:1.75,
                   color:'var(--text)',whiteSpace:'pre-wrap',
-                  overflowWrap:'anywhere'}}>{csDraftMessenger(cur?cur.list:[])}</pre>
+                  overflowWrap:'anywhere'}}>{csDraftMessenger(cur?cur.list:[], events)}</pre>
               )}
             </div>
 
