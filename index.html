@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261103h_history_date_bold -->
+<!-- (2026-11-03) 🐞 티켓 상세 이력 줄의 날짜가 100% 에서 뭉개져 보이던 것(제니) — 'monospace' 10px(윈도우 = Courier New 가는 획) → MONO(Consolas) 11px. 같은 줄 묶음 #번호(9.5px monospace)도 MONO 10.5px. + 제니 「날짜와 작성자 이름을 볼드체로 잘 보이게」 → 둘 다 굵게(700) · 글자색 본문색. 작성자(한글)는 고정폭에서 뺐다. 라이트·다크 1배 캡처로 확인. SQL 없음. -->
 <!-- v20261103g_ticket_quick_search -->
 <!-- (2026-11-03) 🔍 티켓 등록·상세 화면 머리에 «티켓 검색»(제니: 「우측 상단 티켓 등록 버튼 좌측으로 티켓 검색 기능 … 등록, 상세 화면 안에서 티켓을 검색할 수 있게」). 새 CsTicketQuickSearch — 상세는 [+ 티켓 등록] 왼쪽 · 등록 화면은 [+ 티켓 등록] 이 없어 [목록으로] 왼쪽. DB 에 바로 묻는다(cs_tickets · 목록 검색과 같은 칸: 주문번호·품목번호·주문자·수령인·연락처·상품·공급사·옛 티켓번호 + 티켓 번호 #N · 숫자만 친 연락처는 하이픈 꼴로도) · 최근 순 20건 + 「N건 찾음 · 더 좁혀 찾거나 티켓 목록에서」 · ↑↓ Enter Esc · 고르면 openTicket(작성 중이면 먼저 묻는다). 목록은 fixed 로 띄움. SQL 없음. -->
 <!-- v20261103f_type_dir_sort -->
@@ -31167,7 +31169,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                   {/* 묶음이면 «어느 티켓의 일인가» 를 붙인다 — 값 변경은 티켓마다
                       따로 남으므로 표시가 없으면 뒤섞여 읽힌다. */}
                   {group.length>1 && (
-                    <span style={{fontSize:9.5,fontFamily:'monospace',
+                    <span style={{fontSize:10.5,fontFamily:MONO,fontWeight:600,
                       color: e.ticket_id===t.id ? 'var(--accent)' : 'var(--sub)',
                       opacity: e.ticket_id===t.id ? 1 : .7}}>#{e.ticket_id}</span>
                   )}
@@ -31201,8 +31203,13 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                         color: intakeIds.indexOf(e.id)>=0 ? '#F6AD09' : '#9FB6DC'}}>
                       {intakeIds.indexOf(e.id)>=0 ? '★' : '☆'}</button>
                   )}
-                  <span style={{fontSize:10,color:'var(--sub)',fontFamily:'monospace'}}>
-                    {String(e.created_at).slice(5,16).replace('T',' ')}{' '}
+                  {/* 🐞 2026-11-03 제니 「날짜 숫자가 뭉개져 보인다」 — 'monospace' 10px = 윈도우에서
+                      Courier New(가는 획). MONO 상수 + 11px + 굵기로 바꾸고, 작성자(한글)는
+                      고정폭에서 빼 콘솔 글꼴로 둔다. */}
+                  {/* ★ 날짜·작성자 모두 굵게 · 글자색 본문색(제니 2026-11-03 「볼드체로 잘 보이게」). */}
+                  <span style={{fontSize:11,color:'var(--text)',fontWeight:700,whiteSpace:'nowrap'}}>
+                    <span style={{fontFamily:MONO,fontWeight:700}}>
+                      {String(e.created_at).slice(5,16).replace('T',' ')}</span>{' '}
                     {e.side==='시스템' ? '시스템' : csShortUser(e.actor)}</span>
                   {/* ★ 지울 수 있는 사람: 그 글을 쓴 본인, 또는 master. DB 정책도 같다.
                       ★★ 시스템 줄에는 «지우기» 를 두지 않는다(제니 2026-09-03).
