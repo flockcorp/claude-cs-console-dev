@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261103c_ticket_no_order_inquiry -->
+<!-- (2026-11-03) 🎫 주문 없는 «문의» 티켓(제니: 「주문 없이 단순 상품 문의인 경우에는 주문 번호 없이 티켓이 끊겨야」 · 조건 = 방향이 «문의» 일 때만 · 대신 = 상품 검색 + 고객 직접 입력). 등록 화면: 방향 «문의» + 주문 안 불러옴 → noOrder. ①주문번호 칸 별표 대신 «비워도 됩니다» · 그 밖엔 «문의로 고르면 주문번호 없이» 안내 한 줄 ②«문의 상품» 칸(products 를 이름·코드로 찾기 · 고르면 공급사·③ 상품 CS 정보) ③고객 이름·연락처 입력(비워도 됨) ④필수 = 상품 + 설정의 «만들 때» 중 주문이 주던 칸(품목·수량·공급사·주문자·수령인·배송지·담당자) 뺀 것 ⑤저장 = 티켓 하나(order_id·order_item_code null · group_key null · cs_qty 1 · 스냅샷 {}) — 이력·이동은 보통 길 그대로 ⑥공급사 접수 문안·매크로 치환자도 그 상품으로(noRowOf). 상세 머리줄은 «주문 없음». ★ DB: claude-cs-backup `sql/cs_ticket_no_order_inquiry.sql`(not null 해제 · 문의 조건은 DB 에 안 건다 — 상세에서 방향을 바꾸면 알 수 없는 제약 오류로 막히므로) → 운영은 SQL 먼저. -->
 <!-- v20261103b_type_product_dir_inquiry -->
 <!-- (2026-11-03) 티켓 «유형» 에 「상품」(기타 앞) · «방향» 에 「문의」(맨 뒤) 추가(제니). CS_TYPES·CS_DIRECTIONS 한 곳 + CS 통계 색(상품 #3E63DD · 문의 #12A594). 등록·상세·일괄·목록 필터·CS 통계·칸 설정이 이 목록을 그대로 쓴다. ★ DB check 제약과 짝 — claude-cs-backup `sql/cs_type_dir_add_product_inquiry.sql` 을 운영에 «먼저» 돌릴 것(화면만 가면 저장이 막힌다). 환불 사유(refund_reasons)·FAQ 유형은 따로 체계라 안 건드림. -->
 <!-- v20261103a_draft_head_vars -->
@@ -28262,10 +28264,35 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   });
   const set = (k,v)=> setF(p=>({...p,[k]:v}));
   const setIF = (code,k,v)=> setItemF(p=>({...p,[code]:{...(p[code]||{}),[k]:v}}));
+  // ── 주문 없는 «문의» (2026-11-03 제니) ─────────────────────────────────────
+  // 「주문 없이 단순 상품 문의인 경우에는 주문 번호 없이 티켓이 끊겨야」 — **방향이 «문의» 일
+  //   때만** 주문번호를 비울 수 있다(제니가 고른 조건). 그때는 주문 대신 ①상품을 콘솔 상품
+  //   목록에서 고르고(공급사·상품 CS 정보가 따라온다) ②고객 이름·연락처를 사람이 적는다(비워도 된다).
+  // ★ 주문을 «불러왔으면» 보통 길이다 — 문의여도 주문이 있으면 주문에 붙는 편이 낫다.
+  // ★ 티켓은 하나만 만든다(묶음 없음) · order_id·order_item_code 는 null
+  //   (DB 는 sql/cs_ticket_no_order_inquiry.sql 로 not null 을 풀었다).
+  const [noProd,setNoProd] = useState(null);   // {product_code, product_name, supplier_name}
+  const [noCust,setNoCust] = useState({name:'', phone:''});
+  const [npq,setNpq]       = useState('');
+  const [npRes,setNpRes]   = useState([]);
+  const noOrder = f.direction==='문의' && !items.length;
+  useEffect(()=>{
+    const term = npq.trim().replace(/[,()%]/g,' ').trim();
+    if(term.length<2){ setNpRes([]); return; }
+    const timer = setTimeout(async ()=>{
+      const {data,error} = await sb.from('products')
+        .select('product_code,product_name,supplier_name')
+        .or(`product_code.ilike.%${term}%,product_name.ilike.%${term}%`)
+        .limit(10);
+      setNpRes(error ? [] : (data||[]));
+    },300);
+    return ()=>clearTimeout(timer);
+  },[npq]);
   // 작성 중 이탈 확인 — 주문번호를 적었거나·조회했거나·글/사진/이력 줄을 넣었거나·칸을 바꿨으면 «작성 중».
   const fInitRef = useRef(f);
   const leaveDone = useCsLeaveGuard(
     raw.trim() || items.length || draft.trim() || photos.length || notes.length
+    || noProd || noCust.name.trim() || noCust.phone.trim()
     || assignee!==currentUserEmail || JSON.stringify(f)!==JSON.stringify(fInitRef.current));
 
   // ★★ 카페24가 준 값은 «잠그고», 비어 있으면 사람이 채운다(제니 2026-09-02).
@@ -28337,7 +28364,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   const chosen = items.filter(i=>sel.indexOf(i.code)>=0);
   // 접수 문안의 «형식» 을 정하는 값 — 고른 품목의 공급사 창구.
   // ★ 한 주문의 품목들은 대개 한 공급사다(묶음 판정도 그 전제로 서 있다).
-  const supChannel = useSupplierChannel(chosen.length ? chosen[0].supplier_name : null);
+  const supChannel = useSupplierChannel(chosen.length ? chosen[0].supplier_name
+    : (noOrder && noProd ? noProd.supplier_name : null));
   // ★ 넣은 글이 한눈에 보이게 칸을 늘린다 — 글이 바뀔 때마다 다시 잰다.
   useEffect(()=>{ csAutoGrow(noteRef.current); },[draft]);
   // ★★★ 메인 판정을 **화면과 저장이 함께 쓴다**(제니 2026-09-09: 「등록 화면에서 뜨는
@@ -28386,7 +28414,18 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   //   값과 이력에 박히는 값이 갈린다.** 2026-09-09 에 그 어긋남을 고친 자리다.
   // ★ 접수 문안 단추는 그대로 «고른 품목 전부» 다 — 공급사는 여러 품목을 한 번에 받아야 한다.
   //   매크로는 이력에 남길 «한 문장» 이라 단위가 다르다.
-  const macroVars = ()=>({ t: mainItem ? draftRowOf(mainItem) : null, ev: draftEvs() });
+  // 주문 없는 문의의 «티켓처럼 생긴 것» — 저장할 줄(save)과 같은 칸을 담는다.
+  const noRowOf = ()=>({
+    id:'new', cs_type:f.cs_type, direction:f.direction,
+    order_id:null, order_item_code:null,
+    supplier_name: noProd ? (noProd.supplier_name||null) : null,
+    product_code:  noProd ? (noProd.product_code||null) : null,
+    product_name:  noProd ? (noProd.product_name||null) : null, option_name:null,
+    orderer_name: noCust.name.trim()||null, orderer_phone: noCust.phone.trim()||null,
+    order_qty:null, cs_qty:1, cafe24_snapshot:{},
+  });
+  const macroVars = ()=>({ t: mainItem ? draftRowOf(mainItem) : (noOrder ? noRowOf() : null),
+    ev: draftEvs() });
 
   // ★★★ 수령인·배송지는 «주문» 의 값이다 — 품목마다 갖지 않는다(제니 2026-09-03).
   //   「우리가 쓰는 카페24는 동일 주문번호 안의 품목별 주문번호가 같은 주문자·수령자·
@@ -28610,8 +28649,19 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     }
   };
   const missing = [];
-  if(!chosen.length) missing.push('품목 선택');
-  csRequiredIds(fieldRules,'create').forEach(id=>{
+  // ★ 주문 없는 문의 — 품목 대신 «상품» 이 필수다(공급사가 거기서 온다). 주문이 주던 칸
+  //   (품목·수량·수령인·배송지·주문자)은 묻지 않는다: 채울 자리가 없는 칸을 필수로 두면
+  //   사람이 «-» 를 채운다(CS_REQ_OPTS 위 주석). 나머지 칸(접수 경로·유형 등)은 그대로 본다.
+  const NO_ORDER_SKIP = ['order_item_code','cs_qty','supplier_name','orderer_name','orderer_phone',
+    'receiver_name','receiver_phone','ship_address1','assignee'];
+  if(noOrder){
+    if(!noProd) missing.push('상품 선택');
+    csRequiredIds(fieldRules,'create').forEach(id=>{
+      if(NO_ORDER_SKIP.indexOf(id)>=0) return;
+      if(!String(f[id]||'').trim()) missing.push(csFieldLabel(id));
+    });
+  } else if(!chosen.length) missing.push('품목 선택');
+  if(!noOrder) csRequiredIds(fieldRules,'create').forEach(id=>{
     // 품목을 아직 안 골랐으면 «품목 선택» 한 줄로 족하다 — 딸린 칸을 줄줄이 세우면
     // 정작 먼저 할 일이 그 속에 묻힌다.
     if(id==='order_item_code' || !chosen.length) return;
@@ -28633,6 +28683,33 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     setBusy(true);
     // ★★ 메인 판정은 **화면과 같은 것을 쓴다**(mainItem · 위에서 한 번만 가린다).
     //   여기 따로 적어 두었더니 화면은 «첫 품목», 저장은 «본품» 을 봐서 둘이 갈렸다.
+    let mrow, made;
+    if(noOrder){
+      // ★ 주문 없는 문의 — 티켓 하나. 칸은 아래 rowOf 와 같은 차례로 적는다(주문이 주던 칸만 빈다).
+      const row = {
+        order_id:null, order_item_code:null,
+        product_code: noProd.product_code||null, product_name: noProd.product_name||null,
+        option_name:null, supplier_name: noProd.supplier_name||null,
+        orderer_name: noCust.name.trim()||null, orderer_phone: noCust.phone.trim()||null,
+        pickup_zipcode: f.pickup_zipcode || null,
+        pickup_address1: f.pickup_address1 || null, pickup_address2: f.pickup_address2 || null,
+        order_qty:null, cs_qty:1,
+        intake_path: f.intake_path, cs_type: f.cs_type, direction: f.direction || null,
+        refund_amount: money(f.refund_amount),
+        refund_method: f.refund_method || null, refund_bank: f.refund_bank || null,
+        refund_holder: f.refund_holder || null,
+        refund_account: f.refund_account ? String(f.refund_account).replace(/\s/g,'') : null,
+        cost_bearer: f.cost_bearer || null,
+        settle_fee: money(f.settle_fee), settle_shipping_fee: money(f.settle_shipping_fee),
+        stage: st, recheck_at: recheck, group_key: null, prev_ticket_id: null,
+        assignee: assignee || currentUserEmail,
+        created_by: currentUserEmail, updated_by: currentUserEmail,
+        memo: f.memo || null, cafe24_snapshot: {},
+      };
+      const {data:nr,error:en} = await sb.from('cs_tickets').insert(row).select('id').single();
+      if(sbFail('티켓 만들기', en)){ setBusy(false); return; }
+      mrow = nr; made = [nr.id];
+    } else {
     const main = mainItem;
     const rest = sortedChosen.filter(i=>i.code!==main.code);
     // 같은 주문 + 같은 공급사 = 한 묶음. 서브가 없어도 묶음 키는 남긴다 —
@@ -28690,14 +28767,15 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
     };
 
     // 메인을 먼저 만든다 — 서브가 그 번호를 가리켜야 하기 때문이다.
-    const {data:mrow,error} = await sb.from('cs_tickets').insert(rowOf(main)).select('id').single();
+    const {data:mr,error} = await sb.from('cs_tickets').insert(rowOf(main)).select('id').single();
     if(sbFail('티켓 만들기', error)){ setBusy(false); return; }
-    let made = [mrow.id];
+    mrow = mr; made = [mr.id];
     if(rest.length){
       const {data:srows,error:e1} = await sb.from('cs_tickets')
         .insert(rest.map(it=>({...rowOf(it), main_ticket_id: mrow.id}))).select('id');
       if(sbFail('서브 티켓 만들기', e1)){ setBusy(false); return; }
       made = made.concat((srows||[]).map(r=>r.id));
+    }
     }
     // ★★ 이력은 «메인에만» 쌓는다. 양쪽에 복사하면 같은 사건이 두 번 찍힌다
     //   (환불 이력에서 이미 겪은 함정이다). 서브 화면은 메인의 이력을 함께 읽는다.
@@ -28935,7 +29013,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             );
           })()}
           <div style={{marginBottom:10}}>
-            <label style={lbl}>주문번호 또는 품목별 주문번호{req}</label>
+            <label style={lbl}>주문번호 또는 품목별 주문번호
+              {f.direction==='문의'
+                ? <span style={{color:'var(--accent)'}}> · 방향이 «문의» 라 비워도 됩니다</span>
+                : req}</label>
             <div style={{display:'flex',gap:5}}>
               <input value={raw} onChange={e=>setRaw(e.target.value)}
                 onKeyDown={e=>{ if(e.key==='Enter') lookup(); }}
@@ -28951,7 +29032,58 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                 background: msg.t==='ok'?'rgba(34,211,160,.10)':'rgba(248,113,113,.10)',
                 color: msg.t==='ok'?'var(--green)':'var(--red)'}}>{msg.m}</div>
             )}
+            {!items.length && f.direction!=='문의' && (
+              <div style={{fontSize:10.5,color:'var(--sub)',marginTop:5,lineHeight:1.6}}>
+                주문 없는 상품 문의는 아래 «방향» 을 <b>문의</b>로 고르면 주문번호 없이 등록할 수 있습니다.</div>
+            )}
           </div>
+
+          {/* ── 주문 없는 문의 — 상품을 고른다 (2026-11-03) ───────────────────
+              ★ 고른 상품의 공급사가 티켓의 공급사가 된다 · 오른쪽 ③ 상품 CS 정보도 이 상품으로. */}
+          {noOrder && (
+            <div style={{marginBottom:11}}>
+              <label style={lbl}>문의 상품{req}</label>
+              {noProd ? (
+                <div style={{padding:'7px 9px',borderRadius:6,fontSize:11,
+                  border:'1px solid var(--primary)',background:'rgba(42,71,141,.22)',
+                  display:'flex',alignItems:'center',gap:7}}>
+                  <span style={{fontFamily:'monospace',color:'var(--accent)'}}>{noProd.product_code||'—'}</span>
+                  <span style={{flex:1,minWidth:0,wordBreak:'break-word'}}>{noProd.product_name||'—'}</span>
+                  <span style={{color:'var(--sub)'}}>{noProd.supplier_name||''}</span>
+                  <button type="button" onClick={()=>{ setNoProd(null); setCsInfo(null); }}
+                    title="다른 상품 고르기"
+                    style={{border:'none',background:'transparent',color:'var(--sub)',
+                      cursor:'pointer',fontSize:13,padding:'0 2px'}}>×</button>
+                </div>
+              ) : (<>
+                <input value={npq} onChange={e=>setNpq(e.target.value)}
+                  placeholder="상품명 또는 상품코드 (두 글자 이상)" style={inp}/>
+                {npRes.length>0 && (
+                  <div style={{border:'1px solid var(--border)',borderRadius:6,marginTop:4,
+                    maxHeight:220,overflowY:'auto'}}>
+                    {npRes.map(p=>(
+                      <div key={p.product_code} onClick={async ()=>{
+                          setNoProd(p); setNpq(''); setNpRes([]);
+                          const {data:d3} = await sb.from('products')
+                            .select('product_code,product_name,cs_info,memo,return_fee,return_fee_type,return_fee_text')
+                            .eq('product_code', p.product_code).limit(1);
+                          setCsInfo((d3||[])[0] || {ambiguous:0});
+                        }}
+                        style={{padding:'6px 9px',fontSize:11,cursor:'pointer',
+                          borderBottom:'1px solid var(--border)'}}>
+                        <span style={{fontFamily:'monospace',color:'var(--accent)',marginRight:7}}>{p.product_code}</span>
+                        {p.product_name}
+                        <span style={{marginLeft:7,color:'var(--sub)'}}>{p.supplier_name||''}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {npq.trim().length>=2 && !npRes.length && (
+                  <div style={{fontSize:10.5,color:'var(--sub)',marginTop:4}}>찾는 중이거나 맞는 상품이 없습니다.</div>
+                )}
+              </>)}
+            </div>
+          )}
 
           {/* 품목 — 여럿 고를 수 있다. 같은 공급사만. */}
           {items.length>0 && (
@@ -29078,7 +29210,16 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
           <div style={sec}>고객</div>
           {head && ro('주문자', (head.customer_name||'')
             + (head.customer_phone?' · '+head.customer_phone:''))}
-          {!chosen.length && (
+          {/* 주문 없는 문의 — 고객은 사람이 적는다(비워도 된다). */}
+          {noOrder && (<>
+            {roRow('고객 이름', <input value={noCust.name} placeholder="비워도 됩니다"
+              onChange={e=>setNoCust(c=>({...c,name:e.target.value}))}
+              style={{...inp,fontSize:11.5,padding:'5px 7px'}}/>)}
+            {roRow('연락처', <input value={noCust.phone} placeholder="010-0000-0000"
+              onChange={e=>setNoCust(c=>({...c,phone:e.target.value}))}
+              style={{...inp,fontSize:11.5,padding:'5px 7px'}}/>)}
+          </>)}
+          {!chosen.length && !noOrder && (
             <div style={{fontSize:11,color:'var(--sub)',marginBottom:9}}>
               품목을 고르면 카페24 주문서의 수령인·배송지가 여기 나옵니다.</div>
           )}
@@ -29332,8 +29473,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
             <CsSymbolBar taRef={noteRef} value={draft} onChange={setDraft} light
               onSpace={setMacroSpace} vars={macroVars}
               right={
-                <button type="button" disabled={!chosen.length}
-                  title={chosen.length ? (supChannel==='email'
+                <button type="button" disabled={!chosen.length && !(noOrder && noProd)}
+                  title={(chosen.length || (noOrder && noProd)) ? (supChannel==='email'
                       ? '이 공급사는 메일 창구 — 제목+표로 넣습니다' : '메신저용 줄글로 넣습니다')
                     : '품목을 먼저 고르세요'}
                   onClick={async ()=>{
@@ -29350,7 +29491,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                     //     저장 뒤 상세에서 누른 것과 같은 글이 나와야 하기 때문이다.
                     // ★ 매크로 치환자와 «같은 것» 으로 만든다(draftRowOf · 2026-09-21에
                     //   이 onClick 안에 있던 것을 위로 뽑았다).
-                    const list = chosen.map(draftRowOf);
+                    const list = chosen.length ? chosen.map(draftRowOf) : [noRowOf()];
                     const d = csDraftFor(supChannel, list, draftEvs());
                     // ★ 뒤에 빈 줄 하나를 남긴다(제니) — 문안 다음에 한마디 덧붙이는
                     //   일이 흔한데, 커서가 표 끝에 붙어 있으면 거기서 줄을 만들어야 한다.
@@ -29366,10 +29507,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                           ok ? 'ok' : 'warn');
                   }}
                   style={{padding:'4px 10px',borderRadius:5,fontSize:11,fontWeight:600,
-                    fontFamily:'inherit',cursor:chosen.length?'pointer':'default',
+                    fontFamily:'inherit',cursor:(chosen.length || (noOrder && noProd))?'pointer':'default',
                     background:CS_WRITE.field,border:'1px solid '+CS_WRITE.btnBd,
-                    color:chosen.length?CS_WRITE.text:'#9AA7BE',whiteSpace:'nowrap'}}>
-                  📋 공급사 접수 문안{chosen.length
+                    color:(chosen.length || (noOrder && noProd))?CS_WRITE.text:'#9AA7BE',whiteSpace:'nowrap'}}>
+                  📋 공급사 접수 문안{(chosen.length || (noOrder && noProd))
                     ? (supChannel==='email' ? ' (메일)' : ' (메신저)') : ''}</button>
               }/>
             <CsPhotoAttach photos={photos} setPhotos={setPhotos} light/>
@@ -29635,7 +29776,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
                   border:'1px solid var(--border)',color:'var(--sub)'}}>지우기</button>
             )}
           </div>
-          {!head ? (
+          {!head && !(noOrder && noProd) ? (
             <div style={{fontSize:11,color:'var(--sub)',lineHeight:1.8}}>
               주문을 불러오면 <b>상품 CS 정보</b>와 <b>이 주문자의 최근 티켓</b>이 여기 뜹니다.
             </div>
@@ -30479,7 +30620,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
           </span>
         )}
         <span style={{fontSize:12,color:'var(--sub)'}}>
-          {t.order_item_code} / {t.supplier_name||'—'} / 접수 : {csDate(t.created_at)} / 담당자 : {csShortUser(t.assignee)}
+          {t.order_item_code||'주문 없음'} / {t.supplier_name||'—'} / 접수 : {csDate(t.created_at)} / 담당자 : {csShortUser(t.assignee)}
         </span>
         <div style={{flex:1}}></div>
         {/* ★ 상세에서 바로 새 티켓 등록으로(제니 2026-10-29). [목록으로] 왼쪽.
