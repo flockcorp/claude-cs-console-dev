@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261103i_kst_everywhere -->
+<!-- (2026-11-03) 🕘 콘솔 시각을 «한국 시간» 으로(제니: 「dev 에 찍힌 시간이 잘못된 거 같은데 한국 시간이야?」 → 「콘솔 내 모든 시간은 한국 시간이 되도록」). 원인 = DB 시각(UTC 글자)을 그대로 잘라 찍거나 toISOString(UTC)으로 «오늘» 을 잡은 곳들 — 9시간 늦게 찍히고 오전 9시 전은 전날로. 새 공통 함수 kstIso·kstDay·kstYm·kstMin·kstFrom·kstTo(+9 시간 고정 · PC 시간대 무관). 고친 곳: ①티켓 이력 시각(csStamp) ②csDate·csStamp·csStampFull(티켓 목록·상세·검색·연락망 등) ③today()·dateOffset() ④환불 통계 «이번 달·지난달·7일» 거르기(지난달은 «전전달» 을 비교하고 있었다)·일자별 묶음·기간 조회(시간대 없이 묻던 것 → +09:00) ⑤배송지연 발송 내역 기간 조회(+09:00)·기본 기간 ⑥즉시 발송 카페24 조회 기본 기간 ⑦계약 일정 addDays(한국 PC 에서 하루 앞이 나왔다 — 통보 마감·검토 시작일) ⑧카페24 맞춘 때·상품 등록/수정일·콘솔 고친 때·결제 시각·잔액 기준 시각(«(UTC)» 뺌). ★ 그대로 둔 것: 날짜만 있는 값(퇴사일 등) · 엑셀 날짜 칸 변환(UTC 가 맞다) · 이미 +9 로 계산하던 곳(통계·리체크 등) · toLocale*/getHours 계열(PC 시계 = 한국 PC 에선 KST). 저장 값(timestamptz)은 안 바뀐다. SQL 없음. -->
 <!-- v20261103h_history_date_bold -->
 <!-- (2026-11-03) 🐞 티켓 상세 이력 줄의 날짜가 100% 에서 뭉개져 보이던 것(제니) — 'monospace' 10px(윈도우 = Courier New 가는 획) → MONO(Consolas) 11px. 같은 줄 묶음 #번호(9.5px monospace)도 MONO 10.5px. + 제니 「날짜와 작성자 이름을 볼드체로 잘 보이게」 → 둘 다 굵게(700) · 글자색 본문색. 작성자(한글)는 고정폭에서 뺐다. 라이트·다크 1배 캡처로 확인. SQL 없음. -->
 <!-- v20261103g_ticket_quick_search -->
@@ -1945,10 +1947,28 @@ const calcUph = (a, date) => {
 };
 const calcRR  = ops => { const req=Number(ops.request_calls)||0, ans=Number(ops.answered_calls)||0; return req?((ans/req)*100).toFixed(1):''; };
 
-const dateOffset = days => { const d=new Date(); d.setDate(d.getDate()-days); return d.toISOString().slice(0,10); };
-const today = () => new Date().toISOString().slice(0,10);
-// ★ 위 today() 는 UTC 기준이라 새벽(KST 00~09시)엔 어제 날짜가 나온다. 날짜를 '오늘인가'로
-//   비교할 때는 이걸 쓸 것 — 그 시간대에 하루 어긋난 판정이 나온다.
+// ── 한국 시간(KST) 공통 (2026-11-03 제니 「콘솔 내 모든 시간은 한국 시간이 되도록」) ──────
+// ★★ DB 의 시각(timestamptz)은 UTC 글자로 온다(…T08:15:00+00:00). 그 글자를 그대로 잘라
+//   찍으면 9시간 늦은 시각 · 오전 9시 전은 «전날» 이 된다. 화면·날짜 계산은 언제나 이 함수로.
+// ★ 한국은 서머타임이 없어 +9 시간 고정이 맞다 — PC 시간대와 상관없이 KST 로 나온다.
+// ★ 날짜만 있는 값('2026-11-06')은 UTC 0시로 읽혀 +9 시간 = 같은 날이라 그대로 맞다.
+const KST_MS = 9*3600*1000;
+function kstIso(v){
+  const t = v==null ? Date.now() : (v instanceof Date ? v.getTime() : (typeof v==='number' ? v : Date.parse(v)));
+  return isNaN(t) ? null : new Date(t + KST_MS).toISOString();     // KST 벽시계를 ISO 글자로
+}
+function kstDay(v){ const s=kstIso(v); return s ? s.slice(0,10) : (v ? String(v).slice(0,10) : ''); }   // YYYY-MM-DD
+function kstYm(v){  return kstDay(v).slice(0,7); }                                                  // YYYY-MM
+function kstMin(v){ const s=kstIso(v); return s ? s.slice(0,16).replace('T',' ') : (v ? String(v).slice(0,16).replace('T',' ') : ''); } // YYYY-MM-DD HH:mm
+// 날짜 칸(YYYY-MM-DD)을 KST 하루의 처음·끝 «시각» 으로 — DB 에 기간으로 물을 때.
+//   ★ 시간대를 안 붙이면 DB 가 UTC 로 읽어 하루가 9시간 밀린다.
+const kstFrom = ymd => ymd+'T00:00:00+09:00';
+const kstTo   = ymd => ymd+'T23:59:59.999+09:00';
+
+const dateOffset = days => kstDay(Date.now() - days*86400000);
+// ★ 2026-11-03 부터 today() 도 KST 다(전에는 UTC 라 새벽 0~9시에 어제가 나왔다).
+const today = () => kstDay();
+// ★ todayLocal 은 PC 시계 기준 — 한국 PC 에선 today() 와 같다. 남겨 둔다.
 const todayLocal = () => { const d=new Date(), p=n=>String(n).padStart(2,'0');
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; };
 
@@ -4152,7 +4172,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
           )}
           <div style={{fontSize:12,color:'var(--sub)',marginTop:4}}>
             {s.missing&&'콘솔에서는 지우지 않고 보관합니다. '}
-            {s.syncedAt?'카페24와 맞춘 때: '+s.syncedAt.slice(0,16).replace('T',' '):'카페24와 맞춘 기록이 없습니다'}
+            {s.syncedAt?'카페24와 맞춘 때: '+kstMin(s.syncedAt):'카페24와 맞춘 기록이 없습니다'}
           </div>
         </div>
       </div>
@@ -5510,8 +5530,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                     <td>{p.product_url?<a href={p.product_url} target="_blank" rel="noreferrer" style={{color:'#1a5fcc',fontSize:12}}>링크</a>:'-'}</td>
                     <td>
                       <div style={{display:'flex',flexDirection:'column',gap:2}}>
-                        <span style={{fontSize:11,color:'#2a4060',fontWeight:500}}>{p.created_at?p.created_at.slice(0,10):'-'}</span>
-                        <span style={{fontSize:10,color:'var(--sub)'}}>수정 {p.updated_at?p.updated_at.slice(0,10):'-'}</span>
+                        <span style={{fontSize:11,color:'#2a4060',fontWeight:500}}>{p.created_at?kstDay(p.created_at):'-'}</span>
+                        <span style={{fontSize:10,color:'var(--sub)'}}>수정 {p.updated_at?kstDay(p.updated_at):'-'}</span>
                         {/* ★ 「맞춤 MM-DD」 줄은 2026-08-31 에 뺐다(제니 지시).
                             08-26 에 수정 동기화를 300건씩 손으로 돌리던 때는 «이번에 무엇을
                             건드렸나» 를 알 유일한 자리였지만, 이제 매일 자동으로 돌아
@@ -6754,7 +6774,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                 if(!s||!s.known) return <span style={{color:'var(--sub)'}}>아직 카페24와 맞춘 적이 없습니다</span>;
                 const state=s.stopped&&s.hidden?'판매중지 · 미진열':(s.stopped?'판매중지':(s.hidden?'미진열':'판매중 · 진열중'));
                 return <span>{state}<span style={{color:'var(--sub)',fontSize:11,marginLeft:8}}>
-                  맞춘 때 {s.syncedAt?s.syncedAt.slice(0,16).replace('T',' '):'-'}</span></span>;
+                  맞춘 때 {s.syncedAt?kstMin(s.syncedAt):'-'}</span></span>;
               })()],
               ['URL', detailProd.product_url?<a href={detailProd.product_url} target="_blank" rel="noreferrer" style={{color:'var(--accent)'}}>링크 열기</a>:'-'],
             ]:[
@@ -7980,10 +8000,10 @@ function SuppliersPage({isCrew=false,isMaster=false,isManager=false,currentUserE
                       그런 곳은 상단 «배송비 미설정» 으로 걸러 카페24에서 확인해 넣는다. */}
                 <span style={{textAlign:'center',fontSize:10,color:'#8895B0',whiteSpace:'nowrap'}}
                   title={s.updated_at
-                    ? '콘솔에서 마지막으로 고친 때: '+String(s.updated_at).slice(0,16).replace('T',' ')
+                    ? '콘솔에서 마지막으로 고친 때: '+kstMin(s.updated_at)
                       +' (카페24 자동 동기화는 이 값을 밀지 않습니다)'
                     : '콘솔에서 고친 기록이 없습니다'}>
-                  {s.updated_at?String(s.updated_at).slice(0,10):'—'}
+                  {s.updated_at?kstDay(s.updated_at):'—'}
                 </span>
                 {/* 저장. 권한이 없어 회색인 경우가 있는데 표가 길어 헤더의 '읽기 전용' 안내가
                     화면 밖으로 나가 있을 수 있다 — 버튼 자리에서도 이유를 알 수 있게 한다. */}
@@ -9920,8 +9940,9 @@ function RefundReportTab({ reasons }){
   const load = async ()=>{
     setLoading(true);
     // created_at 기준 기간 필터. to는 그날 끝까지 포함
-    const fromIso = from + 'T00:00:00';
-    const toIso   = to   + 'T23:59:59';
+    // ★ KST 하루로 묻는다(2026-11-03 · 시간대를 안 붙이면 DB 가 UTC 로 읽는다).
+    const fromIso = kstFrom(from);
+    const toIso   = kstTo(to);
     let all = [];
     let rangeFrom = 0;
     const PAGE = 1000;
@@ -9974,7 +9995,7 @@ function RefundReportTab({ reasons }){
   // ① 일자별 추이 (건수 + 금액 2축)
   const byDate = {};
   rows.forEach(r=>{
-    const d = String(r.created_at).slice(0,10);
+    const d = kstDay(r.created_at);   // KST 날짜(2026-11-03)
     if(!byDate[d]) byDate[d]={count:0, amount:0};
     byDate[d].count += 1;
     byDate[d].amount += (r.refund_amount||0);
@@ -10301,19 +10322,20 @@ function RefundManagementPage({ currentUserEmail, goTicket, can }) {
   // 단순화를 위해 created_at 문자열 prefix 비교
   const periodFilter = (()=>{
     if(period==='all') return null;
-    const d = new Date();
+    // 🐞 2026-11-03 KST 로(전에는 UTC — 오전 9시 전 건이 전날·전달로 갔고, «지난달» 은
+    //   로컬 1일 0시를 UTC 로 바꿔 «전전달» 을 비교하고 있었다).
+    const ymNow = kstYm();
     if(period==='this_month'){
-      const ym = d.toISOString().slice(0,7);
-      return (r)=>String(r.created_at).slice(0,7)===ym;
+      return (r)=>kstYm(r.created_at)===ymNow;
     }
     if(period==='last_month'){
-      const lm = new Date(d.getFullYear(), d.getMonth()-1, 1);
-      const ym = lm.toISOString().slice(0,7);
-      return (r)=>String(r.created_at).slice(0,7)===ym;
+      const [y,m] = ymNow.split('-').map(Number);
+      const ym = m===1 ? (y-1)+'-12' : y+'-'+String(m-1).padStart(2,'0');
+      return (r)=>kstYm(r.created_at)===ym;
     }
     if(period==='last_7d'){
-      const from = new Date(d.getTime() - 7*24*3600*1000).toISOString().slice(0,10);
-      return (r)=>String(r.created_at).slice(0,10) >= from;
+      const from = kstDay(Date.now() - 7*24*3600*1000);
+      return (r)=>kstDay(r.created_at) >= from;
     }
     return null;
   })();
@@ -11984,8 +12006,8 @@ function DelayAddModal({ editingRow, onClose, onSaved, canSend=false }){
   const [elapsedDays,setElapsedDays] = useState('3');
 
   // 즉시 발송 시 카페24 주문 조회 기간 (immediate일 때만 사용)
-  const todayStr = new Date().toISOString().slice(0,10);
-  const monthAgoStr = (()=>{ const d=new Date(); d.setDate(d.getDate()-30); return d.toISOString().slice(0,10); })();
+  const todayStr = kstDay();
+  const monthAgoStr = kstDay(Date.now() - 30*86400000);
   const [blastDateFrom,setBlastDateFrom] = useState(monthAgoStr);
   const [blastDateTo,setBlastDateTo] = useState(todayStr);
 
@@ -14698,8 +14720,8 @@ function DelayAlimtalkPreview({ selectedProduct, variants, selectedVariantCodes,
 
 function DelayHistoryTab({canSend=false}){
   // ─── 필터 state ──────────────────────────────────────────────────────
-  const todayStr = new Date().toISOString().slice(0,10);
-  const weekAgoStr = (()=>{ const d=new Date(); d.setDate(d.getDate()-7); return d.toISOString().slice(0,10); })();
+  const todayStr = kstDay();
+  const weekAgoStr = kstDay(Date.now() - 7*86400000);
   const [dateFrom,setDateFrom] = useState(weekAgoStr);
   const [dateTo,setDateTo] = useState(todayStr);
   const [statusFilter,setStatusFilter] = useState('all');     // all | success | failed | scheduled | queued
@@ -14732,8 +14754,8 @@ function DelayHistoryTab({canSend=false}){
   const buildQuery = (selectCols, isCount=false)=>{
     let q = sb.from('delay_notifications').select(selectCols, isCount?{count:'exact',head:isCount&&!selectCols}:{});
     // 기간 필터 (sent_at)
-    if(dateFrom) q = q.gte('sent_at', dateFrom+'T00:00:00');
-    if(dateTo)   q = q.lte('sent_at', dateTo  +'T23:59:59');
+    if(dateFrom) q = q.gte('sent_at', kstFrom(dateFrom));   // KST 하루(2026-11-03)
+    if(dateTo)   q = q.lte('sent_at', kstTo(dateTo));
     // 상태/채널/트리거
     if(statusFilter!=='all')  q = q.eq('status', statusFilter);
     if(channelFilter!=='all') q = q.eq('channel', channelFilter);
@@ -15500,7 +15522,7 @@ const VIEWS = [
   ["setup", "설정"],
 ];
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => kstDay();   // KST(2026-11-03 · 전에는 UTC — 새벽엔 어제)
 
 // 오늘 기준 남은 일수. 지난 날짜면 음수.
 function daysUntil(dateStr) {
@@ -15513,9 +15535,11 @@ function daysUntil(dateStr) {
 
 function addDays(dateStr, days) {
   if (!dateStr) return "";
-  const t = new Date(dateStr + "T00:00:00");
+  // 🐞 2026-11-03 — 로컬 0시를 toISOString(UTC)으로 적어 한국 PC 에선 «하루 앞» 이 나왔다.
+  //   날짜 계산은 UTC 달력으로만 한다(시간대가 끼지 않는다).
+  const t = new Date(dateStr + "T00:00:00Z");
   if (isNaN(t.getTime())) return "";
-  t.setDate(t.getDate() + days);
+  t.setUTCDate(t.getUTCDate() + days);
   return t.toISOString().slice(0, 10);
 }
 
@@ -20906,24 +20930,25 @@ function csShortUser(v){
   if(!v) return '—';
   return CS_USER_NAMES[String(v).toLowerCase()] || String(v).split('@')[0];
 }
-function csDate(v){ return v ? String(v).slice(5,10) : '—'; }
+// 🐞 2026-11-03 제니 「찍힌 시간이 한국 시간이야?」 — 아니었다. DB 시각(UTC)의 글자를 그대로
+//   잘라 써서 오전 9시 전 KST 는 «전날» 로 찍혔다. → 브라우저 시각(KST)으로 바꿔 적는다.
+//   ★ 날짜만 있는 값(YYYY-MM-DD · 리체크 날짜 등)은 시각이 없으니 그대로 자른다.
+function csDate(v){
+  if(!v) return '—';
+  const s = String(v);
+  if(s.length<=10) return s.slice(5,10);
+  return kstDay(s).slice(5,10);
+}
 // «2026-09-08 21:14» — 연도까지 적는 자리다. csStamp 은 월-일만 적어 «작년 것» 이
 // 올해 것처럼 보인다. 연락망처럼 «언제 기준인가» 가 곧 값의 신뢰도인 자리에 쓴다.
 function csStampFull(v){
   if(!v) return '—';
-  const d = new Date(v);
-  if(isNaN(d)) return String(v).slice(0,16).replace('T',' ');
-  const p=(n)=>String(n).padStart(2,'0');
-  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())
-    +' '+p(d.getHours())+':'+p(d.getMinutes());
+  return kstMin(v);   // KST 고정(2026-11-03 · PC 시간대와 무관)
 }
 // «09-01 18:16» — 날짜만으로는 같은 날 여러 번 손댄 것이 구분되지 않는다.
 function csStamp(v){
   if(!v) return '—';
-  const d = new Date(v);
-  if(isNaN(d)) return String(v).slice(5,16).replace('T',' ');
-  const p=(n)=>String(n).padStart(2,'0');
-  return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+  return kstMin(v).slice(5);   // «11-03 17:15» · KST 고정(2026-11-03)
 }
 // ★★ 목록의 시각은 «얼마나 됐나» 가 먼저다(제니). 한 시간 안쪽은 「17분 전」이
 //   훨씬 빨리 읽히고, 그 뒤로는 상대 시각이 오히려 흐려진다(「6시간 전」이 몇 시인지
@@ -31209,7 +31234,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
                   {/* ★ 날짜·작성자 모두 굵게 · 글자색 본문색(제니 2026-11-03 「볼드체로 잘 보이게」). */}
                   <span style={{fontSize:11,color:'var(--text)',fontWeight:700,whiteSpace:'nowrap'}}>
                     <span style={{fontFamily:MONO,fontWeight:700}}>
-                      {String(e.created_at).slice(5,16).replace('T',' ')}</span>{' '}
+                      {csStamp(e.created_at)}</span>{' '}
                     {e.side==='시스템' ? '시스템' : csShortUser(e.actor)}</span>
                   {/* ★ 지울 수 있는 사람: 그 글을 쓴 본인, 또는 master. DB 정책도 같다.
                       ★★ 시스템 줄에는 «지우기» 를 두지 않는다(제니 2026-09-03).
@@ -36975,7 +37000,7 @@ function LogisticsClassifyPage({currentUserEmail, isMaster}){
                   {orderList.map(o=>(
                     <tr key={o.order_no}>
                       <td style={{fontFamily:'monospace',fontSize:12}}>{o.order_no}</td>
-                      <td style={{color:'var(--sub)',fontSize:12}}>{String(o.paid_at).slice(0,16)}</td>
+                      <td style={{color:'var(--sub)',fontSize:12}}>{o.paid_at?kstMin(o.paid_at):'—'}</td>
                       <td>{o.ship_group}{o.staged_due && <span style={{marginLeft:6}}>{tag('순차 '+o.staged_label+' 도래','warn')}</span>}</td>
                       <td style={{textAlign:'right',fontWeight:700}}>{o.total_qty}</td>
                       <td style={{textAlign:'right',color:'var(--sub)'}} title={o.small_qty ? '소형품목 '+o.small_qty+'개' : undefined}>{o.box_qty}</td>
@@ -38775,7 +38800,7 @@ function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved,onNavSa
                             부가세 몫을 뺀 <b style={{color:'var(--text)'}}>실제 발송 가능액</b>입니다.<br/></>
                         : null}
                       {bal.point>0?'포인트 '+bal.point.toLocaleString()+'원 · ':''}
-                      {bal.fetched_at?String(bal.fetched_at).slice(0,16).replace('T',' ')+' 기준 (UTC)':''}
+                      {bal.fetched_at?kstMin(bal.fetched_at)+' 기준':''}
                     </div>
                   </>
                 ):(
