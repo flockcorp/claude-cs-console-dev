@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261106c_draft_group_one_template -->
+<!-- (2026-11-06) ✉ 공급사 접수 문안(메신저) — 묶음(메인+서브)을 «한 템플릿» 으로(제니: 「각 품목별로 템플릿을 만드는 게 아니고 템플릿 내에서 품목별 주문번호, 상품명+옵션을 한번에 나열되게 해서 1개 템플릿으로」 · 원하는 모양 = 첫 줄 유형·방향만 · 품목 줄에 번호/상품·옵션/수량). 규칙 하나: 치환자에 item:true(품목별주문번호 · 상품명/옵션 · 수량 넷 · 카페24 «품목» 값) → 그 값이 든 줄은 묶음의 품목 수만큼 되풀이, 없는 줄은 한 번만(값은 묶음에서 모음 — csFillMerged · 제목/머리말의 csFillHead 와 같은 규칙). csDraftMessenger 가 건이 아니라 묶음(csDraftGroups · 메인 번호)마다 한 덩어리 · 묶음 사이 빈 줄. ★ 상세 [공급사 접수 문안] 이 묶음 «전체» 를 담는다(그전엔 그 건 하나 · 형제는 DB 에서 다시 읽음 · 이 건은 화면 값). 등록·공급사 접수 메뉴는 그대로 지나며 묶인다. 메일(표)은 안 바뀜. 설정: 줄 구성 안내 · 치환자 표 «품목» 표 · 미리보기는 품목 둘 묶음(CS_VAR_SAMPLE_SUB) · 코드 기본 줄 구성을 새 모양으로(저장된 설정은 제니가 고친다). 한 건짜리 묶음은 예전과 같은 글. SQL 없음. ★ dev 전용. -->
 <!-- v20261106b_ticket_delete_detail_group -->
 <!-- (2026-11-06) 🗑 티켓 삭제 둘째 판(제니: 「상세 화면에서 삭제 버튼을 넣고 싶어. 그룹 티켓은 하나가 삭제되면 당연히 묶인 서브·메인도 삭제」). ①상세 머리에 [🗑 삭제](권한 있을 때만 · 오른쪽 묶음 맨 왼쪽 · 테두리만 붉은 글자) → 지우면 목록으로. ②묶음 규칙 바꿈: 목록·상세 어디서 지우든 **메인+서브를 통째로**(a 판의 «서브 안 고르면 막음» 은 뺌) · 묻는 창에 «묶음으로 이어진 N건도 함께 · 모두 M건» 적음 · 줄마다 (메인)/(서브) 표시. ③지우는 길을 한 함수 csDeleteTickets 로 모음(목록·상세 같은 확인·막는 조건·기록) — 묶음 안에 환불 연결 건이 있으면 통째로 막음 · 기록 꼬리 «(목록에서/상세에서 N건 함께 지움)». 설정 탭·격자 안내 문구 맞춤. SQL 없음(a 판 SQL 그대로). ★ dev 전용. -->
 <!-- v20261106a_ticket_delete_by_role -->
@@ -26042,6 +26044,10 @@ const CS_VAR_SAMPLE = {
   product_name:'극세사 차렵이불', option_name:'본품=그레이 Q',
   order_qty:2, cs_qty:1, cafe24_snapshot:{tracking_no:'1234567890'},
 };
+// 견본의 «서브» 품목 — 접수 문안 설정의 메신저 미리보기가 묶음(품목 둘)으로 그릴 때 쓴다(2026-11-06).
+const CS_VAR_SAMPLE_SUB = {...CS_VAR_SAMPLE, id:-1, main_ticket_id:0,
+  order_item_code:'20260908-0001234-02', product_name:'극세사 베개커버', option_name:'본품=그레이',
+  order_qty:1, cs_qty:1};
 const CS_VAR_SAMPLE_EV = [{id:1, ticket_id:0, side:'고객', note:'모서리가 찢어져 왔어요'}];
 // 「카페24 연동」에서 지금 켜 둔 값 — 치환자 목록이 «켜야 담긴다» 를 그 자리에서 말해 준다.
 function useCsC24On(){
@@ -26086,6 +26092,10 @@ function CsVarTable({c24On}){
                 background:'var(--hover)',border:'1px solid var(--border)',
                 color:'var(--text)',whiteSpace:'nowrap',opacity:need?.6:1}}>{'{'+v.k+'}'}</span>
               <span style={{fontSize:11,color:'var(--sub)',lineHeight:1.6}}>
+                {/* ★ 품목 값 표시 — 묶음 문안에서 이 값이 든 줄은 품목마다 되풀이된다(2026-11-06). */}
+                {!!v.item && <span title="묶음 문안에서 이 값이 든 줄은 품목마다 되풀이됩니다"
+                  style={{fontSize:9,fontWeight:700,padding:'0 4px',marginRight:5,borderRadius:4,
+                    border:'1px solid rgba(120,170,255,.5)',color:'var(--info-ink)'}}>품목</span>}
                 {v.d}
                 {/* ★ 열 드롭박스와 «같은 조각» 이다(제니 2026-09-09: 「이 문구는 그 아래
                     메일-표의 열 드롭박스에서도 동일하게 노출되어야」). 두 곳에 따로 적으면
@@ -26159,7 +26169,9 @@ function CsDraftTplSettings({currentUserEmail}){
   const prevSubject = withDraft(()=>csDraftSubject([SAMPLE], SAMPLE_EV));
   const prevCols    = withDraft(()=>csDraftCols());
   const prevRow     = withDraft(()=>csDraftRow(SAMPLE, SAMPLE_EV));
-  const prevMsg     = withDraft(()=>csDraftMessenger([SAMPLE], SAMPLE_EV));
+  // ★ 메신저 미리보기는 «품목 둘인 묶음» 으로 그린다(2026-11-06) — 품목 값이 든 줄이 되풀이되고
+  //   나머지 줄은 한 번만 나오는 것을 저장 전에 보게. 견본 둘째 건은 첫 건의 서브다.
+  const prevMsg     = withDraft(()=>csDraftMessenger([SAMPLE, CS_VAR_SAMPLE_SUB], SAMPLE_EV));
   // ★ 미리보기도 **실제 메일과 같은 함수**로 조각을 나눈다(csDraftMailParts) —
   //   여기서 따로 그리면 «미리보기와 실제가 다른» 자리가 생긴다.
   const prevParts   = withDraft(()=>csDraftMailParts(SAMPLE_EV));
@@ -26348,8 +26360,11 @@ function CsDraftTplSettings({currentUserEmail}){
         <input value={d.msg_head} onChange={e=>set('msg_head',e.target.value)} style={inp}/>
         <div style={{...h,marginTop:16}}>메신저 — 줄 구성</div>
         <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.7,marginBottom:8}}>
-          <b>한 줄이 문안의 한 줄</b>입니다. 건이 여럿이면 이 덩어리가 건마다 되풀이되고,
-          건과 건 사이는 빈 줄로 나뉩니다.
+          <b>한 줄이 문안의 한 줄</b>입니다. 묶음(메인+서브)은 <b>한 덩어리</b>로 나가고,
+          묶음과 묶음 사이는 빈 줄로 나뉩니다.
+          <br/>★ <b>품목 값</b>({'{품목별주문번호}'} · {'{상품명/옵션}'} · 수량 넷 · 카페24 «품목» 값)이 든 줄은
+          묶음의 <b>품목 수만큼 되풀이</b>되고, 그 밖의 줄(유형·방향 · 주문자 · 연락처 · 운송장 · 접수 사유)은
+          <b>한 번만</b> 나옵니다. 아래 미리보기는 품목 둘인 묶음입니다.
         </div>
         <textarea value={d.msg_lines.join('\n')}
           onChange={e=>set('msg_lines', e.target.value.split('\n'))}
@@ -31631,7 +31646,17 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
                   onClick={async ()=>{
                     // ★ 매크로 치환자와 «같은 것» 을 본다(macroVars · 2026-09-21).
                     const s = macroVars();
-                    const d = csDraftFor(supChannel, [s.t], s.ev);
+                    // ★★ 묶음(메인+서브)이면 묶음 «전체» 를 담는다(제니 2026-11-06 — 한 템플릿으로).
+                    //   group 에는 칸이 몇 개뿐이라 문안에 쓸 칸을 다시 읽는다. 이 건은 화면의 값(s.t ·
+                    //   고치는 중인 수량)을 쓰고, 형제는 DB 값. 못 읽으면 예전처럼 이 건만.
+                    let list = [s.t];
+                    const sibIds = (group||[]).map(x=>x.id).filter(id=>id!==t.id);
+                    if(sibIds.length){
+                      const {data:sib, error:eS} = await sb.from('cs_tickets').select('*').in('id', sibIds);
+                      if(eS) console.warn('[접수 문안] 묶음 읽기 실패 — 이 건만 넣습니다:', eS.message);
+                      else list = list.concat(sib||[]).sort((a,b)=>(a.id||0)-(b.id||0));
+                    }
+                    const d = csDraftFor(supChannel, list, s.ev);
                     // ★ 뒤에 빈 줄 하나를 남긴다(제니) — 문안 다음에 한마디 덧붙이는
                     //   일이 흔한데, 커서가 표 끝에 붙어 있으면 거기서 줄을 만들어야 한다.
                     setDraft(x=> (x.trim() ? (x.replace(/\s+$/,'')+'\n\n') : '')+d.text+'\n');
@@ -32482,7 +32507,9 @@ const CS_DRAFT_VARS = [
   //   값을 넣을 수 없다 — 본문에서는 이 표시가 있는 것만 바뀌고 나머지는 글자 그대로 남는다.
   {k:'날짜', n:true,   d:'오늘 날짜 · 예) 9/8',                        g:(t)=>csTodayMD()},
   {k:'유형·방향',      d:'CS 유형과 방향 · 예) 불량 교환',             g:(t)=>csClaimLabel(t)},
-  {k:'품목별주문번호', d:'품목까지 붙은 번호 · 예) 20260908-0001234-01', g:(t)=>t.order_item_code||'—'},
+  // ★★ item:true = «품목 값»(2026-11-06 제니 — 묶음을 한 템플릿으로). 메신저 줄 구성에서
+  //   이 값이 든 줄은 묶음의 품목 수만큼 되풀이되고, 없는 줄은 한 번만 나온다(csDraftMessengerGroup).
+  {k:'품목별주문번호', item:true, d:'품목까지 붙은 번호 · 예) 20260908-0001234-01', g:(t)=>t.order_item_code||'—'},
   {k:'주문번호',       d:'주문 번호만 · 예) 20260908-0001234',         g:(t)=>t.order_id||'—'},
   {k:'공급사',         d:'공급사 이름 · 예) ○○침구',                   g:(t)=>t.supplier_name||'—'},
   {k:'주문자명',       d:'주문자 이름만 · 예) 김하늘',                  g:(t)=>t.orderer_name||'—'},
@@ -32492,13 +32519,13 @@ const CS_DRAFT_VARS = [
                        d:'주문자 연락처만 · 예) 010-1234-5678',         g:(t)=>t.orderer_phone||'—'},
   {k:'주문자연락처(수령인연락처)', a:['연락처+수령인'],
                        d:'수령인 연락처가 다를 때만 괄호가 붙는다 · 예) 010-1234-5678 (010-9876-5432)', g:(t)=>csPhonePair(t)},
-  {k:'상품명/옵션',    a:['상품'],
+  {k:'상품명/옵션',    a:['상품'], item:true,
                        d:'상품명과 옵션 · 예) 극세사 차렵이불 / 본품=그레이 Q', g:(t)=>csProductLabel(t)},
-  {k:'주문수량',       d:'주문한 개수만 · 예) 2',                       g:(t)=>(t.order_qty==null?'—':String(t.order_qty))},
-  {k:'CS접수수량',     d:'CS 로 접수한 개수만 · 예) 1',                 g:(t)=>(t.cs_qty==null?'—':String(t.cs_qty))},
-  {k:'주문수량/CS접수수량', a:['수량숫자'],
+  {k:'주문수량',       item:true, d:'주문한 개수만 · 예) 2',             g:(t)=>(t.order_qty==null?'—':String(t.order_qty))},
+  {k:'CS접수수량',     item:true, d:'CS 로 접수한 개수만 · 예) 1',       g:(t)=>(t.cs_qty==null?'—':String(t.cs_qty))},
+  {k:'주문수량/CS접수수량', a:['수량숫자'], item:true,
                        d:'두 개수를 빗금으로 · 예) 2 / 1',              g:(t)=>csQtyPair(t)},
-  {k:'주문수량중 CS접수수량', a:['수량'],
+  {k:'주문수량중 CS접수수량', a:['수량'], item:true,
                        d:'두 개수를 말로 · 예) 2개중 1개 접수.',        g:(t)=>csQtyWords(t)},
   // ★★ 주소 둘은 **티켓의 칸**이다(2026-09-08 제니: 「회수 주소지는 카페24 연동값은
   //   아닌데 문안에 추가 가능성이 있어서 변수값으로 넣어 달라」). 카페24 연동을 켜지
@@ -32565,7 +32592,8 @@ const CS_DRAFT_VARS_C24 = CS_CAFE24_FIELDS
   .filter(f=>CS_DRAFT_C24_SKIP.indexOf(f.id)<0)
   .filter(f=>!CS_DRAFT_VARS.some(v=> v.k===f.label || (v.a && v.a.indexOf(f.label)>=0)))
   .map(f=>({
-    k: f.label, c24: f.id, o: true,
+    // ★ 카페24 «품목» 묶음의 값은 품목 값이다(상품코드·상품 금액 …) — 묶음 문안에서 품목마다 되풀이.
+    k: f.label, c24: f.id, o: true, item: f.g==='품목',
     // ★ 문구는 제니가 정한 그대로다(2026-09-09) — 「카페24 주문 · [카페24 연동] 연동 켜짐」.
     //   ★★ 뒷마디(연동 켜짐/꺼짐)는 여기 «문자열» 에 넣지 않는다: 색이 실려야 하고,
     //     켜졌는지는 지금 설정을 봐야 아는 값이라 상수에 담을 수 없다.
@@ -32618,11 +32646,13 @@ const CS_DRAFT_TPL_DEFAULT = {
   //   한 글자도 달라선 안 된다. 인사말·서명은 제니가 넣고 싶을 때 넣는다.
   mail_body: '{표}',
   msg_head: '[원룸만들기 CS 접수 {날짜}]',
+  // ★ 2026-11-06 제니 — 묶음을 한 템플릿으로: 첫 줄은 유형·방향만, 품목 줄 하나에 번호·상품/옵션·수량.
+  //   (설정을 저장해 둔 콘솔은 저장값을 쓴다 — 이 기본은 아직 저장 안 한 콘솔용.)
   msg_lines: [
-    '{유형·방향} / {품목별주문번호}',
+    '{유형·방향}',
     '{주문자명(수령인명)} / {주문자연락처(수령인연락처)}',
-    '{상품명/옵션} / {주문수량중 CS접수수량}',
     '운송장 번호 : {운송장}',
+    '{품목별주문번호} / {상품명/옵션} / {주문수량중 CS접수수량}',
     '접수 사유 : {접수사유}',
   ],
 };
@@ -32687,20 +32717,42 @@ function csFillTpl(str, t, ev){
 //     값이 갈리면 앞의 둘 + 「외 N」(제목이 끝없이 길어지지 않게). 값이 하나도 없으면 「—」.
 //   ★ {날짜}(n:true) 는 예전 그대로 · 모르는 이름은 글자 그대로(csFillTpl 과 같은 규칙).
 function csFillHead(str, rows, ev){
+  return csFillMerged(str, rows, ev, {oneLine:true}).text;
+}
+// ★★ «여러 건의 값을 하나로» 채운다 — 제목·머리말(csFillHead)과 묶음 문안의 «한 번만 나오는 줄»
+//   (csDraftMessengerGroup)이 같은 규칙을 쓴다(2026-11-06). hasVar·filled 는 csFillTpl 과 같은 뜻.
+//   ★ oneLine = 제목처럼 한 줄 자리면 여러 줄 값을 한 줄로 편다. 줄글 자리(접수 사유)는 그대로.
+//   ★ 값이 하나도 없으면 「—」(제목은 비울 수 없다) — 줄글에서는 filled=false 라 그 줄이 빠진다.
+function csFillMerged(str, rows, ev, opt){
   const list = (rows||[]).filter(Boolean);
-  return String(str==null?'':str).replace(/\{([^}]+)\}/g, (m,name)=>{
+  const one = !!(opt && opt.oneLine);
+  let had=false, any=false;
+  const out = String(str==null?'':str).replace(/\{([^}]+)\}/g, (m,name)=>{
     const v = csDraftVar(name);
     if(!v) return m;
-    if(v.n || !list.length) return String(v.g({}, ev) ?? '');
+    had = true;
+    if(v.n || !list.length){ const s = String(v.g({}, ev) ?? ''); if(s) any = true; return s; }
     const vals = [];
     list.forEach(t=>{
-      // 제목은 한 줄이다 — 여러 줄 값(접수사유)은 한 줄로 편다.
-      const s = String(v.g(t, ev) ?? '').replace(/\s*\n\s*/g,' ').trim();
+      let s = String(v.g(t, ev) ?? '');
+      s = one ? s.replace(/\s*\n\s*/g,' ').trim() : s.trim();
       if(s && s!=='—' && vals.indexOf(s)<0) vals.push(s);
     });
     if(!vals.length) return '—';
+    any = true;
     return vals.length<=2 ? vals.join(', ') : vals.slice(0,2).join(', ')+' 외 '+(vals.length-2);
   });
+  return {text:out, hasVar:had, filled:any};
+}
+// 이 줄에 «품목 값» 치환자가 있나 — 묶음 문안에서 품목마다 되풀이할 줄인지 가른다.
+function csLineHasItemVar(str){
+  let hit = false;
+  String(str==null?'':str).replace(/\{([^}]+)\}/g, (m,name)=>{
+    const v = csDraftVar(name);
+    if(v && v.item) hit = true;
+    return m;
+  });
+  return hit;
 }
 function csPhonePair(t){
   const p = t.orderer_phone || '—';
@@ -32833,6 +32885,40 @@ function csFillLines(lines, t, ev){
 function csDraftMessengerOne(t, events){
   return csFillLines(csTpl().msg_lines||[], t, events).join('\n');
 }
+// ── 묶음(메인+서브) 하나 = 템플릿 하나 (제니 2026-11-06) ───────────────────────
+// 「각 품목별로 템플릿을 만드는 게 아니고 템플릿 내에서 품목별 주문번호, 상품명+옵션을
+//   한번에 나열되게 해서 1개 템플릿으로」.
+// ★★ 규칙 하나: **품목 값(item:true)이 든 줄은 품목 수만큼 되풀이**(그 품목의 값으로) ·
+//   없는 줄은 **한 번만**(묶음의 값을 모아 — 같으면 그 값, 갈리면 앞의 둘 + 외 N).
+//   「치환자가 든 줄인데 값이 모두 비면 그 줄은 빠진다」는 그대로다.
+// ★ 한 건짜리 묶음이면 예전 결과와 글자 하나 다르지 않다(되풀이가 한 번 · 모은 값이 그 값).
+function csDraftMessengerGroup(rows, events){
+  const list = (rows||[]).filter(Boolean);
+  const out = [];
+  (csTpl().msg_lines||[]).forEach(l=>{
+    if(csLineHasItemVar(l)){
+      list.forEach(t=>{
+        const r = csFillTpl(l, t, events);
+        if(!(r.hasVar && !r.filled)) out.push(r.text);
+      });
+    } else {
+      const r = csFillMerged(l, list, events);
+      if(!(r.hasVar && !r.filled)) out.push(r.text);
+    }
+  });
+  return out.join('\n');
+}
+// 담긴 건을 «묶음» 으로 가른다 — 메인 번호가 같으면 한 묶음(등록 화면의 «새 건» 들은 전부 'new').
+function csDraftGroups(rows){
+  const groups = [], at = {};
+  (rows||[]).filter(Boolean).forEach(t=>{
+    // ★ null 만 «없음» 으로 본다 — 견본 건의 메인 번호가 0 이라 `||` 로 재면 서브가 딴 묶음이 된다.
+    const k = String(t.main_ticket_id != null ? t.main_ticket_id : t.id);
+    if(at[k]==null){ at[k] = groups.length; groups.push([]); }
+    groups[at[k]].push(t);
+  });
+  return groups;
+}
 // 매크로 본문의 치환자를 그 티켓 값으로 바꾼다 (2026-09-21).
 // ★★ 접수 문안과 **글자 그대로 같은 규칙**이다(위 csFillLines) — 상담원이 두 자리에서
 //   다른 규칙을 외우지 않아도 된다.
@@ -32847,8 +32933,9 @@ function csFillMacro(body, t, ev){
 function csDraftMessenger(rows, events){
   // ★ 머리말 다음은 «바로» 첫 건이다(제니 문안 그대로). 건과 건 사이만 빈 줄로 나눈다 —
   //   머리말 뒤에도 빈 줄을 넣으면 첫 건이 «둘째 덩어리» 처럼 떨어져 보인다.
+  // ★ 2026-11-06 — 건이 아니라 «묶음» 마다 한 덩어리다(csDraftMessengerGroup). 묶음과 묶음 사이만 빈 줄.
   return csFillHead(csTpl().msg_head, rows, events) + '\n'
-    + (rows||[]).map(t=>csDraftMessengerOne(t, events)).join('\n\n');
+    + csDraftGroups(rows).map(g=>csDraftMessengerGroup(g, events)).join('\n\n');
 }
 // ── 건별 접수 문안을 «이력 칸에 넣고 복사한다» (제니 2026-09-04) ─────────────
 // ★★★ 일괄 화면과 «같은 형식» 을 쓴다 — 그것이 제니가 말한 «매크로처럼» 이다.
