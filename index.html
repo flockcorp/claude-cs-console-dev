@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261106a_ticket_delete_by_role -->
+<!-- (2026-11-06) 🗑 티켓 삭제(제니: 「불필요하게 중복으로 생성된 티켓은 삭제해야 할 필요성이 생겼어 · 운영팀·센터장 권한에만 · 권한 설정은 CS 관리 > 설정에서」). ①티켓 목록 일괄 편집 바에 [🗑 삭제] — 권한 있을 때만 그림 · 환불 연결 건(refund_id)·서브 딸린 메인(서브 안 고르면)은 막음 · 「삭제」 입력 확인 · 지운 행 수를 세어 0행/일부만을 말함 · 지운 번호로 «티켓 삭제» 기록(번호·품목번호·상태 · 고객 이름 안 적음) 이력 표에 남김. ②CS 설정 새 탭 «삭제 권한» — 값은 action_roles.csTickets.delete(기본 운영팀·센터장) · 다른 키는 그대로 되쓴다. ③계정 정보 › 동작 권한 격자에는 «CS 관리 › 티켓 삭제» 줄을 잠근 채 보여 줌(editor:'csSettings' · 저장 때 그 키는 안 건드림). ★ DB: claude-cs-backup `sql/cs_tickets_delete_by_action.sql` — DELETE 정책 master 고정 → console_action_allows('csTickets.delete') · 씨앗 병합. 운영은 SQL 먼저. 이력 표는 append-only 그대로. ★ dev 전용. -->
 <!-- v20261105a_account_email_msg -->
 <!-- (2026-11-05) 콘솔 계정 추가에서 이메일 형식이 틀리면 한글로 알린다(제니: 「Unable to validate email address: invalid format」 문구를 받음). 보내기 전에 화면에서 검사(한글·공백·쉼표·@ 없음 등) · 그래도 서버가 형식으로 거절하면 같은 문구. 엣지 함수·DB·다른 화면의 이메일 검사는 안 건드림. SQL 없음. -->
 <!-- v20261103i_kst_everywhere -->
@@ -22787,7 +22789,7 @@ function CsStatsPage(){
   );
 }
 
-function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDraft,
+function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNew, goTicket, goDraft,
                        chip, setChip}){
   const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
   // ★ 칸 규칙 — [환불 요청 하기] 를 그릴지 정하는 데 쓴다(2026-09-16). 상세 화면과 같은 값이라야
@@ -23274,6 +23276,76 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
     load();
   };
 
+  // ── 고른 티켓 지우기 (제니 2026-11-06) ──────────────────────────────────
+  // 「불필요하게 중복으로 생성된 티켓은 중복 티켓을 삭제해야 할 필요성이 생겼어」.
+  // ★ 버튼은 권한(CS 설정 › 삭제 권한 · action_roles.csTickets.delete)이 있을 때만 그린다.
+  //   DB 정책(cs_tickets_delete_by_action)도 같은 설정을 보므로 화면이 그려도 DB 가 막으면
+  //   «0행» 이다 — 아래서 그 수를 센다(applyBulk 와 같은 규칙).
+  // ★★ 못 지우는 건 둘: ①환불이 연결된 건(refund_id · 환불 쪽이 이 번호를 가리킨다)
+  //   ②서브가 딸린 메인(이력은 메인에만 쌓인다 — 메인만 지우면 서브의 이력이 통째로 사라진다).
+  //   서브까지 함께 골랐으면 묶음을 통째로 지우는 것이라 된다.
+  // ★ 확인은 «삭제» 라고 치게 한다 — 되돌릴 수 없는 일은 confirm 한 번으로 모자란다
+  //   (계정 삭제가 이메일을 치게 하는 것과 같은 자리).
+  // ★ 지운 뒤 그 번호로 «티켓 삭제» 기록 한 줄을 이력 표에 남긴다(FK 가 없어 남는다 ·
+  //   누가 언제 지웠나). 이력 표는 그대로 append-only 다.
+  const deletePicked = async ()=>{
+    if(!pickedIds.length || bulkBusy) return;
+    const sel = pickedIds.map(id=>pageList.find(x=>x.id===id)).filter(Boolean);
+    const withRefund = sel.filter(t=>t.refund_id);
+    if(withRefund.length){
+      toast('환불이 연결된 티켓은 지울 수 없습니다 — #'+withRefund.map(t=>t.id).join(', #')
+          +'\n환불 관리에서 먼저 정리해 주세요.','warn');
+      return;
+    }
+    setBulkBusy(true);
+    const {data:subs, error:eS} = await sb.from('cs_tickets')
+      .select('id,main_ticket_id').in('main_ticket_id', pickedIds);
+    if(sbFail('서브 티켓 확인', eS)){ setBulkBusy(false); return; }
+    const left = (subs||[]).filter(s=>pickedIds.indexOf(s.id)<0);
+    if(left.length){
+      const mains = Array.from(new Set(left.map(s=>s.main_ticket_id)));
+      toast('서브 티켓이 딸린 메인은 혼자 지울 수 없습니다 — 메인 #'+mains.join(', #')
+          +' (서브 '+left.length+'건)\n서브까지 함께 고르면 묶음을 통째로 지울 수 있습니다.','warn');
+      setBulkBusy(false); return;
+    }
+    const stageOf = (t)=>(CS_STAGE_LABEL[t.stage]||{}).label || t.stage || '';
+    const show = sel.slice(0,8).map(t=>'#'+t.id+' · '+(t.orderer_name||'—')+' · '
+      +String(t.product_name||'').slice(0,18)+' · '+stageOf(t));
+    const typed = prompt(pickedIds.length+'건을 지웁니다. 되돌릴 수 없습니다.\n\n'
+      +show.join('\n')+(sel.length>8 ? '\n… 외 '+(sel.length-8)+'건' : '')
+      +'\n\n계속하려면 「삭제」 라고 입력하세요.');
+    if(typed===null){ setBulkBusy(false); return; }
+    if(String(typed).trim()!=='삭제'){
+      toast('「삭제」 라고 입력해야 지워집니다. 지우지 않았습니다.','warn');
+      setBulkBusy(false); return;
+    }
+    const {data:hit, error} = await sb.from('cs_tickets').delete().in('id', pickedIds).select('id');
+    if(sbFail('티켓 삭제', error, {write:true})){ setBulkBusy(false); return; }
+    const doneIds = (hit||[]).map(r=>r.id);
+    if(!doneIds.length){
+      toast('한 건도 지워지지 않았습니다 — 티켓을 지울 권한이 없는 것 같습니다.\n'
+          + '관리자에게 알려 주세요.','warn');
+      setBulkBusy(false); return;
+    }
+    if(doneIds.length < pickedIds.length){
+      toast('고른 '+pickedIds.length+'건 가운데 '+doneIds.length+'건만 지워졌습니다.\n'
+          + '나머지 '+(pickedIds.length-doneIds.length)+'건은 권한에 막혔을 수 있습니다 — 목록에서 확인해 주세요.','warn');
+    }
+    // ★ 기록에는 고객 이름을 적지 않는다(이력엔 가린 값만 · 2026-09-01 원칙) — 번호·품목번호·상태만.
+    const evs = doneIds.map(id=>{
+      const t = sel.find(x=>x.id===id) || {};
+      return {ticket_id:id, side:'원룸만들기', action:'기록', actor:currentUserEmail,
+        note:'티켓 삭제 — #'+id+' · '+(t.order_item_code||'주문 없음')+' · '+stageOf(t)
+            +'\n(목록에서 '+doneIds.length+'건 함께 지움)'};
+    });
+    const {error:e2} = await sb.from('cs_ticket_events').insert(evs);
+    csEventFail(e2, '티켓은 지워졌지만 지운 기록이 남지 않았습니다.');
+    setBulkBusy(false); setBulkOpen(null);
+    if(doneIds.length === pickedIds.length) toast(doneIds.length+'건을 지웠습니다.','ok');
+    setPicked({});
+    load();
+  };
+
   // 지금 이 칩의 폭이 «코드 기본» 과 다른가 — [너비 되돌리기] 를 보일지 정한다.
   // ★ colKeys 뒤에 둔다(선언 순서) — 검사가 잡아 준 자리다.
   const widthsChanged = viewKeys.some(k=>
@@ -23659,6 +23731,17 @@ function CsTicketsPage({currentUserEmail, role, canRefund, onNew, goTicket, goDr
                       border:'1px solid '+BP.altBd,color:BP.altFg,
                       fontWeight:600}}>{label} 바꾸기</button>
                 ))}
+                {/* ★ [🗑 삭제] — 권한(CS 설정 › 삭제 권한)이 있을 때만(2026-11-06 제니).
+                    바꾸기 셋과 같은 옷에 글자만 붉게 — «바꾸기» 와 한 줄에 서지만
+                    되돌릴 수 없는 일이라 글자색으로 갈라 둔다. 누르면 「삭제」 입력을 받는다. */}
+                {canDelete && (
+                  <button disabled={bulkBusy} onClick={deletePicked}
+                    title="고른 티켓을 지웁니다 — 되돌릴 수 없습니다"
+                    style={{padding:'5px 11px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
+                      cursor:'pointer',whiteSpace:'nowrap',background:BP.altBg,
+                      border:'1px solid '+BP.altBd,color:'#B42318',
+                      fontWeight:700}}>🗑 삭제</button>
+                )}
                 <button onClick={()=>setPicked({})} disabled={bulkBusy}
                   style={{padding:'5px 10px',borderRadius:7,fontSize:11.5,fontFamily:'inherit',
                     cursor:'pointer',background:BP.ghostBg,
@@ -24887,6 +24970,117 @@ function CsStageRoleSettings({currentUserEmail}){
                 ))}
               </React.Fragment>
             ))}
+          </tbody>
+        </table>
+      </div>
+
+      <CsSaveBar row={row} dirty={dirty} busy={busy} onSave={save}
+        onReset={()=>setDraft(base)}/>
+    </div>
+  );
+}
+
+// ── 삭제 권한 — «누가 티켓을 지울 수 있나» (제니 2026-11-06) ──────────────────
+// 「불필요하게 중복으로 생성된 티켓은 삭제해야 할 필요성이 생겼어. 운영팀·센터장에만」.
+// ★★ 값은 다른 «동작 권한» 과 같은 자리(console_settings.action_roles 의
+//   `csTickets.delete`)에 담는다 — DB 정책(cs_tickets_delete_by_action)이 이미 있는
+//   console_action_allows() 로 그 자리를 읽기 때문이다. 고치는 화면만 여기(티켓 권한이
+//   모여 있는 CS 설정)에 두고, 계정 정보 › 동작 권한 격자에서는 잠근 채 보여 준다.
+// ★ 다른 키는 건드리지 않는다 — 읽어 온 값에 이 키 하나만 바꿔 되쓴다.
+// ★ 상태 권한 표와 **같은 꼴**로 그린다(읽는 법을 두 번 배우지 않게).
+function CsDeleteRoleSettings({currentUserEmail}){
+  const ID  = 'csTickets.delete';
+  const def = CS_ACTION_DEFS.find(d=>d.id===ID) || {base:['master']};
+  const [row,setRow]     = useState(null);
+  const [loaded,setLoaded] = useState(false);
+  const [cfg,setCfg]     = useState(null);     // action_roles 전체(되쓸 때 다른 키를 지키려고)
+  const [base,setBase]   = useState([]);
+  const [draft,setDraft] = useState([]);
+  const [busy,setBusy]   = useState(false);
+
+  // master 는 DB 판정에서 늘 통과한다 — 목록에서 빼도 못 막으므로 늘 켠다.
+  const spread = (arr)=>{
+    const ids = CS_ROLE_IDS.filter(r=>(arr||[]).indexOf(r)>=0);
+    return ids.indexOf('master')>=0 ? ids : ['master'].concat(ids);
+  };
+  useEffect(()=>{ (async()=>{
+    const r = await csLoadSetting('action_roles');
+    setRow(r); setLoaded(true);
+    const v = (r && r.value) || null;
+    setCfg(v);
+    const sp = spread((v && Array.isArray(v[ID])) ? v[ID] : def.base);
+    setBase(sp); setDraft(sp);
+  })(); },[]);
+
+  const dirty = base.join(',')!==draft.join(',');
+  const on = (role)=> draft.indexOf(role)>=0;
+  const toggle = (role)=>{
+    if(role==='master') return;
+    setDraft(p=>{
+      const next = p.indexOf(role)>=0 ? p.filter(x=>x!==role) : p.concat([role]);
+      return CS_ROLE_IDS.filter(x=>next.indexOf(x)>=0);
+    });
+  };
+  const save = async ()=>{
+    // ★ 설정을 못 읽었으면 저장하지 않는다 — 이 키 하나만 남은 값으로 덮어쓰게 된다.
+    if(row===undefined) return;
+    const out = {...(cfg||{}), [ID]: draft};
+    setBusy(true);
+    const ok = await csSaveSetting('action_roles', out, currentUserEmail);
+    setBusy(false);
+    if(!ok) return;
+    setCfg(out); setBase(draft);
+    setRow({value:out, updated_at:new Date().toISOString(), updated_by:currentUserEmail});
+    toast('삭제 권한을 저장했습니다. 다른 계정은 다음에 콘솔을 열 때 반영됩니다.','ok');
+  };
+
+  if(!loaded) return <div style={{fontSize:12,color:'var(--sub)',padding:'30px 0'}}>읽는 중…</div>;
+
+  return (
+    <div style={{width:'100%',maxWidth:'max(680px, 62%)'}}>
+      <CsSetNote>
+        <b>티켓 삭제</b> — 중복으로 등록된 티켓처럼 <b>지워야 하는 건</b>을 누가 지울 수 있는지 정합니다.
+        켜진 권한에만 티켓 목록의 일괄 편집 바에 <b>[🗑 삭제]</b> 가 보입니다. 운영팀은 늘 지울 수 있습니다.
+        <br/>★ 삭제는 <b>되돌릴 수 없습니다</b>. 원칙은 지우지 않고 «철회» 로 종결하는 것이고, 삭제는 잘못 만들어진 건에만 씁니다.
+        <br/>★ <b>화면만 가리는 것이 아닙니다</b> — 데이터베이스 규칙(DB)도 이 설정을 그대로 봅니다.
+        <br/>★ 환불이 연결된 티켓, 서브가 딸린 메인 티켓(서브를 함께 고르지 않으면)은 지울 수 없습니다.
+        지운 건은 그 번호로 「티켓 삭제」 기록(누가·언제)이 이력 표에 남습니다.
+      </CsSetNote>
+
+      <div style={{border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',
+        background:'var(--card)'}}>
+        <table style={{width:'100%',borderCollapse:'collapse'}}>
+          <thead>
+            <tr>
+              <th style={csSetTh}>동작</th>
+              {CS_ROLES.map(r=>(
+                <th key={r.id} style={{...csSetTh, width:110, textAlign:'center'}}>{r.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{borderTop:'1px solid var(--border)'}}>
+              <td style={{...csSetTd, whiteSpace:'nowrap'}}>
+                <div style={{display:'flex',alignItems:'center',gap:7}}>
+                  <span style={{fontWeight:600}}>🗑 티켓 삭제</span>
+                  <span style={{fontSize:9,fontWeight:700,letterSpacing:'.03em',
+                    padding:'1px 5px',borderRadius:4,
+                    border:'1px solid rgba(34,211,160,.45)',color:'var(--ok-ink)'}}>DB</span>
+                </div>
+                <div style={{fontSize:10.5,color:'var(--sub)',marginTop:2}}>
+                  티켓 목록에서 건을 골라 일괄 편집 바의 [🗑 삭제]</div>
+              </td>
+              {CS_ROLES.map(r=>(
+                <td key={r.id} style={{...csSetTd, textAlign:'center'}}>
+                  <input type="checkbox" style={{width:14,height:14,accentColor:'#5B8DEF',
+                    cursor:r.id==='master'?'default':'pointer',
+                    opacity:r.id==='master'?.5:1}}
+                    checked={on(r.id)} disabled={r.id==='master'}
+                    title={r.id==='master'?'운영팀은 늘 지울 수 있습니다':undefined}
+                    onChange={()=>toggle(r.id)}/>
+                </td>
+              ))}
+            </tr>
           </tbody>
         </table>
       </div>
@@ -26193,6 +26387,7 @@ function CsSettingsPage({currentUserEmail, role}){
     {id:'chip',  label:'칩 권한'},
     {id:'field', label:'필드 권한'},
     {id:'stage', label:'상태 권한'},
+    {id:'delete',label:'삭제 권한'},
     {id:'cafe24',label:'카페24 연동'},
   ];
   const [tab,setTab] = useState('macro');
@@ -26223,6 +26418,7 @@ function CsSettingsPage({currentUserEmail, role}){
       {tab==='chip'   && <CsChipRoleSettings currentUserEmail={currentUserEmail}/>}
       {tab==='field'  && <CsFieldRuleSettings currentUserEmail={currentUserEmail}/>}
       {tab==='stage'  && <CsStageRoleSettings currentUserEmail={currentUserEmail}/>}
+      {tab==='delete' && <CsDeleteRoleSettings currentUserEmail={currentUserEmail}/>}
       {tab==='cafe24' && <CsCafe24Settings currentUserEmail={currentUserEmail}/>}
     </div>
   );
@@ -37248,6 +37444,14 @@ function csMenuAllows(settings, id, role, email){
 //   ★★ 이것을 안 적으면 「DB 도 같은 설정을 봅니다」라는 안내가 발송 둘에 대해
 //     거짓말이 된다 — **설정과 화면이 다른 말을 하면 둘 다 안 믿게 된다.**
 const CS_ACTION_DEFS = [
+  // ★★ 티켓 삭제(2026-11-06 · 제니: 중복 생성된 티켓을 지울 수 있게 · 운영팀·센터장).
+  //   값은 다른 동작과 같은 자리(action_roles)에 두어 DB 정책(cs_tickets_delete_by_action)이
+  //   console_action_allows('csTickets.delete') 로 읽지만, **고치는 자리는 CS 관리 › 설정 ›
+  //   삭제 권한 탭**이다(제니 지시 · 티켓 쪽 권한은 거기 모여 있다). 이 격자에서는 읽기만 —
+  //   두 자리에서 고치게 두면 늦게 저장한 쪽이 먼저 저장한 값을 조용히 덮는다.
+  {id:'csTickets.delete', menu:'CS 관리', label:'티켓 삭제', guard:'db', editor:'csSettings',
+   hint:'티켓 목록에서 골라 [🗑 삭제] — 되돌릴 수 없다 · 고치는 곳은 CS 관리 › 설정 › 삭제 권한',
+   base:['master','manager']},
   {id:'entry.delete', menu:'데이터 입력', label:'데이터 삭제', guard:'db',
    hint:'[데이터 내역] 의 [삭제] — 그 날짜의 일일·상담원 기록이 함께 지워진다',
    base:['master','manager']},
@@ -38075,8 +38279,13 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
   })(); },[]);
 
   // ★★ master 는 늘 켠 채 잠근다 — 메뉴 권한과 같은 이유다.
+  // ★ 다른 화면이 주인인 동작(editor 가 있는 것 · 티켓 삭제)은 여기서 안 고친다 —
+  //   보이기만 하고, 저장할 때도 지금 값을 그대로 둔다(2026-11-06).
+  const ownedHere = (d)=> !d.editor;
   const toggle = (id, role)=>{
     if(role==='master') return;
+    const d = CS_ACTION_DEFS.find(x=>x.id===id);
+    if(d && !ownedHere(d)) return;
     setDraft(p=>{
       const cur = p[id]||[];
       return {...p, [id]: cur.indexOf(role)>=0 ? cur.filter(x=>x!==role) : cur.concat([role])};
@@ -38085,7 +38294,7 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
   const save = async ()=>{
     if(!draft) return;
     const out = {...(cfg||{})};   // 모르는 키는 지우지 않는다
-    CS_ACTION_DEFS.forEach(d=>{
+    CS_ACTION_DEFS.filter(ownedHere).forEach(d=>{
       const arr = Array.from(new Set(['master'].concat(draft[d.id]||[])));
       out[d.id] = ROLES.filter(r=>arr.indexOf(r)>=0);
     });
@@ -38097,7 +38306,7 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
     if(onSaved) onSaved();
     toast('동작 권한을 저장했습니다. 다른 계정은 다음에 콘솔을 열 때 반영됩니다.','ok');
   };
-  const dirty = draft && CS_ACTION_DEFS.some(d=>{
+  const dirty = draft && CS_ACTION_DEFS.filter(ownedHere).some(d=>{
     const now = (cfg && Array.isArray(cfg[d.id])) ? cfg[d.id] : d.base;
     const nx  = Array.from(new Set(['master'].concat(draft[d.id]||[])));
     return now.slice().sort().join(',') !== ROLES.filter(r=>nx.indexOf(r)>=0).sort().join(',');
@@ -38183,13 +38392,16 @@ function CsActionRoles({currentUserEmail, card, head, onSaved}){
                       </td>
                       {ROLES.map(r=>{
                         const on = r==='master' || (draft[d.id]||[]).indexOf(r)>=0;
+                        // ★ 주인이 다른 화면인 줄은 칸을 잠근다 — 값은 보이되 여기선 못 바꾼다.
+                        const locked = r==='master' || !ownedHere(d);
                         return (
                           <td key={r} style={{padding:'7px 8px',textAlign:'center'}}>
-                            <input type="checkbox" checked={on} disabled={r==='master'}
+                            <input type="checkbox" checked={on} disabled={locked}
                               onChange={()=>toggle(d.id,r)}
-                              title={r==='master'?'운영팀은 늘 할 수 있습니다':undefined}
+                              title={r==='master' ? '운영팀은 늘 할 수 있습니다'
+                                   : !ownedHere(d) ? 'CS 관리 › 설정 › 삭제 권한 탭에서 바꿉니다' : undefined}
                               style={{width:14,height:14,accentColor:'#5B8DEF',
-                                cursor:r==='master'?'default':'pointer',
+                                cursor:locked?'default':'pointer',
                                 opacity:r==='master'?.55:1}}/>
                           </td>
                         );
@@ -39592,6 +39804,7 @@ function App() {
         {page==='csTickets'&&(canMenu('csTickets')?<CsTicketsPage currentUserEmail={session.user.email} role={role}
           chip={csChip} setChip={setCsChip}
           canRefund={canMenu('refunds') && canAction('refunds.create')}
+          canDelete={canAction('csTickets.delete')}
           onNew={()=>navigateTo('csNew')} goTicket={openTicket}
           goDraft={ids=>{ if(!csConfirmLeave()) return; setCsDraftIds(ids); setPage('csDraft'); setMobileOpen(false); }}/>:<NoAccessPage/>)}
         {page==='csDraft'&&(canMenu('csDraft')?<CsSupplierDraftPage ids={csDraftIds}
