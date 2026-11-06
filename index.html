@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261106b_ticket_delete_detail_group -->
+<!-- (2026-11-06) 🗑 티켓 삭제 둘째 판(제니: 「상세 화면에서 삭제 버튼을 넣고 싶어. 그룹 티켓은 하나가 삭제되면 당연히 묶인 서브·메인도 삭제」). ①상세 머리에 [🗑 삭제](권한 있을 때만 · 오른쪽 묶음 맨 왼쪽 · 테두리만 붉은 글자) → 지우면 목록으로. ②묶음 규칙 바꿈: 목록·상세 어디서 지우든 **메인+서브를 통째로**(a 판의 «서브 안 고르면 막음» 은 뺌) · 묻는 창에 «묶음으로 이어진 N건도 함께 · 모두 M건» 적음 · 줄마다 (메인)/(서브) 표시. ③지우는 길을 한 함수 csDeleteTickets 로 모음(목록·상세 같은 확인·막는 조건·기록) — 묶음 안에 환불 연결 건이 있으면 통째로 막음 · 기록 꼬리 «(목록에서/상세에서 N건 함께 지움)». 설정 탭·격자 안내 문구 맞춤. SQL 없음(a 판 SQL 그대로). ★ dev 전용. -->
 <!-- v20261106a_ticket_delete_by_role -->
 <!-- (2026-11-06) 🗑 티켓 삭제(제니: 「불필요하게 중복으로 생성된 티켓은 삭제해야 할 필요성이 생겼어 · 운영팀·센터장 권한에만 · 권한 설정은 CS 관리 > 설정에서」). ①티켓 목록 일괄 편집 바에 [🗑 삭제] — 권한 있을 때만 그림 · 환불 연결 건(refund_id)·서브 딸린 메인(서브 안 고르면)은 막음 · 「삭제」 입력 확인 · 지운 행 수를 세어 0행/일부만을 말함 · 지운 번호로 «티켓 삭제» 기록(번호·품목번호·상태 · 고객 이름 안 적음) 이력 표에 남김. ②CS 설정 새 탭 «삭제 권한» — 값은 action_roles.csTickets.delete(기본 운영팀·센터장) · 다른 키는 그대로 되쓴다. ③계정 정보 › 동작 권한 격자에는 «CS 관리 › 티켓 삭제» 줄을 잠근 채 보여 줌(editor:'csSettings' · 저장 때 그 키는 안 건드림). ★ DB: claude-cs-backup `sql/cs_tickets_delete_by_action.sql` — DELETE 정책 master 고정 → console_action_allows('csTickets.delete') · 씨앗 병합. 운영은 SQL 먼저. 이력 표는 append-only 그대로. ★ dev 전용. -->
 <!-- v20261105a_account_email_msg -->
@@ -22789,6 +22791,93 @@ function CsStatsPage(){
   );
 }
 
+// ── 티켓 지우기 — 목록·상세가 «같은 함수» 를 쓴다 (제니 2026-11-06) ────────────
+// 「불필요하게 중복으로 생성된 티켓은 중복 티켓을 삭제해야 할 필요성이 생겼어」 +
+// 「그룹 티켓은 하나가 삭제되면 당연히 그룹으로 묶인 서브 티켓 또는 메인 티켓도 삭제」.
+// ★★ 묶음(메인+서브)은 **어느 하나를 지워도 통째로** 지운다 — 이력은 메인에만 쌓이므로
+//   메인만 지우면 서브가 이력 없는 빈 껍데기로 남고, 서브만 지우면 같은 사건의 품목 하나가
+//   조용히 사라진다. 같은 사건이면 같이 간다. 펼친 수는 묻는 창에 적어 사람이 알고 누른다.
+// ★ 버튼은 권한(CS 설정 › 삭제 권한 · action_roles.csTickets.delete)이 있을 때만 그린다.
+//   DB 정책(cs_tickets_delete_by_action)도 같은 설정을 보므로 화면이 그려도 DB 가 막으면
+//   «0행» 이다 — 그 수를 센다(applyBulk 와 같은 규칙).
+// ★★ 못 지우는 건: 묶음 안에 **환불이 연결된 건**(refund_id)이 있으면 — 환불 쪽이 그 번호를
+//   가리키고 있어 지우면 환불이 «없는 티켓» 을 가리킨다. 환불 관리에서 먼저 정리한다.
+// ★ 확인은 «삭제» 라고 치게 한다 — 되돌릴 수 없는 일은 confirm 한 번으로 모자란다
+//   (계정 삭제가 이메일을 치게 하는 것과 같은 자리).
+// ★ 지운 뒤 그 번호로 «티켓 삭제» 기록 한 줄을 이력 표에 남긴다(FK 가 없어 남는다 ·
+//   누가 언제 지웠나). 고객 이름은 적지 않는다(이력엔 가린 값만 · 2026-09-01 원칙).
+//   이력 표는 그대로 append-only 다.
+// 돌려주는 값: null = 안 지움(취소·막힘·오류) · {done,total} = 지운 수 / 지우려던 수.
+async function csDeleteTickets({ids, currentUserEmail, from}){
+  const want = Array.from(new Set((ids||[]).map(Number).filter(Boolean)));
+  if(!want.length) return null;
+  // ① 묶음으로 펼친다 — 고른 건의 메인 번호를 모아, 그 메인과 그 메인의 서브 전부.
+  const {data:seed, error:e0} = await sb.from('cs_tickets')
+    .select('id,main_ticket_id').in('id', want);
+  if(sbFail('티켓 확인', e0)) return null;
+  const mains = Array.from(new Set((seed||[]).map(r=>r.main_ticket_id||r.id)));
+  if(!mains.length){
+    toast('지울 티켓을 찾지 못했습니다 — 이미 지워졌을 수 있습니다. 목록을 새로고침해 주세요.','warn');
+    return null;
+  }
+  const {data:fam, error:e1} = await sb.from('cs_tickets')
+    .select('id,main_ticket_id,refund_id,stage,order_item_code,orderer_name,product_name')
+    .or('id.in.('+mains.join(',')+'),main_ticket_id.in.('+mains.join(',')+')')
+    .order('id',{ascending:true});
+  if(sbFail('묶음 확인', e1)) return null;
+  const all = fam||[];
+  // ② 환불이 연결된 건이 묶음 안에 있으면 통째로 막는다.
+  const withRefund = all.filter(t=>t.refund_id);
+  if(withRefund.length){
+    toast('환불이 연결된 티켓은 지울 수 없습니다 — #'+withRefund.map(t=>t.id).join(', #')
+        +(withRefund.some(t=>want.indexOf(t.id)<0) ? '\n(고른 건과 같은 묶음에 있습니다)' : '')
+        +'\n환불 관리에서 먼저 정리해 주세요.','warn');
+    return null;
+  }
+  // ③ 묻는다 — 펼쳐진 수를 그대로 적는다.
+  const extra = all.filter(t=>want.indexOf(t.id)<0);
+  const stageOf = (t)=>(CS_STAGE_LABEL[t.stage]||{}).label || t.stage || '';
+  const line = (t)=>'#'+t.id+(t.main_ticket_id?' (서브)':all.length>1?' (메인)':'')+' · '
+    +(t.orderer_name||'—')+' · '+String(t.product_name||'').slice(0,18)+' · '+stageOf(t);
+  const head = want.length+'건을 지웁니다.'
+    + (extra.length ? '\n묶음(메인·서브)으로 이어진 '+extra.length+'건도 함께 지워져 모두 '+all.length+'건입니다.' : '')
+    + '\n되돌릴 수 없습니다.';
+  const typed = prompt(head+'\n\n'+all.slice(0,8).map(line).join('\n')
+    +(all.length>8 ? '\n… 외 '+(all.length-8)+'건' : '')
+    +'\n\n계속하려면 「삭제」 라고 입력하세요.');
+  if(typed===null) return null;
+  if(String(typed).trim()!=='삭제'){
+    toast('「삭제」 라고 입력해야 지워집니다. 지우지 않았습니다.','warn');
+    return null;
+  }
+  // ④ 지운다 — 한 문장으로(메인·서브 함께 · main_ticket_id 는 on delete set null 이라 차례 무관).
+  const allIds = all.map(t=>t.id);
+  const {data:hit, error} = await sb.from('cs_tickets').delete().in('id', allIds).select('id');
+  if(sbFail('티켓 삭제', error, {write:true})) return null;
+  const doneIds = (hit||[]).map(r=>r.id);
+  if(!doneIds.length){
+    toast('한 건도 지워지지 않았습니다 — 티켓을 지울 권한이 없는 것 같습니다.\n'
+        + '관리자에게 알려 주세요.','warn');
+    return {done:0, total:allIds.length};
+  }
+  if(doneIds.length < allIds.length){
+    toast('지우려던 '+allIds.length+'건 가운데 '+doneIds.length+'건만 지워졌습니다.\n'
+        + '나머지 '+(allIds.length-doneIds.length)+'건은 권한에 막혔을 수 있습니다 — 목록에서 확인해 주세요.','warn');
+  }
+  // ⑤ 기록 — 번호·품목번호·상태만(고객 이름 없음).
+  const tail = doneIds.length===1 ? '('+(from||'')+' 지움)' : '('+(from||'')+' '+doneIds.length+'건 함께 지움)';
+  const evs = doneIds.map(id=>{
+    const t = all.find(x=>x.id===id) || {};
+    return {ticket_id:id, side:'원룸만들기', action:'기록', actor:currentUserEmail,
+      note:'티켓 삭제 — #'+id+(t.main_ticket_id?' (서브)':'')+' · '+(t.order_item_code||'주문 없음')
+          +' · '+stageOf(t)+'\n'+tail};
+  });
+  const {error:e2} = await sb.from('cs_ticket_events').insert(evs);
+  csEventFail(e2, '티켓은 지워졌지만 지운 기록이 남지 않았습니다.');
+  if(doneIds.length === allIds.length) toast(doneIds.length+'건을 지웠습니다.','ok');
+  return {done:doneIds.length, total:allIds.length};
+}
+
 function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNew, goTicket, goDraft,
                        chip, setChip}){
   const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
@@ -23277,72 +23366,14 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
   };
 
   // ── 고른 티켓 지우기 (제니 2026-11-06) ──────────────────────────────────
-  // 「불필요하게 중복으로 생성된 티켓은 중복 티켓을 삭제해야 할 필요성이 생겼어」.
-  // ★ 버튼은 권한(CS 설정 › 삭제 권한 · action_roles.csTickets.delete)이 있을 때만 그린다.
-  //   DB 정책(cs_tickets_delete_by_action)도 같은 설정을 보므로 화면이 그려도 DB 가 막으면
-  //   «0행» 이다 — 아래서 그 수를 센다(applyBulk 와 같은 규칙).
-  // ★★ 못 지우는 건 둘: ①환불이 연결된 건(refund_id · 환불 쪽이 이 번호를 가리킨다)
-  //   ②서브가 딸린 메인(이력은 메인에만 쌓인다 — 메인만 지우면 서브의 이력이 통째로 사라진다).
-  //   서브까지 함께 골랐으면 묶음을 통째로 지우는 것이라 된다.
-  // ★ 확인은 «삭제» 라고 치게 한다 — 되돌릴 수 없는 일은 confirm 한 번으로 모자란다
-  //   (계정 삭제가 이메일을 치게 하는 것과 같은 자리).
-  // ★ 지운 뒤 그 번호로 «티켓 삭제» 기록 한 줄을 이력 표에 남긴다(FK 가 없어 남는다 ·
-  //   누가 언제 지웠나). 이력 표는 그대로 append-only 다.
+  // 확인·묶음 펼치기·막는 조건·기록은 전부 csDeleteTickets 한 곳(상세 화면과 같은 함수).
   const deletePicked = async ()=>{
     if(!pickedIds.length || bulkBusy) return;
-    const sel = pickedIds.map(id=>pageList.find(x=>x.id===id)).filter(Boolean);
-    const withRefund = sel.filter(t=>t.refund_id);
-    if(withRefund.length){
-      toast('환불이 연결된 티켓은 지울 수 없습니다 — #'+withRefund.map(t=>t.id).join(', #')
-          +'\n환불 관리에서 먼저 정리해 주세요.','warn');
-      return;
-    }
     setBulkBusy(true);
-    const {data:subs, error:eS} = await sb.from('cs_tickets')
-      .select('id,main_ticket_id').in('main_ticket_id', pickedIds);
-    if(sbFail('서브 티켓 확인', eS)){ setBulkBusy(false); return; }
-    const left = (subs||[]).filter(s=>pickedIds.indexOf(s.id)<0);
-    if(left.length){
-      const mains = Array.from(new Set(left.map(s=>s.main_ticket_id)));
-      toast('서브 티켓이 딸린 메인은 혼자 지울 수 없습니다 — 메인 #'+mains.join(', #')
-          +' (서브 '+left.length+'건)\n서브까지 함께 고르면 묶음을 통째로 지울 수 있습니다.','warn');
-      setBulkBusy(false); return;
-    }
-    const stageOf = (t)=>(CS_STAGE_LABEL[t.stage]||{}).label || t.stage || '';
-    const show = sel.slice(0,8).map(t=>'#'+t.id+' · '+(t.orderer_name||'—')+' · '
-      +String(t.product_name||'').slice(0,18)+' · '+stageOf(t));
-    const typed = prompt(pickedIds.length+'건을 지웁니다. 되돌릴 수 없습니다.\n\n'
-      +show.join('\n')+(sel.length>8 ? '\n… 외 '+(sel.length-8)+'건' : '')
-      +'\n\n계속하려면 「삭제」 라고 입력하세요.');
-    if(typed===null){ setBulkBusy(false); return; }
-    if(String(typed).trim()!=='삭제'){
-      toast('「삭제」 라고 입력해야 지워집니다. 지우지 않았습니다.','warn');
-      setBulkBusy(false); return;
-    }
-    const {data:hit, error} = await sb.from('cs_tickets').delete().in('id', pickedIds).select('id');
-    if(sbFail('티켓 삭제', error, {write:true})){ setBulkBusy(false); return; }
-    const doneIds = (hit||[]).map(r=>r.id);
-    if(!doneIds.length){
-      toast('한 건도 지워지지 않았습니다 — 티켓을 지울 권한이 없는 것 같습니다.\n'
-          + '관리자에게 알려 주세요.','warn');
-      setBulkBusy(false); return;
-    }
-    if(doneIds.length < pickedIds.length){
-      toast('고른 '+pickedIds.length+'건 가운데 '+doneIds.length+'건만 지워졌습니다.\n'
-          + '나머지 '+(pickedIds.length-doneIds.length)+'건은 권한에 막혔을 수 있습니다 — 목록에서 확인해 주세요.','warn');
-    }
-    // ★ 기록에는 고객 이름을 적지 않는다(이력엔 가린 값만 · 2026-09-01 원칙) — 번호·품목번호·상태만.
-    const evs = doneIds.map(id=>{
-      const t = sel.find(x=>x.id===id) || {};
-      return {ticket_id:id, side:'원룸만들기', action:'기록', actor:currentUserEmail,
-        note:'티켓 삭제 — #'+id+' · '+(t.order_item_code||'주문 없음')+' · '+stageOf(t)
-            +'\n(목록에서 '+doneIds.length+'건 함께 지움)'};
-    });
-    const {error:e2} = await sb.from('cs_ticket_events').insert(evs);
-    csEventFail(e2, '티켓은 지워졌지만 지운 기록이 남지 않았습니다.');
-    setBulkBusy(false); setBulkOpen(null);
-    if(doneIds.length === pickedIds.length) toast(doneIds.length+'건을 지웠습니다.','ok');
-    setPicked({});
+    const r = await csDeleteTickets({ids:pickedIds, currentUserEmail, from:'목록에서'});
+    setBulkBusy(false);
+    if(!r || !r.done) return;
+    setBulkOpen(null); setPicked({});
     load();
   };
 
@@ -25040,11 +25071,11 @@ function CsDeleteRoleSettings({currentUserEmail}){
     <div style={{width:'100%',maxWidth:'max(680px, 62%)'}}>
       <CsSetNote>
         <b>티켓 삭제</b> — 중복으로 등록된 티켓처럼 <b>지워야 하는 건</b>을 누가 지울 수 있는지 정합니다.
-        켜진 권한에만 티켓 목록의 일괄 편집 바에 <b>[🗑 삭제]</b> 가 보입니다. 운영팀은 늘 지울 수 있습니다.
+        켜진 권한에만 티켓 목록의 일괄 편집 바와 티켓 상세 머리에 <b>[🗑 삭제]</b> 가 보입니다. 운영팀은 늘 지울 수 있습니다.
         <br/>★ 삭제는 <b>되돌릴 수 없습니다</b>. 원칙은 지우지 않고 «철회» 로 종결하는 것이고, 삭제는 잘못 만들어진 건에만 씁니다.
         <br/>★ <b>화면만 가리는 것이 아닙니다</b> — 데이터베이스 규칙(DB)도 이 설정을 그대로 봅니다.
-        <br/>★ 환불이 연결된 티켓, 서브가 딸린 메인 티켓(서브를 함께 고르지 않으면)은 지울 수 없습니다.
-        지운 건은 그 번호로 「티켓 삭제」 기록(누가·언제)이 이력 표에 남습니다.
+        <br/>★ 묶음(메인·서브)은 <b>어느 하나를 지워도 통째로</b> 지워집니다 — 묻는 창에 몇 건이 함께 가는지 적힙니다.
+        환불이 연결된 티켓이 든 묶음은 지울 수 없습니다. 지운 건은 그 번호로 「티켓 삭제」 기록(누가·언제)이 이력 표에 남습니다.
       </CsSetNote>
 
       <div style={{border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',
@@ -25068,7 +25099,7 @@ function CsDeleteRoleSettings({currentUserEmail}){
                     border:'1px solid rgba(34,211,160,.45)',color:'var(--ok-ink)'}}>DB</span>
                 </div>
                 <div style={{fontSize:10.5,color:'var(--sub)',marginTop:2}}>
-                  티켓 목록에서 건을 골라 일괄 편집 바의 [🗑 삭제]</div>
+                  티켓 목록에서 건을 골라 일괄 편집 바의 [🗑 삭제] · 티켓 상세 머리의 [🗑 삭제]</div>
               </td>
               {CS_ROLES.map(r=>(
                 <td key={r.id} style={{...csSetTd, textAlign:'center'}}>
@@ -30243,7 +30274,7 @@ function csCafe24OrderUrl(t){
 }
 
 // ★ canRefund — 환불 관리 메뉴 권한(목록 화면과 같은 값). 자세한 것은 CsTicketsPage 주석.
-function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack, goTicket, onNew}){
+function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=false, seq, onBack, goTicket, onNew}){
   // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
   // 어느 단계로 저장할 수 있나 — CS 설정 › 상태 권한(2026-09-16).
@@ -31019,6 +31050,25 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, seq, onBack,
           {t.order_item_code||'주문 없음'} / {t.supplier_name||'—'} / 접수 : {csDate(t.created_at)} / 담당자 : {csShortUser(t.assignee)}
         </span>
         <div style={{flex:1}}></div>
+        {/* ★ [🗑 삭제] — 권한(CS 설정 › 삭제 권한)이 있을 때만(제니 2026-11-06). 오른쪽 묶음의 맨 왼쪽 —
+            나가는 길([목록으로])·만드는 길([+ 티켓 등록])과 떨어뜨려 손이 미끄러져 닿지 않게.
+            테두리만 · 붉은 글자. 묶음(메인·서브)은 통째로 — 묻는 창에 수가 적힌다(csDeleteTickets). */}
+        {canDelete && (
+          <button disabled={busy}
+            onClick={async ()=>{
+              if(busy) return;
+              setBusy(true);
+              const r = await csDeleteTickets({ids:[t.id], currentUserEmail, from:'상세에서'});
+              setBusy(false);
+              if(!r || !r.done) return;
+              leaveDone();   // 지웠다 — 적던 글은 티켓과 함께 사라진 것이라 묻지 않는다
+              onBack();
+            }}
+            title="이 티켓을 지웁니다 — 묶음(메인·서브)은 함께 · 되돌릴 수 없습니다"
+            style={{padding:'6px 13px',marginRight:8,background:'transparent',
+              border:'1px solid rgba(248,113,113,.55)',borderRadius:7,color:'var(--red-ink)',
+              fontSize:12,fontWeight:600,cursor:busy?'default':'pointer',fontFamily:'inherit'}}>🗑 삭제</button>
+        )}
         {/* ★ 티켓 빠른 검색 — [+ 티켓 등록] 왼쪽(제니 2026-11-03). */}
         <CsTicketQuickSearch goTicket={goTicket} currentId={t.id}/>
         {/* ★ 상세에서 바로 새 티켓 등록으로(제니 2026-10-29). [목록으로] 왼쪽.
@@ -37450,7 +37500,7 @@ const CS_ACTION_DEFS = [
   //   삭제 권한 탭**이다(제니 지시 · 티켓 쪽 권한은 거기 모여 있다). 이 격자에서는 읽기만 —
   //   두 자리에서 고치게 두면 늦게 저장한 쪽이 먼저 저장한 값을 조용히 덮는다.
   {id:'csTickets.delete', menu:'CS 관리', label:'티켓 삭제', guard:'db', editor:'csSettings',
-   hint:'티켓 목록에서 골라 [🗑 삭제] — 되돌릴 수 없다 · 고치는 곳은 CS 관리 › 설정 › 삭제 권한',
+   hint:'티켓 목록·상세의 [🗑 삭제] — 묶음은 통째로 · 되돌릴 수 없다 · 고치는 곳은 CS 관리 › 설정 › 삭제 권한',
    base:['master','manager']},
   {id:'entry.delete', menu:'데이터 입력', label:'데이터 삭제', guard:'db',
    hint:'[데이터 내역] 의 [삭제] — 그 날짜의 일일·상담원 기록이 함께 지워진다',
@@ -39815,6 +39865,7 @@ function App() {
           goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
           role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={ticketSeq}
+          canDelete={canAction('csTickets.delete')}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}
           onNew={()=>navigateTo('csNew')}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
