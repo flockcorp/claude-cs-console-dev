@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261110c_chip_stages_kpi_hint -->
+<!-- (2026-11-10) 🎫 c 판 둘. ①칩별 «보여 줄 상태» 를 CS 설정 › 칩 권한에서(제니: 「칩별로 보여줄 티켓 상태값을 설정 메뉴에서」) — 고정 칩 여덟(전체 뺌)의 «보이는 티켓» 칸에 [상태] → 상태 10개 체크 · [기본값으로] · 기본과 다르면 «바꿈». 새 설정 키 cs_chip_stages {칩 id:[상태]} — 기본과 같은 칩은 안 담음(없으면 예전 판정 그대로). 내 티켓·리체크는 담당·날짜 조건 + 상태로 더 좁힘(기본 = 종결 그룹 제외). 숫자 카드는 이 설정을 안 따른다(제니 · match 셋째 인자 base). 빈 선택은 저장 막음. ②CS 관리 상단 카드 넷 이름 옆 「?」(CsHint)로 셈 기준 설명(제니). SQL 없음(console_settings 새 키 · 표·칸 안 더함). ★ dev 전용. -->
 <!-- v20261110b_tk_list_filter_reset_on_menu -->
 <!-- (2026-11-10) 🎫 b 판 — 사이드바 «티켓 목록» 을 누르면 칩과 필터를 «모두» 처음으로(제니: 「칩, 필터 모두 돌아가는걸로」). a 판은 필터를 남겼다. 상세 [목록으로]·저장 후 목록으로는 그대로 유지. SQL 없음. ★ dev 전용. -->
 <!-- v20261110a_tk_list_keep_filter -->
@@ -20458,6 +20460,29 @@ const CS_CHIPS = [
 const CS_CHIP_ROLES_FALLBACK = {
   'g:확인 대기':['master','manager'], 'st:settlement':['master','manager'],
 };
+// ── 칩별 «보여 줄 상태» (제니 2026-11-10: 「칩별로 보여줄 티켓 상태값을 설정 메뉴에서」) ──
+// ★ 설정 키 cs_chip_stages = {칩 id: [상태 id…]}. 없거나 빈 칩은 «코드 기본» 이다 —
+//   기본은 지금까지 목록이 세던 것과 글자 그대로 같다(설정을 안 건드리면 아무것도 안 바뀐다).
+// ★ 대상: 고정 칩 중 «전체» 를 뺀 여덟. 내 티켓·오늘의 리체크는 담당·날짜 조건은 그대로 두고
+//   상태로 «더» 좁힌다(기본 = 종결 그룹 제외).
+// ★★ 숫자 카드(공급사 미접수·정산 대기·비용 미입력)는 이 설정을 «안 따른다»(제니 11-10) —
+//   카드는 늘 코드 기본으로 센다(match 의 base 인자).
+const CS_CHIP_STAGE_EDITABLE = (id)=> id!=='all' && CS_CHIPS.some(c=>c.id===id);
+function csChipStageDefault(id){
+  const fixed = CS_CHIPS.find(c=>c.id===id);
+  if(fixed && fixed.where && Array.isArray(fixed.where.stage)) return fixed.where.stage.slice();
+  if(id==='mine' || id==='recheck') return CS_STAGES.filter(s=>s.group!=='종결').map(s=>s.id);
+  if(id.indexOf('st:')===0) return [id.slice(3)];
+  if(id.indexOf('g:')===0)  return CS_STAGES.filter(s=>s.group===id.slice(2)).map(s=>s.id);
+  return CS_STAGES.map(s=>s.id);
+}
+// 설정값이 «쓸 만하면» 그것, 아니면 기본. 모르는 상태 id 는 버린다(단계 이름이 바뀌어도 화면이 안 죽게).
+function csChipStages(settings, id){
+  const v = settings && settings.cs_chip_stages;
+  const a = v && Array.isArray(v[id]) ? v[id].filter(x=>CS_STAGES.some(s=>s.id===x)) : null;
+  return (a && a.length) ? CS_STAGES.map(s=>s.id).filter(x=>a.indexOf(x)>=0) : csChipStageDefault(id);
+}
+function csSameSet(a,b){ return a.length===b.length && a.every(x=>b.indexOf(x)>=0); }
 
 // 주소 한 줄 — «[우편번호] 주소 상세주소». 상세 화면이 복사 버튼으로 주는 값과
 // 같은 모양이다(그 자리의 addr 과 같은 식). 목록에서 본 것과 복사한 것이 다르면
@@ -23076,7 +23101,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
   // 설정(칩 권한·열 구성)을 한 번 읽는다. 못 읽으면 기본값으로 돈다.
   useEffect(()=>{ (async()=>{
     const {data,error} = await sb.from('console_settings').select('key,value')
-      .in('key',['cs_chip_roles','cs_list_columns','cs_chips_custom']);
+      .in('key',['cs_chip_roles','cs_list_columns','cs_chips_custom','cs_chip_stages']);
     if(error){ console.warn('[CS 설정] 기본값으로 돕니다:', error.message); setSettings({}); return; }
     const m = {};
     (data||[]).forEach(r=>{ m[r.key] = r.value; });
@@ -23095,17 +23120,19 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
 
   // 칩마다 «무엇을 보여 주나». 한 곳에 모아 둔다 — 칩과 KPI 가 같은 셈을 써야
   // 「숫자는 3인데 목록은 5줄」 같은 어긋남이 안 생긴다.
-  const match = (t, id)=>{
+  // ★ base=true 면 설정(cs_chip_stages)을 안 보고 코드 기본으로 센다 — 숫자 카드용(제니 11-10).
+  const match = (t, id, base)=>{
     const today = csTodayKst();
     if(id==='all')        return true;
-    if(id==='mine')       return t.assignee===currentUserEmail && csGroupOf(t.stage)!=='종결';
-    if(id==='recheck')    return csGroupOf(t.stage)!=='종결' && t.recheck_at && t.recheck_at<=today;
-    // ★ «st:» 는 단계 하나, «g:» 는 그룹. 칩 이름이 단계 이름과 같으니 대부분 st: 다.
-    // ★ 고정 칩에 조건이 적혀 있으면 그것을 본다(정산 대기가 그 예다).
-    const fixed = CS_CHIPS.find(c=>c.id===id);
-    if(fixed && fixed.where) return csChipWhereMatch(t, fixed.where);
-    if(id.indexOf('st:')===0) return t.stage === id.slice(3);
-    if(id.indexOf('g:')===0)  return csGroupOf(t.stage) === id.slice(2);
+    // ★★ 고정 칩은 «보여 줄 상태» 목록 하나로 가른다(2026-11-10). 기본은 예전 판정과 같다
+    //   (st: 하나 · g: 그룹 · 정산 대기 where · 내 티켓/리체크 = 종결 제외).
+    if(CS_CHIP_STAGE_EDITABLE(id)){
+      const st = base ? csChipStageDefault(id) : csChipStages(settings, id);
+      if(st.indexOf(t.stage)<0) return false;
+      if(id==='mine')    return t.assignee===currentUserEmail;
+      if(id==='recheck') return !!(t.recheck_at && t.recheck_at<=today);
+      return true;
+    }
     // ★ 사람이 만든 칩 — 조건은 설정에서 온다(csChipWhereMatch).
     if(id.indexOf('u:')===0){
       const c = csCustomChips(settings).find(x=>x.id===id);
@@ -23223,7 +23250,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
       }
     }
     return out;
-  },[rows,chip,q,sort,flt]);
+  },[rows,chip,q,sort,flt,settings]);   // ★ settings — 칩 상태 설정이 늦게 읽혀도 다시 거른다
 
   // 열 구성은 «칩마다» 다르다 — 칩마다 보는 목적이 다르기 때문이다.
   const colKeys = useMemo(()=>{
@@ -23414,9 +23441,10 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
   const kpi = useMemo(()=>{
     const r = rows||[], today = csTodayKst();
     return {
-      recheck: r.filter(t=>match(t,'recheck')).length,
+      // ★ 카드는 칩 «상태 설정» 을 안 따른다(제니 2026-11-10) — 셋째 인자 true = 코드 기본.
+      recheck: r.filter(t=>match(t,'recheck',true)).length,
       over:    r.filter(t=>csGroupOf(t.stage)!=='종결' && t.recheck_at && t.recheck_at<today).length,
-      tosup:   r.filter(t=>match(t,'st:received')).length,
+      tosup:   r.filter(t=>match(t,'st:received',true)).length,
       await4:  r.filter(t=>t.stage==='awaiting' && t.supplier_sent_at &&
                  (Date.now()-new Date(t.supplier_sent_at))/86400000 >= 4).length,
       awaiting:r.filter(t=>t.stage==='awaiting').length,
@@ -23426,8 +23454,8 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
       //     그 순간 둘 다 안 믿는다(공급사 KPI 에서 세운 원칙이다).
       //   → 카드도 **칩의 판정(match)** 을 그대로 쓴다. 나중에 칩 조건을 고치면
       //     카드가 저절로 따라온다 — 두 곳에 적지 않는다.
-      settle:  r.filter(t=>match(t,'st:settlement')).length,
-      nocost:  r.filter(t=>match(t,'st:settlement') && t.settle_fee==null).length,
+      settle:  r.filter(t=>match(t,'st:settlement',true)).length,
+      nocost:  r.filter(t=>match(t,'st:settlement',true) && t.settle_fee==null).length,
     };
   },[rows]);
 
@@ -23439,25 +23467,47 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
       </div>
 
       <div className="kpi-grid cs-kpi" style={{marginBottom:14}}>
+        {/* ★ 카드마다 「?」 로 «무엇을 세나» 를 적는다(제니 2026-11-10). 글은 아래 kpi 셈과
+            글자 그대로 맞춰 둘 것 — 셈을 바꾸면 여기도. */}
         <div className="kpi-card">
-          <div className="kpi-label">오늘 리체크</div>
+          <div className="kpi-label" style={{display:'flex',alignItems:'center',gap:5}}>오늘 리체크
+            <CsHint width={300}>
+              <b>종결·철회를 뺀</b> 티켓 중 <b>리체크 날짜가 오늘이거나 이미 지난</b> 건.
+              <br/>아래 «기한 지남» = 그중 리체크 날짜가 <b>어제 이전</b>인 건.
+              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+            </CsHint></div>
           <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'var(--warn-ink)'}}>{kpi.recheck}</div>
           <div className="cs-kpi-note">
             {kpi.over? '기한 지남 '+kpi.over+'건' : '기한 지난 건 없음'}</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">공급사 미접수</div>
+          <div className="kpi-label" style={{display:'flex',alignItems:'center',gap:5}}>공급사 미접수
+            <CsHint width={300}>
+              상태가 <b>«티켓 등록»</b> 인 건 — 아직 공급사에 접수(진행중으로 옮기기) 안 한 티켓.
+              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+            </CsHint></div>
           <div className="kpi-value blue">{kpi.tosup}</div>
           <div className="cs-kpi-note">아직 공급사에 안 보낸 건</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">회신 대기</div>
+          <div className="kpi-label" style={{display:'flex',alignItems:'center',gap:5}}>회신 대기
+            <CsHint width={300}>
+              상태가 <b>«진행중»</b> 인 건 전부(공급사 회신을 기다리는 티켓).
+              <br/>아래 «4일째 이상» = 그중 <b>공급사에 보낸 때부터 4일(96시간) 이상</b> 지난 건.
+              보낸 시각이 없는 건은 여기에 안 셉니다.
+              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+            </CsHint></div>
           <div className="kpi-value red">{kpi.awaiting}</div>
           <div className="cs-kpi-note">
             {kpi.await4? '4일째 이상 '+kpi.await4+'건' : '오래 기다린 건 없음'}</div>
         </div>
         <div className="kpi-card">
-          <div className="kpi-label">정산 대기</div>
+          <div className="kpi-label" style={{display:'flex',alignItems:'center',gap:5}}>정산 대기
+            <CsHint width={300}>
+              상태가 <b>«정산 대기»</b> 또는 <b>«환불 완료»</b> 인 건.
+              <br/>아래 «비용 미입력» = 그중 <b>정산 상품금액</b> 칸이 비어 있는 건.
+              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+            </CsHint></div>
           <div className="kpi-value green">{kpi.settle}</div>
           <div className="cs-kpi-note">
             {kpi.nocost? '비용 미입력 '+kpi.nocost+'건' : '비용 입력 완료'}</div>
@@ -24513,7 +24563,18 @@ const csChk = {width:15,height:15,accentColor:'#78AAFF',cursor:'pointer',margin:
 // ★★ 단계 이름을 여기 다시 적지 않고 CS_STAGES 에서 읽는다 — 두 번째 목록을 두면
 //   단계 이름을 고쳤을 때 설정 화면만 옛 이름을 말하게 되고, 그 순간 이 표가 거짓말이 된다.
 // ★ «내 티켓»·«오늘의 리체크» 는 단계가 아니라 «조건» 이다(담당자·날짜).
-function csChipShows(id){
+// ★ 2026-11-10 — 상태를 설정에서 고른 칩은 «고른 상태» 를 읽어 준다(stages 를 넘길 때).
+//   기본과 같으면 예전 말 그대로(아래 csChipShowsBase).
+function csChipShows(id, stages){
+  if(stages && CS_CHIP_STAGE_EDITABLE(id) && !csSameSet(stages, csChipStageDefault(id))){
+    const names = CS_STAGES.filter(s=>stages.indexOf(s.id)>=0).map(s=>s.label).join(' · ');
+    if(id==='mine')    return '내가 담당인 티켓 · '+names;
+    if(id==='recheck') return '리체크 날짜가 오늘까지인 티켓 · '+names;
+    return names;
+  }
+  return csChipShowsBase(id);
+}
+function csChipShowsBase(id){
   // ★ 조건이 적힌 고정 칩은 그 조건을 그대로 읽어 준다 — 여기 다시 적으면
   //   조건을 넓힌 날 설정 화면만 옛말을 하게 된다.
   // ★★ 다만 **적는 꼴은 다른 고정 칩과 같아야 한다**(제니 2026-09-09) — 「CS 완료 ·
@@ -24580,6 +24641,12 @@ function CsChipRoleSettings({currentUserEmail}){
   const [custom,setCustom]         = useState([]);
   const [baseCustom,setBaseCustom] = useState([]);
   const [openId,setOpenId]         = useState(null);   // 조건을 펼쳐 둔 칩
+  // ★ 고정 칩의 «보여 줄 상태»(제니 2026-11-10) — cs_chip_stages. {칩 id: [상태 id…]} 를
+  //   화면에선 여덟 칩 전부 펼쳐 들고(기본 포함), 저장할 땐 «기본과 다른 것» 만 남긴다.
+  const [stgRow,setStgRow]   = useState(null);
+  const [stg,setStg]         = useState({});
+  const [baseStg,setBaseStg] = useState({});
+  const [openStg,setOpenStg] = useState(null);         // 상태를 펼쳐 둔 고정 칩
   // ★★★ 값은 «손으로 치지 않는다» — 이미 티켓에 쌓인 값에서 고른다(제니 2026-09-09:
   //   「단순 텍스트 입력하게 되면 불일치되는 경우가 있을 수 있으니」).
   //   **고를 수 있으면 틀릴 수 없다** — 「(주)가나」와 「가나」가 갈려 조용히 0건이
@@ -24638,9 +24705,15 @@ function CsChipRoleSettings({currentUserEmail}){
     return out;
   };
   useEffect(()=>{ (async()=>{
-    const [r, rc] = [await csLoadSetting('cs_chip_roles'),
-                     await csLoadSetting('cs_chips_custom')];
-    setRow(r); setLoaded(true);
+    const [r, rc, rs] = [await csLoadSetting('cs_chip_roles'),
+                     await csLoadSetting('cs_chips_custom'),
+                     await csLoadSetting('cs_chip_stages')];
+    setRow(r); setStgRow(rs);
+    const sm = {};
+    CS_CHIPS.filter(c=>CS_CHIP_STAGE_EDITABLE(c.id))
+      .forEach(c=>{ sm[c.id] = csChipStages({cs_chip_stages: rs && rs.value}, c.id); });
+    setStg(sm); setBaseStg(sm);
+    setLoaded(true);
     const v = (r && r.value) || {};
     const cs = csCustomChips({cs_chips_custom: rc && rc.value});
     setCustom(cs); setBaseCustom(cs);
@@ -24651,8 +24724,14 @@ function CsChipRoleSettings({currentUserEmail}){
       !CS_CHIPS.some(c=>c.id===k) && !cs.some(c=>c.id===k)));
   })(); },[]);
 
+  const stgDirty = JSON.stringify(baseStg)!==JSON.stringify(stg);
   const dirty = JSON.stringify(base)!==JSON.stringify(draft)
-             || JSON.stringify(baseCustom)!==JSON.stringify(custom);
+             || JSON.stringify(baseCustom)!==JSON.stringify(custom) || stgDirty;
+  const toggleStg = (chip, sid)=> setStg(p=>{
+    const cur = p[chip]||[];
+    const nx = cur.indexOf(sid)>=0 ? cur.filter(x=>x!==sid) : cur.concat([sid]);
+    return {...p, [chip]: CS_STAGES.map(s=>s.id).filter(x=>nx.indexOf(x)>=0)};
+  });
   const has = (chip,role)=> (draft[chip]||[]).indexOf(role)>=0;
   const toggle = (chip,role)=>{
     setDraft(p=>{
@@ -24672,11 +24751,22 @@ function CsChipRoleSettings({currentUserEmail}){
     //   있는데 무엇인지 알 길이 없다.
     const cleanCustom = custom.filter(c=>String(c.label||'').trim())
       .map(c=>({id:c.id, label:String(c.label).trim(), where:c.where||{}}));
+    // ★ 상태를 하나도 안 고른 칩은 저장하지 않는다 — 그 칩은 늘 0건이 되어 «고장» 으로 읽힌다.
+    const emptyStg = CS_CHIPS.filter(c=>stg[c.id] && !stg[c.id].length).map(c=>c.label);
+    if(emptyStg.length){ toast('보여 줄 상태를 하나 이상 고르세요: '+emptyStg.join(', '),'warn'); return; }
+    // ★ 기본과 같은 칩은 빼고 담는다 — 나중에 코드 기본을 고치면 손대지 않은 칩은 그것을 따른다.
+    //   ★ 설정에만 있고 화면이 모르는 키는 그대로 다시 담는다(칩 권한과 같은 규칙).
+    const stgOut = {};
+    const oldStg = (stgRow && stgRow.value) || {};
+    Object.keys(oldStg).forEach(k=>{ if(!CS_CHIP_STAGE_EDITABLE(k)) stgOut[k] = oldStg[k]; });
+    Object.keys(stg).forEach(k=>{ if(!csSameSet(stg[k], csChipStageDefault(k))) stgOut[k] = stg[k]; });
     setBusy(true);
     const ok1 = await csSaveSetting('cs_chip_roles', out, currentUserEmail);
     const ok2 = ok1 && await csSaveSetting('cs_chips_custom', cleanCustom, currentUserEmail);
+    const ok3 = ok2 && (!stgDirty || await csSaveSetting('cs_chip_stages', stgOut, currentUserEmail));
     setBusy(false);
-    if(!ok1 || !ok2) return;
+    if(!ok1 || !ok2 || !ok3) return;
+    setBaseStg(stg); if(stgDirty) setStgRow({value:stgOut});
     setBase(draft); setCustom(cleanCustom); setBaseCustom(cleanCustom);
     setRow({value:out, updated_at:new Date().toISOString(), updated_by:currentUserEmail});
     toast('칩 설정을 저장했습니다.','ok');
@@ -24693,7 +24783,7 @@ function CsChipRoleSettings({currentUserEmail}){
         공급사·담당자 …)과 <b>카페24 연동 값</b>입니다.
         <br/>★ 값은 <b>이미 티켓에 쌓인 것 중에서 고릅니다</b> — 손으로 치지 않으므로
         「(주)가나」와 「가나」가 갈려 아무것도 안 보이는 일이 없습니다.
-        <br/>★ 기존 칩은 <b>고정</b>입니다 — 오른쪽 체크로 «누가 보나» 만 정합니다.
+        <br/>★ 기존 칩은 이름이 <b>고정</b>입니다 — 오른쪽 체크로 «누가 보나» 를, <b>[상태]</b> 로 «어떤 상태의 티켓을 보여 줄지» 를 정합니다.
         <br/>★ <b>티켓 자체의 노출 설정이 아닙니다.</b> 어떤 목록 칩을 보여줄지를 설정합니다.
         <br/>★ 「전체」는 끌 수 없습니다.
       </CsSetNote>
@@ -24720,15 +24810,39 @@ function CsChipRoleSettings({currentUserEmail}){
           <tbody>
             {CS_CHIPS.map(c=>{
               const locked = c.id==='all';
+              const canStg = CS_CHIP_STAGE_EDITABLE(c.id);
+              const cur = stg[c.id] || [];
+              const isDef = canStg && csSameSet(cur, csChipStageDefault(c.id));
+              const changed = canStg && !csSameSet(cur, baseStg[c.id]||[]);
               return (
-                <tr key={c.id}>
+                <React.Fragment key={c.id}>
+                <tr>
                   <td style={csSetTd}>
                     {c.label}
                     <span style={{marginLeft:7,fontFamily:'monospace',fontSize:11.5,
                       color:'var(--sub)',opacity:.72}}>{c.id}</span>
                   </td>
                   <td style={{...csSetTd,color:'var(--sub)',fontSize:11.5}}>
-                    {csChipShows(c.id)}</td>
+                    {/* ★ 고정 칩도 «보여 줄 상태» 를 고른다(제니 2026-11-10) — [상태] 로 펼친다.
+                        기본과 다르면 «바꿈» 표를 단다(무엇이 손댄 칩인지 한눈에). */}
+                    {canStg ? (
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span style={{flex:1,minWidth:0,color:cur.length?undefined:'var(--red-ink)'}}>
+                          {cur.length ? csChipShows(c.id, cur) : '상태를 하나 이상 고르세요'}
+                          {!isDef && cur.length>0 && <span style={{marginLeft:6,fontSize:10,
+                            padding:'1px 6px',borderRadius:4,border:'1px solid var(--accent)',
+                            color:'var(--accent)'}}>바꿈</span>}
+                          {changed && <span style={{marginLeft:6,fontSize:10,color:'var(--amber, #f6ad09)'}}>
+                            · 저장 안 됨</span>}
+                        </span>
+                        <button onClick={()=>setOpenStg(o=>o===c.id?null:c.id)}
+                          style={{padding:'3px 9px',borderRadius:6,fontSize:10.5,
+                            fontFamily:'inherit',cursor:'pointer',whiteSpace:'nowrap',
+                            background:'transparent',border:'1px solid var(--accent)',
+                            color:'var(--accent)'}}>
+                          {openStg===c.id?'접기':'상태'}</button>
+                      </div>
+                    ) : csChipShows(c.id)}</td>
                   {CS_ROLES.map(r=>(
                     <td key={r.id} style={{...csSetTd,textAlign:'center'}}>
                       <input type="checkbox" style={{...csChk,
@@ -24740,6 +24854,36 @@ function CsChipRoleSettings({currentUserEmail}){
                     </td>
                   ))}
                 </tr>
+                {canStg && openStg===c.id && (
+                  <tr>
+                    <td colSpan={2+CS_ROLES.length}
+                      style={{...csSetTd,background:'var(--bg)',padding:'10px 12px'}}>
+                      <div style={{fontSize:10.5,color:'var(--sub)',marginBottom:8,lineHeight:1.7}}>
+                        «{c.label}» 칩에서 <b>보여 줄 상태</b>를 고릅니다(고른 것끼리는 <b>또는</b>).
+                        {(c.id==='mine'||c.id==='recheck') &&
+                          <><br/>{c.id==='mine'?'«내가 담당인 티켓»':'«리체크 날짜가 오늘까지인 티켓»'} 조건은 그대로이고, 상태로 더 좁힙니다.</>}
+                        <br/>위 숫자 카드는 이 설정과 상관없이 지금 기준으로 셉니다.
+                      </div>
+                      <div style={{display:'flex',flexWrap:'wrap',gap:'6px 14px',alignItems:'center'}}>
+                        {CS_STAGES.map(s=>(
+                          <label key={s.id} style={{display:'inline-flex',alignItems:'center',gap:5,
+                            fontSize:12,cursor:'pointer',color:'var(--text)'}}>
+                            <input type="checkbox" style={{...csChk,cursor:'pointer'}}
+                              checked={cur.indexOf(s.id)>=0} onChange={()=>toggleStg(c.id,s.id)}/>
+                            {s.label}
+                          </label>
+                        ))}
+                        <button onClick={()=>setStg(p=>({...p,[c.id]:csChipStageDefault(c.id)}))}
+                          disabled={isDef}
+                          style={{marginLeft:'auto',padding:'3px 9px',borderRadius:6,fontSize:10.5,
+                            fontFamily:'inherit',cursor:isDef?'default':'pointer',whiteSpace:'nowrap',
+                            background:'transparent',border:'1px solid var(--border)',
+                            color:'var(--sub)',opacity:isDef?.5:1}}>기본값으로</button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               );
             })}
             {/* ── 사람이 만든 칩 (제니 2026-09-09) ─────────────────────────
@@ -24900,8 +25044,10 @@ function CsChipRoleSettings({currentUserEmail}){
         </div>
       )}
 
+      {/* ★ 되돌리기는 이 탭의 세 가지(권한·만든 칩·상태)를 함께 되돌린다(2026-11-10 —
+          그전엔 권한만 되돌려 만든 칩을 고친 것은 «저장 안 한 변경» 이 안 꺼졌다). */}
       <CsSaveBar row={row} dirty={dirty} busy={busy} onSave={save}
-        onReset={()=>setDraft(base)}/>
+        onReset={()=>{ setDraft(base); setCustom(baseCustom); setStg(baseStg); }}/>
     </div>
   );
 }
