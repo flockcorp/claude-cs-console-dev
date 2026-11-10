@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261110d_kpi_hint_short -->
+<!-- (2026-11-10) 카드 「?」 끝줄을 «최근 수정 500건 기준» 으로 줄임(제니). SQL 없음. ★ dev 전용. -->
 <!-- v20261110c_chip_stages_kpi_hint -->
 <!-- (2026-11-10) 🎫 c 판 둘. ①칩별 «보여 줄 상태» 를 CS 설정 › 칩 권한에서(제니: 「칩별로 보여줄 티켓 상태값을 설정 메뉴에서」) — 고정 칩 여덟(전체 뺌)의 «보이는 티켓» 칸에 [상태] → 상태 10개 체크 · [기본값으로] · 기본과 다르면 «바꿈». 새 설정 키 cs_chip_stages {칩 id:[상태]} — 기본과 같은 칩은 안 담음(없으면 예전 판정 그대로). 내 티켓·리체크는 담당·날짜 조건 + 상태로 더 좁힘(기본 = 종결 그룹 제외). 숫자 카드는 이 설정을 안 따른다(제니 · match 셋째 인자 base). 빈 선택은 저장 막음. ②CS 관리 상단 카드 넷 이름 옆 「?」(CsHint)로 셈 기준 설명(제니). SQL 없음(console_settings 새 키 · 표·칸 안 더함). ★ dev 전용. -->
 <!-- v20261110b_tk_list_filter_reset_on_menu -->
@@ -23474,7 +23476,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
             <CsHint width={300}>
               <b>종결·철회를 뺀</b> 티켓 중 <b>리체크 날짜가 오늘이거나 이미 지난</b> 건.
               <br/>아래 «기한 지남» = 그중 리체크 날짜가 <b>어제 이전</b>인 건.
-              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+              <br/><br/>최근 수정 500건 기준
             </CsHint></div>
           <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'var(--warn-ink)'}}>{kpi.recheck}</div>
           <div className="cs-kpi-note">
@@ -23484,7 +23486,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
           <div className="kpi-label" style={{display:'flex',alignItems:'center',gap:5}}>공급사 미접수
             <CsHint width={300}>
               상태가 <b>«티켓 등록»</b> 인 건 — 아직 공급사에 접수(진행중으로 옮기기) 안 한 티켓.
-              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+              <br/><br/>최근 수정 500건 기준
             </CsHint></div>
           <div className="kpi-value blue">{kpi.tosup}</div>
           <div className="cs-kpi-note">아직 공급사에 안 보낸 건</div>
@@ -23495,7 +23497,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
               상태가 <b>«진행중»</b> 인 건 전부(공급사 회신을 기다리는 티켓).
               <br/>아래 «4일째 이상» = 그중 <b>공급사에 보낸 때부터 4일(96시간) 이상</b> 지난 건.
               보낸 시각이 없는 건은 여기에 안 셉니다.
-              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+              <br/><br/>최근 수정 500건 기준
             </CsHint></div>
           <div className="kpi-value red">{kpi.awaiting}</div>
           <div className="cs-kpi-note">
@@ -23506,7 +23508,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
             <CsHint width={300}>
               상태가 <b>«정산 대기»</b> 또는 <b>«환불 완료»</b> 인 건.
               <br/>아래 «비용 미입력» = 그중 <b>정산 상품금액</b> 칸이 비어 있는 건.
-              <br/><br/>읽어 온 티켓(최근 수정 500건) 전부로 셉니다 — 칩·필터·검색과 상관없음.
+              <br/><br/>최근 수정 500건 기준
             </CsHint></div>
           <div className="kpi-value green">{kpi.settle}</div>
           <div className="cs-kpi-note">
