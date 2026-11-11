@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261111a_cs_info_qa_sep_edit_btn -->
+<!-- (2026-11-11) 🎫 티켓 등록·상세 ③ 이 상품 CS 정보 — ①Q·A 한 묶음마다 구분선(제니: 「Q 와 A 줄이 연속돼 구분이 안 된다」 · csLinesOf qa · 같은 유형 안 두 번째 묶음부터 위에 선 · [유형] 머리글 굵게) ②[수정 바로하기](상품코드 옆 · 상품 정보 메뉴 권한 있을 때만) → 상품 정보 화면으로 가서 그 상품 수정 화면을 바로 연다(ProductsPage editCode · 작성 중이면 이탈 확인). SQL 없음. ★ dev 전용. -->
 <!-- v20261110d_kpi_hint_short -->
 <!-- (2026-11-10) 카드 「?」 끝줄을 «최근 수정 500건 기준» 으로 줄임(제니). SQL 없음. ★ dev 전용. -->
 <!-- v20261110c_chip_stages_kpi_hint -->
@@ -4000,7 +4002,7 @@ function mergeFaqAnswers(csInfo,faqMap,uploadRows,parseCs){
 }
 // [FAQ-MERGE-BLOCK-END]
 
-function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEmail='',can}){
+function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEmail='',can,editCode=null,onEditCodeUsed}){
   // ★ 자식 기본값은 «못 한다» 쪽이다 — prop 을 빠뜨렸을 때 열리는 쪽으로 넘어지면
   //   권한이 조용히 사라진 것을 아무도 모른다.
   const canDelete = typeof can==='function' ? can('products.delete') : false;
@@ -5218,6 +5220,24 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
       price:p.price||'',shipping_fee:p.shipping_fee||'',shipping_threshold:p.shipping_threshold||''});
     setEditId(p.id); setDetailProd(null); setTab('add'); setMsg('');
   };
+  // ★ 티켓 ③ [수정 바로하기] 로 들어왔으면(제니 2026-11-11) 그 상품의 수정 화면을 바로 연다.
+  //   목록 줄과 같은 startEdit 를 쓴다 — 줄은 select('*') 라 같은 값을 다시 읽는다.
+  //   코드가 둘 이상·없으면 열지 않고 말한다(엉뚱한 상품을 고치게 하지 않는다).
+  useEffect(()=>{
+    if(!editCode) return;
+    let off=false;
+    (async()=>{
+      const{data,error}=await sb.from('products').select('*').eq('product_code',editCode).limit(2);
+      if(off) return;
+      if(onEditCodeUsed) onEditCodeUsed();
+      if(sbFail('상품 불러오기',error)) return;
+      if((data||[]).length===1) startEdit(data[0]);
+      // ★ alert 로 — msg 는 수정 탭 안에서만 보여서 목록에 머물면 안 보인다.
+      else alert((data||[]).length ? '같은 상품코드가 여럿이라 수정 화면을 열지 않았습니다: '+editCode
+                                   : '상품을 찾지 못했습니다: '+editCode);
+    })();
+    return ()=>{off=true;};
+  },[editCode]);
   const bulkDelete=async()=>{
     if(!confirm(checkedIds.size+'개 상품을 삭제하시겠습니까?'))return;
     await Promise.all([...checkedIds].map(id=>sb.from('products').delete().eq('id',id)));
@@ -21217,22 +21237,70 @@ function csReturnFeeLine(p){
     : (Number(p.return_fee) > 0 ? Number(p.return_fee).toLocaleString()+'원 (왕복)' : '');
   return t ? '반품배송비: '+t : '';
 }
+// ── 티켓 ③ [수정 바로하기] (제니 2026-11-11) ─────────────────────────────────
+// 「이 영역 안에서 상품 정보를 바로 수정 · 클릭하면 상품 정보 수정 화면으로」.
+// ★ 등록·상세가 같은 것을 쓴다. onEditProduct 가 없으면(상품 정보 메뉴 권한 없음) 안 그린다 —
+//   눌러서 «권한 없음» 화면으로 가는 단추는 거짓말이다.
+// ★ 화면을 옮기는 길이라 작성 중이면 App 의 csConfirmLeave 가 먼저 묻는다.
+function CsEditProductBtn({code, onEditProduct}){
+  if(!code || typeof onEditProduct!=='function') return null;
+  return (
+    <button type="button" onClick={()=>onEditProduct(code)}
+      title="상품 정보 메뉴의 이 상품 수정 화면으로 갑니다"
+      style={{padding:'3px 9px',borderRadius:5,fontSize:10.5,fontFamily:'inherit',
+        cursor:'pointer',background:'transparent',border:'1px solid var(--accent)',
+        color:'var(--accent)',whiteSpace:'nowrap',flexShrink:0,fontWeight:600}}>
+      수정 바로하기</button>
+  );
+}
 // 여러 줄 글을 줄 단위로 그린다. 찾은 줄은 왼쪽에 ▸ 를 세우고 배경을 옅게 깐다.
 // ★ 화살표 자리는 «찾든 안 찾든» 늘 비워 둔다 — 있을 때만 자리를 만들면 글이
 //   좌우로 들썩여 읽기 나쁘다.
-function csLinesOf(text, rawQ, style){
+// ★ qa 를 주면(상품 CS 정보) «Q. 줄부터 다음 Q.·[유형] 앞까지» 를 한 묶음으로 보고
+//   묶음 사이에 구분선을 긋는다(제니 2026-11-11: Q 와 A 가 이어져 구분이 안 된다).
+//   선은 «같은 유형 안의 두 번째 묶음부터» 위에 — [유형] 머리글 바로 아래엔 긋지 않는다.
+//   묶음 끝의 빈 줄(유형 사이 빈 줄)은 그리지 않는다 — 선과 겹쳐 틈만 벌어진다.
+function csLinesOf(text, rawQ, style, qa){
   const q = String(rawQ||'').trim();
   const lines = String(text||'').split(/\r?\n/);
+  const lineEl = (ln,i)=>{
+    const on = !!q && ln.toLowerCase().indexOf(q.toLowerCase())>=0;
+    return (
+      <div key={i} style={{display:'grid',gridTemplateColumns:'11px 1fr',gap:3,
+        background: on?'rgba(246,173,9,.10)':'transparent',borderRadius:4}}>
+        <span style={{color:'var(--warn-ink)',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
+        <span style={{whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
+          {csMarkText(ln, q)}</span>
+      </div>
+    );
+  };
+  if(!qa) return (
+    <div style={{lineHeight:1.75, ...(style||{})}}>{lines.map(lineEl)}</div>
+  );
+  // 묶음: {kind:'head'|'qa'|'text', items:[[줄,번호]...]}
+  const blocks = [];
+  lines.forEach((ln,i)=>{
+    const head = /^\[.+\]$/.test(ln.trim());
+    const isQ  = /^Q\.\s?/.test(ln);
+    const last = blocks[blocks.length-1];
+    if(head) blocks.push({kind:'head', items:[[ln,i]]});
+    else if(isQ) blocks.push({kind:'qa', items:[[ln,i]]});
+    else if(last && last.kind!=='head') last.items.push([ln,i]);
+    else blocks.push({kind:'text', items:[[ln,i]]});
+  });
+  blocks.forEach(b=>{ while(b.items.length>1 && !b.items[b.items.length-1][0].trim()) b.items.pop(); });
   return (
     <div style={{lineHeight:1.75, ...(style||{})}}>
-      {lines.map((ln,i)=>{
-        const on = !!q && ln.toLowerCase().indexOf(q.toLowerCase())>=0;
+      {blocks.map((b,bi)=>{
+        const prev = blocks[bi-1];
+        const line = b.kind==='qa' && prev && prev.kind!=='head';
+        const gapTop = b.kind==='head' && bi>0;
         return (
-          <div key={i} style={{display:'grid',gridTemplateColumns:'11px 1fr',gap:3,
-            background: on?'rgba(246,173,9,.10)':'transparent',borderRadius:4}}>
-            <span style={{color:'var(--warn-ink)',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
-            <span style={{whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
-              {csMarkText(ln, q)}</span>
+          <div key={bi} style={{
+            ...(line ? {borderTop:'1px solid var(--border)', marginTop:5, paddingTop:5} : {}),
+            ...(gapTop ? {marginTop:10} : {}),
+            ...(b.kind==='head' ? {fontWeight:700} : {})}}>
+            {b.items.map(([ln,i])=>lineEl(ln,i))}
           </div>
         );
       })}
@@ -28768,7 +28836,7 @@ function useCsLeaveGuard(hasUnsaved){
 }
 
 //   ★ 공급사가 다르면 함께 못 고른다 — 접수는 «공급사 단위» 로 나가기 때문이다.
-function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
+function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket, onEditProduct}){
   const isMaster = role==='master';
   // 「무엇이 언제 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
@@ -29521,8 +29589,11 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
       <div style={{marginBottom:8,paddingBottom:8,borderBottom:'1px solid var(--border)'}}>
         <div style={{fontSize:12,color:'var(--text)',lineHeight:1.5,
           wordBreak:'break-word'}}>{p.product_name || '—'}</div>
-        <div style={{fontSize:11,color:'var(--accent)',fontFamily:'monospace',
-          marginTop:3,wordBreak:'break-all'}}>{p.product_code || '—'}</div>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginTop:3}}>
+          <div style={{flex:1,minWidth:0,fontSize:11,color:'var(--accent)',fontFamily:'monospace',
+            wordBreak:'break-all'}}>{p.product_code || '—'}</div>
+          <CsEditProductBtn code={p.product_code} onEditProduct={onEditProduct}/>
+        </div>
       </div>
       {/* ★ 찾는 말이 있으면 그 줄만 도드라진다. 없으면 평소와 똑같이 보인다 —
           검색을 «켠 적 없는» 사람에게는 아무것도 달라지지 않아야 한다. */}
@@ -29538,7 +29609,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
         </div>
       )}
       {p.cs_info
-        ? csLines(p.cs_info, {fontSize:11,color:'var(--text)'})
+        ? csLines(p.cs_info, {fontSize:11,color:'var(--text)'}, true)
         : <div style={{fontSize:11,color:'var(--sub)'}}>— CS 정보 없음 —</div>}
       {p.memo && (
         <div style={{marginTop:8,paddingTop:8,borderTop:'1px solid var(--border)'}}>
@@ -29552,7 +29623,7 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket}){
   // ★ 셈은 화면 밖(csLinesOf·csHitLines)에 있다 — 등록과 상세가 «같은 것» 을 써야
   //   한쪽만 고쳐지는 일이 없다. 여기 남는 것은 찾는 말 하나뿐이다.
   const [pq,setPq]  = useState('');
-  const csLines     = (text,style)=> csLinesOf(text, pq, style);
+  const csLines     = (text,style,qa)=> csLinesOf(text, pq, style, qa);
   const csHitCount  = (text)=> csHitLines(text, pq);
  // 칸 너비 — 사람마다 따로 남는다. 생성과 상세가 «다른» 열쇠를 쓴다:
   // 만들 때와 볼 때 보는 것이 달라 원하는 폭도 다르다.
@@ -30451,7 +30522,7 @@ function csCafe24OrderUrl(t){
 }
 
 // ★ canRefund — 환불 관리 메뉴 권한(목록 화면과 같은 값). 자세한 것은 CsTicketsPage 주석.
-function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=false, seq, onBack, goTicket, onNew}){
+function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=false, seq, onBack, goTicket, onNew, onEditProduct}){
   // 「무엇이 종결할 때 꼭 있어야 하나」 — 설정(cs_field_rules)에서 읽는다(2026-09-04).
   const fieldRules = useCsFieldRules();
   // 어느 단계로 저장할 수 있나 — CS 설정 › 상태 권한(2026-09-16).
@@ -30697,7 +30768,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
   //   지우기가 조용히 입력칸을 긁게 된다.
   // ── ③ «상품 정보 안에서 찾기» — 등록 화면과 같은 것을 쓴다.
   const [pq,setPq]  = useState('');
-  const csLines     = (text,style)=> csLinesOf(text, pq, style);
+  const csLines     = (text,style,qa)=> csLinesOf(text, pq, style, qa);
   const csHitCount  = (text)=> csHitLines(text, pq);
   const draftRef = useRef(null);
   // 접수 문안의 «형식» 을 정하는 값 — 이 티켓 공급사의 창구(메일·네이트온·카카오톡).
@@ -32040,8 +32111,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
             <div style={{fontSize:11,color:'var(--sub)'}}>이 상품의 CS 정보가 없습니다.</div>
           ) : (
             <>
-              <div style={{fontSize:11,color:'var(--accent)',fontFamily:'monospace',
-                marginBottom:6,wordBreak:'break-all'}}>{csInfo.product_code}</div>
+              <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                <div style={{flex:1,minWidth:0,fontSize:11,color:'var(--accent)',fontFamily:'monospace',
+                  wordBreak:'break-all'}}>{csInfo.product_code}</div>
+                <CsEditProductBtn code={csInfo.product_code} onEditProduct={onEditProduct}/>
+              </div>
               {(()=>{ const n = csHitCount([csReturnFeeLine(csInfo), csInfo.cs_info||'', csInfo.memo||''].join('\n'));
                 return n===null ? null : (
                   <div style={{fontSize:10,marginBottom:6,
@@ -32055,7 +32129,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
               )}
               <div style={{maxHeight:260,overflowY:'auto'}}>
                 {csInfo.cs_info
-                  ? csLines(csInfo.cs_info, {fontSize:11,color:'var(--text)'})
+                  ? csLines(csInfo.cs_info, {fontSize:11,color:'var(--text)'}, true)
                   : <div style={{fontSize:11,color:'var(--sub)'}}>— CS 정보 없음 —</div>}
               </div>
               {csInfo.memo && (
@@ -39551,6 +39625,9 @@ function App() {
   // ★ 티켓 목록 필터도 여기서(2026-11-10 제니) — 상세 갔다 와도 남는다 · 푸는 길은 [필터 지우기]와
   //   사이드바 «티켓 목록»(칩과 함께 되돌림 · 제니 11-10 b 판).
   const [csFlt,setCsFlt] = useState(CS_FILTER0);
+  // ★ 티켓 ③ [수정 바로하기] 가 넘긴 상품코드(제니 2026-11-11) — 상품 정보 화면이 열리며 한 번 쓰고 비운다.
+  const [prodEditCode,setProdEditCode] = useState(null);
+  const editProduct = (code)=>{ if(navigateTo('products')) setProdEditCode(code); };
   const navigateTo = (pageId)=>{
     if(!csConfirmLeave()) return false;
     setPage(pageId);
@@ -40099,7 +40176,8 @@ function App() {
           onActionSaved={()=>csLoadSetting('action_roles').then(r=>setActionCfg((r&&r.value)||null))}
           /* ★ 메뉴 차례도 저장하는 즉시 내 사이드바가 바뀐다(다른 사람은 다음 로그인 때). */
           onNavSaved={(v)=>setNavOrderCfg(v)}/>}
-        {page==='products'&&(canMenu('products')?<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}/>:<NoAccessPage/>)}
+        {page==='products'&&(canMenu('products')?<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}
+          editCode={prodEditCode} onEditCodeUsed={()=>setProdEditCode(null)}/>:<NoAccessPage/>)}
         {page==='suppliers'&&(canMenu('suppliers')?<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {page==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager} can={canAction}/>}
         {page==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}/>}
@@ -40114,12 +40192,12 @@ function App() {
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csNew'&&(canMenu('csTickets')?<CsNewTicketPage currentUserEmail={session.user.email} role={role}
           onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
-          goTicket={openTicket}/>:<NoAccessPage/>)}
+          goTicket={openTicket} onEditProduct={canMenu('products') ? editProduct : null}/>:<NoAccessPage/>)}
         {page==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
           role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={ticketSeq}
           canDelete={canAction('csTickets.delete')}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}
-          onNew={()=>navigateTo('csNew')}/>:<NoAccessPage/>)}
+          onNew={()=>navigateTo('csNew')} onEditProduct={canMenu('products') ? editProduct : null}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='csStats'&&(canMenu('csStats')?<CsStatsPage/>:<NoAccessPage/>)}
         {page==='manuals'&&(canMenu('manuals')?<ManualsPage currentUserEmail={session.user.email} role={role} can={canAction}/>:<NoAccessPage/>)}
