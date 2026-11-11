@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261111b_cs_info_q_bold -->
+<!-- (2026-11-11) 🎫 ③ 상품 CS 정보 — Q. 줄만 굵게(제니: Q·A 자체도 구분 · 기울임 대신 굵게 — 맑은 고딕엔 기울임 꼴이 없다). SQL 없음. ★ dev 전용. -->
 <!-- v20261111a_cs_info_qa_sep_edit_btn -->
 <!-- (2026-11-11) 🎫 티켓 등록·상세 ③ 이 상품 CS 정보 — ①Q·A 한 묶음마다 구분선(제니: 「Q 와 A 줄이 연속돼 구분이 안 된다」 · csLinesOf qa · 같은 유형 안 두 번째 묶음부터 위에 선 · [유형] 머리글 굵게) ②[수정 바로하기](상품코드 옆 · 상품 정보 메뉴 권한 있을 때만) → 상품 정보 화면으로 가서 그 상품 수정 화면을 바로 연다(ProductsPage editCode · 작성 중이면 이탈 확인). SQL 없음. ★ dev 전용. -->
 <!-- v20261110d_kpi_hint_short -->
@@ -21263,10 +21265,14 @@ function CsEditProductBtn({code, onEditProduct}){
 function csLinesOf(text, rawQ, style, qa){
   const q = String(rawQ||'').trim();
   const lines = String(text||'').split(/\r?\n/);
+  // ★ qa 일 때 Q. 줄만 굵게(제니 2026-11-11 · Q·A 자체도 구분) — 기울임은 안 쓴다:
+  //   맑은 고딕엔 기울임 꼴이 없어 브라우저가 억지로 눕혀 11px 에서 뭉개진다.
   const lineEl = (ln,i)=>{
     const on = !!q && ln.toLowerCase().indexOf(q.toLowerCase())>=0;
+    const qLine = qa && /^Q\.\s?/.test(ln);
     return (
       <div key={i} style={{display:'grid',gridTemplateColumns:'11px 1fr',gap:3,
+        ...(qLine ? {fontWeight:700} : {}),
         background: on?'rgba(246,173,9,.10)':'transparent',borderRadius:4}}>
         <span style={{color:'var(--warn-ink)',fontSize:10,lineHeight:1.75}}>{on?'▸':''}</span>
         <span style={{whiteSpace:'pre-wrap',wordBreak:'break-word'}}>
