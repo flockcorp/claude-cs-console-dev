@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261111c_tk_key_label -->
+<!-- (2026-11-11) 🎫 티켓 등록·상세 ① 항목명(품목별 주문번호·상품·옵션·주문 수량·CS 접수 …) 10.5px·회색·보통 → 11px·600·회색과 본문 사이 색(color-mix · 제니: 눈에 안 띈다 · 추천안). row·rowWide 두 화면. 이름 칸 78px 그대로 — 가장 긴 «품목별 주문번호» 69.2px(실측). SQL 없음. ★ dev 전용. -->
 <!-- v20261111b_cs_info_q_bold -->
 <!-- (2026-11-11) 🎫 ③ 상품 CS 정보 — Q. 줄만 굵게(제니: Q·A 자체도 구분 · 기울임 대신 굵게 — 맑은 고딕엔 기울임 꼴이 없다). SQL 없음. ★ dev 전용. -->
 <!-- v20261111a_cs_info_qa_sep_edit_btn -->
@@ -29552,7 +29554,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket, on
       {/* ★ 왼쪽 정렬이다(제니 2026-09-02). 오른쪽에 붙이면 이름의 «끝» 이 가지런해지는
           대신 «시작» 이 들쭉날쭉해진다 — 눈은 왼쪽에서 오른쪽으로 읽으므로 시작이
           맞는 편이 훑기 쉽다. */}
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,
+      {/* ★ 10.5px·회색·보통 → 11px·600·회색과 본문 글자 사이 색(제니 2026-11-11: 항목명이 눈에 안 띈다).
+          크기는 조금만 — 키우면 이름 칸이 넓어져 값 칸을 뺏는다. 색은 color-mix 라 다크·라이트가 각자 맞는다. */}
+      <div className="cs-tk-key" style={{fontSize:11,fontWeight:600,lineHeight:1.5,
+        color:'color-mix(in srgb, var(--text) 45%, var(--sub))',
         whiteSpace:'nowrap'}}>{k}</div>
       <div style={{minWidth:0}}>{node}</div>
     </div>
@@ -29562,7 +29567,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket, on
   //   다른 줄과 시작점이 같으므로(x=28) 정렬은 그대로 지켜진다.
   const rowWide = (k,node)=>(
     <div style={{padding:'4px 0 4px '+rowPad+'px'}}>
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,marginBottom:4}}>{k}</div>
+      <div className="cs-tk-key" style={{fontSize:11,fontWeight:600,lineHeight:1.5,marginBottom:4,
+        color:'color-mix(in srgb, var(--text) 45%, var(--sub))'}}>{k}</div>
       <div style={{minWidth:0}}>{node}</div>
     </div>
   );
@@ -31160,7 +31166,10 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
       {/* ★ 왼쪽 정렬이다(제니 2026-09-02). 오른쪽에 붙이면 이름의 «끝» 이 가지런해지는
           대신 «시작» 이 들쭉날쭉해진다 — 눈은 왼쪽에서 오른쪽으로 읽으므로 시작이
           맞는 편이 훑기 쉽다. */}
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,
+      {/* ★ 10.5px·회색·보통 → 11px·600·회색과 본문 글자 사이 색(제니 2026-11-11: 항목명이 눈에 안 띈다).
+          크기는 조금만 — 키우면 이름 칸이 넓어져 값 칸을 뺏는다. 색은 color-mix 라 다크·라이트가 각자 맞는다. */}
+      <div className="cs-tk-key" style={{fontSize:11,fontWeight:600,lineHeight:1.5,
+        color:'color-mix(in srgb, var(--text) 45%, var(--sub))',
         whiteSpace:'nowrap'}}>{k}</div>
       <div style={{minWidth:0}}>{node}</div>
     </div>
@@ -31170,7 +31179,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
   //   다른 줄과 시작점이 같으므로(x=28) 정렬은 그대로 지켜진다.
   const rowWide = (k,node)=>(
     <div style={{padding:'4px 0 4px '+rowPad+'px'}}>
-      <div style={{fontSize:10.5,color:'var(--sub)',lineHeight:1.5,marginBottom:4}}>{k}</div>
+      <div className="cs-tk-key" style={{fontSize:11,fontWeight:600,lineHeight:1.5,marginBottom:4,
+        color:'color-mix(in srgb, var(--text) 45%, var(--sub))'}}>{k}</div>
       <div style={{minWidth:0}}>{node}</div>
     </div>
   );
