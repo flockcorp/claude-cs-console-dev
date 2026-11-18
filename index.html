@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261118a_settle_stage_solo -->
+<!-- (2026-11-18) 🎫 그룹 티켓 «정산 단계» 는 그 티켓만(제니 제안 ⓐ: 정산은 품목 기준 — 금액 없는 품목은 종결, 있는 품목만 정산 대기 · 한 묶음 안에서 갈린다). 지금 단계가 재출고 완료·환불 완료·정산 대기이고 고른 단계가 정산 대기·종결이면 형제 티켓 단계는 안 바꾼다(csStageSoloOnly). 그 밖(접수~확인 대기 · 철회 · 진행중에서 바로 종결)은 예전대로 묶음 함께. 리체크·담당자는 늘 묶음 함께. 이력 꼬리 «(상태는 이 티켓만 · 정산 단계)» · 저장 줄 왼쪽에 운영팀에게 안내 한 줄(묶음이고 정산 앞 단계일 때만). SQL 없음. ★ dev 전용. -->
 <!-- v20261116a_msg_chat_link -->
 <!-- (2026-11-16) 💬 안내 템플릿 «채팅 링크» 한 곳 관리 — 오른쪽 위 칸(운영팀만 변경 · console_settings.msg_chat_link {url}) · 본문의 {채팅링크} 가 보여 줄 때·복사할 때 그 주소로 바뀐다 · 편집기 [+ 채팅 링크] · 편집·저장은 바꾸기 전 본문(주소가 다시 박히지 않게) · 값이 비면 빈칸으로 떠 복사 경고(제니: 우측 상단에 넣고 모든 템플릿에 반영). 데이터: 본문의 해피톡 주소 → {채팅링크} 는 SQL(msg_tpl_chat_link.sql). ★ dev 전용. -->
 <!-- v20261111c_tk_key_label -->
@@ -20271,6 +20273,16 @@ const CS_STAGE_GROUPS = ['접수','처리중','확인 대기','완료','종결']
 //   ★ 이건 «화면» 의 잠금이다. DB 가 진짜로 막는 것은 «환불 요청(refunds 행 생성)» 과
 //     «정산 반영(settled_at)» 이다 — 되돌릴 수 없는 것은 그 둘이고, 단계는 이름표다.
 const CS_STAGES_MASTER = ['refunded','settlement','closed','withdrawn'];
+// ★★★ 2026-11-18 제니 — 「정산은 품목 기준이라, 같은 묶음 안에서도 금액 없는 품목은 «종결»,
+//   있는 품목만 «정산 대기» 로 제출한다」. 앞 과정(접수~확인 대기)은 묶음이 함께 가지만
+//   **정산 단계로 넘길 때는 그 티켓만** 바꾼다(제안 ⓐ). 철회는 묶음 전체 그대로(제니).
+//   ★ 조건이 «지금 단계» 와 «고른 단계» 둘 다다 — 진행중에서 바로 종결하는 것은
+//     사건 전체를 닫는 일이라 묶음이 함께 간다.
+const CS_SETTLE_FROM = ['reshipped','refunded','settlement'];
+const CS_SETTLE_TO   = ['settlement','closed'];
+function csStageSoloOnly(from, to){
+  return CS_SETTLE_FROM.indexOf(from) >= 0 && CS_SETTLE_TO.indexOf(to) >= 0;
+}
 // ★★★ 2026-09-16 제니 — **«권한별로 저장할 수 있는 단계» 를 설정에서 정한다**
 //   (CS 설정 › «상태 권한» 탭). 그전에는 위 `CS_STAGES_MASTER` 가 코드에 박혀 있어
 //   화면에서 바꿀 길이 없었다.
@@ -31007,7 +31019,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
       //   한쪽만 늘어나 이력이 사실과 다른 말을 한다(문구가 「단계·리체크」 로 박혀
       //   있던 것을 이번에 함께 고쳤다).
       const grpNames = [];
-      if(st !== (t.stage||''))                   { grpRow.stage = st; grpNames.push('단계'); }
+      // ★★ 정산 단계로 넘길 때는 «이 티켓만»(제니 2026-11-18 · CS_SETTLE_FROM/TO).
+      const solo = st !== (t.stage||'') && csStageSoloOnly(t.stage||'', st);
+      if(st !== (t.stage||'') && !solo)          { grpRow.stage = st; grpNames.push('단계'); }
       if(edit.recheck_at !== (t.recheck_at||'')) { grpRow.recheck_at = edit.recheck_at || null; grpNames.push('리체크'); }
       if(String(edit.assignee||'') !== String(t.assignee||'')) { grpRow.assignee = row.assignee; grpNames.push('담당자'); }
       if(sibs.length && grpNames.length){
@@ -31028,8 +31042,9 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
       //   항목 구분이 안 된다. 이력 화면이 pre-wrap 이라 줄바꿈이 그대로 보인다.
       const grpHint = (group.length>1 && grpNames.length)
         ? '\n('+grpNames.join('·')+'는 묶음 '+group.length+'건에 함께 적용)' : '';
+      const soloHint = (group.length>1 && solo) ? '\n(상태는 이 티켓만 · 정산 단계)' : '';
       evs.push({ticket_id:ticketId, side:'원룸만들기', action:'수정', actor:currentUserEmail,
-        note: chg.join('\n')+grpHint, stage_after: st, direction_after: edit.direction||null,
+        note: chg.join('\n')+grpHint+soloHint, stage_after: st, direction_after: edit.direction||null,
         // ★★★ 빈 배열을 «꼭» 적는다(2026-10-12 운영 오류). 여러 줄을 한 번에 넣으면
         //   supabase 가 모든 줄의 칸을 합쳐 보내서, 이 줄에 없는 칸은 DB 기본값이 아니라
         //   null 이 된다 → 위의 «기록» 줄(attachments 있음)과 함께 들어가면
@@ -32023,6 +32038,11 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
                     {i < CS_DONE_STAGES.length-1 ? csIna(s.label) : csRo(s.label)}
                   </React.Fragment>
                 ))} 넘기세요.</>}
+              {/* ★ 2026-11-18 제니 — 정산 단계는 품목마다 갈린다. 누르기 «전» 에 보여야 한다. */}
+              {isMaster && group.length>1 && CS_SETTLE_FROM.indexOf(t.stage||'')>=0 && <>
+                <b style={{color:'var(--text)'}}>정산 대기·종결</b>로 제출하면
+                <b style={{color:'var(--text)'}}> 이 티켓만</b> 바뀝니다(묶음 {group.length}건 중 1건).
+                그 밖의 상태는 묶음이 함께 바뀝니다.</>}
             </div>
             {/* ★ «되돌리기»(화면만 되돌림) 대신 «취소»(저장하지 않고 목록으로) 다(제니).
                 고치던 것을 물리는 이유는 대개 «이 티켓이 아니었다» 이지 «이 값만 물리자» 가
