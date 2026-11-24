@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261124a_tk_order_items_all -->
+<!-- (2026-11-24) 🎫 티켓 등록 «불러오기» — 주문번호로 품목을 훑을 때 상한이 10 이라 11번째 품목부터 안 불러왔다(제니 제보). 99(두 자리 끝번호)까지 본다 · 연속 3번 실패 시 멈춤은 그대로. SQL 없음. ★ dev 전용. -->
 <!-- v20261118a_settle_stage_solo -->
 <!-- (2026-11-18) 🎫 그룹 티켓 «정산 단계» 는 그 티켓만(제니 제안 ⓐ: 정산은 품목 기준 — 금액 없는 품목은 종결, 있는 품목만 정산 대기 · 한 묶음 안에서 갈린다). 지금 단계가 재출고 완료·환불 완료·정산 대기이고 고른 단계가 정산 대기·종결이면 형제 티켓 단계는 안 바꾼다(csStageSoloOnly). 그 밖(접수~확인 대기 · 철회 · 진행중에서 바로 종결)은 예전대로 묶음 함께. 리체크·담당자는 늘 묶음 함께. 이력 꼬리 «(상태는 이 티켓만 · 정산 단계)» · 저장 줄 왼쪽에 운영팀에게 안내 한 줄(묶음이고 정산 앞 단계일 때만). SQL 없음. ★ dev 전용. -->
 <!-- v20261116a_msg_chat_link -->
@@ -29242,8 +29244,10 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket, on
       const one = await fetchOne(v);
       if(one) found = [one];
     } else {
+      // ★ 2026-11-24 제니 — 「품목을 10개만 불러온다」. 상한이 10 이라 11번째부터 안 물어봤다.
+      //   품목 번호는 두 자리(-01~-99)라 99 까지 본다. 연속 세 번 실패하면 멈추는 건 그대로다.
       const base = baseOf(v); let miss = 0;
-      for(let i=1;i<=10 && miss<3;i++){
+      for(let i=1;i<=99 && miss<3;i++){
         const one = await fetchOne(base+'-'+String(i).padStart(2,'0'));
         if(one){ found.push(one); miss=0; } else { miss++; }
       }
