@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20261125b_tk_list_search_all -->
+<!-- v20261125c_tk_list_all_rows -->
+<!-- (2026-11-25) 🔢 티켓 목록이 «최근 수정 500건» 만 불러와 숫자 카드·칩 숫자·칩 목록이 그 안에서만 셌다 → 전체 티켓을 1,000줄씩 쪽으로 받는다(csFetchAllRows · 제니 «전체 티켓 대상으로 세줘»). 카드 「?」 끝줄 «전체 티켓 기준». 같이: 사진 수 세기(cs_ticket_events 첨부)도 1,000줄 상한에 걸릴 수 있어 쪽으로. SQL 없음. -->
 <!-- (2026-11-25) 🔍 티켓 목록 검색이 «최근 수정 500건» 안에서만 찾아, 그 밖의 티켓(운영 1,547건 중 약 1천 건)은 있어도 안 나왔다(제니 제보). 검색어가 있으면 DB 전체에 묻는다(조건은 빠른 검색과 같은 csTicketSearchConds 로 합침 · 주문자 번호는 숫자 칸으로 중간 자리도) · 최대 1,000건 + 넘으면 «N건 중 최근 1,000건만» · 검색 중에는 칩·필터를 안 건다(목록 위에 한 줄로 알림). SQL 없음. -->
 <!-- (2026-11-25) 📦 상품 정보 «수정» 을 동작 권한 `products.edit` 로(기본 운영팀·센터장·CS매니저 · 제니 «CS매니저도 수정할 수 있게»). 짝 SQL `sql/products_update_by_action.sql`(운영은 SQL 먼저). 권한 없으면 [수정]·[수정 바로하기] 를 안 그린다 · 저장이 0행이면 «저장 실패» 로 말한다(그전엔 crew 가 저장하면 0행인데 «저장되었습니다!»). 등록(INSERT)은 그대로 운영팀·센터장. -->
 <!-- (2026-11-24) 🎫 티켓 등록 «불러오기» — 주문번호로 품목을 훑을 때 상한이 10 이라 11번째 품목부터 안 불러왔다(제니 제보). 99(두 자리 끝번호)까지 본다 · 연속 3번 실패 시 멈춤은 그대로. SQL 없음. ★ dev 전용. -->
@@ -20585,6 +20586,18 @@ function csGroupLookup(list){
 //   하나도 못 거른다 — 빈 배열과 견줘야 한다). 이 필터를 DB 가 못 알아들으면
 //   조용히 «사진 0장» 이 되어 버리므로, 그때는 필터 없이 한 번 더 물어본다.
 // ★ 세는 데 실패해도 목록은 그대로 그린다 — 곁다리 열 하나 때문에 화면이 비면 안 된다.
+// ★★ 2026-11-25 — DB 는 한 번에 최대 1,000줄만 돌려준다(Supabase 기본 max rows). «전부» 가
+//   필요하면 쪽(range)으로 나눠 끝까지 받는다. make 는 매번 새 쿼리를 만드는 함수 — 차례가
+//   흔들리면 쪽 사이로 줄이 빠지거나 겹치므로 order 에 id 를 꼭 붙일 것.
+async function csFetchAllRows(make, page=1000){
+  const out = [];
+  for(let from=0; ; from+=page){
+    const {data,error} = await make().range(from, from+page-1);
+    if(error) return {data:out, error};
+    out.push(...(data||[]));
+    if(!data || data.length<page) return {data:out, error:null};
+  }
+}
 async function csWithPhotoCount(list){
   // ★★ 2026-09-16 — 이력이 «적은 그 티켓» 에 쌓이면서, 메인 번호 하나로는 다 못 센다.
   //   묶음 열쇠로 모아 센다. 지금 목록에 없는 티켓의 이력도 있을 수 있어
@@ -20607,11 +20620,12 @@ async function csWithPhotoCount(list){
     });
     return list.map(t=>({...t, _photos: cnt[csGroupKey(t)] || 0}));
   };
-  let {data,error} = await sb.from('cs_ticket_events')
-    .select('ticket_id,attachments').neq('attachments','[]');
+  // ★ 2026-11-25 — 쪽으로 끝까지 받는다(1,000줄 넘으면 사진 수가 조용히 덜 세어졌다).
+  let {data,error} = await csFetchAllRows(()=>sb.from('cs_ticket_events')
+    .select('id,ticket_id,attachments').neq('attachments','[]').order('id'));
   if(error){
     console.warn('[사진 첨부 세기] 빈 배열 필터가 안 먹어 전체로 다시 셉니다:', error.message);
-    const r2 = await sb.from('cs_ticket_events').select('ticket_id,attachments');
+    const r2 = await csFetchAllRows(()=>sb.from('cs_ticket_events').select('id,ticket_id,attachments').order('id'));
     if(r2.error){ console.warn('[사진 첨부 세기] 실패:', r2.error.message); return list; }
     data = r2.data;
   }
@@ -23214,9 +23228,12 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
 
   // 티켓을 읽는다. dev 는 아직 건수가 적어 통째로 받아 화면에서 거른다 —
   // ★ 건수가 늘면 서버 쪽 필터로 옮긴다. 지금 나누면 확인할 것만 늘어난다.
+  // ★★ 2026-11-25 — «최근 수정 500건» 상한을 걷었다(제니: 숫자 카드·칩 숫자도 전체 티켓으로).
+  //   운영 1,547건(11-25) · 1,000줄씩 쪽으로 받는다(csFetchAllRows). 목록·칩·카드가 같은 rows 를
+  //   보므로 셈이 어긋나지 않는다. ⚠ 젠데스크 이관으로 수만 건이 들어오면 여기를 서버 셈으로 옮길 것.
   const load = async()=>{
-    const {data,error} = await sb.from('cs_tickets').select('*')
-      .order('updated_at',{ascending:false}).limit(500);
+    const {data,error} = await csFetchAllRows(()=>sb.from('cs_tickets').select('*')
+      .order('updated_at',{ascending:false}).order('id',{ascending:false}));
     if(sbFail('CS 티켓 조회', error)) { setRows([]); return; }
     setRows(await csWithPhotoCount(data||[]));
   };
@@ -23611,7 +23628,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
             <CsHint width={300}>
               <b>종결·철회를 뺀</b> 티켓 중 <b>리체크 날짜가 오늘이거나 이미 지난</b> 건.
               <br/>아래 «기한 지남» = 그중 리체크 날짜가 <b>어제 이전</b>인 건.
-              <br/><br/>최근 수정 500건 기준
+              <br/><br/>전체 티켓 기준
             </CsHint></div>
           <div className={'kpi-value'+(kpi.recheck?' ':'')} style={{color:'var(--warn-ink)'}}>{kpi.recheck}</div>
           <div className="cs-kpi-note">
@@ -23621,7 +23638,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
           <div className="kpi-label" style={{display:'flex',alignItems:'center',gap:5}}>공급사 미접수
             <CsHint width={300}>
               상태가 <b>«티켓 등록»</b> 인 건 — 아직 공급사에 접수(진행중으로 옮기기) 안 한 티켓.
-              <br/><br/>최근 수정 500건 기준
+              <br/><br/>전체 티켓 기준
             </CsHint></div>
           <div className="kpi-value blue">{kpi.tosup}</div>
           <div className="cs-kpi-note">아직 공급사에 안 보낸 건</div>
@@ -23632,7 +23649,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
               상태가 <b>«진행중»</b> 인 건 전부(공급사 회신을 기다리는 티켓).
               <br/>아래 «4일째 이상» = 그중 <b>공급사에 보낸 때부터 4일(96시간) 이상</b> 지난 건.
               보낸 시각이 없는 건은 여기에 안 셉니다.
-              <br/><br/>최근 수정 500건 기준
+              <br/><br/>전체 티켓 기준
             </CsHint></div>
           <div className="kpi-value red">{kpi.awaiting}</div>
           <div className="cs-kpi-note">
@@ -23643,7 +23660,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
             <CsHint width={300}>
               상태가 <b>«정산 대기»</b> 또는 <b>«환불 완료»</b> 인 건.
               <br/>아래 «비용 미입력» = 그중 <b>정산 상품금액</b> 칸이 비어 있는 건.
-              <br/><br/>최근 수정 500건 기준
+              <br/><br/>전체 티켓 기준
             </CsHint></div>
           <div className="kpi-value green">{kpi.settle}</div>
           <div className="cs-kpi-note">
