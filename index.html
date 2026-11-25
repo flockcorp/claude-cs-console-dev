@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20261125a_products_edit_crew -->
+<!-- v20261125b_tk_list_search_all -->
+<!-- (2026-11-25) 🔍 티켓 목록 검색이 «최근 수정 500건» 안에서만 찾아, 그 밖의 티켓(운영 1,547건 중 약 1천 건)은 있어도 안 나왔다(제니 제보). 검색어가 있으면 DB 전체에 묻는다(조건은 빠른 검색과 같은 csTicketSearchConds 로 합침 · 주문자 번호는 숫자 칸으로 중간 자리도) · 최대 1,000건 + 넘으면 «N건 중 최근 1,000건만» · 검색 중에는 칩·필터를 안 건다(목록 위에 한 줄로 알림). SQL 없음. -->
 <!-- (2026-11-25) 📦 상품 정보 «수정» 을 동작 권한 `products.edit` 로(기본 운영팀·센터장·CS매니저 · 제니 «CS매니저도 수정할 수 있게»). 짝 SQL `sql/products_update_by_action.sql`(운영은 SQL 먼저). 권한 없으면 [수정]·[수정 바로하기] 를 안 그린다 · 저장이 0행이면 «저장 실패» 로 말한다(그전엔 crew 가 저장하면 0행인데 «저장되었습니다!»). 등록(INSERT)은 그대로 운영팀·센터장. -->
 <!-- (2026-11-24) 🎫 티켓 등록 «불러오기» — 주문번호로 품목을 훑을 때 상한이 10 이라 11번째 품목부터 안 불러왔다(제니 제보). 99(두 자리 끝번호)까지 본다 · 연속 3번 실패 시 멈춤은 그대로. SQL 없음. ★ dev 전용. -->
 <!-- v20261118a_settle_stage_solo -->
@@ -23221,6 +23222,32 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
   };
   useEffect(()=>{ load(); },[]);
 
+  // ★★★ 검색은 «DB 전체» 에 묻는다(2026-11-25 제니: 「분명히 있는 티켓인데 검색하면 안 나온다 ·
+  //   해당하는 티켓이 있다면 무조건 리스트에 나와야」). 위 load() 는 최근 수정 500건뿐인데
+  //   운영은 1,547건(11-25) — 그 밖의 티켓은 검색해도 «없다» 가 나왔다(= 중복 생성 자리).
+  //   ★ 조건은 빠른 검색과 같은 csTicketSearchConds. 불러 둔 목록에서 찾은 것도 합친다
+  //     (화면 쪽 연락처 숫자 맞추기가 DB 보다 넓은 경우가 있다) — 빼지 않고 더하기만.
+  //   ★ rows 가 바뀌면(저장·새로고침) 다시 묻는다 — 검색 결과가 옛 값으로 남지 않게.
+  const CS_LIST_SEARCH_MAX = 1000;
+  const [srv,setSrv] = useState(null);   // {term, rows, total, err}
+  useEffect(()=>{
+    const term = csTicketSearchTerm(q);
+    if(!term){ setSrv(null); return; }
+    let off = false;
+    const timer = setTimeout(async ()=>{
+      const {data,error,count} = await sb.from('cs_tickets').select('*',{count:'exact'})
+        .or(csTicketSearchConds(term).join(','))
+        .order('updated_at',{ascending:false}).limit(CS_LIST_SEARCH_MAX);
+      if(off) return;
+      if(error){ console.error('티켓 검색 실패:',error); setSrv({term,rows:[],total:0,err:error.message}); return; }
+      const got = await csWithPhotoCount(data||[]);
+      if(off) return;
+      setSrv({term, rows:got, total:(count==null ? got.length : count)});
+    },300);
+    return ()=>{ off=true; clearTimeout(timer); };
+  },[q, rows]);
+  const srvNow = srv && srv.term===csTicketSearchTerm(q) ? srv : null;
+
   // 칩마다 «무엇을 보여 주나». 한 곳에 모아 둔다 — 칩과 KPI 가 같은 셈을 써야
   // 「숫자는 3인데 목록은 5줄」 같은 어긋남이 안 생긴다.
   // ★ base=true 면 설정(cs_chip_stages)을 안 보고 코드 기본으로 센다 — 숫자 카드용(제니 11-10).
@@ -23321,8 +23348,9 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
     // ★★ 검색은 «전체» 에서 한다(제니). 칩은 무시한다 — 찾는 사람은 그 건이 어느
     //   상태인지 모르니까 찾는 것이고, 칩 안에서만 뒤지면 「없다」는 답이 돌아온다.
     //   그게 곧 «없는 줄 알고 티켓을 또 만드는» 자리다(중복 생성 방지가 이 화면의 규칙).
-    // ★ 필터는 그대로 건다 — 사람이 방금 손으로 건 조건이라 말없이 풀면 더 헷갈린다.
-    let out = (rows||[]).filter(t=>(s || match(t,chip)) && hit(t));
+    // ★★ 2026-11-25 — 필터도 검색 때는 안 건다(제니 «있다면 무조건 나와야»). 대신 목록 위에
+    //   «검색 중엔 칩·필터를 보지 않는다» 를 적는다(말없이 풀지 않는다).
+    let out = (rows||[]).filter(t=>s ? true : (match(t,chip) && hit(t)));
     if(s){
       // 🔴 2026-09-15 — 연락처는 **표기가 흔들린다**(010-1234-5678 · 01012345678).
       //   글자 그대로만 찾으면 화면에 보이는 대로 쳤는데 «없다» 가 돌아오고,
@@ -23335,6 +23363,12 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
         .some(k=>String(t[k]||'').toLowerCase().includes(s))
         || (sd.length>=4 && ['orderer_phone','receiver_phone']
               .some(k=>csDigits(t[k]).includes(sd))));
+      // DB 전체에서 찾은 것을 합친다(불러 둔 500건 밖의 티켓). 같은 번호는 DB 쪽 값으로.
+      if(srvNow){
+        const seen = new Set(srvNow.rows.map(t=>t.id));
+        out = srvNow.rows.concat(out.filter(t=>!seen.has(t.id)));
+        if(!sort) out = out.slice().sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+      }
     }
     if(sort){
       const col = CS_COLS[sort.key];
@@ -23353,7 +23387,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
       }
     }
     return out;
-  },[rows,chip,q,sort,flt,settings]);   // ★ settings — 칩 상태 설정이 늦게 읽혀도 다시 거른다
+  },[rows,chip,q,sort,flt,settings,srvNow]);   // ★ settings — 칩 상태 설정이 늦게 읽혀도 다시 거른다
 
   // 열 구성은 «칩마다» 다르다 — 칩마다 보는 목적이 다르기 때문이다.
   const colKeys = useMemo(()=>{
@@ -23802,13 +23836,24 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
       </div>
       </div>
 
+      {/* ★ 2026-11-25 — 검색 중엔 «무엇을 뒤졌나» 를 한 줄로 말한다(칩·필터를 안 보고 전체 티켓). */}
+      {q.trim() && rows!==null && (
+        <div style={{fontSize:11.5,color:'var(--sub)',margin:'0 0 8px 2px'}}>
+          {!srvNow ? '전체 티켓에서 찾는 중…'
+            : srvNow.err ? <span style={{color:'var(--red-ink)'}}>전체 티켓 검색에 실패했습니다 — 불러 둔 최근 티켓에서만 찾은 결과입니다. 잠시 뒤 다시 검색해 주세요.</span>
+            : <>전체 티켓에서 찾았습니다 · <b style={{color:'var(--text)'}}>{list.length.toLocaleString()}건</b> · 검색 중에는 칩·필터를 적용하지 않습니다
+                {srvNow.total>srvNow.rows.length && <span style={{color:'var(--red-ink)'}}> · 맞는 티켓 {srvNow.total.toLocaleString()}건 중 최근 {srvNow.rows.length.toLocaleString()}건만 보입니다 — 검색어를 더 좁혀 주세요</span>}</>}
+        </div>
+      )}
       {rows===null ? (
         <div style={{padding:'60px 0',textAlign:'center',color:'var(--sub)',fontSize:12}}>불러오는 중…</div>
       ) : list.length===0 ? (
         <div style={{textAlign:'center',padding:'70px 24px',background:'var(--card)',
           border:'1px dashed var(--border)',borderRadius:12,color:'var(--sub)'}}>
           <div style={{fontSize:14,fontWeight:600,color:'var(--text)',marginBottom:6}}>
-            {(rows||[]).length===0 ? '아직 티켓이 없습니다' : '이 조건에 맞는 티켓이 없습니다'}</div>
+            {(rows||[]).length===0 ? '아직 티켓이 없습니다'
+              : q.trim() ? (srvNow ? '전체 티켓에서 찾지 못했습니다' : '전체 티켓에서 찾는 중…')
+              : '이 조건에 맞는 티켓이 없습니다'}</div>
           <div style={{fontSize:12,lineHeight:1.7}}>
             {(rows||[]).length===0
               ? '표는 만들어져 있고 화면을 이어서 만드는 중입니다. 과거 티켓 이관은 운영 적용 때 합니다.'
@@ -27962,6 +28007,29 @@ function csQsPhoneVariants(d){
   if(d.length===8)  out.push(d.slice(0,4)+'-'+d.slice(4));
   return out;
 }
+// ★ 2026-11-25 — 티켓 «DB 검색» 조건을 한 곳에서 만든다. 빠른 검색과 티켓 목록 검색이 같이 쓴다
+//   (두 곳에 베껴 두면 한쪽만 칸이 늘어 «여기선 찾히는데 저기선 안 찾힌다» 가 생긴다).
+function csTicketSearchTerm(q){
+  // PostgREST «or» 문법을 깨는 글자는 뺀다.
+  return String(q||'').trim().replace(/[,()%*\\]/g,' ').replace(/\s+/g,' ').trim();
+}
+function csTicketSearchConds(term){
+  const conds = ['order_id','order_item_code','orderer_name','orderer_phone','receiver_name',
+    'receiver_phone','product_name','supplier_name','zendesk_id']
+    .map(k=>`${k}.ilike.%${term}%`);
+  const d = csDigits(term);
+  // 숫자(·하이픈·빈칸)만 친 검색어일 때만 연락처 꼴을 더한다 — 이름 등에는 영향 없음.
+  const numeric = !!d && d===term.replace(/[-\s]/g,'');
+  if(numeric && d.length>=4){
+    const vs = [d, ...csQsPhoneVariants(d)].filter(v=>v!==term);
+    vs.forEach(v=>{ conds.push(`orderer_phone.ilike.%${v}%`, `receiver_phone.ilike.%${v}%`); });
+    // 주문자 번호는 숫자만 담은 칸이 따로 있다(sql/cs_tickets_phone_digits.sql) — 중간 몇 자리만 쳐도 찾힌다.
+    conds.push(`orderer_phone_digits.ilike.%${d}%`);
+  }
+  const idm = term.match(/^#?(\d{1,9})$/);
+  if(idm) conds.push(`id.eq.${idm[1]}`);
+  return conds;
+}
 function CsTicketQuickSearch({goTicket, currentId}){
   const [q,setQ]         = useState('');
   const [res,setRes]     = useState(null);   // null = 아직 안 찾음
@@ -27972,23 +28040,11 @@ function CsTicketQuickSearch({goTicket, currentId}){
   const boxRef = useRef(null);
   const [pos,setPos] = useState(null);
   useEffect(()=>{
-    // PostgREST «or» 문법을 깨는 글자는 뺀다.
-    const term = q.trim().replace(/[,()%*\\]/g,' ').replace(/\s+/g,' ').trim();
+    const term = csTicketSearchTerm(q);
     if(term.length<2){ setRes(null); setTotal(0); setBusy(false); return; }
     setBusy(true);
     const timer = setTimeout(async ()=>{
-      const conds = ['order_id','order_item_code','orderer_name','orderer_phone','receiver_name',
-        'receiver_phone','product_name','supplier_name','zendesk_id']
-        .map(k=>`${k}.ilike.%${term}%`);
-      const d = csDigits(term);
-      // 숫자(·하이픈·빈칸)만 친 검색어일 때만 연락처 꼴을 더한다 — 이름 등에는 영향 없음.
-      const numeric = !!d && d===term.replace(/[-\s]/g,'');
-      if(numeric && d.length>=4){
-        const vs = [d, ...csQsPhoneVariants(d)].filter(v=>v!==term);
-        vs.forEach(v=>{ conds.push(`orderer_phone.ilike.%${v}%`, `receiver_phone.ilike.%${v}%`); });
-      }
-      const idm = term.match(/^#?(\d{1,9})$/);
-      if(idm) conds.push(`id.eq.${idm[1]}`);
+      const conds = csTicketSearchConds(term);
       const {data,error,count} = await sb.from('cs_tickets')
         .select('id,stage,order_item_code,orderer_name,receiver_name,product_name,supplier_name,cs_type,direction,created_at',
           {count:'exact'})
