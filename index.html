@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20261124a_tk_order_items_all -->
+<!-- v20261125a_products_edit_crew -->
+<!-- (2026-11-25) 📦 상품 정보 «수정» 을 동작 권한 `products.edit` 로(기본 운영팀·센터장·CS매니저 · 제니 «CS매니저도 수정할 수 있게»). 짝 SQL `sql/products_update_by_action.sql`(운영은 SQL 먼저). 권한 없으면 [수정]·[수정 바로하기] 를 안 그린다 · 저장이 0행이면 «저장 실패» 로 말한다(그전엔 crew 가 저장하면 0행인데 «저장되었습니다!»). 등록(INSERT)은 그대로 운영팀·센터장. -->
 <!-- (2026-11-24) 🎫 티켓 등록 «불러오기» — 주문번호로 품목을 훑을 때 상한이 10 이라 11번째 품목부터 안 불러왔다(제니 제보). 99(두 자리 끝번호)까지 본다 · 연속 3번 실패 시 멈춤은 그대로. SQL 없음. ★ dev 전용. -->
 <!-- v20261118a_settle_stage_solo -->
 <!-- (2026-11-18) 🎫 그룹 티켓 «정산 단계» 는 그 티켓만(제니 제안 ⓐ: 정산은 품목 기준 — 금액 없는 품목은 종결, 있는 품목만 정산 대기 · 한 묶음 안에서 갈린다). 지금 단계가 재출고 완료·환불 완료·정산 대기이고 고른 단계가 정산 대기·종결이면 형제 티켓 단계는 안 바꾼다(csStageSoloOnly). 그 밖(접수~확인 대기 · 철회 · 진행중에서 바로 종결)은 예전대로 묶음 함께. 리체크·담당자는 늘 묶음 함께. 이력 꼬리 «(상태는 이 티켓만 · 정산 단계)» · 저장 줄 왼쪽에 운영팀에게 안내 한 줄(묶음이고 정산 앞 단계일 때만). SQL 없음. ★ dev 전용. -->
@@ -4016,6 +4017,8 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
   // ★ 자식 기본값은 «못 한다» 쪽이다 — prop 을 빠뜨렸을 때 열리는 쪽으로 넘어지면
   //   권한이 조용히 사라진 것을 아무도 모른다.
   const canDelete = typeof can==='function' ? can('products.delete') : false;
+  // ★ 2026-11-25 — 수정도 동작 권한으로(DB 정책 products_update_by_action 이 같은 키를 읽는다).
+  const canEdit = typeof can==='function' ? can('products.edit') : false;
   const [tab,setTab]=useState('list');
   const [products,setProducts]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -5200,11 +5203,17 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
       updated_at:new Date().toISOString()};
     // return_fee_text 컬럼 없으면 제외
     if(!payload.return_fee_text&&payload.return_fee_text==='') delete payload.return_fee_text;
-    let error;
-    if(editId){({error}=await sb.from('products').update(payload).eq('id',editId));}
+    let error, rows=null;
+    // ★ 2026-11-25 — 수정은 «바뀐 줄 수» 를 센다. 권한이 없으면 DB 가 오류 없이 0행으로 넘겨서
+    //   «저장되었습니다!» 가 거짓으로 떴다(CS매니저 실측). 0행이면 실패로 말한다.
+    if(editId){({data:rows,error}=await sb.from('products').update(payload).eq('id',editId).select('id'));}
     else{({error}=await sb.from('products').insert(payload));}
     setSaving(false);
     if(error){setMsg('저장 실패: '+error.message);return;}
+    if(editId && (!rows || rows.length===0)){
+      setMsg('저장 실패: 바뀐 상품이 없습니다. 상품 수정 권한이 없거나 그 사이 상품이 지워졌을 수 있습니다.');
+      return;
+    }
     // 공급사 자동 등록 (신규 공급사명이면 suppliers 테이블에 channel=null로 추가)
     ensureSupplier(form.supplier_name);
     setMsg('저장되었습니다!'); load(page,search,searchField,cafeFilter);
@@ -5587,7 +5596,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
                       </div>
                     </td>
                     <td>
-                      <button className="btn-edit" onClick={()=>startEdit(p)} style={{background:'#2A478D',border:'1px solid #1a3060',color:'#fff',borderRadius:5,padding:'4px 10px',fontSize:11,cursor:'pointer',marginRight:4,fontWeight:600}}>수정</button>
+                      {canEdit&&<button className="btn-edit" onClick={()=>startEdit(p)} style={{background:'#2A478D',border:'1px solid #1a3060',color:'#fff',borderRadius:5,padding:'4px 10px',fontSize:11,cursor:'pointer',marginRight:4,fontWeight:600}}>수정</button>}
                       {canDelete&&<button onClick={()=>del(p.id)} style={{background:'rgba(248,113,113,.15)',border:'1px solid rgba(248,113,113,.5)',color:'var(--red-ink)',borderRadius:5,padding:'4px 10px',fontSize:11,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>삭제</button>}
                     </td>
                   </tr>
@@ -6900,7 +6909,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
             )}
             <div style={{marginTop:20,paddingTop:16,borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:10}}>
               <button className="btn-cancel" onClick={()=>setDetailProd(null)}>닫기</button>
-              <button className="btn-save" onClick={()=>startEdit(detailProd)}>수정</button>
+              {canEdit&&<button className="btn-save" onClick={()=>startEdit(detailProd)}>수정</button>}
             </div>
           </div>
         </div>
@@ -37937,6 +37946,11 @@ const CS_ACTION_DEFS = [
   //   → 격자는 DB 가 가를 수 있는 단위(하나)로 두고 기본값은 «지금 실제로 되는 사람»
   //     으로 두되, **화면이 더 좁게 잠근 두 자리를 여기 적는다.** 안 적으면 설정을
   //     켜 놓고 「왜 그 버튼이 없지」를 묻게 된다.
+  // ★ 2026-11-25 — 상품 수정(제니 «CS매니저도 수정할 수 있게»). DB 는 UPDATE 를 칸으로 못 가른다 —
+  //   수정 창 저장·FAQ 일괄 업로드가 같은 UPDATE 다. FAQ 업로드 버튼은 화면이 운영팀으로 따로 잠근다.
+  {id:'products.edit', menu:'상품 정보', label:'상품 수정', guard:'db',
+   hint:'목록·상세의 [수정] · 티켓 ③ 의 [수정 바로하기] (※ 상품 등록·FAQ 일괄 업로드는 따로 · 운영팀 쪽)',
+   base:['master','manager','crew']},
   {id:'products.delete', menu:'상품 정보', label:'상품 삭제', guard:'db',
    hint:'고른 상품 · 선택 삭제 (※ «전체 삭제»·«카페24 정리» 는 되돌릴 수 없어 운영팀만)',
    base:['master','manager']},
@@ -40294,12 +40308,12 @@ function App() {
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {page==='csNew'&&(canMenu('csTickets')?<CsNewTicketPage currentUserEmail={session.user.email} role={role}
           onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
-          goTicket={openTicket} onEditProduct={canMenu('products') ? editProduct : null}/>:<NoAccessPage/>)}
+          goTicket={openTicket} onEditProduct={canMenu('products') && canAction('products.edit') ? editProduct : null}/>:<NoAccessPage/>)}
         {page==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
           role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={ticketSeq}
           canDelete={canAction('csTickets.delete')}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}
-          onNew={()=>navigateTo('csNew')} onEditProduct={canMenu('products') ? editProduct : null}/>:<NoAccessPage/>)}
+          onNew={()=>navigateTo('csNew')} onEditProduct={canMenu('products') && canAction('products.edit') ? editProduct : null}/>:<NoAccessPage/>)}
         {page==='csSettings'&&canMenu('csSettings')&&<CsSettingsPage currentUserEmail={session.user.email} role={role}/>}
         {page==='csStats'&&(canMenu('csStats')?<CsStatsPage/>:<NoAccessPage/>)}
         {page==='manuals'&&(canMenu('manuals')?<ManualsPage currentUserEmail={session.user.email} role={role} can={canAction}/>:<NoAccessPage/>)}
