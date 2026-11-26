@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20261126g_tk_list_live -->
+<!-- v20261126h_tk_list_keep_sort -->
+<!-- (2026-11-26) 🎫 티켓 목록 정렬도 보던 값 그대로(제니: 「칩·필터는 유지되는데 정렬은 안 된다」) — sort 를 칩·필터처럼 App tabVals.sort 로 올림(탭마다 · 상세 갔다 와도 · 다시 읽어도 유지). 사이드바 «티켓 목록» 누를 때 칩·필터만 처음으로(정렬은 그대로). SQL 없음. -->
 <!-- (2026-11-26) 🔄 티켓 목록이 바뀐 것을 저절로 다시 읽는다(제니: 「탭 2 에서 처리하고 탭 1 로 오면 그대로 · 다른 상담원 열린 탭에도 반영」). ① 내 저장 = cs_tickets·cs_ticket_events 로 가는 쓰기가 성공하면(fetch 감싸기 · createClient 앞) 'cs-tickets-changed' → 목록 탭 곧바로 다시 읽기 ② 남의 저장 = 목록이 20초마다·탭이 앞으로 올 때·창으로 돌아올 때 «표 도장»(건수|최근 updated_at · 1줄 조회)을 묻고 다르면 다시 읽기. 칩·필터·검색어·쪽 그대로. 창이 숨어 있으면 안 묻는다. SQL 없음. -->
 <!-- (2026-11-26) 🎫 사람이 만든 칩(u:… 예 «정산 체크»)을 고르고 상세 → [목록으로] 오면 '전체' 로 돌아가던 것(제니). 원인 = 목록이 새로 붙을 때 설정(settings)을 읽기 전이라 만든 칩이 «안 보이는 칩» 으로 판정돼 되돌림 effect 가 '전체' 로 바꿈 → settings===null 이면 판정하지 않는다. 기본 칩은 원래 유지됐다. SQL 없음. -->
 <!-- (2026-11-26) 🗂 탭 최대 8 → 10개(제니). CS_TAB_MAX 하나만. SQL 없음. -->
@@ -23067,7 +23068,7 @@ async function csDeleteTickets({ids, currentUserEmail, from}){
 // ★ 티켓 목록 필터의 «빈 값» — App 이 처음 값으로도 쓴다(2026-11-10).
 const CS_FILTER0 = {assignee:[], supplier:[], stage:[], cs_type:[], direction:[], from:'', to:''};
 function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNew, goTicket, goDraft,
-                       chip, setChip, flt:fltP, setFlt:setFltP}){
+                       chip, setChip, flt:fltP, setFlt:setFltP, sort:sortP, setSort:setSortP}){
   const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
   // ★ 칸 규칙 — [환불 요청 하기] 를 그릴지 정하는 데 쓴다(2026-09-16). 상세 화면과 같은 값이라야
   //   «목록에선 되는데 상세에선 안 되는» 자리가 안 생긴다.
@@ -23429,7 +23430,11 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
     return true;
   };
 
-  const [sort,setSort] = useState(null);   // {key, dir:'asc'|'desc'}
+  // ★ 2026-11-26 제니 «칩·필터는 유지되는데 정렬은 안 된다» — 정렬도 칩·필터처럼 탭(App tabVals.sort)이
+  //   들고 있게 올렸다. 상세 갔다 [목록으로]·탭 오가기·저절로 다시 읽기에도 보던 정렬 그대로.
+  const [sortL,setSortL] = useState(null);   // {key, dir:'asc'|'desc'}
+  const sort = sortP!==undefined ? sortP : sortL;
+  const setSort = setSortP || setSortL;
   const clickSort = (k)=> setSort(p=>{
     if(!p || p.key!==k) return {key:k, dir:'asc'};
     if(p.dir==='asc')   return {key:k, dir:'desc'};
@@ -39975,7 +39980,7 @@ function App() {
   //   chip·flt = 티켓 목록 칩·필터(상세 갔다 와도 남는다 · 2026-11-10) · draftIds = 접수 문안 대상
   //   prodEditCode = 티켓 ③ [수정 바로하기] 가 넘긴 상품코드(한 번 쓰고 비운다) · costNav = 비용 화면 지시
   const [tabVals,setTabVals] = useState({});
-  const TV0 = {ticketId:null, seq:[], chip:'all', flt:CS_FILTER0, draftIds:[], prodEditCode:null, costNav:{view:'dashboard',id:null,seq:0}};
+  const TV0 = {ticketId:null, seq:[], chip:'all', flt:CS_FILTER0, sort:null, draftIds:[], prodEditCode:null, costNav:{view:'dashboard',id:null,seq:0}};
   const tv = (k)=>({...TV0, ...(tabVals[k]||{})});
   const setTv = (k, patch)=> setTabVals(m=>{
     const o = {...TV0, ...(m[k]||{})};
@@ -40744,6 +40749,7 @@ function App() {
         {p==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}/>}
         {p==='csTickets'&&(canMenu('csTickets')?<CsTicketsPage currentUserEmail={session.user.email} role={role}
           chip={v.chip} setChip={setTvField(k,'chip')} flt={v.flt} setFlt={setTvField(k,'flt')}
+          sort={v.sort} setSort={setTvField(k,'sort')}
           canRefund={canMenu('refunds') && canAction('refunds.create')}
           canDelete={canAction('csTickets.delete')}
           onNew={()=>navigateTo('csNew')} goTicket={openTicket}
