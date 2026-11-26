@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20261125d_top_tabs -->
+<!-- v20261126a_tabs_multi -->
+<!-- (2026-11-26) 🗂 한 메뉴를 여러 탭으로(제니: 「모든 메뉴 · 탭의 [+] 와 사이드바 Ctrl+클릭 함께」). 탭 id = 메뉴(첫 탭) 또는 «메뉴~N»(이름 «티켓 목록 2»). [+] = 앞 탭 메뉴를 새 탭(첫 화면부터) · 사이드바 Ctrl(⌘)+클릭·가운데 클릭 = 그 메뉴 새 탭 · 그냥 누르면 그 메뉴의 «마지막에 보던 탭». 탭마다 따로 드는 값(보는 티켓·다음 티켓 차례·칩·필터·접수 대상·상품 수정 코드·비용 화면 지시)을 App 의 tabVals[탭 id] 로 옮김(그전엔 한 벌 → 두 티켓 탭이 같은 티켓을 보였을 것). 작성 중 가드도 탭마다(csLeaveGuards · 화면은 CsTabCtx 로 제 탭을 안다) · 로그아웃·창 닫기는 어느 탭이든 작성 중이면 묻는다. page 는 이제 «앞 탭의 화면» 을 읽은 값 · 화면 바꾸는 길은 csGo 하나. SQL 없음. -->
 <!-- (2026-11-25) 🗂 상단 탭(제니: 「보던 메뉴를 상단에 탭으로 열어 두고 · 메뉴 기준 · 지울 수 있게 · 있는 탭의 메뉴를 다시 누르면 그 탭으로」). 제니 선택: 보던 화면 «그대로 유지»(탭 화면을 display:none 으로 살려 둠) · 탭 목록 «이 PC 에서 기억»(localStorage `cs_console_tabs:<이메일>` · 화면 안 값은 처음부터). 탭 = 메뉴(티켓 등록·상세는 «티켓 목록» 탭 안) · 최대 8개(넘으면 가장 오래된 탭을 닫고 알림 · 작성 중 탭은 건너뜀) · × 또는 가운데 클릭으로 닫기(탭 하나면 × 없음). 작성 중 확인은 «그 탭 화면을 바꾸거나 닫을 때» 만(csConfirmLeaveTab) — 탭 이동은 안 묻는다. 사이드바 «티켓 목록» 의 칩·필터 풀기는 이미 그 탭에 있을 때만. SQL 없음. -->
 <!-- (2026-11-25) 🔢 티켓 목록이 «최근 수정 500건» 만 불러와 숫자 카드·칩 숫자·칩 목록이 그 안에서만 셌다 → 전체 티켓을 1,000줄씩 쪽으로 받는다(csFetchAllRows · 제니 «전체 티켓 대상으로 세줘»). 카드 「?」 끝줄 «전체 티켓 기준». 같이: 사진 수 세기(cs_ticket_events 첨부)도 1,000줄 상한에 걸릴 수 있어 쪽으로. SQL 없음. -->
 <!-- (2026-11-25) 🔍 티켓 목록 검색이 «최근 수정 500건» 안에서만 찾아, 그 밖의 티켓(운영 1,547건 중 약 1천 건)은 있어도 안 나왔다(제니 제보). 검색어가 있으면 DB 전체에 묻는다(조건은 빠른 검색과 같은 csTicketSearchConds 로 합침 · 주문자 번호는 숫자 칸으로 중간 자리도) · 최대 1,000건 + 넘으면 «N건 중 최근 1,000건만» · 검색 중에는 칩·필터를 안 건다(목록 위에 한 줄로 알림). SQL 없음. -->
@@ -28923,30 +28924,39 @@ function CsRefundFetch({orderRef, current, onPick}){
 //   로그아웃)이 csConfirmLeave() 로 먼저 묻는다. 새로고침·창 닫기는 브라우저 기본 확인창.
 //   ★ 저장이 «끝난 뒤» 의 이동(저장 후 목록으로·다음 티켓·만든 티켓 열기)은 묻지 않는다 — 화면이
 //     이동 직전에 useCsLeaveGuard 가 돌려준 함수(done)를 부른다(상태 갱신은 다음 그림에서야 반영되므로).
-let csLeaveGuard = null;
 // ★ 2026-11-25 상단 탭 — 탭을 옮겨도 화면은 숨겨 둔 채 살아 있어 입력이 안 사라진다.
 //   그래서 «이 가드가 어느 탭 것인가» 를 함께 적어, 그 탭의 화면을 «바꾸거나 닫을 때» 만 묻는다.
-//   csCurTab 은 App 이 그릴 때마다 적는다 — 가드는 화면이 붙는 순간(그 탭이 앞에 있을 때) 생긴다.
-let csLeaveGuardTab = null;
-let csCurTab = null;
-function csConfirmLeave(){
-  if(!csLeaveGuard || !csLeaveGuard()) return true;
-  return confirm('작성 중인 내용이 있습니다.\n저장하지 않고 이동하면 입력한 내용이 사라집니다. 이동할까요?');
-}
+// ★★ 2026-11-26 — 한 메뉴를 여러 탭으로 연다(제니). 작성 중인 탭이 «둘 이상» 일 수 있어
+//   가드를 탭마다 따로 둔다(csLeaveGuards[탭 id]). 화면은 자기가 어느 탭에 있는지를
+//   CsTabCtx 로 안다 — 저장해 둔 탭을 한꺼번에 펼 때도 저마다 제 탭에 붙는다.
+const CsTabCtx = React.createContext(null);
+const csLeaveGuards = {};
+let csCurTab = null;          // App 이 그릴 때마다 적는 «앞에 있는 탭»
+const CS_LEAVE_MSG = '작성 중인 내용이 있습니다.\n저장하지 않고 이동하면 입력한 내용이 사라집니다. 이동할까요?';
+function csTabDirty(tab){ const g = csLeaveGuards[tab]; return !!(g && g()); }
 function csConfirmLeaveTab(tab){
-  if(csLeaveGuardTab!==tab) return true;
-  return csConfirmLeave();
+  if(!csTabDirty(tab)) return true;
+  return confirm(CS_LEAVE_MSG);
+}
+// 앞에 있는 탭의 화면을 바꿀 때
+function csConfirmLeave(){ return csConfirmLeaveTab(csCurTab); }
+// 로그아웃 — 어느 탭이든 작성 중이면 묻는다
+function csConfirmLeaveAll(){
+  if(!Object.keys(csLeaveGuards).some(csTabDirty)) return true;
+  return confirm(CS_LEAVE_MSG);
 }
 window.addEventListener('beforeunload', e=>{
-  if(csLeaveGuard && csLeaveGuard()){ e.preventDefault(); e.returnValue=''; }
+  if(Object.keys(csLeaveGuards).some(csTabDirty)){ e.preventDefault(); e.returnValue=''; }
 });
 function useCsLeaveGuard(hasUnsaved){
+  const ctxTab = React.useContext(CsTabCtx);
   const ref = useRef(false);
   ref.current = !!hasUnsaved;
   useEffect(()=>{
     const fn = ()=>ref.current;
-    csLeaveGuard = fn; csLeaveGuardTab = csCurTab;
-    return ()=>{ if(csLeaveGuard===fn){ csLeaveGuard = null; csLeaveGuardTab = null; } };
+    const tab = ctxTab || csCurTab;
+    csLeaveGuards[tab] = fn;
+    return ()=>{ if(csLeaveGuards[tab]===fn) delete csLeaveGuards[tab]; };
   },[]);
   return ()=>{ ref.current = false; };
 }
@@ -38076,15 +38086,32 @@ function csActionAllows(settings, id, role){
 // ★ 탭 = «메뉴» 다. 티켓 등록·상세는 «티켓 목록» 탭 안의 화면이다(메뉴 권한과 같은 묶음).
 // ★ 살려 두는 화면이 늘면 브라우저가 무거워진다 → 최대 CS_TAB_MAX 개. 넘으면 가장 왼쪽(오래된)
 //   탭을 닫는다 — 작성 중인 탭은 건너뛴다.
+// ★★ 2026-11-26 — 한 메뉴를 여러 탭으로(제니: 「모든 메뉴 · [+] 와 Ctrl+클릭 함께」).
+//   탭 id = 메뉴 id(첫 탭) 또는 «메뉴~N»(둘째부터 · 이름 «티켓 목록 2»). 새 탭은 그 메뉴의 첫 화면부터.
+//   사이드바를 그냥 누르면 그 메뉴 탭 중 «마지막에 보던 탭» 으로 · Ctrl(⌘)+클릭·가운데 클릭은 새 탭.
+//   탭마다 따로 드는 값(보는 티켓·칩·필터·접수 대상·비용 화면 등)은 App 의 tabVals[탭 id] 에 있다.
 const CS_TAB_MAX = 8;
 function csTabOf(p){ return (p==='csNew' || p==='csTicket') ? 'csTickets' : p; }
+function csTabMenu(id){ return String(id||'').split('~')[0]; }
 const CS_TAB_EXTRA = {account:'계정 정보', agents:'인력 관리'};
 function csTabLabel(k){
   const d = CS_MENU_DEFS.find(x=>x.id===k);
   return d ? d.label : (CS_TAB_EXTRA[k] || PAGE_LABELS[k] || k);
 }
-function csTabKnown(k){ return !!(CS_MENU_DEFS.find(x=>x.id===k) || CS_TAB_EXTRA[k]); }
-function CsTabBar({tabs, active, onPick, onClose}){
+function csTabTitle(id){
+  const n = String(id||'').split('~')[1];
+  return csTabLabel(csTabMenu(id)) + (n ? ' '+n : '');
+}
+function csTabKnown(id){ const k = csTabMenu(id); return !!(CS_MENU_DEFS.find(x=>x.id===k) || CS_TAB_EXTRA[k]); }
+function csNextTabId(menu, list){
+  if(list.indexOf(menu)<0) return menu;
+  let n = 2; while(list.indexOf(menu+'~'+n)>=0) n++;
+  return menu+'~'+n;
+}
+// 사이드바 Ctrl+클릭·가운데 클릭 표시 — 사이드바가 «누르는 순간» 켜고, 메뉴 줄의 onClick(navigateTo)이 읽고,
+//   사이드바가 맨 끝에 끈다. 메뉴 줄마다 따로 손대지 않으려는 것이다.
+let csNavNewTab = false;
+function CsTabBar({tabs, active, onPick, onClose, onAdd}){
   if(!tabs.length) return null;
   const many = tabs.length>1;
   return (
@@ -38098,7 +38125,7 @@ function CsTabBar({tabs, active, onPick, onClose}){
           <div key={k} role="tab" aria-selected={on}
             onClick={()=>onPick(k)}
             onMouseDown={e=>{ if(e.button===1 && many){ e.preventDefault(); onClose(k); } }}
-            title={csTabLabel(k)}
+            title={csTabTitle(k)}
             style={{display:'inline-flex',alignItems:'center',gap:6,flexShrink:0,cursor:'pointer',
               height:30,padding:'0 8px 0 12px',fontSize:12,lineHeight:1,userSelect:'none',
               borderRadius:'7px 7px 0 0',marginBottom:-1,
@@ -38107,9 +38134,9 @@ function CsTabBar({tabs, active, onPick, onClose}){
               background:on?'var(--bg)':'transparent',
               color:on?'var(--text)':'var(--sub)',fontWeight:on?700:400,
               boxShadow:on?'inset 0 2px 0 var(--accent)':'none'}}>
-            <span style={{whiteSpace:'nowrap'}}>{csTabLabel(k)}</span>
+            <span style={{whiteSpace:'nowrap'}}>{csTabTitle(k)}</span>
             {many && (
-              <button type="button" aria-label={csTabLabel(k)+' 탭 닫기'} title="탭 닫기"
+              <button type="button" aria-label={csTabTitle(k)+' 탭 닫기'} title="탭 닫기"
                 onClick={e=>{ e.stopPropagation(); onClose(k); }}
                 style={{display:'inline-flex',alignItems:'center',justifyContent:'center',
                   width:18,height:18,padding:0,border:'none',borderRadius:4,lineHeight:1,
@@ -38121,6 +38148,15 @@ function CsTabBar({tabs, active, onPick, onClose}){
           </div>
         );
       })}
+      {onAdd && (
+        <button type="button" onClick={onAdd} aria-label="이 메뉴를 새 탭으로 열기"
+          title={'«'+csTabLabel(csTabMenu(active))+'» 을(를) 새 탭으로 열기\n(사이드바 메뉴를 Ctrl+클릭해도 새 탭으로 열립니다)'}
+          style={{display:'inline-flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+            width:26,height:24,marginBottom:3,marginLeft:2,padding:0,border:'none',borderRadius:5,lineHeight:1,
+            background:'transparent',color:'var(--sub)',fontSize:16,cursor:'pointer',fontFamily:'inherit'}}
+          onMouseEnter={e=>{ e.currentTarget.style.background='color-mix(in srgb, var(--sub) 22%, transparent)'; }}
+          onMouseLeave={e=>{ e.currentTarget.style.background='transparent'; }}>+</button>
+      )}
     </div>
   );
 }
@@ -39688,7 +39724,15 @@ function AccountPage({session,role,alerts,onGo,onMenuSaved,onActionSaved,onNavSa
 }
 
 function App() {
-  const [session,setSession]=useState(null); const [page,setPage]=useState('dashboard'); const [editDate,setEditDate]=useState(null); const [loading,setLoading]=useState(true);
+  const [session,setSession]=useState(null); const [editDate,setEditDate]=useState(null); const [loading,setLoading]=useState(true);
+  // ── 상단 탭 상태(2026-11-26 — 한 메뉴 여러 탭) ──────────────────────────────
+  //   tabs = 탭 id 차례 · cur = 앞에 있는 탭 · tabPage = 탭 → 그 탭이 보던 화면.
+  //   ★ page 는 이제 «앞 탭의 화면» 을 읽은 값이다. 탭이 생기기 전(권한 읽기 전)엔 prePage.
+  const [tabs,setTabs] = useState([]);
+  const [cur,setCur] = useState(null);
+  const [tabPage,setTabPage] = useState({});
+  const [prePage,setPrePage] = useState('dashboard');
+  const page = cur ? (tabPage[cur] || csTabMenu(cur)) : prePage;
   // 권한은 서버(console_users)에서만 받는다. user_metadata 는 본인이 고칠 수 있어 신뢰하지 않는다.
   const [me,setMe]=useState(null); const [meLoading,setMeLoading]=useState(true);
   // 권한 조회가 '실패'한 것과 '등록되지 않은 계정'은 다르다. meError 가 있으면 전자다.
@@ -39726,7 +39770,14 @@ function App() {
     if(!role || page!=='dashboard') return;
     if(csMenuAllows({menu_roles:menuCfg, menu_emails:menuEmailCfg},'dashboard',role,myEmail)) return;
     const first = CS_MENU_DEFS.find(d=>d.id!=='dashboard'&&csMenuAllows({menu_roles:menuCfg, menu_emails:menuEmailCfg},d.id,role,myEmail));
-    if(first) setPage(first.id);
+    if(!first) return;
+    // ★ 탭이 있으면 «그 대시보드 탭» 을 그 자리에서 첫 메뉴 탭으로 바꾼다(탭이 하나 더 생기지 않게).
+    if(cur){
+      const id = csNextTabId(first.id, tabs.filter(x=>x!==cur));
+      setTabs(ts=>ts.map(x=>x===cur?id:x));
+      setTabPage(m=>{ const n={...m}; delete n[cur]; n[id]=first.id; return n; });
+      setCur(id);
+    } else setPrePage(first.id);
   },[role,menuCfg,page]);
   // 메뉴 «안» 의 동작 권한(2026-09-07). 메뉴 권한과 같은 모양으로 읽는다 —
   // 읽는 법을 새로 배울 것이 없어야 한다.
@@ -39755,12 +39806,12 @@ function App() {
   // 현재 펼친 부모들 (다중 펼침 가능: 사용자 수동 조작 존중)
   // 비용 비교 도구와 사이드바를 잇는 두 칸. 목록은 도구가 올려 주고, 클릭은 nav 로 내려보낸다.
   const [costState,setCostState] = useState({list:[],view:'dashboard',activeId:null});
-  const [costNav,setCostNav] = useState({view:'dashboard',id:null,seq:0});
+  // ★ 비용 화면 지시(costNav)는 탭마다(tabVals) — 사이드바 클릭은 «가게 된 그 탭» 에 보낸다.
   // ★ 이전 값을 펼치지 않는다. 그러면 '+ 새 프로젝트'의 action:'add' 가 남아
   //   다음에 무엇을 눌러도 프로젝트가 또 만들어진다(2026-08-20 실제로 겪었다).
   const goCost = (patch)=>{
-    navigateTo('costs');
-    setCostNav(v=>({view:'dashboard', id:null, action:null, ...patch, seq:v.seq+1}));
+    const t = navigateTo('costs');
+    if(t) setTv(t, o=>({costNav:{view:'dashboard', id:null, action:null, ...patch, seq:((o.costNav&&o.costNav.seq)||0)+1}}));
   };
 
   // ── 사이드바의 비용 프로젝트 목록을 미리 읽는다 (2026-08-25, 제니 제보) ──────
@@ -39824,19 +39875,29 @@ function App() {
   // 모바일 사이드바 열림/닫힘
   // 지금 열어 둔 티켓. ★ 주소창에 안 넣는다 — 이 콘솔은 라우터가 없고
   //   page 하나로 화면을 가른다. 티켓만 예외를 두면 뒤로가기 동작이 갈린다.
-  const [csTicketId,setCsTicketId] = useState(null);
-  // 접수 문안 화면이 다룰 티켓 번호들 — 목록에서 고른 것을 넘겨받는다.
-  const [csDraftIds,setCsDraftIds] = useState([]);
-  // ★★ 티켓을 열 때 «그 시점 목록의 차례» 를 함께 받아 둔다 — 상세의 [다음 티켓]이
-  //   이것을 본다. 목록에서 연 것이 아니면(이력·묶음 등) 비어 있고, 그때는 다음이
-  //   없는 것이 맞다(어느 목록의 다음인지 말할 수 없으므로).
-  const [ticketSeq,setTicketSeq] = useState([]);
-  // ★ 화면을 옮기는 길(openTicket·navigateTo·goDraft·로그아웃)은 먼저 csConfirmLeave — 작성 중이면 묻는다(2026-10-30).
+  // ★★ 2026-11-26 — 탭마다 따로 드는 값(tabVals[탭 id]). 그전엔 App 에 한 벌뿐이라
+  //   티켓 탭을 둘 열면 두 탭이 같은 티켓을 보였을 것이다.
+  //   ticketId = 지금 열어 둔 티켓(★ 주소창에 안 넣는다 — 라우터가 없고 화면은 page 로 가른다)
+  //   seq = 티켓을 열 때 «그 시점 목록의 차례»(상세의 [다음 티켓] · 목록 밖에서 열면 비어 있는 게 맞다)
+  //   chip·flt = 티켓 목록 칩·필터(상세 갔다 와도 남는다 · 2026-11-10) · draftIds = 접수 문안 대상
+  //   prodEditCode = 티켓 ③ [수정 바로하기] 가 넘긴 상품코드(한 번 쓰고 비운다) · costNav = 비용 화면 지시
+  const [tabVals,setTabVals] = useState({});
+  const TV0 = {ticketId:null, seq:[], chip:'all', flt:CS_FILTER0, draftIds:[], prodEditCode:null, costNav:{view:'dashboard',id:null,seq:0}};
+  const tv = (k)=>({...TV0, ...(tabVals[k]||{})});
+  const setTv = (k, patch)=> setTabVals(m=>{
+    const o = {...TV0, ...(m[k]||{})};
+    const p = typeof patch==='function' ? patch(o) : patch;
+    return {...m, [k]:{...o, ...p}};
+  });
+  const setTvField = (k, f)=> (x)=> setTv(k, o=>({[f]: typeof x==='function' ? x(o[f]) : x}));
+  // ★ 화면을 옮기는 길(openTicket·navigateTo·goDraft·로그아웃)은 먼저 묻는다 — 작성 중이면(2026-10-30).
   const openTicket = (id, seq)=>{
-    // ★ 상세는 «티켓 목록» 탭 안의 화면이다 — 그 탭의 작성 중 가드에만 묻는다(2026-11-25 탭).
-    if(!csConfirmLeaveTab('csTickets')) return;
-    if(Array.isArray(seq)) setTicketSeq(seq);
-    setCsTicketId(id); setPage('csTicket'); setMobileOpen(false);
+    // ★ 상세는 «티켓 목록» 탭 안의 화면이다 — 앞 탭이 티켓 탭이면 거기서, 아니면 마지막에 보던 티켓 탭에서.
+    const t = (cur && csTabMenu(cur)==='csTickets') ? cur : csFindTab('csTickets');
+    if(t && !csConfirmLeaveTab(t)) return;
+    const g = csGo('csTicket', {tab:t||undefined});
+    setTv(g, o=>({ticketId:id, seq: Array.isArray(seq) ? seq : o.seq}));
+    setMobileOpen(false);
   };
   const [mobileOpen,setMobileOpen] = useState(false);
   // ── 사이드바 접기 (제니 요청 · 2026-09-08) ───────────────────────────────────
@@ -39877,20 +39938,47 @@ function App() {
   //     「들어가면 첨에는 '전체'」 이고, 브라우저에 남기면 다음 날도 지난 칩이다.
   //   ★ 되돌리는 것은 **사이드바에서 «티켓 목록» 을 누를 때 한 번뿐이다** —
   //     상세의 [목록으로] · 등록 취소 · 「저장 후 목록으로」는 전부 유지된다.
-  const [csChip,setCsChip] = useState('all');
-  // ★ 티켓 목록 필터도 여기서(2026-11-10 제니) — 상세 갔다 와도 남는다 · 푸는 길은 [필터 지우기]와
-  //   사이드바 «티켓 목록»(칩과 함께 되돌림 · 제니 11-10 b 판).
-  const [csFlt,setCsFlt] = useState(CS_FILTER0);
-  // ★ 티켓 ③ [수정 바로하기] 가 넘긴 상품코드(제니 2026-11-11) — 상품 정보 화면이 열리며 한 번 쓰고 비운다.
-  const [prodEditCode,setProdEditCode] = useState(null);
-  const editProduct = (code)=>{ if(navigateTo('products')) setProdEditCode(code); };
-  // ── 상단 탭 (2026-11-25) — 규칙은 CsTabBar 위 설명 ─────────────────────────
+  //   ★ 2026-11-26 — 칩·필터는 이제 탭마다(tabVals.chip·flt). 규칙은 그대로.
+  // ★ 티켓 ③ [수정 바로하기] 가 넘긴 상품코드(제니 2026-11-11) — 상품 정보 탭이 열리며 한 번 쓰고 비운다.
+  const editProduct = (code)=>{ const t = navigateTo('products'); if(t) setTv(t,{prodEditCode:code}); };
+  // ── 상단 탭 (2026-11-25 · 11-26 한 메뉴 여러 탭) — 규칙은 CsTabBar 위 설명 ─────────
   //   ★ 탭 이동은 «화면을 버리지 않는다» → 묻지 않는다. 같은 탭 안에서 화면을 바꿀 때(상세→목록)와
   //     탭을 닫을 때만 그 탭의 작성 중 가드에 묻는다(csConfirmLeaveTab).
-  const activeTab = csTabOf(page);
-  csCurTab = activeTab;
-  const [tabs,setTabs] = useState([]);
-  const [tabPage,setTabPage] = useState({});   // 탭 → 그 탭이 보던 화면
+  const activeTab = cur;      // 앞 탭 id(«메뉴~N» 일 수 있다 · 메뉴는 csTabMenu)
+  csCurTab = cur;
+  // 메뉴마다 «마지막에 보던 탭» — 사이드바를 그냥 누르면 그 탭으로 간다.
+  const lastUsed = useRef({});
+  if(cur) lastUsed.current[csTabMenu(cur)] = cur;
+  const csFindTab = (M)=>{
+    const lu = lastUsed.current[M];
+    if(lu && tabs.indexOf(lu)>=0) return lu;
+    return tabs.find(x=>csTabMenu(x)===M) || null;
+  };
+  // ★ 화면을 바꾸는 단 하나의 길. 어느 탭에 그릴지 정하고(없으면 새로 만든다) 그 탭을 앞으로.
+  //   opts.tab = 그 탭에 · opts.newTab = 새 탭에. 돌려주는 값 = 그 탭 id.
+  const csGo = (pg, opts={})=>{
+    const M = csTabOf(pg);
+    // 권한을 읽기 전 — 탭을 안 만든다(첫 화면이 못 보는 대시보드여도 탭으로 남지 않게).
+    if(!role && !tabs.length){ setPrePage(pg); return null; }
+    let t = opts.newTab ? null : (opts.tab || ((cur && csTabMenu(cur)===M) ? cur : csFindTab(M)));
+    if(!t){
+      t = csNextTabId(M, tabs);
+      let n = tabs.concat(t);
+      while(n.length>CS_TAB_MAX){
+        const drop = n.find(k=>k!==t && !csTabDirty(k));
+        if(!drop) break;
+        n = n.filter(k=>k!==drop);
+        toast('탭은 '+CS_TAB_MAX+'개까지 열립니다 — 가장 오래된 «'+csTabTitle(drop)+'» 탭을 닫았습니다.');
+      }
+      setTabs(n);
+      // 같은 id 를 다시 쓰면 지난 값이 남는다 → 새 탭은 비운다(뒤따르는 setTv 보다 먼저 적힌다).
+      setTabVals(m=>{ const x={...m}; delete x[t]; return x; });
+    }
+    setTabPage(m=> m[t]===pg ? m : {...m,[t]:pg});
+    setCur(t);
+    return t;
+  };
+  const setPage = (pg)=>csGo(pg);
   const tabsKey = 'cs_console_tabs:'+myEmail;
   const tabsReady = useRef('');
   // 로그인한 사람마다 «이 PC» 에 기억해 둔 탭을 편다(화면 안 값은 처음부터 — 제니 선택).
@@ -39898,37 +39986,32 @@ function App() {
     if(!myEmail || tabsReady.current===myEmail) return;
     let saved = null;
     try{ saved = JSON.parse(localStorage.getItem(tabsKey)||'null'); }catch(_e){}
-    const list = (saved && Array.isArray(saved.tabs) ? saved.tabs : []).filter(csTabKnown).slice(0,CS_TAB_MAX);
+    const list = (saved && Array.isArray(saved.tabs) ? saved.tabs : []).filter(csTabKnown)
+      .filter((k,i,a)=>a.indexOf(k)===i).slice(0,CS_TAB_MAX);
     if(list.length){
       setTabs(list);
-      setTabPage(Object.fromEntries(list.map(k=>[k,k])));
-      setPage(saved.active && list.indexOf(saved.active)>=0 ? saved.active : list[list.length-1]);
+      setTabPage(Object.fromEntries(list.map(k=>[k,csTabMenu(k)])));
+      setCur(saved.active && list.indexOf(saved.active)>=0 ? saved.active : list[list.length-1]);
     }
     tabsReady.current = myEmail;
+    setTabsLoaded(myEmail);
   },[myEmail]);
-  // 지금 화면을 그 탭에 적는다(새 탭이면 오른쪽 끝에). ★ setPage 를 직접 부르는 길
-  //   (openTicket·goDraft·첫 화면 옮기기)도 모두 여기서 잡힌다.
+  const [tabsLoaded,setTabsLoaded] = useState('');
+  // 처음 쓰는 PC(기억한 탭이 없음) — 권한을 읽은 뒤 첫 화면을 첫 탭으로.
   useEffect(()=>{
-    // ★ 권한을 읽기 전엔 적지 않는다 — 첫 화면(대시보드)이 못 보는 사람에게도 탭으로 남는다.
-    if(!role) return;
-    setTabPage(m=> m[activeTab]===page ? m : {...m,[activeTab]:page});
-    setTabs(t=>{
-      if(t.indexOf(activeTab)>=0) return t;
-      let n = t.concat(activeTab);
-      while(n.length>CS_TAB_MAX){
-        const drop = n.find(k=>k!==activeTab && !(csLeaveGuardTab===k && csLeaveGuard && csLeaveGuard()));
-        if(!drop) break;
-        n = n.filter(k=>k!==drop);
-        toast('탭은 '+CS_TAB_MAX+'개까지 열립니다 — 가장 오래된 «'+csTabLabel(drop)+'» 탭을 닫았습니다.');
-      }
-      return n;
-    });
-  },[page, role]);
+    if(!role || tabsLoaded!==myEmail || tabs.length) return;
+    let pg = prePage;
+    if(pg==='dashboard' && !canMenu('dashboard')){
+      const first = CS_MENU_DEFS.find(d=>d.id!=='dashboard'&&canMenu(d.id));
+      if(first) pg = first.id;
+    }
+    csGo(pg);
+  },[role, tabsLoaded, tabs.length]);
   useEffect(()=>{
     if(!myEmail || tabsReady.current!==myEmail || !tabs.length) return;
-    try{ localStorage.setItem(tabsKey, JSON.stringify({tabs, active:activeTab})); }catch(_e){}
-  },[tabs, activeTab, myEmail]);
-  const pickTab = (k)=>{ if(k!==activeTab){ setPage(tabPage[k]||k); setMobileOpen(false); } };
+    try{ localStorage.setItem(tabsKey, JSON.stringify({tabs, active:cur})); }catch(_e){}
+  },[tabs, cur, myEmail]);
+  const pickTab = (k)=>{ if(k!==cur){ setCur(k); setMobileOpen(false); } };
   const closeTab = (k)=>{
     if(tabs.length<=1) return;
     if(!csConfirmLeaveTab(k)) return;
@@ -39936,33 +40019,41 @@ function App() {
     const rest = tabs.filter(x=>x!==k);
     setTabs(rest);
     setTabPage(m=>{ const n={...m}; delete n[k]; return n; });
-    if(k===activeTab){
-      const nk = rest[Math.min(Math.max(i,0), rest.length-1)];
-      setPage(tabPage[nk]||nk); setMobileOpen(false);
+    setTabVals(m=>{ const n={...m}; delete n[k]; return n; });
+    if(lastUsed.current[csTabMenu(k)]===k) delete lastUsed.current[csTabMenu(k)];
+    if(k===cur){
+      setCur(rest[Math.min(Math.max(i,0), rest.length-1)]); setMobileOpen(false);
     }
   };
 
-  const navigateTo = (pageId)=>{
+  // 메뉴로 가기. opts.newTab(또는 사이드바 Ctrl+클릭·가운데 클릭) = 새 탭에서 그 메뉴 첫 화면.
+  //   돌려주는 값 = 가게 된 탭 id(못 가면 false) — 부르는 쪽이 그 탭에 값을 넣는다(setTv).
+  const navigateTo = (pageId, opts)=>{
     const T = csTabOf(pageId);
-    if(T!==activeTab){
-      // 다른 탭으로 — 보던 탭은 숨겨 둔 채 그대로 남는다(묻지 않는다).
-      const cur = tabPage[T];
-      if(tabs.indexOf(T)>=0 && cur && pageId!==T && pageId!==cur){
-        // 열린 탭의 «다른 화면» 을 콕 집어 부른 경우만 그 탭 화면이 바뀐다 → 그 탭 가드에 묻는다.
-        if(!csConfirmLeaveTab(T)) return false;
-        setPage(pageId);
-      } else {
-        // ★ 이미 탭이 있는 메뉴를 다시 누르면 «있었던 탭으로»(제니) — 보던 화면 그대로.
-        setPage(tabs.indexOf(T)>=0 && cur ? cur : pageId);
-      }
+    const newTab = !!((opts && opts.newTab) || csNavNewTab);
+    let t;
+    if(newTab){
+      t = csGo(pageId, {newTab:true});
+    } else if(cur && csTabMenu(cur)===T){
+      if(pageId===page) return cur;            // 같은 화면 — 할 일 없음
+      if(!csConfirmLeaveTab(cur)) return false;
+      t = csGo(pageId, {tab:cur});
     } else {
-      if(pageId===page) return true;            // 같은 화면 — 할 일 없음
-      if(!csConfirmLeave()) return false;
-      setPage(pageId);
+      // 다른 메뉴로 — 보던 탭은 숨겨 둔 채 그대로 남는다(묻지 않는다).
+      const ex = csFindTab(T);
+      const exPage = ex && tabPage[ex];
+      if(ex && exPage && pageId!==T && pageId!==exPage){
+        // 열린 탭의 «다른 화면» 을 콕 집어 부른 경우만 그 탭 화면이 바뀐다 → 그 탭 가드에 묻는다.
+        if(!csConfirmLeaveTab(ex)) return false;
+        t = csGo(pageId, {tab:ex});
+      } else {
+        // ★ 이미 탭이 있는 메뉴를 다시 누르면 «마지막에 보던 탭으로»(제니) — 보던 화면 그대로.
+        t = csGo(ex && exPage ? exPage : pageId, ex ? {tab:ex} : {});
+      }
     }
-    if(T==='entry' || activeTab==='entry') setEditDate(null);
+    if(T==='entry' || csTabMenu(cur)==='entry') setEditDate(null);
     setMobileOpen(false);
-    return true;
+    return t || 'pre';
   };
 
   // ── 운영 알림 (2026-08-31) ────────────────────────────────────────────────
@@ -40050,7 +40141,22 @@ function App() {
         {mobileOpen ? '✕' : '☰'}
       </button>
       <div className={`mobile-overlay ${mobileOpen?'show':''}`} onClick={()=>setMobileOpen(false)}/>
-      <div className={`sidebar ${mobileOpen?'mobile-open':''} ${navCollapsed?'collapsed':''}`}>
+      <div className={`sidebar ${mobileOpen?'mobile-open':''} ${navCollapsed?'collapsed':''}`}
+        /* ★ 2026-11-26 — Ctrl(⌘)+클릭·가운데 클릭 = 그 메뉴를 새 탭으로(제니). 누르는 순간(capture) 켜고
+             메뉴 줄의 onClick → navigateTo 가 읽고, 맨 끝(bubble)에서 끈다. 가운데 클릭은 click 이 안 나므로
+             그 자리에 click 을 한 번 일으킨다. 메뉴가 아닌 줄(접기·펼치기)은 navigateTo 를 안 불러 그대로다. */
+        onClickCapture={e=>{ csNavNewTab = !!(e.ctrlKey || e.metaKey); }}
+        onClick={()=>{ csNavNewTab = false; }}
+        onMouseDown={e=>{ if(e.button===1 && e.target.closest && e.target.closest('.nav-child,.nav-parent,.nav-item')) e.preventDefault(); }}
+        onAuxClick={e=>{
+          if(e.button!==1) return;
+          const el = e.target.closest && e.target.closest('.nav-child,.nav-parent,.nav-item');
+          if(!el) return;
+          e.preventDefault();
+          csNavNewTab = true;
+          try{ el.dispatchEvent(new window.MouseEvent('click',{bubbles:true,cancelable:true,ctrlKey:true})); }
+          finally{ csNavNewTab = false; }
+        }}>
         <div className="sidebar-logo">
           {/* ★ 접기/펼치기 — 늘 같은 자리(로고 줄 오른쪽 위)다. 접은 뒤 «펴는 단추» 를
               다른 데서 찾게 하지 않는다. 접히면 로고 자리에 이 단추만 남는다.
@@ -40096,8 +40202,11 @@ function App() {
                   onClick={()=>{
                     // ★ 2026-11-25 — 칩·필터를 처음으로 푸는 것은 «이미 티켓 목록 탭에 있을 때» 만.
                     //   다른 탭에서 오면 «있었던 탭으로» — 보던 그대로(제니).
-                    const here = activeTab==='csTickets';
-                    if(navigateTo('csTickets') && here){ setCsChip('all'); setCsFlt(CS_FILTER0); } }}>
+                    //   (2026-11-26) 새 탭으로 열면 처음부터니 풀 것도 없다.
+                    const before = cur;
+                    const here = !csNavNewTab && csTabMenu(cur)==='csTickets';
+                    const t = navigateTo('csTickets');
+                    if(t && here && t===before) setTv(t,{chip:'all', flt:CS_FILTER0}); }}>
                   <span className="nav-label">티켓 목록</span><RoleTag on={masterOnly('csTickets')}/>
                 </div>
               )}
@@ -40110,7 +40219,7 @@ function App() {
                      정해진 시각의 일이라고 정했다. **전제가 바뀌면 결론도 바꾼다.** */}
               {canMenu('csDraft') && (
                 <div className={`nav-child ${page==='csDraft'?'active':''}`}
-                  onClick={()=>{ if(navigateTo('csDraft')) setCsDraftIds([]); }}>
+                  onClick={()=>{ const t = navigateTo('csDraft'); if(t) setTv(t,{draftIds:[]}); }}>
                   <span className="nav-label">공급사 접수</span><RoleTag on={masterOnly('csDraft')}/>
                 </div>
               )}
@@ -40489,7 +40598,7 @@ function App() {
               ))}
             </div>
           )}
-          <button className="btn-logout" onClick={()=>{ if(csConfirmLeave()) sb.auth.signOut(); }}
+          <button className="btn-logout" onClick={()=>{ if(csConfirmLeaveAll()) sb.auth.signOut(); }}
             title={navCollapsed?'로그아웃':undefined}>로그아웃</button>
         </div>
       </div>
@@ -40498,11 +40607,15 @@ function App() {
         {/* ★ 2026-11-25 상단 탭 — 열린 탭마다 그 탭이 보던 화면을 그리고, 앞에 있는 탭만 보인다.
             나머지는 display:none 으로 숨겨 «살려» 둔다(검색어·필터·스크롤·작성 중인 글이 그대로 · 제니 선택).
             경계(PageErrorBoundary)는 탭마다 — 한 화면이 죽어도 다른 탭은 산다. key={p} 라 화면을 바꾸면 오류도 지워진다. */}
-        <CsTabBar tabs={tabs.indexOf(activeTab)>=0 ? tabs : tabs.concat(role ? [activeTab] : [])} active={activeTab} onPick={pickTab} onClose={closeTab}/>
-        {(tabs.indexOf(activeTab)>=0 ? tabs : tabs.concat([activeTab])).map(k=>{
-          const p = k===activeTab ? page : (tabPage[k]||k);
+        <CsTabBar tabs={tabs} active={cur} onPick={pickTab} onClose={closeTab}
+          onAdd={cur ? ()=>navigateTo(csTabMenu(cur),{newTab:true}) : null}/>
+        {/* ★ 2026-11-26 — 탭마다 제 값(tv(k))을 넘긴다. 탭이 생기기 전(권한 읽기 전)엔 prePage 한 장. */}
+        {(tabs.length ? tabs : ['__pre']).map(k=>{
+          const p = k==='__pre' ? prePage : (tabPage[k]||csTabMenu(k));
+          const v = tv(k);
           return (
-            <div key={k} className="cs-tab-pane" style={k===activeTab ? undefined : {display:'none'}}>
+            <div key={k} className="cs-tab-pane" style={(k==='__pre' || k===cur) ? undefined : {display:'none'}}>
+            <CsTabCtx.Provider value={k}>
             <PageErrorBoundary key={p} label={PAGE_LABELS[p]}>
         {/* ★★ 2026-09-08 — 새로 목록에 오른 메뉴들(대시보드·상품 정보·공급사 관리·
             티켓 목록·공급사 접수)도 여기서 막는다. **설정에 체크가 있는데 화면이
@@ -40518,24 +40631,24 @@ function App() {
           /* ★ 메뉴 차례도 저장하는 즉시 내 사이드바가 바뀐다(다른 사람은 다음 로그인 때). */
           onNavSaved={(v)=>setNavOrderCfg(v)}/>}
         {p==='products'&&(canMenu('products')?<ProductsPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}
-          editCode={prodEditCode} onEditCodeUsed={()=>setProdEditCode(null)}/>:<NoAccessPage/>)}
+          editCode={v.prodEditCode} onEditCodeUsed={()=>setTv(k,{prodEditCode:null})}/>:<NoAccessPage/>)}
         {p==='suppliers'&&(canMenu('suppliers')?<SuppliersPage isCrew={isCrew} isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {p==='delays'&&canMenu('delays')&&<DelayedProductsPage isMaster={isMaster} isManager={isManager} can={canAction}/>}
         {p==='autoDelivery'&&canMenu('autoDelivery')&&<AutoDeliveryPage isMaster={isMaster} isManager={isManager} currentUserEmail={session.user.email} can={canAction}/>}
         {p==='csTickets'&&(canMenu('csTickets')?<CsTicketsPage currentUserEmail={session.user.email} role={role}
-          chip={csChip} setChip={setCsChip} flt={csFlt} setFlt={setCsFlt}
+          chip={v.chip} setChip={setTvField(k,'chip')} flt={v.flt} setFlt={setTvField(k,'flt')}
           canRefund={canMenu('refunds') && canAction('refunds.create')}
           canDelete={canAction('csTickets.delete')}
           onNew={()=>navigateTo('csNew')} goTicket={openTicket}
-          goDraft={ids=>{ if(!csConfirmLeave()) return; setCsDraftIds(ids); setPage('csDraft'); setMobileOpen(false); }}/>:<NoAccessPage/>)}
-        {p==='csDraft'&&(canMenu('csDraft')?<CsSupplierDraftPage ids={csDraftIds}
+          goDraft={ids=>{ const t = navigateTo('csDraft'); if(t) setTv(t,{draftIds:ids}); }}/>:<NoAccessPage/>)}
+        {p==='csDraft'&&(canMenu('csDraft')?<CsSupplierDraftPage ids={v.draftIds}
           currentUserEmail={session.user.email}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}/>:<NoAccessPage/>)}
         {p==='csNew'&&(canMenu('csTickets')?<CsNewTicketPage currentUserEmail={session.user.email} role={role}
           onDone={()=>navigateTo('csTickets')} onCancel={()=>navigateTo('csTickets')}
           goTicket={openTicket} onEditProduct={canMenu('products') && canAction('products.edit') ? editProduct : null}/>:<NoAccessPage/>)}
-        {p==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={csTicketId} currentUserEmail={session.user.email}
-          role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={ticketSeq}
+        {p==='csTicket'&&(canMenu('csTickets')?<CsTicketPage ticketId={v.ticketId} currentUserEmail={session.user.email}
+          role={role} canRefund={canMenu('refunds') && canAction('refunds.create')} seq={v.seq}
           canDelete={canAction('csTickets.delete')}
           onBack={()=>navigateTo('csTickets')} goTicket={openTicket}
           onNew={()=>navigateTo('csNew')} onEditProduct={canMenu('products') && canAction('products.edit') ? editProduct : null}/>:<NoAccessPage/>)}
@@ -40544,12 +40657,13 @@ function App() {
         {p==='manuals'&&(canMenu('manuals')?<ManualsPage currentUserEmail={session.user.email} role={role} can={canAction}/>:<NoAccessPage/>)}
         {p==='msgTemplates'&&(canMenu('msgTemplates')?<MsgTemplatesPage currentUserEmail={session.user.email} can={canAction} role={role}/>:<NoAccessPage/>)}
         {p==='refunds'&&(canMenu('refunds')?<RefundManagementPage currentUserEmail={session.user.email} goTicket={openTicket} can={canAction}/>:<NoAccessPage/>)}
-        {p==='costs'&&(canMenu('costs')?<ToolCostCompare nav={costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
+        {p==='costs'&&(canMenu('costs')?<ToolCostCompare nav={v.costNav} onProjects={setCostState} currentUserEmail={session.user.email}/>:<NoAccessPage/>)}
         {p==='logistics'&&(canMenu('logistics')?<LogisticsClassifyPage currentUserEmail={session.user.email} isMaster={isMaster}/>:<NoAccessPage/>)}
         {p==='agentAnalysis'&&canMenu('agentAnalysis')&&<AgentAnalysisPage/>}
         {p==='agents'&&(canMenu('agents')?<AgentMgmtPage/>:<NoAccessPage/>)}
         {p==='auditLog'&&(canMenu('auditLog')?<AuditLogPage/>:<NoAccessPage/>)}
             </PageErrorBoundary>
+            </CsTabCtx.Provider>
             </div>
           );
         })}
