@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<!-- v20261126h_tk_list_keep_sort -->
+<!-- v20261126j_tk_list_no_flicker -->
+<!-- (2026-11-26) 🎫 티켓 목록에 올 때마다 «깜빡이듯 움직이던» 것(제니) — 상세 갔다 오거나 새 탭으로 열 때마다 목록(1,500건대)·CS 설정을 처음부터 읽어 «불러오는 중…» → 표, 설정이 늦으면 기본 열 → 설정 열로 바뀌었다. → 마지막에 읽은 목록·설정(csTicketsCache · 창 메모리 · 계정별)으로 바로 그리고 새 값은 뒤에서 받아 갈아 낌(설정은 같으면 안 갈아 낌) · 열 구성을 모르면 표를 안 그림. SQL 없음. -->
+<!-- v20261126i_tabbar_sticky -->
+<!-- (2026-11-26) 🗂 상단 탭 막대를 스크롤해도 위에 고정(제니) — .cs-tabbar-top sticky top:0 · z 150(일괄 막대 120 위 · 모달·사이드바 아래). App 이 막대 높이를 재어(ResizeObserver) .main 에 --cs-tabtop 으로 내려 주고, 화면 안 sticky 머리(티켓 상세 머리·일괄 막대·CS 설정 탭·.cs-tabbar-wrap·③ 칸·알림톡 미리보기·비용 도구 옆칸 등 10곳)는 그만큼 내려 붙는다(maxHeight 도 그만큼 뺌). 스크롤 상자 «안» 의 sticky(표 머리·드롭다운 검색칸)는 그대로. SQL 없음. -->
 <!-- (2026-11-26) 🎫 티켓 목록 정렬도 보던 값 그대로(제니: 「칩·필터는 유지되는데 정렬은 안 된다」) — sort 를 칩·필터처럼 App tabVals.sort 로 올림(탭마다 · 상세 갔다 와도 · 다시 읽어도 유지). 사이드바 «티켓 목록» 누를 때 칩·필터만 처음으로(정렬은 그대로). SQL 없음. -->
 <!-- (2026-11-26) 🔄 티켓 목록이 바뀐 것을 저절로 다시 읽는다(제니: 「탭 2 에서 처리하고 탭 1 로 오면 그대로 · 다른 상담원 열린 탭에도 반영」). ① 내 저장 = cs_tickets·cs_ticket_events 로 가는 쓰기가 성공하면(fetch 감싸기 · createClient 앞) 'cs-tickets-changed' → 목록 탭 곧바로 다시 읽기 ② 남의 저장 = 목록이 20초마다·탭이 앞으로 올 때·창으로 돌아올 때 «표 도장»(건수|최근 updated_at · 1줄 조회)을 묻고 다르면 다시 읽기. 칩·필터·검색어·쪽 그대로. 창이 숨어 있으면 안 묻는다. SQL 없음. -->
 <!-- (2026-11-26) 🎫 사람이 만든 칩(u:… 예 «정산 체크»)을 고르고 상세 → [목록으로] 오면 '전체' 로 돌아가던 것(제니). 원인 = 목록이 새로 붙을 때 설정(settings)을 읽기 전이라 만든 칩이 «안 보이는 칩» 으로 판정돼 되돌림 effect 가 '전체' 로 바꿈 → settings===null 이면 판정하지 않는다. 기본 칩은 원래 유지됐다. SQL 없음. -->
@@ -1366,7 +1369,7 @@
          있는 화면(인력 관리·데이터 입력·상품 정보)에서 **그 래퍼 자체를 붙인다.**
          래퍼의 부모는 화면 루트라 자리가 넉넉하다.
        ★★ 배경을 반드시 준다 — 투명하면 밑을 지나가는 표가 탭 글자에 겹쳐 읽힌다. */
-    .cs-tabbar-wrap{position:sticky;top:0;z-index:20;background:var(--bg)}
+    .cs-tabbar-wrap{position:sticky;top:var(--cs-tabtop,0px);z-index:20;background:var(--bg)}
     .page-header{padding:24px 32px 0;display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
     /* 제목과 부연을 «한 줄에 나란히» — 기준 세 화면이 그렇다. */
     .page-header > div:first-child{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
@@ -5905,7 +5908,7 @@ function ProductsPage({isCrew=false,isMaster=false,isManager=false,currentUserEm
               </div>
 
               {/* 우측: CS 정보 + 메모 (sticky) */}
-              <div style={{position:'sticky',top:20}}>
+              <div style={{position:'sticky',top:'calc(20px + var(--cs-tabtop,0px))'}}>
                 <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:10,padding:16}}>
                   <div className="entry-section-title">CS 정보</div>
 
@@ -14740,7 +14743,7 @@ function DelayAlimtalkPreview({ selectedProduct, variants, selectedVariantCodes,
   const renderVal = (val,key)=> isVar(val) ? <span key={key} style={varStyle}>{val}</span> : <span key={key} style={{color:'#222',whiteSpace:'pre-line'}}>{val}</span>;
 
   return (
-    <div style={{position:'sticky',top:0}}>
+    <div style={{position:'sticky',top:'var(--cs-tabtop,0px)'}}>
       <div style={{fontSize:12,fontWeight:700,color:'var(--text)',marginBottom:8,letterSpacing:'.02em'}}>📱 알림톡 발송 미리보기</div>
 
       {/* 발송 건수 안내 */}
@@ -19623,7 +19626,7 @@ const CSS = `
 .tcc-body.is-collapsed .tcc-side { display: none; }
 .tcc-content { min-width: 0; }
 
-.tcc-side { position: sticky; top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.tcc-side { position: sticky; top: calc(14px + var(--cs-tabtop,0px)); display: flex; flex-direction: column; gap: 8px; }
 .tcc-navhome { font-family: inherit; font-size: 13px; font-weight: 700; text-align: left; padding: 10px 12px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; cursor: pointer; color: var(--ink2); }
 .tcc-navhome:hover { border-color: var(--ink2); color: var(--ink); }
 .tcc-navhome.is-on { background: var(--tcc-fill); border-color: var(--tcc-fill); color: #fff; }
@@ -20624,6 +20627,13 @@ function csGroupLookup(list){
 // ★★ 2026-11-25 — DB 는 한 번에 최대 1,000줄만 돌려준다(Supabase 기본 max rows). «전부» 가
 //   필요하면 쪽(range)으로 나눠 끝까지 받는다. make 는 매번 새 쿼리를 만드는 함수 — 차례가
 //   흔들리면 쪽 사이로 줄이 빠지거나 겹치므로 order 에 id 를 꼭 붙일 것.
+// 티켓 목록 사본(2026-11-26 · 깜빡임) — 마지막에 읽은 목록·설정. 계정이 바뀌면 버린다.
+//   ★ 이 브라우저 창 안 메모리에만 둔다(새로고침하면 처음부터) — 고객 정보를 저장소에 남기지 않는다.
+const csTicketsCache = {email:null, rows:null, settings:null};
+function csTicketsCacheSet(email, part){
+  if(csTicketsCache.email!==email){ csTicketsCache.email = email; csTicketsCache.rows = null; csTicketsCache.settings = null; }
+  Object.assign(csTicketsCache, part);
+}
 // 티켓 표 «도장» — 건수 + 가장 최근 수정 시각(2026-11-26 · 다른 상담원 저장 반영).
 const CS_TICKETS_POLL_MS = 20000;
 function csTicketsStampOf(count, latest){ return String(count||0)+'|'+String(latest||''); }
@@ -23069,7 +23079,11 @@ async function csDeleteTickets({ids, currentUserEmail, from}){
 const CS_FILTER0 = {assignee:[], supplier:[], stage:[], cs_type:[], direction:[], from:'', to:''};
 function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNew, goTicket, goDraft,
                        chip, setChip, flt:fltP, setFlt:setFltP, sort:sortP, setSort:setSortP}){
-  const [rows,setRows]     = useState(null);   // null = 아직 안 읽음
+  // ★ 2026-11-26 제니 «목록 화면에 올 때마다 깜빡이듯 움직인다» — 상세 갔다 오거나 탭을 새로 열 때마다
+  //   목록·설정을 처음부터 읽어 «읽는 중…» → 표, 설정이 늦으면 기본 열 → 설정 열로 바뀌었다.
+  //   → 마지막에 읽은 목록·설정(csTicketsCache · 계정별)으로 «바로» 그리고, 새 값은 뒤에서 받아 갈아 낀다.
+  const cached = csTicketsCache.email===currentUserEmail ? csTicketsCache : null;
+  const [rows,setRows]     = useState(cached ? cached.rows : null);   // null = 아직 안 읽음
   // ★ 칸 규칙 — [환불 요청 하기] 를 그릴지 정하는 데 쓴다(2026-09-16). 상세 화면과 같은 값이라야
   //   «목록에선 되는데 상세에선 안 되는» 자리가 안 생긴다.
   const fieldRules = useCsFieldRules();
@@ -23251,17 +23265,19 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
     document.addEventListener('mouseup', up);
   };
   const [q,setQ]           = useState('');
-  const [settings,setSettings] = useState(null);
+  const [settings,setSettings] = useState(cached ? cached.settings : null);
   const isMaster = role==='master';
 
   // 설정(칩 권한·열 구성)을 한 번 읽는다. 못 읽으면 기본값으로 돈다.
+  // ★ 사본이 있으면 그것으로 먼저 그리고, 읽어 온 값이 «같으면» 갈아 끼우지 않는다(다시 그리기 없음).
   useEffect(()=>{ (async()=>{
     const {data,error} = await sb.from('console_settings').select('key,value')
       .in('key',['cs_chip_roles','cs_list_columns','cs_chips_custom','cs_chip_stages']);
-    if(error){ console.warn('[CS 설정] 기본값으로 돕니다:', error.message); setSettings({}); return; }
+    if(error){ console.warn('[CS 설정] 기본값으로 돕니다:', error.message); setSettings(p=>p||{}); return; }
     const m = {};
     (data||[]).forEach(r=>{ m[r.key] = r.value; });
-    setSettings(m);
+    csTicketsCacheSet(currentUserEmail, {settings:m});
+    setSettings(p=> (p && JSON.stringify(p)===JSON.stringify(m)) ? p : m);
   })(); },[]);
 
   // 티켓을 읽는다. dev 는 아직 건수가 적어 통째로 받아 화면에서 거른다 —
@@ -23275,7 +23291,9 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
     if(sbFail('CS 티켓 조회', error)) { setRows([]); return; }
     const list = data||[];
     stampRef.current = csTicketsStampOf(list.length, list[0] && list[0].updated_at);
-    setRows(await csWithPhotoCount(list));
+    const withPh = await csWithPhotoCount(list);
+    csTicketsCacheSet(currentUserEmail, {rows:withPh});
+    setRows(withPh);
   };
   useEffect(()=>{ load(); },[]);
 
@@ -23945,7 +23963,8 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
                 {srvNow.total>srvNow.rows.length && <span style={{color:'var(--red-ink)'}}> · 맞는 티켓 {srvNow.total.toLocaleString()}건 중 최근 {srvNow.rows.length.toLocaleString()}건만 보입니다 — 검색어를 더 좁혀 주세요</span>}</>}
         </div>
       )}
-      {rows===null ? (
+      {/* ★ 열 구성(settings)을 알기 전엔 표를 그리지 않는다 — 기본 열로 먼저 그렸다가 바뀌면 «움직인다»(2026-11-26). */}
+      {(rows===null || settings===null) ? (
         <div style={{padding:'60px 0',textAlign:'center',color:'var(--sub)',fontSize:12}}>불러오는 중…</div>
       ) : list.length===0 ? (
         <div style={{textAlign:'center',padding:'70px 24px',background:'var(--card)',
@@ -23991,7 +24010,7 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
               맞춰 둔 테두리(CS_LINE)·파란 버튼은 붉은 바탕에서 탁해진다.
               (09-03 밝은 판, 09-04 그 판 밖으로 — 같은 함정을 판이 바뀔 때마다 만난다.) */}
         {pickedIds.length>0 && (()=>{ const BP = csBulkBarPalette(); return (
-          <div style={{position:'sticky',top:0,zIndex:120,marginBottom:8,
+          <div style={{position:'sticky',top:'var(--cs-tabtop,0px)',zIndex:120,marginBottom:8,
             background:BP.bg,border:'2px solid '+BP.bd,borderRadius:10,
             boxShadow:'0 8px 24px rgba(0,0,0,.5)',padding:'9px 12px',
             display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
@@ -25994,7 +26013,7 @@ function CsCafe24Settings({currentUserEmail}){
 
         {/* 차례 */}
         <div style={{border:'1px solid var(--border)',borderRadius:8,background:'var(--card)',
-          padding:'10px 12px',position:'sticky',top:12}}>
+          padding:'10px 12px',position:'sticky',top:'calc(12px + var(--cs-tabtop,0px))'}}>
           <div style={{fontSize:11.5,color:'var(--sub)',marginBottom:8,lineHeight:1.55}}>
             티켓 필드 조정 <span style={{fontFamily:'monospace',opacity:.7}}>({order.length})</span>
           </div>
@@ -26290,7 +26309,7 @@ function CsPageTabs({tabs, value, onChange}){
   return (
     <div style={{display:'flex',gap:0,borderBottom:'1px solid var(--border)',
       marginBottom:24,flexWrap:'wrap',
-      position:'sticky',top:0,zIndex:20,background:'var(--bg)'}}>
+      position:'sticky',top:'var(--cs-tabtop,0px)',zIndex:20,background:'var(--bg)'}}>
       {tabs.map(t=>{
         const on = value===t.id;
         return (
@@ -29717,8 +29736,8 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket, on
   //   정작 필요한 순간에 안 보이면 없는 것과 같다.
   //   ★ 스스로 스크롤되게 해 둔다(maxHeight) — 붙어 있기만 하고 안이 넘치면
   //     아래쪽 버튼에 손이 안 닿는다.
-  const sticky = {...panel, position:'sticky', top:16,
-    maxHeight:'calc(100vh - 32px)', overflowY:'auto'};
+  const sticky = {...panel, position:'sticky', top:'calc(16px + var(--cs-tabtop,0px))',
+    maxHeight:'calc(100vh - 32px - var(--cs-tabtop,0px))', overflowY:'auto'};
   // ★ 패널 제목은 «이 칸이 무엇인가» 를 말하는 자리라 한 단계 크고 굵다(제니).
   //   콘솔의 다른 화면 제목(.entry-section-title)이 쓰는 색을 그대로 쓴다.
   const ptitle = {fontSize:12.5,fontWeight:700,color:'var(--accent)',letterSpacing:'.04em',
@@ -31314,8 +31333,8 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
   //   ★ 그래서 ②는 이제 ③과 «같은» 규칙을 쓴다(sticky). 규칙이 하나면 나중에
   //     머리말 높이가 바뀌어도 한 곳만 고치면 된다.
   // ③용 — 짧은 칸이라 따라 내려온다. 머리말이 위에 붙어 있으므로 그 높이만큼 내려 붙는다.
-  const sticky = {...panel, position:'sticky', top:74, alignSelf:'start',
-    maxHeight:'calc(100vh - 90px)', overflowY:'auto'};
+  const sticky = {...panel, position:'sticky', top:'calc(74px + var(--cs-tabtop,0px))', alignSelf:'start',
+    maxHeight:'calc(100vh - 90px - var(--cs-tabtop,0px))', overflowY:'auto'};
   // ★ 패널 제목은 «이 칸이 무엇인가» 를 말하는 자리라 한 단계 크고 굵다(제니).
   //   콘솔의 다른 화면 제목(.entry-section-title)이 쓰는 색을 그대로 쓴다.
   const ptitle = {fontSize:12.5,fontWeight:700,color:'var(--accent)',letterSpacing:'.04em',
@@ -31433,7 +31452,7 @@ function CsTicketPage({ticketId, currentUserEmail, role, canRefund, canDelete=fa
           본문이 그 아래로 지나가게 한다(투명하면 글자가 겹쳐 읽힌다).
           ★ .section 의 좌우 여백(32px)을 음수 여백으로 벌려 띠가 화면을 가로지르게 하고,
             같은 만큼 안쪽 여백을 줘 글자 위치는 그대로 둔다. */}
-      <div style={{position:'sticky',top:0,zIndex:20,background:'var(--bg)',
+      <div style={{position:'sticky',top:'var(--cs-tabtop,0px)',zIndex:20,background:'var(--bg)',
         margin:'-24px -32px 8px',padding:'18px 32px 12px',
         borderBottom:'1px solid var(--border)',
         display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
@@ -38208,7 +38227,11 @@ function CsTabBar({tabs, active, onPick, onClose, onAdd, titleOf}){
   const many = tabs.length>1;
   return (
     <div className="cs-tabbar-top" role="tablist"
-      style={{display:'flex',alignItems:'flex-end',gap:4,overflowX:'auto',overflowY:'hidden',
+      /* ★ 2026-11-26 제니 「스크롤 내려도 탭이 위에 고정으로 보이게」 → sticky top:0.
+           화면 안의 sticky 머리들(티켓 상세 머리·일괄 막대·설정 탭 등)은 이 높이(--cs-tabtop · App 이 잰다)만큼
+           내려 붙는다. z 150 = 일괄 막대(120)보다 위 · 모달(900~)·사이드바(1000)보다 아래. */
+      style={{position:'sticky',top:0,zIndex:150,
+        display:'flex',alignItems:'flex-end',gap:4,overflowX:'auto',overflowY:'hidden',
         padding:'6px 12px 0',borderBottom:'1px solid var(--border)',background:'var(--surface)',
         scrollbarWidth:'thin'}}>
       {tabs.map(k=>{
@@ -40116,6 +40139,18 @@ function App() {
     if(!myEmail || tabsReady.current!==myEmail || !tabs.length) return;
     try{ localStorage.setItem(tabsKey, JSON.stringify({tabs, active:cur})); }catch(_e){}
   },[tabs, cur, myEmail]);
+  // ★ 탭 막대 높이를 잰다(2026-11-26 · 상단 고정) — 화면 안 sticky 머리들이 이만큼 내려 붙는다(--cs-tabtop).
+  //   숫자로 박지 않는다(글꼴·확대에 따라 달라진다 — size-measure-dont-guess).
+  const [tabTop,setTabTop] = useState(0);
+  useEffect(()=>{
+    const el = document.querySelector('.cs-tabbar-top');
+    if(!el){ setTabTop(0); return; }
+    const put = ()=> setTabTop(Math.ceil(el.getBoundingClientRect().height));
+    put();
+    let ro = null;
+    try{ ro = new window.ResizeObserver(put); ro.observe(el); }catch(_e){}
+    return ()=>{ if(ro) ro.disconnect(); };
+  },[tabs.length>0]);
   // 탭이 앞으로 오면 알린다 — 티켓 목록 탭은 «그새 바뀐 게 있나» 를 바로 확인한다(2026-11-26).
   useEffect(()=>{
     if(!cur) return;
@@ -40713,7 +40748,7 @@ function App() {
             title={navCollapsed?'로그아웃':undefined}>로그아웃</button>
         </div>
       </div>
-      <div className="main">
+      <div className="main" style={{'--cs-tabtop': tabTop+'px'}}>
         {/* 화면 하나가 죽어도 콘솔 전체는 살아남는다. key={page} 라 메뉴를 옮기면 오류 상태도 함께 지워진다. */}
         {/* ★ 2026-11-25 상단 탭 — 열린 탭마다 그 탭이 보던 화면을 그리고, 앞에 있는 탭만 보인다.
             나머지는 display:none 으로 숨겨 «살려» 둔다(검색어·필터·스크롤·작성 중인 글이 그대로 · 제니 선택).
