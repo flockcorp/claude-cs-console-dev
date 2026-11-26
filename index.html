@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<!-- v20261126a_tabs_multi -->
+<!-- v20261126c_ticket_ctrl_newtab -->
+<!-- (2026-11-26) 🎫 티켓 목록 줄 Ctrl(⌘)+클릭·가운데 클릭 = 그 티켓 상세를 새 탭으로(제니) — openTicket(id, seq, {newTab}) · 새 탭 «티켓 목록 N» 이 상세로 열리고 앞으로 온다 · 목록 탭은 그대로라 작성 중 확인 안 묻는다 · [다음 티켓] 차례도 함께 넘김. 다른 자리(빠른 검색·이어진 건 등)는 그대로. SQL 없음. -->
+<!-- (2026-11-26) 🗂 안 고른 탭이 다크에서 잘 안 보이던 것(제니) — 면(var(--text) 7% 섞음)·테두리(16%)·글자(82% · 굵기 500)·탭 사이 4px · 마우스 올리면 면 14%·글자 var(--text). × 는 글자색을 따른다. 라이트도 같은 식(어두운 막). SQL 없음. -->
 <!-- (2026-11-26) 🗂 한 메뉴를 여러 탭으로(제니: 「모든 메뉴 · 탭의 [+] 와 사이드바 Ctrl+클릭 함께」). 탭 id = 메뉴(첫 탭) 또는 «메뉴~N»(이름 «티켓 목록 2»). [+] = 앞 탭 메뉴를 새 탭(첫 화면부터) · 사이드바 Ctrl(⌘)+클릭·가운데 클릭 = 그 메뉴 새 탭 · 그냥 누르면 그 메뉴의 «마지막에 보던 탭». 탭마다 따로 드는 값(보는 티켓·다음 티켓 차례·칩·필터·접수 대상·상품 수정 코드·비용 화면 지시)을 App 의 tabVals[탭 id] 로 옮김(그전엔 한 벌 → 두 티켓 탭이 같은 티켓을 보였을 것). 작성 중 가드도 탭마다(csLeaveGuards · 화면은 CsTabCtx 로 제 탭을 안다) · 로그아웃·창 닫기는 어느 탭이든 작성 중이면 묻는다. page 는 이제 «앞 탭의 화면» 을 읽은 값 · 화면 바꾸는 길은 csGo 하나. SQL 없음. -->
 <!-- (2026-11-25) 🗂 상단 탭(제니: 「보던 메뉴를 상단에 탭으로 열어 두고 · 메뉴 기준 · 지울 수 있게 · 있는 탭의 메뉴를 다시 누르면 그 탭으로」). 제니 선택: 보던 화면 «그대로 유지»(탭 화면을 display:none 으로 살려 둠) · 탭 목록 «이 PC 에서 기억»(localStorage `cs_console_tabs:<이메일>` · 화면 안 값은 처음부터). 탭 = 메뉴(티켓 등록·상세는 «티켓 목록» 탭 안) · 최대 8개(넘으면 가장 오래된 탭을 닫고 알림 · 작성 중 탭은 건너뜀) · × 또는 가운데 클릭으로 닫기(탭 하나면 × 없음). 작성 중 확인은 «그 탭 화면을 바꾸거나 닫을 때» 만(csConfirmLeaveTab) — 탭 이동은 안 묻는다. 사이드바 «티켓 목록» 의 칩·필터 풀기는 이미 그 탭에 있을 때만. SQL 없음. -->
 <!-- (2026-11-25) 🔢 티켓 목록이 «최근 수정 500건» 만 불러와 숫자 카드·칩 숫자·칩 목록이 그 안에서만 셌다 → 전체 티켓을 1,000줄씩 쪽으로 받는다(csFetchAllRows · 제니 «전체 티켓 대상으로 세줘»). 카드 「?」 끝줄 «전체 티켓 기준». 같이: 사진 수 세기(cs_ticket_events 첨부)도 1,000줄 상한에 걸릴 수 있어 쪽으로. SQL 없음. -->
@@ -24079,7 +24081,10 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
                      함께 바뀐다.** 작은 글자에 붙어 있던 말이 줄·칸 전체로 가면 같은
                      문구라도 성격이 달라진다 — 문자열만 대조하면 이 변화가 안 보인다.
                    ★ 누를 수 있다는 것은 cursor:pointer 와 hover 색이 이미 말한다. */
-                <tr key={t.id} onClick={()=>goTicket(t.id, list.map(x=>x.id))}
+                /* ★ 2026-11-26 제니 — Ctrl(⌘)+클릭·가운데 클릭 = 그 티켓 상세를 «새 탭» 으로(목록 탭은 그대로). */
+                <tr key={t.id} onClick={e=>goTicket(t.id, list.map(x=>x.id), {newTab: !!(e.ctrlKey||e.metaKey)})}
+                  onMouseDown={e=>{ if(e.button===1) e.preventDefault(); }}
+                  onAuxClick={e=>{ if(e.button!==1) return; e.preventDefault(); goTicket(t.id, list.map(x=>x.id), {newTab:true}); }}
                   className="cs-row"
                   style={{borderTop:'1px solid var(--border)',cursor:'pointer',
                     background: picked[t.id] ? 'rgba(248,113,113,.13)' : undefined}}>
@@ -38111,12 +38116,17 @@ function csNextTabId(menu, list){
 // 사이드바 Ctrl+클릭·가운데 클릭 표시 — 사이드바가 «누르는 순간» 켜고, 메뉴 줄의 onClick(navigateTo)이 읽고,
 //   사이드바가 맨 끝에 끈다. 메뉴 줄마다 따로 손대지 않으려는 것이다.
 let csNavNewTab = false;
+// 안 고른 탭의 면·테두리·글자(2026-11-26 · 다크에서 안 보인다는 제니 지적)
+const CS_TAB_OFF_BG    = 'color-mix(in srgb, var(--text) 7%, var(--surface))';
+const CS_TAB_OFF_HOVER = 'color-mix(in srgb, var(--text) 14%, var(--surface))';
+const CS_TAB_OFF_LINE  = 'color-mix(in srgb, var(--text) 16%, transparent)';
+const CS_TAB_OFF_INK   = 'color-mix(in srgb, var(--text) 82%, var(--surface))';
 function CsTabBar({tabs, active, onPick, onClose, onAdd}){
   if(!tabs.length) return null;
   const many = tabs.length>1;
   return (
     <div className="cs-tabbar-top" role="tablist"
-      style={{display:'flex',alignItems:'flex-end',gap:2,overflowX:'auto',overflowY:'hidden',
+      style={{display:'flex',alignItems:'flex-end',gap:4,overflowX:'auto',overflowY:'hidden',
         padding:'6px 12px 0',borderBottom:'1px solid var(--border)',background:'var(--surface)',
         scrollbarWidth:'thin'}}>
       {tabs.map(k=>{
@@ -38126,13 +38136,19 @@ function CsTabBar({tabs, active, onPick, onClose, onAdd}){
             onClick={()=>onPick(k)}
             onMouseDown={e=>{ if(e.button===1 && many){ e.preventDefault(); onClose(k); } }}
             title={csTabTitle(k)}
+            /* ★ 2026-11-26 제니 「다크에서 선택 안 한 탭의 구분·글자가 잘 안 보인다」 →
+                 안 고른 탭도 «면·테두리» 를 갖게 하고 글자를 --sub 보다 밝게. 색은 var(--text) 를 섞어
+                 만든다 — 다크에선 밝은 막, 라이트에선 어두운 막이 돼 두 모드 다 맞는 쪽으로 간다
+                 (흰 반투명을 박으면 라이트에서 «없어진다» — console-theme-sweep-rule). */
+            onMouseEnter={on ? undefined : e=>{ e.currentTarget.style.background=CS_TAB_OFF_HOVER; e.currentTarget.style.color='var(--text)'; }}
+            onMouseLeave={on ? undefined : e=>{ e.currentTarget.style.background=CS_TAB_OFF_BG; e.currentTarget.style.color=CS_TAB_OFF_INK; }}
             style={{display:'inline-flex',alignItems:'center',gap:6,flexShrink:0,cursor:'pointer',
               height:30,padding:'0 8px 0 12px',fontSize:12,lineHeight:1,userSelect:'none',
               borderRadius:'7px 7px 0 0',marginBottom:-1,
-              border:'1px solid '+(on?'var(--border)':'transparent'),
-              borderBottom:'1px solid '+(on?'var(--bg)':'transparent'),
-              background:on?'var(--bg)':'transparent',
-              color:on?'var(--text)':'var(--sub)',fontWeight:on?700:400,
+              border:'1px solid '+(on?'var(--border)':CS_TAB_OFF_LINE),
+              borderBottom:'1px solid '+(on?'var(--bg)':'var(--border)'),
+              background:on?'var(--bg)':CS_TAB_OFF_BG,
+              color:on?'var(--text)':CS_TAB_OFF_INK,fontWeight:on?700:500,
               boxShadow:on?'inset 0 2px 0 var(--accent)':'none'}}>
             <span style={{whiteSpace:'nowrap'}}>{csTabTitle(k)}</span>
             {many && (
@@ -38140,7 +38156,7 @@ function CsTabBar({tabs, active, onPick, onClose, onAdd}){
                 onClick={e=>{ e.stopPropagation(); onClose(k); }}
                 style={{display:'inline-flex',alignItems:'center',justifyContent:'center',
                   width:18,height:18,padding:0,border:'none',borderRadius:4,lineHeight:1,
-                  background:'transparent',color:'var(--sub)',fontSize:13,cursor:'pointer',fontFamily:'inherit'}}
+                  background:'transparent',color:'inherit',opacity:on?0.75:0.65,fontSize:13,cursor:'pointer',fontFamily:'inherit'}}
                 onMouseEnter={e=>{ e.currentTarget.style.background='color-mix(in srgb, var(--sub) 22%, transparent)'; }}
                 onMouseLeave={e=>{ e.currentTarget.style.background='transparent'; }}>×</button>
             )}
@@ -39891,7 +39907,14 @@ function App() {
   });
   const setTvField = (k, f)=> (x)=> setTv(k, o=>({[f]: typeof x==='function' ? x(o[f]) : x}));
   // ★ 화면을 옮기는 길(openTicket·navigateTo·goDraft·로그아웃)은 먼저 묻는다 — 작성 중이면(2026-10-30).
-  const openTicket = (id, seq)=>{
+  const openTicket = (id, seq, opts)=>{
+    // ★ 2026-11-26 — 목록 줄 Ctrl+클릭·가운데 클릭 = 상세를 새 탭으로(보던 탭은 안 바뀌니 묻지 않는다).
+    if(opts && opts.newTab){
+      const g = csGo('csTicket', {newTab:true});
+      if(g) setTv(g, {ticketId:id, seq: Array.isArray(seq) ? seq : []});
+      setMobileOpen(false);
+      return;
+    }
     // ★ 상세는 «티켓 목록» 탭 안의 화면이다 — 앞 탭이 티켓 탭이면 거기서, 아니면 마지막에 보던 티켓 탭에서.
     const t = (cur && csTabMenu(cur)==='csTickets') ? cur : csFindTab('csTickets');
     if(t && !csConfirmLeaveTab(t)) return;
