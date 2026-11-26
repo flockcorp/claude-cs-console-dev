@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<!-- v20261126f_chip_keep_custom -->
+<!-- v20261126g_tk_list_live -->
+<!-- (2026-11-26) 🔄 티켓 목록이 바뀐 것을 저절로 다시 읽는다(제니: 「탭 2 에서 처리하고 탭 1 로 오면 그대로 · 다른 상담원 열린 탭에도 반영」). ① 내 저장 = cs_tickets·cs_ticket_events 로 가는 쓰기가 성공하면(fetch 감싸기 · createClient 앞) 'cs-tickets-changed' → 목록 탭 곧바로 다시 읽기 ② 남의 저장 = 목록이 20초마다·탭이 앞으로 올 때·창으로 돌아올 때 «표 도장»(건수|최근 updated_at · 1줄 조회)을 묻고 다르면 다시 읽기. 칩·필터·검색어·쪽 그대로. 창이 숨어 있으면 안 묻는다. SQL 없음. -->
 <!-- (2026-11-26) 🎫 사람이 만든 칩(u:… 예 «정산 체크»)을 고르고 상세 → [목록으로] 오면 '전체' 로 돌아가던 것(제니). 원인 = 목록이 새로 붙을 때 설정(settings)을 읽기 전이라 만든 칩이 «안 보이는 칩» 으로 판정돼 되돌림 effect 가 '전체' 로 바꿈 → settings===null 이면 판정하지 않는다. 기본 칩은 원래 유지됐다. SQL 없음. -->
 <!-- (2026-11-26) 🗂 탭 최대 8 → 10개(제니). CS_TAB_MAX 하나만. SQL 없음. -->
 <!-- (2026-11-26) 🗂 탭 이름 = 티켓 상세면 «#번호» · 그 밖엔 메뉴 이름(«2» 꼬리 뺌 · 제니) · 8개를 넘으면 저절로 닫지 않고 알림 창(«쓰지 않는 탭을 × 로 닫은 뒤 다시») — 열기를 멈춘다(제니 «직접 삭제 후 추가»). SQL 없음. -->
@@ -1647,6 +1648,32 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const { createClient } = supabase;
 const { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } = React;
+// ── 티켓이 바뀌면 열린 티켓 목록이 다시 읽는다 (2026-11-26 제니) ──────────────────
+//   「탭 2 에서 처리하고 탭 1 로 오면 그대로다 · 다른 상담원 열린 탭에도 반영되게」.
+//   ① 내 저장: 티켓 표(cs_tickets·cs_ticket_events)로 가는 쓰기(POST·PATCH·DELETE)가 성공하면
+//      'cs-tickets-changed' 를 알린다 → 목록 탭이 곧바로 다시 읽는다. 쓰는 자리가 20곳이 넘어
+//      자리마다 붙이지 않고 «요청 한 곳» 에서 잡는다(새 쓰기 자리가 생겨도 빠지지 않게).
+//   ② 남의 저장: 목록이 «표에 바뀐 게 있나» 를 가볍게 묻는다(CsTicketsPage · csTicketsStamp).
+//   ★ supabase-js 는 createClient 때 fetch 를 잡아 두므로 이 감싸기는 반드시 그 «앞» 이다.
+let csTicketsChangedTimer = null;
+function csTicketsChangedSoon(){
+  clearTimeout(csTicketsChangedTimer);
+  csTicketsChangedTimer = setTimeout(()=>{
+    try{ window.dispatchEvent(new window.Event('cs-tickets-changed')); }catch(_e){}
+  }, 400);
+}
+(function(){
+  const f0 = window.fetch.bind(window);
+  window.fetch = async (input, init)=>{
+    const res = await f0(input, init);
+    try{
+      const url = typeof input==='string' ? input : ((input && input.url) || '');
+      const m = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      if(m!=='GET' && m!=='HEAD' && res.ok && /\/rest\/v1\/cs_ticket(s|_events)(\?|$)/.test(url)) csTicketsChangedSoon();
+    }catch(_e){}
+    return res;
+  };
+})();
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── 테스트(dev) 환경 발송 차단 ─────────────────────────────────────────
@@ -20596,6 +20623,9 @@ function csGroupLookup(list){
 // ★★ 2026-11-25 — DB 는 한 번에 최대 1,000줄만 돌려준다(Supabase 기본 max rows). «전부» 가
 //   필요하면 쪽(range)으로 나눠 끝까지 받는다. make 는 매번 새 쿼리를 만드는 함수 — 차례가
 //   흔들리면 쪽 사이로 줄이 빠지거나 겹치므로 order 에 id 를 꼭 붙일 것.
+// 티켓 표 «도장» — 건수 + 가장 최근 수정 시각(2026-11-26 · 다른 상담원 저장 반영).
+const CS_TICKETS_POLL_MS = 20000;
+function csTicketsStampOf(count, latest){ return String(count||0)+'|'+String(latest||''); }
 async function csFetchAllRows(make, page=1000){
   const out = [];
   for(let from=0; ; from+=page){
@@ -23242,9 +23272,46 @@ function CsTicketsPage({currentUserEmail, role, canRefund, canDelete=false, onNe
     const {data,error} = await csFetchAllRows(()=>sb.from('cs_tickets').select('*')
       .order('updated_at',{ascending:false}).order('id',{ascending:false}));
     if(sbFail('CS 티켓 조회', error)) { setRows([]); return; }
-    setRows(await csWithPhotoCount(data||[]));
+    const list = data||[];
+    stampRef.current = csTicketsStampOf(list.length, list[0] && list[0].updated_at);
+    setRows(await csWithPhotoCount(list));
   };
   useEffect(()=>{ load(); },[]);
+
+  // ── 바뀌면 다시 읽기 (2026-11-26 제니 · 규칙은 sb 만드는 자리 위 설명) ─────────────
+  //   «표 도장» = 건수 + 가장 최근 수정 시각. 수정이면 시각이, 삭제면 건수가 바뀐다.
+  //   ★ 다시 읽어도 칩·필터·검색어·쪽은 이 화면/App 상태라 그대로다.
+  const stampRef = useRef(null);
+  const busyRef = useRef(false);
+  const myTab = React.useContext(CsTabCtx);
+  const reloadQuiet = async ()=>{
+    if(busyRef.current) return;
+    busyRef.current = true;
+    try{ await load(); } finally { busyRef.current = false; }
+  };
+  const checkStale = async ()=>{
+    if(busyRef.current || document.hidden) return;
+    const {data,count,error} = await sb.from('cs_tickets').select('updated_at',{count:'exact'})
+      .order('updated_at',{ascending:false}).limit(1);
+    if(error) return;                                   // 조용히 — 다음 차례에 다시 본다
+    const s = csTicketsStampOf(count, data && data[0] && data[0].updated_at);
+    if(stampRef.current!==null && s!==stampRef.current) reloadQuiet();
+  };
+  useEffect(()=>{
+    const onMine = ()=>reloadQuiet();                   // ① 내 저장 — 곧바로
+    const onShown = (e)=>{ if(!myTab || (e && e.detail)===myTab) checkStale(); };
+    const onVis = ()=>{ if(!document.hidden) checkStale(); };
+    window.addEventListener('cs-tickets-changed', onMine);
+    window.addEventListener('cs-tab-shown', onShown);
+    document.addEventListener('visibilitychange', onVis);
+    const t = setInterval(checkStale, CS_TICKETS_POLL_MS);   // ② 남의 저장 — 가볍게 묻기
+    return ()=>{
+      window.removeEventListener('cs-tickets-changed', onMine);
+      window.removeEventListener('cs-tab-shown', onShown);
+      document.removeEventListener('visibilitychange', onVis);
+      clearInterval(t);
+    };
+  },[]);
 
   // ★★★ 검색은 «DB 전체» 에 묻는다(2026-11-25 제니: 「분명히 있는 티켓인데 검색하면 안 나온다 ·
   //   해당하는 티켓이 있다면 무조건 리스트에 나와야」). 위 load() 는 최근 수정 500건뿐인데
@@ -40044,6 +40111,11 @@ function App() {
     if(!myEmail || tabsReady.current!==myEmail || !tabs.length) return;
     try{ localStorage.setItem(tabsKey, JSON.stringify({tabs, active:cur})); }catch(_e){}
   },[tabs, cur, myEmail]);
+  // 탭이 앞으로 오면 알린다 — 티켓 목록 탭은 «그새 바뀐 게 있나» 를 바로 확인한다(2026-11-26).
+  useEffect(()=>{
+    if(!cur) return;
+    try{ window.dispatchEvent(new window.CustomEvent('cs-tab-shown',{detail:cur})); }catch(_e){}
+  },[cur]);
   const pickTab = (k)=>{ if(k!==cur){ setCur(k); setMobileOpen(false); } };
   const closeTab = (k)=>{
     if(tabs.length<=1) return;
