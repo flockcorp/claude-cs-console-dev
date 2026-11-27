@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261127d_tabtop_remeasure -->
+<!-- (2026-11-27) 🐞 스크롤하면 티켓 상세·등록 머리가 탭 막대 밑으로 가려지던 것(제니 캡처 · dev · 사이드바 접힘) — 머리가 내려 붙는 높이(--cs-tabtop)가 0 이었다. 탭 막대를 처음 한 번 집은 요소로만 재서, 막대가 새로 그려지면 옛 요소(높이 0)를 따랐다. → 막대가 붙을 때마다 재는 callback ref(barRef) · 떨어진 요소 값은 안 받음. 탭 막대 높이를 쓰는 sticky 10곳 모두 함께 고쳐진다. SQL 없음. -->
 <!-- v20261127c_tk_new_head_sticky -->
 <!-- (2026-11-27) 🎫 티켓 등록 화면 머리(제목·티켓 검색·[목록으로])를 상단 고정(제니) — 상세 머리와 같은 띠(sticky · 탭 막대 아래 · 바탕색). ①②③ 칸은 머리 높이(잰 값)+12px 아래에 붙는다. 상세 머리는 원래 고정. SQL 없음. -->
 <!-- v20261127b_tk_next_down -->
@@ -38254,12 +38256,12 @@ const CS_TAB_OFF_BG    = 'color-mix(in srgb, var(--text) 7%, var(--surface))';
 const CS_TAB_OFF_HOVER = 'color-mix(in srgb, var(--text) 14%, var(--surface))';
 const CS_TAB_OFF_LINE  = 'color-mix(in srgb, var(--text) 16%, transparent)';
 const CS_TAB_OFF_INK   = 'color-mix(in srgb, var(--text) 82%, var(--surface))';
-function CsTabBar({tabs, active, onPick, onClose, onAdd, titleOf}){
+function CsTabBar({tabs, active, onPick, onClose, onAdd, titleOf, barRef}){
   const csTabTitle = titleOf;
   if(!tabs.length) return null;
   const many = tabs.length>1;
   return (
-    <div className="cs-tabbar-top" role="tablist"
+    <div ref={barRef} className="cs-tabbar-top" role="tablist"
       /* ★ 2026-11-26 제니 「스크롤 내려도 탭이 위에 고정으로 보이게」 → sticky top:0.
            화면 안의 sticky 머리들(티켓 상세 머리·일괄 막대·설정 탭 등)은 이 높이(--cs-tabtop · App 이 잰다)만큼
            내려 붙는다. z 150 = 일괄 막대(120)보다 위 · 모달(900~)·사이드바(1000)보다 아래. */
@@ -40174,16 +40176,19 @@ function App() {
   },[tabs, cur, myEmail]);
   // ★ 탭 막대 높이를 잰다(2026-11-26 · 상단 고정) — 화면 안 sticky 머리들이 이만큼 내려 붙는다(--cs-tabtop).
   //   숫자로 박지 않는다(글꼴·확대에 따라 달라진다 — size-measure-dont-guess).
+  // ★★ 2026-11-27 제니 제보 «스크롤하면 상세·등록 머리가 탭 막대 밑으로 가려진다»(캡처: 머리가 탭 막대 높이만큼
+  //   안 내려와 있었다 = --cs-tabtop 0). 그전엔 effect 가 한 번 querySelector 로 집은 막대만 지켜봤다 —
+  //   막대가 새로 그려지면(다른 요소) 옛 막대는 떨어져 나가며 높이 0 을 알리고, 새 막대는 아무도 안 잰다.
+  //   → 막대가 «붙을 때마다» 그 요소를 재는 callback ref 로. 떨어진 요소의 0 은 안 받는다.
   const [tabTop,setTabTop] = useState(0);
-  useEffect(()=>{
-    const el = document.querySelector('.cs-tabbar-top');
+  const tabBarRO = useRef(null);
+  const tabBarRef = useCallback(el=>{
+    if(tabBarRO.current){ tabBarRO.current.disconnect(); tabBarRO.current = null; }
     if(!el){ setTabTop(0); return; }
-    const put = ()=> setTabTop(Math.ceil(el.getBoundingClientRect().height));
+    const put = ()=>{ if(el.isConnected) setTabTop(Math.ceil(el.getBoundingClientRect().height)); };
     put();
-    let ro = null;
-    try{ ro = new window.ResizeObserver(put); ro.observe(el); }catch(_e){}
-    return ()=>{ if(ro) ro.disconnect(); };
-  },[tabs.length>0]);
+    try{ const ro = new window.ResizeObserver(put); ro.observe(el); tabBarRO.current = ro; }catch(_e){}
+  },[]);
   // 탭이 앞으로 오면 알린다 — 티켓 목록 탭은 «그새 바뀐 게 있나» 를 바로 확인한다(2026-11-26).
   useEffect(()=>{
     if(!cur) return;
@@ -40786,7 +40791,7 @@ function App() {
         {/* ★ 2026-11-25 상단 탭 — 열린 탭마다 그 탭이 보던 화면을 그리고, 앞에 있는 탭만 보인다.
             나머지는 display:none 으로 숨겨 «살려» 둔다(검색어·필터·스크롤·작성 중인 글이 그대로 · 제니 선택).
             경계(PageErrorBoundary)는 탭마다 — 한 화면이 죽어도 다른 탭은 산다. key={p} 라 화면을 바꾸면 오류도 지워진다. */}
-        <CsTabBar tabs={tabs} active={cur} onPick={pickTab} onClose={closeTab}
+        <CsTabBar barRef={tabBarRef} tabs={tabs} active={cur} onPick={pickTab} onClose={closeTab}
           titleOf={k=>csTabTitle(k, tabPage[k], tv(k).ticketId)}
           onAdd={cur ? ()=>navigateTo(csTabMenu(cur),{newTab:true}) : null}/>
         {/* ★ 2026-11-26 — 탭마다 제 값(tv(k))을 넘긴다. 탭이 생기기 전(권한 읽기 전)엔 prePage 한 장. */}
