@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261127a_tk_col_refund_req -->
+<!-- (2026-11-27) 🎫 티켓 [보기 설정] «환불» 묶음에 «환불 요청 여부» 열(제니) — 티켓에서 계좌 환불로 환불 관리에 넘겼으면(refund_id 있음) T · 아니면 F. 화면·CSV 같은 값. 기본은 꺼짐(칩마다 켠다). SQL 없음. -->
 <!-- v20261126j_tk_list_no_flicker -->
 <!-- (2026-11-26) 🎫 티켓 목록에 올 때마다 «깜빡이듯 움직이던» 것(제니) — 상세 갔다 오거나 새 탭으로 열 때마다 목록(1,500건대)·CS 설정을 처음부터 읽어 «불러오는 중…» → 표, 설정이 늦으면 기본 열 → 설정 열로 바뀌었다. → 마지막에 읽은 목록·설정(csTicketsCache · 창 메모리 · 계정별)으로 바로 그리고 새 값은 뒤에서 받아 갈아 낌(설정은 같으면 안 갈아 낌) · 열 구성을 모르면 표를 안 그림. SQL 없음. -->
 <!-- v20261126i_tabbar_sticky -->
@@ -20858,6 +20860,15 @@ const CS_COLS = {
                 title={t.refund_account?'가려서 보여 줍니다 — 온전한 값은 티켓 상세에 있습니다':undefined}>
                 {t.refund_account?csMaskAcct(t.refund_account):'—'}</span>,
               sv:(t)=>t.refund_account||''},
+  // ★ «환불 요청 여부»(제니 2026-11-27) — 티켓에서 [계좌 환불]로 환불 관리에 넘겼으면 T, 아니면 F.
+  //   근거는 refund_id(넘길 때 적는 환불 번호). 환불 건을 나중에 지워도 «요청했다» 는 남는다(FK 없음 · cs_tickets.sql).
+  //   ★ 화면·파일 모두 T/F 그대로 — 빈칸·«—» 로 두지 않는다(F 도 값이다).
+  refund_req:{label:'환불요청', plabel:'환불 요청 여부', g:'환불', w:94, align:'center',
+              cell:(t)=> t.refund_id!=null
+                ? <span title={'환불 #'+t.refund_id} style={{fontWeight:600}}>T</span>
+                : <span style={{color:'var(--sub)'}}>F</span>,
+              sv:(t)=>t.refund_id!=null?1:0,
+              csv:(t)=>t.refund_id!=null?'T':'F'},
 
   // ── ① «정산» (master 만 고친다 · 보는 것은 상세와 같게 전원) ──────────
   bearer:    {label:'부담', plabel:'정산 대상', g:'정산', w:71,
