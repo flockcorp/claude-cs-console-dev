@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!-- v20261127c_tk_new_head_sticky -->
+<!-- (2026-11-27) 🎫 티켓 등록 화면 머리(제목·티켓 검색·[목록으로])를 상단 고정(제니) — 상세 머리와 같은 띠(sticky · 탭 막대 아래 · 바탕색). ①②③ 칸은 머리 높이(잰 값)+12px 아래에 붙는다. 상세 머리는 원래 고정. SQL 없음. -->
 <!-- v20261127b_tk_next_down -->
 <!-- (2026-11-27) 🎫 «저장 후 다음 티켓» 방향을 목록의 위 → 아래로(제니). seq[i-1] → seq[i+1] · 맨 아래면 «목록의 맨 아래 티켓입니다» 알리고 화면 그대로. 등록 화면엔 원래 «다음 티켓» 이 없다. SQL 없음. -->
 <!-- v20261127a_tk_col_refund_req -->
@@ -29749,8 +29751,20 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket, on
   //   정작 필요한 순간에 안 보이면 없는 것과 같다.
   //   ★ 스스로 스크롤되게 해 둔다(maxHeight) — 붙어 있기만 하고 안이 넘치면
   //     아래쪽 버튼에 손이 안 닿는다.
-  const sticky = {...panel, position:'sticky', top:'calc(16px + var(--cs-tabtop,0px))',
-    maxHeight:'calc(100vh - 32px - var(--cs-tabtop,0px))', overflowY:'auto'};
+  // ★ 2026-11-27 — 머리말이 위에 붙게 되어(제니) 칸은 «머리말 높이 + 12px» 아래에 붙는다.
+  //   높이는 짐작하지 않고 잰다(검색칸·줄바꿈으로 달라질 수 있다).
+  const headRef = useRef(null);
+  const [headH, setHeadH] = useState(62);
+  useLayoutEffect(()=>{
+    const el = headRef.current; if(!el) return;
+    const put = ()=>{ const h = Math.round(el.getBoundingClientRect().height); if(h>0) setHeadH(h); };
+    put();
+    let ro = null;
+    try{ ro = new window.ResizeObserver(put); ro.observe(el); }catch(_e){}
+    return ()=>{ if(ro) ro.disconnect(); };
+  }, []);
+  const sticky = {...panel, position:'sticky', top:'calc('+(headH+12)+'px + var(--cs-tabtop,0px))',
+    maxHeight:'calc(100vh - '+(headH+28)+'px - var(--cs-tabtop,0px))', overflowY:'auto'};
   // ★ 패널 제목은 «이 칸이 무엇인가» 를 말하는 자리라 한 단계 크고 굵다(제니).
   //   콘솔의 다른 화면 제목(.entry-section-title)이 쓰는 색을 그대로 쓴다.
   const ptitle = {fontSize:12.5,fontWeight:700,color:'var(--accent)',letterSpacing:'.04em',
@@ -29882,7 +29896,12 @@ function CsNewTicketPage({currentUserEmail, role, onDone, onCancel, goTicket, on
 
   return (
     <div className="section" style={{contain:'inline-size'}}>
-      <div style={{marginBottom:16,display:'flex',alignItems:'baseline',gap:12,flexWrap:'wrap'}}>
+      {/* ★ 머리말 상단 고정(제니 2026-11-27) — 상세 머리와 같은 띠(바탕색 깔고 화면을 가로지름 ·
+          탭 막대 아래 붙음). ①②③ 칸은 그 높이(--cs-newhead · 잰 값)만큼 내려 붙는다. */}
+      <div ref={headRef} style={{position:'sticky',top:'var(--cs-tabtop,0px)',zIndex:20,background:'var(--bg)',
+        margin:'-24px -32px 8px',padding:'18px 32px 12px',
+        borderBottom:'1px solid var(--border)',
+        display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
         {/* ★ 말은 «등록» 으로 통일한다(제니 2026-09-02) — 목록의 [+ 티켓 등록],
             이 머리말, 저장 버튼이 모두 같은 말을 써야 같은 일로 읽힌다. */}
         <h1 style={{fontSize:20,fontWeight:700,margin:0,color:'var(--text)'}}>📝 새 티켓 등록</h1>
